@@ -1,81 +1,116 @@
 # Voxel Fortress Tech Stack (Rust Custom Engine Approach)
 
-Given the specific requirements (deep simulation, large-scale dynamic voxel world, custom LOD) and the decision to pursue maximum control and potential performance, building a custom game engine using Rust is a viable, albeit extremely challenging, path.
+This document provides a high-level overview of our technical approach to building Voxel Fortress. Given the ambitious requirements outlined in our [Game Concept Documentation](./Game%20Concept/), we've chosen a custom Rust-based engine to achieve the necessary performance, control, and flexibility.
 
-## A. Game Engine
+> For detailed technical specifications, implementation guides, architecture diagrams, and subsystem documentation, see our comprehensive [Technical Documentation](./Tech%20Stack/) folder.
 
-### Custom Engine Built with Rust
-This approach involves building the engine's core functionalities from scratch or by integrating various Rust libraries (crates).
+## A. Engine Philosophy
 
-#### Pros
-- **Ultimate Control**: Every system can be tailored precisely to the game's unique needs (simulation, voxel handling, LOD)
-- **Performance Potential**: Rust's focus on performance and low-level control allows for highly optimized code, crucial for simulation and rendering demands
-- **Memory Safety**: Rust's ownership and borrowing system eliminates many common memory-related bugs (segfaults, data races) prevalent in C/C++, leading to more stable and secure code, especially important for complex, long-running simulations
-- **Excellent Concurrency**: Rust has first-class support for concurrency, vital for parallelizing tasks like chunk processing, AI, and LOD generation
-- **Growing Ecosystem**: The Rust game development ecosystem is rapidly maturing, with high-quality libraries available for many core tasks
+Building a custom engine is a strategic decision based on Voxel Fortress's unique requirements:
 
-#### Cons
-- **Massive Development Effort**: You are essentially rebuilding functionalities provided by commercial engines (rendering pipeline, physics integration, asset management, scene graph, UI tools, platform abstractions). This requires significant time, resources, and expertise
-- **Requires Deep Expertise**: Success demands strong knowledge of engine architecture, graphics programming, systems programming, simulation design, and the Rust language itself
-- **Smaller Community/Asset Pool**: While growing, finding pre-made solutions or extensive tutorials for highly specific problems might be harder than with mainstream engines like UE/Unity
+- Handling vast voxel worlds with [extreme view distances](./Game%20Concept/Rendering%20Systems.md)
+- Supporting [deep simulation](./Game%20Concept/Colony%20Simulation.md) of hundreds of entities
+- Managing complex [physics systems](./Game%20Concept/Physics%20Systems.md) in a destructible environment
+- Implementing sophisticated [AI behaviors](./Game%20Concept/AI%20Systems.md) with custom pathfinding
 
-## B. Programming Language
+Using Rust as our foundation provides critical advantages for these challenges, particularly in performance, memory safety, and concurrency.
 
-### Primary: Rust
-The core engine, simulation logic, rendering pipeline, and most gameplay systems would be written in Rust to leverage its performance, safety, and concurrency features.
+> **See:** [Engine Architecture](./Tech%20Stack/Engine%20Architecture.md) for detailed system design
 
-### Potential Secondary Languages
-- **Scripting** (e.g., Lua via mlua, or Rhai): Could be integrated for high-level gameplay logic, modding support, or rapid prototyping of certain features, separating them from the core Rust engine code
-- **C/C++ (via FFI)**: Only if absolutely necessary to bind to existing, indispensable C/C++ libraries that lack mature Rust bindings. This adds complexity and potentially compromises safety guarantees. The goal would be to minimize or avoid this
+## B. Core Technology Components
 
-## C. Key Rust Libraries/Crates & Techniques
+### Entity Component System (ECS)
+Our simulation architecture relies on an ECS design to efficiently manage thousands of interacting entities with complex behaviors.
 
-### Architecture
-- **Entity Component System (ECS)**: Highly recommended. Options include bevy_ecs (mature, feature-rich, part of the Bevy engine but usable standalone), specs (older but established, uses generational arenas), or flecs-rs (bindings to the C Flecs library). ECS is ideal for managing potentially thousands of entities (colonists, creatures, items) and their properties, and facilitates parallel processing of simulation logic
+**Selected Technology:** Custom ECS implementation based on bevy_ecs principles
+> **See:** [Entity Component System](./Tech%20Stack/Entity%20Component%20System.md) for implementation details
 
-### Rendering
-- **Graphics API Abstraction**: wgpu is the de facto standard. It provides a modern, safe, and relatively platform-agnostic API over Vulkan, Metal, DirectX12, OpenGL ES, and WebGPU. This is likely the foundation of the rendering pipeline
-- **Lower-Level Access (Advanced)**: Crates like ash (Vulkan), metal-rs (Metal), windows-rs (DirectX) offer direct access if wgpu proves insufficient, but significantly increase complexity
+### Rendering Pipeline
+A custom, highly optimized rendering system capable of handling voxel geometry at multiple detail levels.
 
-### Windowing & Input
-- **winit**: The standard crate for creating windows and handling input events across different platforms. Integrates seamlessly with wgpu
+**Selected Technology:** wgpu abstraction over modern graphics APIs
+> **See:** [Rendering Pipeline](./Tech%20Stack/Rendering%20Pipeline.md) for architecture and implementation
 
-### Voxel-Specific Systems (Likely requires significant custom code)
-- **Voxel Storage**: Custom implementations of chunked arrays, possibly combined with Octrees (ultraviolet has math types, but data structures are often custom) or spatial hashing techniques. Efficient storage and querying are critical
-- **Meshing**: Crates like block-mesh-rs (greedy meshing) or dual-contouring-rs might provide starting points, but will likely need adaptation or custom implementations for performance, specific block types, and integration with the LOD system. Marching Cubes algorithms would also likely be custom implementations
-- **LOD Generation**: Almost certainly requires custom algorithms tailored to the voxel data structure and desired visual output for different distance levels
+### Voxel Data Management
+Efficient storage, manipulation, and visualization of vast voxel worlds with minimal memory footprint.
 
-### Physics
-- **rapier**: A popular, robust 2D/3D physics engine written in Rust. Needs integration with the ECS and the voxel world (handling collisions with dynamic terrain)
+**Selected Technology:** Custom chunking system with specialized compression
+> **See:** [Voxel Data Structures](./Tech%20Stack/Voxel%20Data%20Structures.md) for implementation details
 
-### Concurrency & Parallelism
-- **Rust Standard Library**: std::thread, async/await for asynchronous tasks
-- **rayon**: Excellent library for easy data parallelism (e.g., parallel iteration over chunks for processing or meshing)
-- **crossbeam**: Provides more advanced concurrency primitives (channels, scoped threads, etc.)
+### Physics System
+Physics simulation handling voxel-based destruction, fluid dynamics, and structural integrity.
+
+**Selected Technology:** Modified Rapier physics with custom voxel integration
+> **See:** [Physics System](./Tech%20Stack/Physics%20System.md) for implementation details
 
 ### AI & Pathfinding
-- **pathfinding**: Provides standard algorithms like A*, Dijkstra. Needs adaptation for the 3D voxel grid and potentially hierarchical pathfinding for scale
-- Behavioral AI (needs, moods, job selection) will be mostly custom logic, likely leveraging the ECS
+Custom behavioral systems driving colonist decision-making and efficient navigation in dynamic voxel environments.
 
-### UI
-- **egui**: A very popular and easy-to-use immediate-mode GUI library. Integrates well with wgpu via adapters like egui-wgpu. Good for debug interfaces and potentially the main game UI
-- **iced**: An alternative, Elm-inspired stateful GUI library
+**Selected Technology:** Custom behavior trees with hierarchical pathfinding
+> **See:** [AI Architecture](./Tech%20Stack/AI%20Architecture.md) for implementation details
 
-### Math
-- **glam or nalgebra**: Widely used linear algebra libraries for vectors, matrices, quaternions, essential for 3D graphics and physics. glam is often preferred for its SIMD support and integration with other ecosystem crates
+## C. Technology Selection Criteria
 
-### Serialization
-- **serde**: The standard for serialization/deserialization. Essential for saving/loading game state, configuration files, potentially network communication. Used with formats like bincode (binary), ron (Rusty Object Notation), or JSON
-- **Asset Handling**: Custom systems will be needed for loading, managing, and potentially hot-reloading assets (textures, models, configuration)
+Each technology component has been evaluated against these key criteria:
 
-## D. Supporting Tools
+1. **Performance Impact:** Direct effect on game performance in our target scenarios
+2. **Integration Complexity:** Ease of incorporation into our custom architecture
+3. **Maintenance Overhead:** Long-term sustainability and update requirements
+4. **Community Support:** Available resources, documentation, and community activity
+5. **Flexibility:** Ability to modify or extend for our specific requirements
 
-- **Version Control**: Git (essential)
-- **Project Management**: Jira, Trello, Asana, HacknPlan, etc.
-- **Voxel Art**: MagicaVoxel, Goxel, Qubicle
-- **Modeling/Texturing**: Blender, Krita/GIMP/Photoshop
-- **Build System/CI**: Cargo (Rust's built-in build system and package manager), potentially GitHub Actions/GitLab CI for continuous integration
+> **See:** [Technology Evaluation](./Tech%20Stack/Technology%20Evaluation.md) for detailed analysis
+
+## D. Implementation Roadmap
+
+Our technical implementation follows the phases outlined in our [Development Roadmap](./Game%20Concept/Development%20Roadmap.md), with technology-specific milestones:
+
+1. **Core Engine Foundation** - Basic voxel rendering, ECS framework, simple physics
+2. **Simulation Systems** - Data structures, AI foundation, resource management
+3. **Advanced Rendering** - LOD implementation, optimization, visual effects
+4. **Scale & Performance** - Optimization, threading models, memory management
+
+> **See:** [Technical Roadmap](./Tech%20Stack/Technical%20Roadmap.md) for detailed implementation phases
+
+## E. Libraries & Dependencies
+
+While building a custom engine, we leverage high-quality Rust crates where appropriate:
+
+### Core Dependencies
+- **wgpu** - Graphics API abstraction
+- **winit** - Cross-platform window management
+- **rapier** - Physics foundation (with custom extensions)
+- **rayon** - Parallel computation
+- **serde** - Data serialization
+- **nalgebra/glam** - Mathematical operations
+
+> **See:** [Dependencies & Integration](./Tech%20Stack/Dependencies%20Integration.md) for complete list and integration approaches
+
+## F. Development Tools
+
+- **Version Control:** Git with structured branching strategy
+- **Build System:** Cargo with custom build scripts
+- **Continuous Integration:** GitHub Actions for automated testing
+- **Performance Profiling:** Custom instrumentation and Tracy integration
+- **Asset Pipeline:** Custom tools for voxel asset processing
+
+> **See:** [Development Environment](./Tech%20Stack/Development%20Environment.md) for setup instructions and workflow details
+
+## G. Challenges & Mitigations
+
+### Identified Technical Challenges
+1. **Rendering Performance** at extreme distances with LOD transitions
+2. **Memory Management** for vast voxel worlds and entity states
+3. **Parallelism** across simulation, physics, and rendering systems
+4. **Custom UI Development** balancing performance and flexibility
+5. **Cross-Platform Compatibility** while maintaining performance
+
+> **See:** [Technical Challenges](./Tech%20Stack/Technical%20Challenges.md) for detailed analysis and mitigation strategies
 
 ## Conclusion
 
-Choosing a custom Rust engine is opting for the most challenging but potentially most rewarding path for this specific game concept. It offers unparalleled control and performance potential, leveraging Rust's strengths in safety and concurrency. However, it necessitates a significant investment in building foundational engine components before focusing purely on gameplay, requiring a team with strong systems programming expertise.
+Developing Voxel Fortress with a custom Rust engine represents a significant technical challenge, but one that aligns precisely with our ambitious game design goals. This approach provides the control and performance needed for our core gameplay features while leveraging Rust's strengths in safety, concurrency, and performance.
+
+Our technical documentation will continue to evolve alongside implementation, serving as both reference and guide for development.
+
+> **See:** [Technology Documentation Index](./Tech%20Stack/README.md) for a complete listing of technical documentation
