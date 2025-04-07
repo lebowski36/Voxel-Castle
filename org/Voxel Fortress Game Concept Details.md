@@ -1,8 +1,8 @@
 # Voxel Fortress Game Concept Details
 
-Here's a breakdown of the core pillars and considerations for the proposed 3D Voxel Simulation game:
+Here's a breakdown of the core pillars and considerations for Voxel Fortress a 3D Voxel Simulation game:
 
-## A. Core Gameplay Loop (Dwarf Fortress Inspiration)
+## A. Core Gameplay Loop (Dwarf Fortress Inspired)
 
 ### Colony Simulation
 - The heart of the game
