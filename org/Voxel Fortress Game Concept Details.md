@@ -7,6 +7,7 @@ Here's a breakdown of the core pillars and considerations for Voxel Fortress a 3
 ### Colony Simulation
 - The heart of the game
 - Players manage a group of individuals (dwarves, humans, goblins, etc.)
+- [See detailed Colony Simulation design](./Game%20Concept/Colony%20Simulation.md)
 
 ### Needs & Moods
 - Characters need food, water, sleep, safety, social interaction, entertainment
