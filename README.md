@@ -4,7 +4,7 @@
 
 **Voxel Fortress** is an ambitious colony simulation game that combines the depth of Dwarf Fortress with the accessibility and creative freedom of voxel-based worlds.
 
-![Under Development](https://img.shields.io/badge/Status-Under%20Development-yellow)
+![Concept Development](https://img.shields.io/badge/Status-Under%20Development-yellow)
 
 > "Build, dig, survive, and watch stories unfold in a vast, procedurally generated voxel world."
 

@@ -13,7 +13,7 @@ The colony simulation system forms the heart of Voxel Fortress, defining how you
 ### Population Management
 
 #### Colonist Acquisition
-- **Starting Group:** Players begin with 7-12 randomly generated colonists with varying traits, skills, and backgrounds
+- **Race:** Colonists belong to different races, each with unique traits, abilities, and cultural tendencies. Races influence colonist behavior, relationships, and colony dynamics. Players can encounter and integrate multiple races into their colony, fostering diversity
 - **Immigration:** New colonists arrive based on fortress wealth, reputation, and living conditions
 - **Birth:** Colonists can form relationships and have children (longer-term investment, children take time to mature)
 - **Rescue:** Occasionally find stranded/imprisoned individuals who can join your colony
