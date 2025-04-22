@@ -1,0 +1,21 @@
+# Rust/Cargo
+/voxel_fortress/target/
+**/*.rs.bk
+/voxel_fortress/Cargo.lock
+
+# IDE/editor
+.vscode/
+.idea/
+*.swp
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Logs
+bevy_error.log
+*.log
+
+# Misc
+*.tmp
+*.bak
