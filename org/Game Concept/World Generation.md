@@ -263,3 +263,14 @@ Generation algorithms must balance detail and realism with acceptable generation
 - Full historical generation
 - Interactive world viewer
 - Performance optimization
+
+## Chunked Voxel World
+The world is divided into 32x32x32 voxel chunks (25cm per voxel, 8m³ per chunk) for efficient storage and rendering. Initial implementation will use simple solid or heightmap-based chunks.
+
+### Hierarchical World Generation & Streaming
+- World size is user-selectable at creation, up to Earth-sized (tens of thousands of km).
+- World is generated as a hierarchy of chunk levels, with high-level worldgen (biomes, heightmaps, caves, etc.) at the top, and detailed chunk data generated on demand.
+- High-level worldgen is visualized for the user during world creation.
+- Only a small area is loaded/simulated at a time; distant terrain uses LOD meshes.
+- Biome and cave systems are modular and designed for future extensibility.
+- Simulation in unloaded chunks is handled at a high level, with fast-forwarding/interpolation when loaded.

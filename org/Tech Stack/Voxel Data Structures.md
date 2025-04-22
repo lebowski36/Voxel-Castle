@@ -14,16 +14,18 @@ The Voxel Data Structures system forms the foundation of Voxel Fortress's world 
 ### Spatial Organization
 
 #### Chunking System
-- **Chunk Dimensions:** Standard 32×32×32 voxel units per chunk
+- **Block Size:** 25cm cubes as the standard voxel unit
+- **Chunk Dimensions:** Standard 32×32×32 voxel units per chunk (8m³ volumes)
 - **Chunk Addressing:** Efficient integer-based coordinate system
 - **Region Management:** 8×8×8 chunks grouped into regions for higher-level operations
 - **World Scales:**
-  - **Microblock System:** Sub-voxel precision for certain features (1/8 voxel)
-  - **Block Scale:** Primary gameplay interaction level
-  - **Chunk Scale:** Basic unit of processing and memory management
-  - **Region Scale:** Loading/unloading and persistence management
+  - **Microblock System:** Sub-voxel precision for detailed features (6.25cm or 12.5cm)
+  - **Block Scale:** Primary gameplay interaction level (25cm)
+  - **Chunk Scale:** Basic unit of processing and memory management (8m³)
+  - **Region Scale:** Loading/unloading and persistence management (64m³)
   - **World Scale:** Global operations and long-distance systems
 - **Border Handling:** Efficient management of cross-chunk operations
+
 
 #### Spatial Hierarchy
 - **Octree Structure:** Dynamic hierarchical representation for spatial queries

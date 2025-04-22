@@ -16,7 +16,7 @@ The Data Structures system forms the technical foundation of Voxel Fortress, pro
 ### Voxel Data Representation
 
 #### Spatial Partitioning
-- **Chunk System:** Division of world into fixed-size 3D chunks (e.g., 32x32x32 voxels)
+- **Chunk System:** Division of world into fixed-size 3D chunks (**32x32x32 voxels**, 25cm per voxel, 8m³ per chunk) as per latest implementation plan.
 - **Region Management:** Grouping chunks into larger regions for higher-level operations
 - **Hierarchical Structure:** Multi-level representation for different scales of operation
 - **Loading Boundaries:** Clear demarcation of loaded vs. unloaded chunks
