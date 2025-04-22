@@ -3,6 +3,8 @@
 **/*.rs.bk
 /voxel_fortress/Cargo.lock
 
+
+
 # IDE/editor
 .vscode/
 .idea/
