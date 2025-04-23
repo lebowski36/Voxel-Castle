@@ -386,6 +386,7 @@ pub struct ChunkSummary {
 }
 
 /// WorldGen struct for hierarchical worldgen
+#[derive(Resource, Clone)]
 pub struct WorldGen {
     pub levels: u8, // Number of chunk levels
     pub chunk_size: usize, // Size per chunk (e.g., 32)
