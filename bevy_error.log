@@ -1,78 +1,66 @@
-   Compiling voxel_fortress v0.1.0 (/home/system-x1/Projects/Voxel Castle/voxel_fortress)
-warning: unused imports: `Camera3dDepthLoadOp` and `Camera3dDepthTextureUsage`
- --> src/main.rs:1:36
+warning: unused import: `PrimitiveTopology`
+ --> src/chunk.rs:2:32
   |
-1 | use bevy::core_pipeline::core_3d::{Camera3dDepthLoadOp, Camera3dDepthTextureUsage};
-  |                                    ^^^^^^^^^^^^^^^^^^^  ^^^^^^^^^^^^^^^^^^^^^^^^^
+2 | use bevy::render::mesh::{Mesh, PrimitiveTopology};
+  |                                ^^^^^^^^^^^^^^^^^
   |
   = note: `#[warn(unused_imports)]` on by default
 
-warning: unused import: `bevy::render::render_resource::TextureUsages`
- --> src/main.rs:7:5
+warning: unused import: `bevy::render::render_asset::RenderAssetUsages`
+ --> src/chunk.rs:3:5
   |
-7 | use bevy::render::render_resource::TextureUsages;
-  |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+3 | use bevy::render::render_asset::RenderAssetUsages;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-warning: unused imports: `VOXEL_SIZE_METERS` and `Voxel`
-  --> src/main.rs:11:27
+warning: unused variable: `prev_state`
+  --> src/chunk.rs:77:13
    |
-11 | use terrain::{CHUNK_SIZE, VOXEL_SIZE_METERS, Chunk, Voxel, Terrain};
-   |                           ^^^^^^^^^^^^^^^^^         ^^^^^
-
-warning: use of deprecated struct `bevy::prelude::Camera3dBundle`: Use the `Camera3d` component instead. Inserting it will now also insert the other components required by it automatically.
-   --> src/main.rs:127:9
-    |
-127 |         Camera3dBundle {
-    |         ^^^^^^^^^^^^^^
-    |
-    = note: `#[warn(deprecated)]` on by default
-
-error[E0061]: this function takes 2 arguments but 1 argument was supplied
-   --> src/terrain.rs:85:20
-    |
-85  |             return Mesh::new(PrimitiveTopology::TriangleList);
-    |                    ^^^^^^^^^--------------------------------- argument #2 of type `RenderAssetUsages` is missing
-    |
-note: associated function defined here
-   --> /home/system-x1/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/bevy_mesh-0.15.3/src/mesh.rs:196:12
-    |
-196 |     pub fn new(primitive_topology: PrimitiveTopology, asset_usage: RenderAssetUsages) -> Self {
-    |            ^^^
-help: provide the argument
-    |
-85  -             return Mesh::new(PrimitiveTopology::TriangleList);
-85  +             return Mesh::new(PrimitiveTopology::TriangleList, /* RenderAssetUsages */);
-    |
-
-error[E0061]: this function takes 2 arguments but 1 argument was supplied
-   --> src/terrain.rs:87:24
-    |
-87  |         let mut mesh = Mesh::new(PrimitiveTopology::TriangleList);
-    |                        ^^^^^^^^^--------------------------------- argument #2 of type `RenderAssetUsages` is missing
-    |
-note: associated function defined here
-   --> /home/system-x1/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/bevy_mesh-0.15.3/src/mesh.rs:196:12
-    |
-196 |     pub fn new(primitive_topology: PrimitiveTopology, asset_usage: RenderAssetUsages) -> Self {
-    |            ^^^
-help: provide the argument
-    |
-87  -         let mut mesh = Mesh::new(PrimitiveTopology::TriangleList);
-87  +         let mut mesh = Mesh::new(PrimitiveTopology::TriangleList, /* RenderAssetUsages */);
-    |
-
-warning: use of deprecated associated function `bevy::prelude::Color::rgb`: Use `Color::srgb` instead
-  --> src/main.rs:16:44
+77 |         let prev_state = managed_chunk.state;
+   |             ^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_prev_state`
    |
-16 |         .insert_resource(ClearColor(Color::rgb(0.5, 0.7, 1.0))) // Set sky color
-   |                                            ^^^
+   = note: `#[warn(unused_variables)]` on by default
 
-warning: use of deprecated field `bevy::prelude::Camera3dBundle::transform`: Use the `Camera3d` component instead. Inserting it will now also insert the other components required by it automatically.
-   --> src/main.rs:128:13
-    |
-128 |             transform: Transform::from_xyz(0.0, 10.0, 20.0).looking_at(Vec3::ZERO, Vec3::Y),
-    |             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+warning: unused variable: `chunk`
+  --> src/chunk.rs:80:29
+   |
+80 |                 if let Some(chunk) = &managed_chunk.chunk {
+   |                             ^^^^^ help: if this is intentional, prefix it with an underscore: `_chunk`
 
-For more information about this error, try `rustc --explain E0061`.
-warning: `voxel_fortress` (bin "voxel_fortress") generated 6 warnings
-error: could not compile `voxel_fortress` (bin "voxel_fortress") due to 2 previous errors; 6 warnings emitted
+warning: field `pos` is never read
+  --> src/chunk.rs:18:9
+   |
+17 | pub struct ManagedChunk {
+   |            ------------ field in this struct
+18 |     pub pos: (i64, i64, i64),
+   |         ^^^
+   |
+   = note: `#[warn(dead_code)]` on by default
+
+warning: function `setup_chunk_material` is never used
+  --> src/systems.rs:25:8
+   |
+25 | pub fn setup_chunk_material(
+   |        ^^^^^^^^^^^^^^^^^^^^
+
+warning: variants `LOD` and `Unloaded` are never constructed
+  --> src/terrain.rs:19:5
+   |
+17 | pub enum ChunkLodState {
+   |          ------------- variants in this enum
+18 |     Active,   // High detail, full mesh
+19 |     LOD,      // Low detail, heightmap mesh
+   |     ^^^
+20 |     Unloaded, // Not loaded/generated
+   |     ^^^^^^^^
+   |
+   = note: `ChunkLodState` has derived impls for the traits `Clone` and `Debug`, but these are intentionally ignored during dead code analysis
+
+warning: field `lod_state` is never read
+  --> src/terrain.rs:25:9
+   |
+23 | pub struct Chunk {
+   |            ----- field in this struct
+24 |     pub voxels: [[[Voxel; CHUNK_SIZE]; CHUNK_SIZE]; CHUNK_SI...
+25 |     pub lod_state: ChunkLodState, // Track LOD state for thi...
+   |         ^^^^^^^^^
+

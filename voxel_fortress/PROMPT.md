@@ -29,6 +29,10 @@
   - Will start with a minimal chunked world (one or a few chunks, all solid or with a simple heightmap), then iterate.
   - Documentation and design files updated to reflect this plan.
   - Next: Implement basic chunk data structure and worldgen, then update visualization to render generated chunks.
+- **2025-04-23:**
+  - Started design and implementation of a basic Level of Detail (LOD) and chunk streaming system.
+  - Created `feature_docs/chunk_lod_streaming.md` to document the plan, motivation, and steps for LOD/streaming.
+  - Next: Design chunk states and LOD levels, then implement chunk state tracking and update logic in `ChunkManager`.
 
 ## Current Step
 - Implementing a hierarchical world generation system: the world is divided into multiple levels of chunks (superchunks, regions, block chunks), with high-level worldgen (biomes, heightmaps, etc.) at the top and detailed block data generated on demand at the lowest level.
@@ -42,4 +46,6 @@
 - If any issues or errors occur, troubleshoot and resolve them before considering the task complete.
 
 ---
-**Note:** This file should be updated with every significant change, feature addition, or design decision. Always consult and confirm with the user before proceeding with new steps.
+**Note:** This file should be updated with every significant change, feature addition, or design decision. Always consult and confirm with the user before proceeding with new steps. User wants the PROMPT.md file to always be started and updated with every significant change, and for me to remember this as a standing instruction.
+
+- We have additional documentation in the `feature_docs` folder and in the `org/Game Concept` folder. For any key design or implementation decisions, always check and reference these documents if relevant guidance is defined there.
