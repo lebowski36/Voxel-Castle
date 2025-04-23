@@ -7,7 +7,7 @@ mod terrain;
 
 pub use camera::CameraPlugin;
 pub use world::WorldPlugin;
-pub use ui::UiPlugin;
+pub use ui::{UiPlugin, GameState};
 pub use terrain::TerrainPlugin;
 
 /// Consolidated plugin collection for the Voxel Fortress game
