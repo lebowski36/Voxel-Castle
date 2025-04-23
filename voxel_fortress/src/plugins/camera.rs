@@ -3,6 +3,10 @@ use bevy::input::keyboard::KeyCode;
 use bevy::input::ButtonInput;
 use bevy::input::mouse::MouseMotion;
 
+/// Marker component for the primary player camera
+#[derive(Component)]
+pub struct PlayerCamera;
+
 /// Plugin handling camera systems and controls
 pub struct CameraPlugin;
 
@@ -25,6 +29,8 @@ pub fn setup_camera(
     // The camera height will be adjusted by the world plugin after terrain generation
     commands.spawn((
         Camera3d::default(),
+        // Add the marker component
+        PlayerCamera,
         Transform::from_xyz(0.0, 10.0, 0.0).looking_at(Vec3::new(5.0, 0.0, 5.0), Vec3::Y),
     ));
 }

@@ -6,3 +6,4 @@ edition = "2021"
 [dependencies]
 bevy = "0.15.3"
 noise = "0.8"
+futures-lite = "2.2.0"

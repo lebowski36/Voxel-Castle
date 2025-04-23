@@ -1,9 +1,7 @@
-use crate::terrain::Terrain;
-
 pub struct Renderer;
 
 impl Renderer {
-    pub fn render(terrain: &Terrain, height_map: &[Vec<f64>]) {
+    pub fn render(height_map: &[Vec<f64>]) {
         for row in height_map {
             for &value in row {
                 let symbol = match value {
