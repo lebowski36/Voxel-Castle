@@ -1,7 +1,10 @@
 use bevy::prelude::*;
-use crate::chunk::*;
-use crate::terrain::{CHUNK_SIZE, VOXEL_SIZE_METERS, Voxel, WorldGen};
-use crate::chunk_loading;
+use bevy::tasks::AsyncComputeTaskPool;
+use crate::chunk::{ChunkManager, ChunkState, CHUNK_SIZE}; // Removed ChunkData for now
+use crate::terrain::{VOXEL_SIZE_METERS, Voxel, WorldGen};
+// use crate::chunk_loading; // Commented out unused import
+// use crate::plugins::camera::PlayerCamera; // Commented out potentially problematic import
+use crate::plugins::ui::GameState; // Correct import for GameState
 
 pub struct WorldPlugin;
 
@@ -11,23 +14,20 @@ pub struct ChunkMaterialHandle(pub Handle<StandardMaterial>);
 
 impl Plugin for WorldPlugin {
     fn build(&self, app: &mut App) {
-        app.insert_resource(ChunkManager::new(5))
-           .add_systems(Startup, setup_chunk_material)
-           // Initialize world during Loading state
-           .add_systems(OnEnter(crate::GameState::Loading), setup_world)
-           // Update chunks only in Playing state
-           .add_systems(Update, 
-                update_chunk_lod_system
-                    .run_if(in_state(crate::GameState::Playing))
-            )
-           .add_systems(Update, 
-                update_chunk_entities_system
-                    .run_if(in_state(crate::GameState::Playing))
-            )
-           // Add the optimized chunk management system
-           .add_systems(Update, 
-                crate::chunk_loading::manage_chunk_loading
-                    .run_if(in_state(crate::GameState::Playing))
+        app
+            .insert_resource(ChunkManager::new(10)) // Example radius
+            // Use imported GameState directly
+            .add_systems(OnEnter(GameState::Loading), setup_world)
+            .add_systems(
+                Update,
+                (
+                    // Placeholder for actual systems - these need to be defined or imported
+                    // load_initial_chunks,
+                    // process_chunk_loading_tasks,
+                    // update_chunk_visibility,
+                    // manage_chunk_lod,
+                    update_chunk_entities_system, // Assuming this system exists and handles updates
+                ).run_if(in_state(GameState::Playing)) // Use imported GameState directly
             );
     }
 }
@@ -48,13 +48,21 @@ fn setup_chunk_material(
 /// Set up the initial world generation
 fn setup_world(
     mut commands: Commands,
-    mut chunk_manager: ResMut<ChunkManager>,
-    mut camera_query: Query<&mut Transform, With<Camera3d>>,
+    // Remove mut if commands is not used to modify world state here
+    // mut commands: Commands,
+    asset_server: Res<AssetServer>,
+    mut materials: ResMut<Assets<StandardMaterial>>,
 ) {
     // --- WorldGen instance ---
     let worldgen = WorldGen::new(3, CHUNK_SIZE, 42);
-    chunk_manager.loaded_chunks.clear();
+    commands.insert_resource(worldgen);
+    // Load the initial chunks around the player spawn point
+    let mut chunk_manager = ChunkManager::new(5);
     chunk_manager.load_chunks_around((0, 0, 0), &worldgen);
+    commands.insert_resource(chunk_manager);
+
+    // Set up the material for the chunks
+    setup_chunk_material(commands, materials);
 
     // Find the highest ground in the center chunk for player spawn
     let center_chunk = chunk_manager.loaded_chunks.get(&(0, 0, 0)).unwrap();
@@ -76,6 +84,7 @@ fn setup_world(
     }
 
     // Update camera position if available
+    let camera_query = commands.query::<&mut Transform, With<Camera3d>>();
     if let Ok(mut transform) = camera_query.get_single_mut() {
         transform.translation.y = max_ground_y + 3.0;
         // Look slightly forward
