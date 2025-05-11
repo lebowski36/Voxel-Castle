@@ -129,37 +129,28 @@ This file tracks our immediate high-level tasks and progress. Detailed sub-tasks
 ## 🧠 Note to Self (Agent)
 **Agent Self-Correction/Reminder:** Per user instruction, I will always execute necessary commands directly using the appropriate tool. I will not ask the user to run commands manually.
 
-**Continuous Operation Preference:** I will proceed with tasks autonomously, pausing only when user input is strictly necessary for decisions, when results need to be communicated, or if an unrecoverable issue is encountered. My default is to continue working through the defined sub-tasks unless a clear stopping point or need for user interaction arises.
+**Autonomous Operation Mandate & Testing Protocol:** My primary mode of operation is to work autonomously through the defined sub-tasks. I will continue coding, implementing features, and resolving issues independently. However, I will pause and await user interaction under the following circumstances:
+1.  A critical design decision with multiple viable options requires user input.
+2.  Specific feedback on a completed segment of work is needed before proceeding.
+3.  A question arises that genuinely blocks progress and cannot be resolved through available context or research.
+4.  An unrecoverable error or significant unexpected behavior is encountered during development or testing.
+5.  **After implementing a significant feature, component, or a set of related changes, I will initiate a build and/or relevant tests. I will then pause and explicitly await user confirmation of the build/test results (success, failure, or observations) before proceeding to the next task. I will not move on if a test fails or if the outcome is unclear without user feedback.**
 
-**I should always clear the console before running a new command** to ensure clean output and prevent confusion between different command results.
+**Testing Best Practices (To be followed diligently):**
+*   **Test Regularly:** Compile and run the code after implementing each significant feature or component to ensure it works as expected. Never let untested code accumulate.
+    *   After a new module or system: Compile and run to test it works.
+    *   After changes to existing functionality: Verify nothing broke.
+    *   After complex algorithms or critical systems: Add specific tests if feasible, or at least perform thorough manual checks.
+    *   After integrating multiple components: Test their integration together.
+*   **Awaiting Test Output:** If I'm unable to see the complete output from a command I've run (especially build outputs or error messages), I **must wait for the user to provide the results** before proceeding.
 
-**If I'm unable to see the complete output from a command I've run, I must wait for the user to provide the results before proceeding.** This is particularly important for build outputs, error messages, and other terminal responses that are crucial for debugging and making progress.
-
-**WE MUST update this file and the relevant detailed task files after each development step!** This ensures we maintain focus on the most important tasks, have clear visibility into progress, and can adapt our plan as new information becomes available. The active task list should always reflect the current state of development.
-
-**IF A PROBLEM PERSISTS after initial attempts, I will search for solutions online before asking the user for help or trying the same fix repeatedly.**
-
-**ALWAYS CONFIRM CRUCIAL DECISIONS WITH THE USER.** Before making significant choices (e.g., selecting a library, deciding on a core architectural pattern), present the options, your recommendation (if any), and ask for the user's input and confirmation. This ensures the project aligns with their vision and preferences.
-
-**DOCUMENTATION IS CRUCIAL!** With every implementation step, we must update relevant documentation to explain design decisions, patterns used, and architectural considerations. This includes:
-1. Updating existing documentation files (`org/` directory)
-2. Creating/updating detailed task files in `development_tasks/`
-3. Creating new documentation for new systems
-4. Adding code comments for complex algorithms
-5. Creating diagrams for system interactions when appropriate
-
-**TEST REGULARLY!** We must compile and run the code after implementing each significant feature or component to ensure it works as expected. Never let untested code accumulate - this helps identify issues early when they're easier to fix. After implementing:
-1. A new module or system → Compile and run to test it works
-2. Changes to existing functionality → Verify nothing broke
-3. Complex algorithms or critical systems → Add specific tests
-4. Multiple components → Test their integration together
-
-**MAINTAIN SMALL, FOCUSED FILES!** We must keep individual source files small, focused, and well-organized to facilitate better development. This approach:
-1. Makes it easier to comprehend the codebase in smaller chunks
-2. Reduces context overload when working on specific features
-3. Allows us to pinpoint exactly what code I need to reference
-4. Promotes better separation of concerns and modularity
-5. Results in more maintainable and testable code
+**General Operational Guidelines:**
+*   **ABSOLUTELY CRITICAL: Clear Console with Command!** Before executing any new command in the terminal that produces significant output (especially builds or tests), I **MUST** prepend the `clear` command to the main command, joined by `&&` (e.g., `clear && cmake --build build`). This ensures the console is cleared immediately before the intended command runs, preventing output from previous commands from obscuring the new results. I will explicitly state that the command includes clearing the console.
+*   **Update Task Files:** WE MUST update this file (`CURRENT_TODO.md`) and the relevant detailed task files in `development_tasks/` after each development step is confirmed complete.
+*   **Problem Persistence:** IF A PROBLEM PERSISTS after initial attempts, I will search for solutions online before asking the user for help or trying the same fix repeatedly.
+*   **Crucial Decisions:** ALWAYS CONFIRM CRUCIAL DECISIONS WITH THE USER. Before making significant choices (e.g., selecting a library, deciding on a core architectural pattern), present the options, your recommendation (if any), and ask for the user's input and confirmation.
+*   **Documentation:** DOCUMENTATION IS CRUCIAL! With every implementation step, update relevant documentation.
+*   **Small, Focused Files:** MAINTAIN SMALL, FOCUSED FILES for better organization and maintainability.
 
 ---
-Last updated: May 12, 2025
+Last updated: May 11, 2025 // Updated agent guidelines for console clearing and command execution.

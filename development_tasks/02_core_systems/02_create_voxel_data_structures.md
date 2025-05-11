@@ -2,49 +2,58 @@
 # Task: Create Voxel Data Structures
 
 **Date Created:** 2025-05-12
-**Status:** Not Started
+**Status:** In Progress
 **Depends On:** ECS Implementation
 **Leads To:** Mesh Generation System
 
 ## 1. Overview
-This task focuses on designing and implementing the core data structures for storing and managing voxel data within the Voxel Castle engine. Efficient voxel data structures are critical for performance, especially concerning world generation, rendering, physics, and game logic.
+This task focuses on designing and implementing the core data structures for storing and managing voxel data within the Voxel Castle engine. Efficient voxel data structures are critical for performance, especially concerning world generation, rendering, physics, and game logic. The chosen approach involves `Chunk Columns` which are vertical stacks of `Chunk Segments`.
 
 ## 2. Goals
 *   Define a clear and efficient representation for individual voxels.
-*   Design a chunk-based system for managing large voxel worlds.
-*   Implement basic chunk management (creation, storage, retrieval).
+*   Design a system based on `Chunk Columns` and `Chunk Segments` for managing large voxel worlds. Each `Chunk Segment` will be a `32x32x32` block of voxels.
+*   Implement basic management for `Chunk Columns` and `Chunk Segments` (creation, storage, retrieval).
 *   Consider future needs like voxel types, lighting data, and metadata.
 
 ## 3. Sub-Tasks
 
 ### 3.1. Define Voxel Structure
-*   **Status:** TODO
+*   **Status:** In Progress
 *   **Description:** Define the data structure for a single voxel.
-    *   [ ] **3.1.1.** Determine the information each voxel needs to store (e.g., type ID, active state, potentially lighting, health, etc.).
-    *   [ ] **3.1.2.** Create `Voxel.h` (e.g., in `engine/include/world/voxel.h` or similar).
-    *   [ ] **3.1.3.** Implement the `Voxel` struct/class. Keep it lightweight.
+    *   [ ] **3.1.1.** Determine the information each voxel needs to store (e.g., type ID, active state, potentially lighting, health, etc.). (Initial `type_id` is set).
+    *   [x] **3.1.2.** Create `Voxel.h` (e.g., in `engine/include/world/voxel.h` or similar). *(Completed)*
+    *   [x] **3.1.3.** Implement the `Voxel` struct/class. Keep it lightweight. *(Completed with initial struct)*
         *   Example: `struct Voxel { uint8_t type_id; /* other data */ };`
 
-### 3.2. Design Chunk Structure
-*   **Status:** TODO
-*   **Description:** Design the data structure for a chunk of voxels.
-    *   [ ] **3.2.1.** Define chunk dimensions (e.g., 16x16x16 or 32x32x32 voxels).
-    *   [ ] **3.2.2.** Decide on the storage mechanism for voxels within a chunk (e.g., 3D array `Voxel voxels[WIDTH][HEIGHT][DEPTH];`).
-    *   [ ] **3.2.3.** Create `Chunk.h` (e.g., in `engine/include/world/chunk.h`).
-    *   [ ] **3.2.4.** Implement the `Chunk` class/struct.
-        *   Include methods for getting/setting voxels at local coordinates.
-        *   Consider methods for converting local to world coordinates and vice-versa (or handle this in a `World` manager).
-        *   Store chunk position/coordinates.
+### 3.2. Design Chunk Segment and Chunk Column Structures
+*   **Status:** Completed
+*   **Description:** Design the data structure for a `Chunk Segment` (a 3D array of voxels) and a `Chunk Column` (a vertical stack of segments).
+    *   [x] **3.2.1.** Define `Chunk Segment` dimensions as `32x32x32` voxels (8m x 8m x 8m). A `Chunk Column` will have a `32x32` voxel footprint (8m x 8m XZ). *(Decision made)*
+    *   [x] **3.2.2.** Define storage for voxels within a `Chunk Segment` (e.g., `std::array<Voxel, 32*32*32>`). *(Completed in ChunkSegment.h)*
+    *   [x] **3.2.3.** Create `ChunkSegment.h` (e.g., in `engine/include/world/chunk_segment.h`). *(Completed)*
+    *   [x] **3.2.4.** Implement the `ChunkSegment` class/struct. *(Completed, including basic get/set methods. Segment position is managed by ChunkColumn.)*
+        *   Include methods for getting/setting voxels at local segment coordinates.
+        *   Store segment's position/coordinates within the column (e.g., Y-index or absolute Y base) - *This will be handled by `ChunkColumn` which owns/manages segments.*
+    *   [x] **3.2.5.** Create `ChunkColumn.h` (e.g., in `engine/include/world/chunk_column.h`). *(Completed)*
+    *   [x] **3.2.6.** Implement the `ChunkColumn` class/struct. *(Completed)*
+        *   Store its world XZ coordinates.
+        *   Manage a collection of `ChunkSegment`s (e.g., `std::map<int, std::unique_ptr<ChunkSegment>>` where key is segment Y-index).
+        *   Provide methods to get/create segments at a given Y-index/world Y coordinate.
+    *   [x] **3.2.7.** Implement `getVoxel(worldX, worldY, worldZ)` and `setVoxel(worldX, worldY, worldZ, voxel)` which delegate to the correct segment (creating if necessary for `setVoxel`).
+    *   [x] **3.2.8.** Implement `getSegment(segmentYIndex)` and `getOrCreateSegment(segmentYIndex)`.
+    *   [x] **3.2.9.** Implement helpers: `worldYToSegmentYIndex(worldY)` and `worldToLocalSegmentCoords(...)`.
+    *   [x] **3.2.10.** Add `chunk_column.cpp` to `engine/CMakeLists.txt`.
+    *   [x] **3.2.11.** Test build after `ChunkColumn` implementation.
 
-### 3.3. Implement Chunk Storage/Management (Initial)
+### 3.3. Implement World/Chunk Management
 *   **Status:** TODO
-*   **Description:** Implement a basic system for managing chunks.
-    *   [ ] **3.3.1.** Design a `World` or `ChunkManager` class (e.g., `engine/include/world/world.h` and `engine/src/world/world.cpp`).
-    *   [ ] **3.3.2.** Implement a simple storage mechanism for active chunks (e.g., `std::unordered_map<ChunkCoord, std::unique_ptr<Chunk>>`).
-    *   [ ] **3.3.3.** Implement methods to load/generate a new chunk at given coordinates.
-        *   For now, this can just allocate a new `Chunk` object, perhaps filled with air or a solid material.
-    *   [ ] **3.3.4.** Implement methods to get a chunk by its coordinates.
-    *   [ ] **3.3.5.** Implement methods to get/set a voxel at world coordinates (delegating to the appropriate chunk).
+*   **Description:** Implement a basic system for managing `ChunkColumn`s and `ChunkSegment`s.
+    *   [ ] **3.3.1.** Design a `World` or `ChunkManager` class (e.g., `engine/include/world/world_manager.h` and `engine/src/world/world_manager.cpp`).
+    *   [ ] **3.3.2.** Implement a simple storage mechanism for active `ChunkColumn`s (e.g., `std::unordered_map<WorldCoordXZ, std::unique_ptr<ChunkColumn>>`).
+    *   [ ] **3.3.3.** Implement methods to load/generate a new `ChunkColumn` (and its initial `ChunkSegment`s) at given XZ world coordinates.
+        *   For now, this can just allocate new `ChunkColumn` and `ChunkSegment` objects, perhaps filled with air or a solid material.
+    *   [ ] **3.3.4.** Implement methods to get a `ChunkColumn` by its XZ world coordinates.
+    *   [ ] **3.3.5.** Implement methods to get/set a voxel at world coordinates (delegating to the appropriate `ChunkColumn` and then `ChunkSegment`).
 
 ### 3.4. Initial Voxel Types
 *   **Status:** TODO
@@ -53,28 +62,28 @@ This task focuses on designing and implementing the core data structures for sto
 
 ### 3.5. Integration and Testing (Basic)
 *   **Status:** TODO
-*   **Description:** Perform basic tests of the voxel and chunk structures.
-    *   [ ] **3.5.1.** In `main.cpp` or a test file, create a `World` manager instance.
-    *   [ ] **3.5.2.** Request a few chunks to be generated.
-    *   [ ] **3.5.3.** Set and get some voxel types within these chunks using world coordinates.
+*   **Description:** Perform basic tests of the voxel, segment, and column structures.
+    *   [ ] **3.5.1.** In `main.cpp` or a test file, create a `WorldManager` instance.
+    *   [ ] **3.5.2.** Request a few `ChunkColumn`s (and implicitly `ChunkSegment`s) to be generated.
+    *   [ ] **3.5.3.** Set and get some voxel types within these segments using world coordinates.
     *   [ ] **3.5.4.** Print or log the results to verify correctness.
 
 ### 3.6. Documentation
 *   **Status:** TODO
-*   **Description:** Document the voxel and chunk data structures.
-    *   [ ] **3.6.1.** Add a section to `docs/design_specifications/Tech Stack/Voxel Data Structures Details.md` (create if it doesn't exist) describing the `Voxel` and `Chunk` structures, their rationale, and how they are managed.
+*   **Description:** Document the voxel, segment, and column data structures.
+    *   [ ] **3.6.1.** Add a section to `docs/design_specifications/Tech Stack/Voxel Data Structures Details.md` (create if it doesn't exist) describing the `Voxel`, `ChunkSegment`, and `ChunkColumn` structures, their rationale, and how they are managed.
 
 ## 4. Considerations
-*   **Memory Layout:** Optimize for cache coherency. A flat array for voxels within a chunk is generally good.
-*   **Chunk Size:** Balance between too many small chunks (overhead) and too few large chunks (granularity issues for loading/meshing). 16x16x16 or 32x32x32 are common.
-*   **Coordinate Systems:** Clearly define local (chunk) vs. world coordinates and how conversions are handled.
-*   **Extensibility:** Design with future needs in mind (e.g., storing more data per voxel, different chunk states).
+*   **Memory Layout:** Optimize for cache coherency. A flat array for voxels within a `Chunk Segment` is generally good.
+*   **`Chunk Segment` Size:** Balance between too many small segments (overhead) and too few large segments (granularity issues for loading/meshing). `32x32x32` is chosen.
+*   **Coordinate Systems:** Clearly define local (`Chunk Segment`), `Chunk Column` relative, and world coordinates, and how conversions are handled.
+*   **Extensibility:** Design with future needs in mind (e.g., storing more data per voxel, different segment states).
 *   **Performance:** Voxel access (get/set) should be as fast as possible.
 
 ## 5. Decisions to be Made
-*   Exact data to be stored per voxel initially.
-*   Chunk dimensions.
+*   Exact data to be stored per voxel initially (beyond `type_id`).
+*   `Chunk Column` vertical extent (dynamic or fixed range?).
 *   Initial set of voxel types.
 
 ---
-**Last Updated:** 2025-05-12
+**Last Updated:** 2025-05-13

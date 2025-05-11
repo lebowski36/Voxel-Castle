@@ -7,7 +7,9 @@ project(VoxelEngine LANGUAGES CXX)
 add_library(VoxelEngine STATIC
     src/core/engine_core.cpp
     src/platform/Window.cpp
-    src/ecs/systems/movement_system.cpp # Added MovementSystem
+    src/ecs/systems/movement_system.cpp
+    src/world/chunk_segment.cpp # Added ChunkSegment source
+    src/world/chunk_column.cpp # Added ChunkColumn source
     # Add GLAD source file if compiling it directly
     # Or link against a pre-built GLAD library later
     # For example, if GLAD source is in external/glad/src/glad.c relative to root:
