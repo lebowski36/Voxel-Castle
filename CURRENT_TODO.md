@@ -17,6 +17,7 @@ This file tracks our immediate high-level tasks and progress. Detailed sub-tasks
 1.  **High-Level Tasks:** `CURRENT_TODO.md` lists the major development phases and tasks.
 2.  **Detailed Sub-Tasks:** Each high-level task in this file will have a corresponding detailed Markdown file in the `development_tasks/` directory (e.g., `development_tasks/01_core_engine_foundation/01_set_up_project_structure.md`).
     *   If a detailed sub-task file does not exist when a high-level task is started, the agent will create it, outlining the specific steps, considerations, and self-prompting needed to complete that item.
+    *   Within these detailed task files, sub-tasks can be further broken down using a hierarchical numbering scheme (e.g., 2.1, 2.1.1, 2.1.2, 2.2) for clarity if needed.
 3.  **Execution Focus:** The agent will primarily work from the detailed sub-task files.
 4.  **User Confirmation & Involvement:**
     *   The agent will confirm individual significant actions or outputs from the sub-task file with the user.

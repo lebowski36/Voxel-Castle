@@ -28,6 +28,8 @@ target_include_directories(VoxelEngine
         # Add GLAD include directory if it's vendored
         # For example, if GLAD headers are in external/glad/include relative to root:
         $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/external/glad/include> 
+        # Add GLM include directory (header-only library)
+        $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/external/glm> 
     PRIVATE
         # For the engine's own internal includes.
         # This makes 'engine/src' an include path for VoxelEngine's own .cpp files.

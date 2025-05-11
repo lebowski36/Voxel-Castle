@@ -19,8 +19,8 @@
 2.  **Integration (Assuming GLM):**
     *   [ ] Download the latest stable version of GLM (it's header-only).
         *   Typically, this involves cloning the repository or downloading a release zip from [https://github.com/g-truc/glm](https://github.com/g-truc/glm).
-    *   [ ] Add GLM to the project's `external/` directory (e.g., `external/glm`).
-    *   [ ] Update CMake (`engine/CMakeLists.txt` and potentially root `CMakeLists.txt`) to include GLM's include directory.
+    *   [x] Add GLM to the project's `external/` directory (e.g., `external/glm`).
+    *   [x] Update CMake (`engine/CMakeLists.txt` and potentially root `CMakeLists.txt`) to include GLM's include directory.
         *   For a header-only library like GLM, this usually means adding its path to `target_include_directories`.
         *   Example for engine library: `target_include_directories(VoxelEngine PRIVATE ../external/glm)` (adjust path as needed).
     *   [ ] Ensure GLM headers can be included in engine code (e.g., `#include <glm/glm.hpp>`).
