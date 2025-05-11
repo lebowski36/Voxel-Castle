@@ -34,6 +34,24 @@ add_subdirectory(external/SDL3)
 add_subdirectory(external/glad)
 # --- End GLAD Configuration ---
 
+# --- Flecs Configuration ---
+# Options:
+#   FLECS_STATIC_ONLY (OFF): Build Flecs only as a static library
+#   FLECS_SHARED_ONLY (OFF): Build Flecs only as a shared library
+#   FLECS_PIC (ON): Enable position independent code (recommended for shared libs, good for static too)
+#   FLECS_DEBUG_FLAGS (OFF): Enable debug flags
+#   FLECS_STRIP_SYMBOLS (OFF): Strip symbols from binary (only for release)
+#   FLECS_BUILD_EXAMPLES (OFF): Build Flecs examples
+#   FLECS_BUILD_TESTS (OFF): Build Flecs tests
+#   FLECS_COVERAGE (OFF): Enable coverage reporting
+#   FLECS_SANITIZE (OFF): Enable sanitizers (asan, ubsan)
+#   FLECS_INSTALL_LIBS (ON): Install Flecs libraries
+#   FLECS_INSTALL_CMAKE (ON): Install Flecs CMake config files
+#   FLECS_C99 (OFF): Enforce C99 standard (Flecs is C99 but can be compiled as C++)
+# We will use the defaults for now, which should build a static library.
+add_subdirectory(external/flecs)
+# --- End Flecs Configuration ---
+
 # Find OpenGL
 find_package(OpenGL REQUIRED)
 

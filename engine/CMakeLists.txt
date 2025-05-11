@@ -31,6 +31,7 @@ target_include_directories(VoxelEngine
         # Add GLM include directory (header-only library)
         $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/external/glm> 
     PRIVATE
+        # Add Flecs include directory (propagated by linking with flecs::flecs or flecs_static/flecs_shared)
         # For the engine's own internal includes.
         # This makes 'engine/src' an include path for VoxelEngine's own .cpp files.
         # e.g., engine/src/platform/Window.cpp can use #include "platform/Window.h"
@@ -48,6 +49,7 @@ target_link_libraries(VoxelEngine PRIVATE
     SDL3::SDL3-static
     OpenGL::GL # Standard CMake target for OpenGL
     glad
+    flecs::flecs # Link against the Flecs library
 )
 
 # Set C++ standard for the engine
