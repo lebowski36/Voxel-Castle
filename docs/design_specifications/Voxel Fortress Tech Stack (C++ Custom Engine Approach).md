@@ -73,6 +73,12 @@ The selection of specific technologies, libraries, and architectural patterns fo
 > For detailed information on how voxel data is structured, stored, accessed, and managed, including compression techniques and spatial indexing, see:
 > - [**Voxel Data Structures Details**](./Tech%20Stack/Voxel%20Data%20Structures.md)
 
+## 8. Mathematics Library
+
+*   **Library:** GLM (OpenGL Mathematics)
+    *   **Rationale:** GLM is a header-only C++ mathematics library based on the OpenGL Shading Language (GLSL) specifications. It was chosen for its ease of integration (header-only), its compatibility with OpenGL and Vulkan workflows, its GLSL-like syntax (which is beneficial for shader development), and its comprehensive set of mathematical functions and types (vectors, matrices, quaternions, transformations).
+    *   **Integration:** Added to the project under `external/glm` and included in the CMake build process for the engine.
+
 ## Engine Architecture (C++ Custom Engine)
 
 The Voxel Fortress engine will be custom-built in C++ to achieve the specific performance and feature requirements of the game. This includes managing vast procedurally generated voxel worlds, simulating a large number of entities, and supporting advanced rendering techniques.

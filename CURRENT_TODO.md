@@ -54,7 +54,7 @@ This file tracks our immediate high-level tasks and progress. Detailed sub-tasks
   - [x] Create swap chain/surface
   - [x] Set up initial render pipeline
   - [x] Define strategy for shader management
-- [ ] Select/Implement C++ Math Library (e.g., GLM, Eigen)
+- [x] Select/Implement C++ Math Library (e.g., GLM, Eigen)
 
 ### 2. Implement Core Systems (C++)
 *Detailed sub-tasks in `/home/system-x1/Projects/Voxel Castle/development_tasks/02_core_systems/`*
@@ -124,7 +124,7 @@ This file tracks our immediate high-level tasks and progress. Detailed sub-tasks
 - [x] Project structure and build system defined.
 - [x] Window management implemented.
 - [x] Basic rendering pipeline established.
-- [ ] ECS selected/designed.
+- [x] ECS selected/designed.
 
 ## 🧠 Note to Self (Agent)
 **Agent Self-Correction/Reminder:** Per user instruction, I will always execute necessary commands directly using the appropriate tool. I will not ask the user to run commands manually.

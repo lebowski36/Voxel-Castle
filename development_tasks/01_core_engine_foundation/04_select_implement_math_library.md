@@ -26,14 +26,15 @@
     *   [ ] Ensure GLM headers can be included in engine code (e.g., `#include <glm/glm.hpp>`).
 
 3.  **Basic Usage and Testing:**
-    *   [ ] Create a simple test case or example within the engine or a temporary test file:
+    *   [x] Create a simple test case or example within the engine or a temporary test file:
         *   Include necessary GLM headers (e.g., `glm/vec3.hpp`, `glm/mat4x4.hpp`, `glm/gtc/matrix_transform.hpp`).
         *   Declare and initialize a `glm::vec3` (vector).
         *   Declare and initialize a `glm::mat4` (matrix), perhaps an identity matrix or a simple translation matrix.
         *   Perform a basic operation (e.g., multiply vector by matrix, or create a view/projection matrix).
         *   Print the results to the console to verify.
-    *   [ ] Compile the project to ensure GLM is correctly integrated and there are no compilation errors related to its inclusion or usage.
-    *   [ ] Run the test case and verify the output.
+    *   [x] Add temporary test code to `main.cpp` (or a dedicated test file) to verify basic GLM vector and matrix operations.
+    *   [x] Compile and run the test code to ensure GLM is correctly integrated and functional.
+    *   [x] Confirm test output is as expected.
 
 4.  **Documentation and Cleanup:**
     *   [ ] Add a brief note to project documentation about the chosen math library and its location/integration method.
