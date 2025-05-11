@@ -62,12 +62,12 @@ This file tracks our immediate high-level tasks and progress. Detailed sub-tasks
   - [x] Research and select C++ ECS library (e.g., EnTT, Flecs) or design custom solution
   - [x] Define entity and component structures
   - [x] Set up system management/scheduler
-- [x] Create voxel data structures
+- [ ] Create voxel data structures
   - [x] Design chunk structure *(Covers Voxel, ChunkSegment, ChunkColumn design)*
   - [x] Implement voxel storage *(Covers Voxel, ChunkSegment, ChunkColumn, WorldManager implementation)*
-  - [ ] Add spatial partitioning (e.g., octrees) // To be addressed later if needed
+  - [ ] Add spatial partitioning (e.g., octrees)
 - [ ] Build mesh generation system
-  - [x] Create mesh from voxel data // Naive meshing implemented and tested
+  - [ ] Create mesh from voxel data // Naive meshing implemented and tested, but part of the larger item
   - [ ] Implement greedy meshing or other optimization
   - [ ] Add texture mapping support
   - [ ] Implement texture atlas system

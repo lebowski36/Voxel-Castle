@@ -84,6 +84,15 @@ This task focuses on designing and implementing the core data structures for sto
     *   [ ] **3.7.1.** Check for code clarity, consistency, and potential optimizations.
     *   [ ] **3.7.2.** Ensure naming conventions are followed.
 
+### 3.8. Add Spatial Partitioning (e.g., Octrees)
+*   **Status:** Not Started
+*   **Description:** Implement a spatial partitioning system to efficiently manage and query `ChunkColumn`s, especially for very large worlds. This will likely involve a structure within `WorldManager`.
+    *   [ ] **3.8.1.** Research suitable spatial partitioning structures for voxel worlds (e.g., Quadtree for XZ plane, Octree if Y-dimension is also sparse and dynamic, or simpler grid-based approaches).
+    *   [ ] **3.8.2.** Design the integration of the chosen structure with `WorldManager` for storing and retrieving `ChunkColumn`s.
+    *   [ ] **3.8.3.** Implement the spatial partitioning structure.
+    *   [ ] **3.8.4.** Update `WorldManager` to use the new structure for `ChunkColumn` management.
+    *   [ ] **3.8.5.** Test the performance and correctness of the spatial partitioning system, especially with operations like loading/unloading chunks and querying chunks in a region.
+
 ## 4. Considerations
 *   **Memory Layout:** Optimize for cache coherency. A flat array for voxels within a `Chunk Segment` is generally good.
 *   **`Chunk Segment` Size:** Balance between too many small segments (overhead) and too few large segments (granularity issues for loading/meshing). `32x32x32` is chosen.

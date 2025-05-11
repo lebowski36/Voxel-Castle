@@ -25,12 +25,21 @@
         - [x] 1.5.3. (Placeholder for rendering) Log the number of vertices/triangles generated or visualize if a simple rendering path is available. For now, focus on data correctness.
 
 ### 2. Mesh Optimization (e.g., Greedy Meshing)
-    - [ ] 2.1. Research and select a suitable mesh optimization algorithm (Greedy Meshing is a common choice for voxel engines).
-        - [ ] 2.1.1. Understand the principles of Greedy Meshing: merging adjacent coplanar faces of the same voxel type.
-    - [ ] 2.2. Implement the chosen optimization algorithm.
-        - [ ] 2.2.1. Iterate through slices (e.g., XY, XZ, YZ planes) of the chunk.
-        - [ ] 2.2.2. Identify contiguous runs of same-type voxels to form larger quads.
-    - [ ] 2.3. Update the mesh generation process to use the optimization.
+    - [x] 2.1. Research and select a suitable mesh optimization algorithm (Greedy Meshing is a common choice for voxel engines).
+        - [x] 2.1.1. Understand the principles of Greedy Meshing: merging adjacent coplanar faces of the same voxel type.
+    - [ ] 2.2. Implement the chosen optimization algorithm (Greedy Meshing).
+        - [ ] 2.2.1. Iterate through the chunk in 3 dimensions (X, Y, Z). For each dimension, process 2D slices for both positive and negative face directions.
+        - [ ] 2.2.2. For each slice and direction:
+            - [ ] 2.2.2.1. Create a 2D mask (e.g., `std::vector<bool>` or `std::vector<std::vector<bool>>`) to keep track of voxels on the current slice whose faces have already been incorporated into a mesh quad. Initialize all to `false`.
+            - [ ] 2.2.2.2. Iterate through the primary axis of the slice (e.g., 'u' coordinate).
+            - [ ] 2.2.2.3. Iterate through the secondary axis of the slice (e.g., 'v' coordinate).
+            - [ ] 2.2.2.4. If the current voxel `(u, v)` on the slice is solid, its face in the current processing direction is exposed (i.e., adjacent voxel in that direction is air or outside chunk boundary), and it has not been masked (`mask[u][v] == false`):
+                - [ ] 2.2.2.4.1. Determine the `voxel_type` of the current voxel.
+                - [ ] 2.2.2.4.2. Greedily expand in the secondary axis ('v' direction) to find the `height` of the quad: Iterate while the voxel at `(u, v + height)` is of the same `voxel_type`, solid, its face is exposed, and it's not masked.
+                - [ ] 2.2.2.4.3. Greedily expand in the primary axis ('u' direction) to find the `width` of the quad: Iterate while all voxels from `(u + width, v)` to `(u + width, v + height - 1)` are of the same `voxel_type`, solid, their faces are exposed, and they are not masked.
+                - [ ] 2.2.2.4.4. Add the vertices and indices for the generated quad of `(width, height)` to the `VoxelMesh`. Ensure correct vertex winding and normal calculation.
+                - [ ] 2.2.2.4.5. Mark all voxels covered by this new quad in the 2D mask as `true`.
+    - [ ] 2.3. Update the mesh generation process to use the optimization. (This means `MeshBuilder` will have a `buildGreedyMesh` method).
     - [ ] 2.4. **Testing:**
         - [ ] 2.4.1. Use the same or a more complex test `ChunkSegment`.
         - [ ] 2.4.2. Compare the vertex/triangle count before and after optimization.
