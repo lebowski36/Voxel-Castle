@@ -181,36 +181,36 @@ The World Generation system forms the foundational environment of Voxel Fortress
 ### Generation Algorithms
 
 #### Noise Functions
-- **Layered Noise:** Combining multiple noise functions for natural variation
-- **Domain Warping:** Creating more organic, less obviously procedural patterns
-- **Feature-Based Generation:** Using higher-level description of features rather than pure noise
-- **Constraint-Based Generation:** Ensuring logical placement of elements (rivers flow downhill, etc.)
+- **Layered Noise:** Combining multiple noise functions (e.g., Perlin, Simplex, Worley) for natural variation. C++ libraries like FastNoiseLite or libnoise can be used, or custom implementations of noise algorithms.
+- **Domain Warping:** Creating more organic, less obviously procedural patterns. Implemented in C++ by displacing input coordinates to noise functions.
+- **Feature-Based Generation:** Using higher-level description of features rather than pure noise.
+- **Constraint-Based Generation:** Ensuring logical placement of elements (rivers flow downhill, etc.). C++ logic would enforce these rules during or after initial generation passes.
 
 #### Chunking System
-- **Generation Order:** Dependencies between different world aspects
-- **Lazy Generation:** Creating chunks only as needed
-- **Level of Detail:** Different resolution data for different generation purposes
-- **Streaming Architecture:** Loading and unloading regions as the player moves
+- **Generation Order:** Dependencies between different world aspects (e.g., terrain height before river placement). Managed by a C++ generation pipeline or state machine.
+- **Lazy Generation:** Creating chunks only as needed. The C++ world manager would request chunk generation when a chunk enters the active region.
+- **Level of Detail:** Different resolution data for different generation purposes.
+- **Streaming Architecture:** Loading and unloading regions as the player moves. The C++ engine would manage chunk data in memory, serializing/deserializing from disk as needed.
 
 #### Performance Optimization
-- **Parallel Generation:** Using multiple threads/cores for world creation
-- **Caching Strategies:** Storing intermediate generation results
-- **Progressive Detail:** Adding finer details only when needed
-- **Persistence Efficiency:** Storing only necessary data for unaltered areas
+- **Parallel Generation:** Using multiple threads/cores for world creation. C++ threading capabilities (`std::thread`, `std::async`, or thread pools) can be used to generate multiple chunks or different generation layers concurrently.
+- **Caching Strategies:** Storing intermediate generation results (e.g., heightmaps, biome maps) in C++ data structures to avoid recomputation.
+- **Progressive Detail:** Adding finer details only when needed.
+- **Persistence Efficiency:** Storing only necessary data for unaltered areas. C++ serialization would need to be efficient, possibly using compression for chunk data.
 
 ### Data Structures
 
 #### Spatial Organization
-- **Octrees/Quadtrees:** Hierarchical spatial division for efficient queries
-- **Chunk Storage:** How voxel data is stored and accessed
-- **Multi-Layer Data:** Separation of different types of world information
-- **Compression Techniques:** Reducing memory and storage requirements
+- **Octrees/Quadtrees:** Hierarchical spatial division for efficient queries (e.g., finding nearby chunks, managing LODs). Implemented using C++ tree data structures.
+- **Chunk Storage:** How voxel data is stored and accessed. Could be flat C++ arrays (`std::vector<VoxelType>`) per chunk, or more complex compressed formats.
+- **Multi-Layer Data:** Separation of different types of world information (e.g., block types, light levels, biome data) within C++ chunk structures.
+- **Compression Techniques:** Reducing memory and storage requirements (e.g., run-length encoding, palette compression implemented in C++).
 
 #### World Representation
-- **Voxel Data Format:** Core representation of terrain and materials
-- **Feature Metadata:** Additional information about special world features
-- **Entity Placement:** Systems for positioning initial creatures, resources, etc.
-- **Reference Systems:** How world locations are indexed and referenced
+- **Voxel Data Format:** Core representation of terrain and materials. C++ structs or enums would define voxel types and their properties.
+- **Feature Metadata:** Additional information about special world features, stored in C++ data structures associated with chunks or world coordinates.
+- **Entity Placement:** Systems for positioning initial creatures, resources, etc., driven by C++ algorithms during world generation.
+- **Reference Systems:** How world locations are indexed and referenced (e.g., chunk coordinates, local voxel coordinates within a chunk).
 
 ## Design Goals & Principles
 

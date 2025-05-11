@@ -156,6 +156,8 @@ The Emergent Narrative system forms the storytelling heart of Voxel Fortress, we
 
 ## Technical Implementation Considerations
 
+<!-- C++ Note: The systems described below for narrative detection, content generation, and state management will need to be implemented using robust C++ data structures and algorithms. Consider performance implications for real-time pattern recognition and historical data querying. Standard C++ libraries, potentially augmented with custom solutions for graph-based event tracking or high-performance string manipulation, will be key. -->
+
 ### Narrative Detection Systems
 - **Pattern Recognition:** Algorithms to identify story-worthy patterns in game data
 - **Significance Evaluation:** Methods for determining which events merit narrative attention

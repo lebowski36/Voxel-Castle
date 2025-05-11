@@ -1,40 +1,54 @@
-# Voxel Fortress: Development Journal
+# Voxel Fortress: C++ Custom Engine Development Strategy
 
-## Implementation Strategy
+## Core Implementation Philosophy
 
-After analyzing our options, we've decided to begin implementation with the **Basic Voxel System & Chunk Management** because:
+Development will focus on building a robust and performant custom C++ engine tailored for Voxel Fortress. The strategy emphasizes iterative development, starting with foundational systems and progressively adding complexity.
 
-1. It establishes the core data structures everything else builds upon
-2. It addresses the most unique aspect of our game
-3. We can validate the approach early before adding complexity
-4. It focuses on core mechanics before visual concerns
+## Phase 1: Foundational Voxel Engine (C++)
 
-## Phase 1: Basic Voxel System Implementation
+The initial development phase will concentrate on establishing the core voxel systems:
 
-Our first implementation goal is to create a functioning voxel data management system with:
+1.  **Voxel Data Management:**
+    *   Implement a chunk-based world representation.
+        *   Define standard block size (e.g., 25cm, allowing 4 blocks per meter).
+        *   Establish chunk dimensions (e.g., 32x32x32 blocks, resulting in 8m³ volumes per chunk).
+        *   Consider future support for multi-resolution capabilities (e.g., sub-blocks for finer detail) if performance allows.
+    *   Develop a flexible block type registry or system.
+    *   Design and implement efficient C++ data structures for voxel storage and access.
+    *   Lay the groundwork for basic procedural world generation.
 
-- Chunk-based world representation
-  - 25cm standard block size (4 blocks = 1 meter)
-  - 32³ blocks per chunk (8m³ volumes)
-  - Multi-resolution capability with sub-blocks (12.5cm, 6.25cm) for detail
-- Block type registry
-- Efficient storage and access patterns
-- Basic world generation
+2.  **Core Engine Architecture:**
+    *   Establish the chosen Entity Component System (ECS) architecture.
+    *   Implement basic rendering systems to visualize the voxel world (e.g., using OpenGL, Vulkan).
+    *   Set up essential engine modules: input handling, window management, and a main game loop.
 
-This block size provides an optimal balance between detail and performance, allowing for detailed construction while maintaining reasonable memory usage and rendering performance.
+This phase aims to create a minimal viable voxel engine, allowing for early validation of core mechanics and performance characteristics.
 
-From there, we'll build up the ECS architecture and finally add rendering to visualize our work.
+## Phase 2: Advanced World Systems & Gameplay Features (C++)
 
-## Phase 2: Hierarchical World & Chunk System
+Building upon the foundational engine, Phase 2 will expand the world's complexity and introduce gameplay elements:
 
-- World size is user-selectable at creation (Small, Medium, Large, Huge, Earth-sized).
-- Hierarchical chunk structure: e.g., 32x32 superchunks, each containing 32x32 lower-level chunks, recursively down to 32x32x32 block chunks (25cm blocks).
-- High-level worldgen (biome map, heightmap, cave map, etc.) is generated at world creation and visualized for the user.
-- Only a small area (e.g., 5x5 or 9x9 chunks) is loaded and simulated around the player at any time; others are saved/unloaded.
-- Distant terrain is rendered using LOD meshes from high-level data.
-- Biome and cave systems are modular and extensible for future features.
-- Simulation in unloaded chunks is handled at a high level, with fast-forwarding/interpolation when loaded.
-- Worldgen is modular and realistic, using multi-octave noise, domain warping, erosion, river pathfinding, and climate simulation for biomes. Caves and features are placed using 3D noise and rules. All systems are designed to be extensible and to work together hierarchically.
-- See `feature_docs/hierarchical_worldgen.md` for detailed design and implementation plan.
+1.  **Hierarchical World Structure:**
+    *   Investigate and implement a hierarchical chunking system to manage large worlds efficiently. This could involve multiple levels of detail or spatial organization.
+    *   Allow for user-selectable world sizes (e.g., Small, Medium, Large) with corresponding performance considerations.
+    *   Develop Level of Detail (LOD) systems for rendering distant terrain and structures.
 
-Next: Implement hierarchical worldgen data structures, high-level map generation, and chunk/block generation using this data.
+2.  **Advanced Procedural Generation:**
+    *   Implement sophisticated world generation algorithms, including:
+        *   Biome generation (e.g., using noise functions, climate simulation).
+        *   Cave systems and other geological features.
+        *   Ensure modularity and extensibility for future content.
+
+3.  **Simulation and Gameplay Mechanics:**
+    *   Address simulation of game elements, potentially including high-level simulation for unloaded or distant chunks.
+    *   Begin implementing core gameplay mechanics as defined in the Game Concept documents.
+
+## Development Practices
+
+*   **Modularity:** Design systems to be as modular and independent as possible.
+*   **Performance:** Profile and optimize critical systems regularly, especially voxel processing and rendering.
+*   **Testing:** Implement unit and integration tests for core engine components.
+*   **Documentation:** Maintain clear documentation for engine architecture, systems, and APIs.
+*   **Version Control:** Utilize Git for version control, with a clear branching and merging strategy.
+
+This document provides a high-level strategic overview. Detailed technical designs for specific systems will be maintained in their respective documentation within the `org/Tech Stack/` directory.

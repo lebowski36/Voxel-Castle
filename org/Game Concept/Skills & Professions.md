@@ -115,19 +115,20 @@ The Skills & Professions system forms a core component of Voxel Fortress's simul
 ## Technical Implementation Considerations
 
 ### Data Architecture
-- **Skill Trees:** Hierarchical organization of related skills and specializations
-- **Experience Tracking:** Systems for measuring appropriate practice activities
-- **Work Process Models:** How tasks break down into steps requiring specific skills
+- **Skill Trees:** Hierarchical organization of related skills and specializations. In C++, this could be represented using tree-like data structures (e.g., nodes with parent/child pointers or an adjacency list) or a flat list with parent IDs, possibly loaded from configuration files.
+- **Experience Tracking:** Systems for measuring appropriate practice activities. Each colonist entity in C++ would have a data structure (e.g., a `std::map<SkillID, float>` or a custom class) to store experience points for each skill.
+- **Work Process Models:** How tasks break down into steps requiring specific skills. This could be defined in C++ using state machines or behavior trees for tasks, with skill checks at relevant points.
 
 ### AI Systems
-- **Task Selection:** How colonists choose what work to do based on priorities
-- **Learning Simulation:** Models for realistic skill development curves
-- **Quality Determination:** Algorithms for how skill affects work outcomes
+- **Task Selection:** How colonists choose what work to do based on priorities. Implemented in C++ using utility-based AI, behavior trees, or a goal-oriented action planning (GOAP) system.
+- **Learning Simulation:** Models for realistic skill development curves. C++ functions would calculate XP gain based on task difficulty, colonist traits, and learning rates, applying mathematical formulas (e.g., logarithmic or exponential curves).
+- **Quality Determination:** Algorithms for how skill affects work outcomes. C++ functions would take skill levels, material quality, and other factors as input to determine output quality, possibly involving weighted random rolls.
 
 ### Balancing Considerations
-- **Generalists vs. Specialists:** Ensuring both approaches are viable
-- **Learning Speed:** Paced to feel rewarding but not trivial
-- **Skill Ceiling Effects:** Preventing single highly-skilled colonists from trivializing gameplay
+- **Generalists vs. Specialists:** Ensuring both approaches are viable. This is primarily a game design concern, but the C++ implementation should allow for flexible tuning of XP gain rates, skill caps, and the benefits of specialization.
+- **Learning Speed:** Paced to feel rewarding but not trivial. Tunable parameters in C++ data files or constants.
+- **Skill Ceiling Effects:** Preventing single highly-skilled colonists from trivializing gameplay. Implemented through diminishing returns in C++ skill effect calculations or caps on skill levels.
+- **Data Storage:** Colonist skill data will need to be efficiently serialized and deserialized for saving and loading game states. C++ libraries like Boost.Serialization or custom binary serialization routines can be used.
 
 ## Design Goals & Principles
 

@@ -68,10 +68,12 @@ The colony simulation system forms the heart of Voxel Fortress, defining how you
 
 ## Technical Implementation Considerations
 
-### Data Structures
+### Data Structures & Algorithms
 - **Colonist Records:** Comprehensive datasets for each individual
 - **Relationship Graphs:** Network representation of interpersonal connections
 - **Event History:** Significant happenings affecting colony development
+- **Entity Management:** Efficiently handling thousands of colonists, creatures, and items. *(Consider C++ data structures like `std::vector` for contiguous data, `std::unordered_map` for fast lookups, or custom pool allocators for performance-critical objects.)*
+- **Pathfinding:** Robust A* or similar for complex 3D voxel environments
 
 ### Simulation Systems
 - **Time Scale:** Colony simulation runs on a separate tick rate from real-time gameplay
@@ -82,6 +84,8 @@ The colony simulation system forms the heart of Voxel Fortress, defining how you
 - **Instanced Processing:** Similar colonists batched for parallel computation
 - **LOD for AI:** Lower simulation fidelity for distant/less important colonists
 - **Caching Social Networks:** Precompute relationship effects
+- **Simulation Tick Rate:** Balancing detail with computational cost. *(C++ allows for fine-grained memory management and optimization techniques to maximize performance.)*
+- **Parallelization:** Identifying parts of the simulation that can run concurrently
 
 ## Design Goals & Principles
 

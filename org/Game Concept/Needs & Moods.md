@@ -128,6 +128,8 @@ The Needs & Moods system is a fundamental pillar of Voxel Fortress that drives c
 
 ## Technical Implementation Considerations
 
+<!-- C++ Note: The simulation of colonist needs and moods will require efficient C++ data structures for tracking numerous individual states and their modifiers. Performance will be critical, especially with a large number of colonists. Consider event-driven updates and optimized algorithms for calculating mood changes and triggering behavioral responses. -->
+
 ### Need Calculation Systems
 - **Continuous vs. Discrete:** Some needs track continuously, others update at intervals
 - **Need Decay Rates:** Different needs deteriorate at different speeds

@@ -232,25 +232,28 @@ The Player Interaction system defines how players engage with and control the Vo
 ## Technical Implementation Considerations
 
 ### Input System Architecture
-- **Input Abstraction:** Separation of physical inputs from game actions
-- **Action Mapping:** Flexible association of inputs to in-game functions
-- **Context Sensitivity:** Input interpretation based on game state
-- **Input Buffering:** Handling rapid or concurrent inputs appropriately
-- **Device Management:** Supporting multiple input devices simultaneously
+- **Input Abstraction:** Separation of physical inputs from game actions.
+- **Action Mapping:** Flexible association of inputs to in-game functions.
+- **Context Sensitivity:** Input interpretation based on game state.
+- **Input Buffering:** Handling rapid or concurrent inputs appropriately.
+- **Device Management:** Supporting multiple input devices simultaneously.
+- **C++ Libraries:** Consider using libraries like SDL, GLFW for cross-platform input handling, or platform-specific APIs (e.g., WinAPI for Windows, X11 for Linux) for more direct control if needed. Event-driven architectures are common.
 
 ### UI Implementation
-- **Layout Engine:** Adaptable UI positioning and scaling
-- **Rendering Pipeline:** Efficient UI drawing with minimal performance impact
-- **State Management:** Clean separation of UI state and game state
-- **Animation System:** Smooth transitions between UI states
-- **Theme Support:** Consistent visual styling with customization options
+- **Layout Engine:** Adaptable UI positioning and scaling.
+- **Rendering Pipeline:** Efficient UI drawing with minimal performance impact.
+- **State Management:** Clean separation of UI state and game state.
+- **Animation System:** Smooth transitions between UI states.
+- **Theme Support:** Consistent visual styling with customization options.
+- **C++ UI Frameworks:** For in-game UI, a custom solution built with a graphics library (like SFML Graphics, or directly via OpenGL/Vulkan/DirectX) is common. For development tools or complex editor-like interfaces, Dear ImGui is a very popular and effective choice. Consider how UI events will be processed, potentially through a dedicated UI event loop or integrated into the main game loop.
 
 ### Performance Optimization
-- **Input Prioritization:** Ensuring responsive controls even under system load
-- **UI Batching:** Minimizing draw calls for interface elements
-- **Event Throttling:** Preventing excessive UI updates
-- **Asynchronous Processing:** Handling intensive operations without blocking input
-- **Memory Management:** Efficient resource usage for UI assets
+- **Input Prioritization:** Ensuring responsive controls even under system load.
+- **UI Batching:** Minimizing draw calls for interface elements.
+- **Event Throttling:** Preventing excessive UI updates.
+- **Asynchronous Processing:** Handling intensive operations without blocking input.
+- **Memory Management:** Efficient resource usage for UI assets.
+- **C++ Event Systems:** A robust event system or message queue in C++ will be crucial for decoupling input handling, UI updates, and game logic, ensuring responsiveness and maintainability. This could involve observer patterns, delegates, or more complex event bus implementations.
 
 ## Design Goals & Principles
 

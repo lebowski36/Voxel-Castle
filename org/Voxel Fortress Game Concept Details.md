@@ -186,7 +186,6 @@ Creating Voxel Fortress presents significant challenges that require innovative 
 - Feature prioritization based on core experience and technical dependencies
 - Phased development approach with functional milestones
 - Clear criteria for minimum viable product and feature expansion
-- [Development Roadmap](./Game%20Concept/Development%20Roadmap.md)
 
 ### Artificial Intelligence
 - Deep behavioral AI is essential for compelling emergent gameplay
@@ -239,7 +238,6 @@ Our design documentation is organized into comprehensive documents covering all 
 13. [Rendering Systems](./Game%20Concept/Rendering%20Systems.md) - Graphics pipeline and LOD
 14. [Performance Optimization](./Game%20Concept/Performance%20Optimization.md) - Technical approaches
 15. [UI Design](./Game%20Concept/UI%20Design.md) - Interface and user experience
-16. [Development Roadmap](./Game%20Concept/Development%20Roadmap.md) - Phases and priorities
 17. [AI Systems](./Game%20Concept/AI%20Systems.md) - Colonist and creature behavior
 18. [Data Structures](./Game%20Concept/Data%20Structures.md) - Technical infrastructure
 

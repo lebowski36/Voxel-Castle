@@ -1,7 +1,7 @@
 # Physics System
 
 ## Overview
-The Voxel Fortress physics system provides realistic physical simulation within our voxel-based world, handling everything from basic object motion to complex structural integrity calculations. Built on a modified version of the Rapier physics engine, our implementation features specialized extensions for voxel environments, including block-based collision detection, structural analysis, and fluid dynamics. The system balances simulation fidelity with performance requirements, employing a variety of optimization techniques to maintain responsiveness even in complex scenarios with thousands of simulated objects.
+The Voxel Fortress physics system provides realistic physical simulation within our voxel-based world, handling everything from basic object motion to complex structural integrity calculations. Built on a modified physics engine, our implementation features specialized extensions for voxel environments, including block-based collision detection, structural analysis, and fluid dynamics. The system balances simulation fidelity with performance requirements, employing a variety of optimization techniques to maintain responsiveness even in complex scenarios with thousands of simulated objects.
 
 > **Related Documents:**
 > - [Engine Architecture](./Engine%20Architecture.md)
@@ -13,8 +13,8 @@ The Voxel Fortress physics system provides realistic physical simulation within 
 
 ### Physics Foundation
 
-#### Rapier Integration
-- **Core Physics Engine:** Based on the Rapier physics library for Rust
+#### Physics Engine Integration
+- **Core Physics Engine:** Based on a mature C++ physics library
 - **Custom Extensions:** Voxel-specific modifications to the base engine
 - **Simulation Pipeline:** Clear stages of collision detection, resolution, and integration
 - **Fixed Timestep:** Physics updates on a consistent time interval independent of frame rate
@@ -268,10 +268,53 @@ The Voxel Fortress physics system provides realistic physical simulation within 
 - **Record & Playback:** Capturing and reviewing physics interactions
 - **Physics Debugging:** Special modes to diagnose issues
 
+## Technical Implementation Considerations (C++)
+
+Adapting and implementing this physics system in C++ involves choosing appropriate libraries, leveraging C++ performance features, and ensuring tight integration with other C++-based engine systems.
+
+*   **Core Physics Engine Choice:**
+    *   **Existing C++ Libraries:** Evaluate mature C++ physics libraries:
+        *   **PhysX (NVIDIA):** Feature-rich, widely used, good performance, but can have a more complex API.
+        *   **Jolt Physics:** Modern, open-source, designed for performance and ease of use, gaining popularity.
+        *   **Bullet Physics:** Long-standing, open-source, very flexible, used in many projects.
+        *   **ReactPhysics3D:** Open-source, relatively lightweight, focused on 3D simulation.
+    *   **Custom Extensions:** Regardless of the chosen library, significant custom extensions will be needed for voxel-specific phenomena like block-based collision, detailed structural integrity, and cellular automata-based fluid dynamics.
+
+*   **C++ Language & Performance:**
+    *   **Performance-Critical Code:** Physics calculations are computationally intensive. Use modern C++ (C++17/20/23) for optimized code. Profile frequently.
+    *   **Memory Management:** Physics engines often create/destroy many small objects (collision shapes, contacts). Custom allocators (pools, arenas) for these objects can significantly improve performance. `std::pmr` can be a basis.
+    *   **SIMD:** Leverage SIMD instructions (e.g., via intrinsics or libraries like `xsimd` or Eigen for vector math) for vector and matrix operations common in physics (e.g., transformations, collision checks, solver stages).
+    *   **Data Structures:** Optimize data structures used for spatial partitioning (e.g., AABB trees, grids) and broad-phase collision detection for cache efficiency.
+
+*   **Voxel-Specific Implementation:**
+    *   **Block Collision:** Develop efficient collision geometry generation for voxel blocks. This might involve creating convex hulls for simple blocks or groups of blocks, or specialized voxel-aware collision algorithms.
+    *   **Structural Integrity:** This will likely be a custom system. It might involve graph-based representations of structures, where nodes are blocks and edges are connections, with forces propagated through the graph.
+    *   **Fluid Dynamics:** Cellular automata for fluids can be implemented efficiently in C++, potentially using grid-based computations that map well to cache-friendly access patterns and SIMD.
+
+*   **Multithreading & Concurrency:**
+    *   **Parallel Pipeline:** Most modern C++ physics engines support multithreading. Design the physics pipeline (broadphase, narrowphase, solver, integration) to exploit parallelism using a job system (e.g., Intel TBB, a custom fiber scheduler, or `std::async` with a thread pool).
+    *   **Island-Based Parallelism:** Simulate disconnected groups of interacting objects (islands) in parallel.
+    *   **Thread Safety:** Ensure data structures accessed by multiple threads are properly synchronized using `std::mutex`, `std::atomic`, or lock-free techniques where appropriate.
+
+*   **Integration with ECS (C++):**
+    *   **Physics Components:** Represent rigid bodies, colliders, joints, etc., as components in the C++ ECS (e.g., using `EnTT` or `Flecs`).
+    *   **Synchronization:** Efficiently synchronize transforms between the ECS and the physics engine. This often involves a buffer or direct updates at specific points in the game loop.
+    *   **Event System:** Propagate collision events (begin contact, end contact, etc.) from the physics engine back to the ECS for game logic to react.
+
+*   **Debugging & Development Tools:**
+    *   **Visualization:** Use a library like ImGui to create in-engine debug visualizations for collision shapes, contact points, forces, AABBs, and structural stress.
+    *   **Profilers:** Integrate with C++ profilers (Tracy, Perf, VTune) to identify physics bottlenecks.
+    *   **Physics Sandbox:** Essential for testing and tuning. Allow real-time modification of physics properties and spawning/manipulation of objects.
+
+*   **Removing Rust-Specific References:**
+    *   The primary reference to **Rapier** needs to be replaced with the chosen C++ physics library or the concept of a C++-based physics foundation.
+
+By selecting a suitable C++ physics library as a base and building specialized voxel systems on top, leveraging C++'s performance capabilities, a robust and efficient physics simulation can be achieved.
+
 ## Implementation Progress
 
 ### Current Status
-- Core physics integration with Rapier established
+- Core physics integration established
 - Basic voxel collision system implemented
 - Initial entity physics working
 - Simple block physics for gravity and support
@@ -290,7 +333,6 @@ The Voxel Fortress physics system provides realistic physical simulation within 
 - "Physically Based Modeling" course materials
 - "Real-Time Collision Detection" by Christer Ericson
 - "Game Physics Engine Development" by Ian Millington
-- Rapier physics engine documentation
 - Research papers on voxel-based structural analysis
 
 ### Inspiration Sources

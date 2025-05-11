@@ -301,6 +301,7 @@ The AI Systems of Voxel Fortress form the behavioral foundation for colonists, c
 - **Memory Layout Optimization:** Arranging data for cache-friendly access
 - **Component Streams:** Processing entity aspects in focused passes
 - **Transformation Orientation:** Focusing on data flow rather than object structure
+These principles align well with modern C++ ECS frameworks like EnTT, focusing on cache-efficient data layouts and processing.
 
 #### Concurrency Model
 - **Task Division:** Breaking AI work into parallelizable chunks
@@ -308,13 +309,14 @@ The AI Systems of Voxel Fortress form the behavioral foundation for colonists, c
 - **Job Dependencies:** Managing work that relies on other calculations
 - **Worker Distribution:** Balancing load across available threads
 - **Synchronization Points:** When parallel work must reconcile
+These will be implemented leveraging C++ standard library features (`<thread>`, `<mutex>`, `<atomic>`, task schedulers) or dedicated C++ threading libraries to maximize parallelism on multi-core CPUs, as outlined in the main C++ Tech Stack document.
 
 #### Debug & Development Tools
 - **Behavior Visualization:** Tools to observe AI decision-making
 - **State Inspection:** Examining entity internal variables
 - **Simulation Tools:** Testing scenarios without full game execution
 - **Performance Profiling:** Identifying AI bottlenecks
-- **Behavior Tree Editors:** Visual tools for creating and modifying AI
+- **Behavior Tree Editors:** Visual tools for creating and modifying AI, potentially integrating with C++ libraries like BehaviorTree.CPP.
 
 ### Decision System Implementation
 

@@ -1,6 +1,6 @@
 # 🏰 Voxel Fortress 🏰
 
-## Welcome to the Voxel Fortress Project! 
+## Welcome to the Voxel Fortress Project!
 
 **Voxel Fortress** is an ambitious colony simulation game that combines the depth of Dwarf Fortress with the accessibility and creative freedom of voxel-based worlds.
 
@@ -32,12 +32,12 @@ In Voxel Fortress, you'll:
 Explore our design documentation:
 
 - [Game Concept Details](org/Voxel%20Fortress%20Game%20Concept%20Details.md) - Core gameplay pillars and considerations
-- [Technical Stack](org/Voxel%20Fortress%20Tech%20Stack%20\(Rust%20Custom%20Engine%20Approach\).md) - Our Rust-based custom engine approach
+- [Technical Stack (C++ Custom Engine)](org/Voxel%20Fortress%20Tech%20Stack%20(C++%20Custom%20Engine%20Approach).md) - Our C++-based custom engine approach
 - [Colony Simulation Design](org/Game%20Concept/Colony%20Simulation.md) - Detailed breakdown of colony mechanics
 
 ## 🚧 Development Status
 
-This project is currently in the early planning and design phase. We're crafting a robust foundation of game design documentation before proceeding with technical implementation.
+This project is currently in the early planning and design phase, with a transition to C++ for custom engine development. We're refining our game design documentation alongside initial C++ engine prototyping.
 
 ## 💡 Vision
 
@@ -52,10 +52,10 @@ We believe in creating games where players create their own stories through inte
 
 Building a game of this ambition requires the right tools:
 
-- **Custom Engine** built with Rust for performance and safety
-- **Entity Component System** architecture for simulation depth
-- **Advanced Voxel Rendering** with multiple LOD techniques
-- **Optimized Data Structures** for managing a dynamic world
+- **Custom Engine** built with C++ for performance, control, and leveraging mature ecosystems.
+- **Entity Component System (ECS)** architecture for simulation depth and flexibility.
+- **Advanced Voxel Rendering** with multiple LOD techniques, utilizing modern graphics APIs (e.g., Vulkan, OpenGL).
+- **Optimized Data Structures** for managing a dynamic and massive voxel world.
 
 ---
 

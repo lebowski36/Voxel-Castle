@@ -249,48 +249,48 @@ The UI Design system serves as the critical interface between the player and Vox
 ### UI Framework Architecture
 
 #### Component System
-- **Reusable Elements:** Library of standard UI components
-- **Inheritance Structure:** Building complex elements from simpler ones
-- **Style Application:** Consistent visual treatment across components
-- **Event Handling:** Clean separation of visual elements and logic
-- **Rendering Optimization:** Efficient drawing of interface elements
+- **Reusable Elements:** Library of standard UI components (buttons, sliders, text boxes, etc.). In C++, this could be a custom-built library or leverage parts of a framework like Dear ImGui, Qt (if a heavier solution is acceptable for tools), or custom classes for in-game UI elements.
+- **Inheritance Structure:** Building complex elements from simpler ones using C++ class inheritance or composition.
+- **Style Application:** Consistent visual treatment across components, possibly managed by a C++ styling system or theme data loaded from files.
+- **Event Handling:** Clean separation of visual elements and logic. C++ event systems (e.g., signals/slots, observer pattern, function callbacks) would connect UI events to game logic.
+- **Rendering Optimization:** Efficient drawing of interface elements, often managed by the chosen C++ UI library or custom rendering code using graphics APIs (Vulkan, OpenGL, DirectX).
 
 #### Data Binding
-- **Model-View Separation:** Clean division between data and presentation
-- **Update Mechanisms:** Efficient refreshing when data changes
-- **Lazy Loading:** Only generating UI components when needed
-- **View Recycling:** Reusing UI elements for similar data
-- **Batch Updates:** Grouping multiple changes to reduce rendering passes
+- **Model-View Separation:** Clean division between data (C++ game state) and presentation (UI elements). Patterns like Model-View-ViewModel (MVVM) or Model-View-Presenter (MVP) can be adapted in C++.
+- **Update Mechanisms:** Efficient refreshing when data changes. This might involve C++ observer patterns, event notifications, or dirty flagging systems to trigger UI updates.
+- **Lazy Loading:** Only generating UI components when needed.
+- **View Recycling:** Reusing UI elements for similar data (common in list views).
+- **Batch Updates:** Grouping multiple C++ state changes to reduce rendering passes for the UI.
 
 #### Input Management
-- **Device Abstraction:** Handling different input methods consistently
-- **Focus System:** Tracking which UI element is currently active
-- **Input Priority:** Resolving conflicts between different handlers
-- **Gesture Recognition:** Interpreting complex input patterns
-- **Accessibility Inputs:** Support for alternative control methods
+- **Device Abstraction:** Handling different input methods consistently via a C++ input layer (e.g., using SDL, GLFW, or custom input handling).
+- **Focus System:** Tracking which UI element is currently active, managed by C++ UI framework logic.
+- **Input Priority:** Resolving conflicts between different handlers (e.g., game input vs. UI input).
+- **Gesture Recognition:** Interpreting complex input patterns, potentially with C++ libraries or custom algorithms.
+- **Accessibility Inputs:** Support for alternative control methods.
 
 ### Performance Optimization
 
 #### Rendering Efficiency
-- **Draw Call Batching:** Minimizing rendering state changes
-- **Clipping & Culling:** Only rendering visible UI elements
-- **Layer Management:** Strategic organization to minimize redraws
-- **Resolution Independence:** Efficient scaling for different displays
-- **Asset Management:** Smart loading and unloading of UI resources
+- **Draw Call Batching:** Minimizing rendering state changes. Critical for custom C++ UI renderers using graphics APIs.
+- **Clipping & Culling:** Only rendering visible UI elements.
+- **Layer Management:** Strategic organization to minimize redraws.
+- **Resolution Independence:** Efficient scaling for different displays, handled by C++ layout and rendering code.
+- **Asset Management:** Smart loading and unloading of UI resources (textures, fonts) in C++.
 
 #### Update Throttling
-- **Change Detection:** Only updating what has actually changed
-- **Importance-Based Updates:** More frequent refreshes for critical info
-- **Deferred Updates:** Grouping non-critical changes
-- **Animation Optimization:** Efficient handling of moving elements
-- **Background Processing:** Heavy computations off the main thread
+- **Change Detection:** Only updating what has actually changed.
+- **Importance-Based Updates:** More frequent refreshes for critical info.
+- **Deferred Updates:** Grouping non-critical changes.
+- **Animation Optimization:** Efficient handling of moving elements, possibly using C++ tweening libraries or custom animation curves.
+- **Background Processing:** Heavy computations off the main UI thread using C++ threading (`std::thread`, `std::async`).
 
 #### Memory Management
-- **Asset Pooling:** Reusing common UI elements
-- **View Virtualization:** Only instantiating visible portions of large lists
-- **Cache Strategy:** Smart retention of frequently accessed data
-- **Garbage Collection Awareness:** Minimizing allocation patterns that cause GC spikes
-- **Memory Budgeting:** Enforcing limits on UI resource usage
+- **Asset Pooling:** Reusing common UI elements and resources. Custom C++ memory pool allocators can be beneficial.
+- **View Virtualization:** Only instantiating visible portions of large lists/grids.
+- **Cache Strategy:** Smart retention of frequently accessed UI data.
+- **Garbage Collection Awareness:** While C++ is not garbage collected by default, smart pointers (`std::unique_ptr`, `std::shared_ptr`) must be used correctly to manage memory. For UI systems with many small objects, custom allocators or arena allocators can improve performance over frequent heap allocations.
+- **Memory Budgeting:** Enforcing limits on UI resource usage through C++ tracking mechanisms.
 
 ## Design Goals & Principles
 

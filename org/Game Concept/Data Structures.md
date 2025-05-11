@@ -9,14 +9,14 @@ The Data Structures system forms the technical foundation of Voxel Fortress, pro
 > - [AI Systems](./AI%20Systems.md)
 > - [Colony Simulation](./Colony%20Simulation.md)
 > - [Main Game Concept](../Voxel%20Fortress%20Game%20Concept%20Details.md)
-> - [Technical Stack](../Voxel%20Fortress%20Tech%20Stack%20\(Rust%20Custom%20Engine%20Approach\).md)
+> - [Technical Stack](../Voxel%20Fortress%20Tech%20Stack%20(C++%20Custom%20Engine%20Approach).md)
 
 ## Core Components
 
 ### Voxel Data Representation
 
 #### Spatial Partitioning
-- **Chunk System:** Division of world into fixed-size 3D chunks (**32x32x32 voxels**, 25cm per voxel, 8m³ per chunk) as per latest implementation plan.
+- **Chunk System:** Division of world into fixed-size 3D chunks (**32x32x32 voxels**, 25cm per voxel, 8m³ per chunk) as per latest implementation plan. *(In C++, `std::vector<VoxelType>` or `std::array<VoxelType, CHUNK_SIZE>` could represent dense chunk data. Custom allocators might be used for performance-critical chunk operations.)*
 - **Region Management:** Grouping chunks into larger regions for higher-level operations
 - **Hierarchical Structure:** Multi-level representation for different scales of operation
 - **Loading Boundaries:** Clear demarcation of loaded vs. unloaded chunks
@@ -47,7 +47,7 @@ The Data Structures system forms the technical foundation of Voxel Fortress, pro
 
 #### Entity Component System
 - **Entity IDs:** Unique identifiers for all game objects
-- **Component Storage:** Efficient organization of entity attributes
+- **Component Storage:** Efficient organization of entity attributes. *(C++ ECS libraries like EnTT, Flecs, or a custom solution would manage this. Struct-of-Arrays (SoA) layouts are often preferred for cache efficiency.)*
 - **System Processing:** Logic separated from data for better optimization
 - **Component Relationships:** Managing connections between related components
 - **Archetype Organization:** Grouping similar entities for processing efficiency
@@ -230,14 +230,14 @@ The Data Structures system forms the technical foundation of Voxel Fortress, pro
 ### Memory Management Architecture
 
 #### Allocation Strategies
-- **Custom Allocators:** Purpose-built memory managers for different needs
+- **Custom Allocators:** Purpose-built memory managers for different needs. *(C++ provides `new`/`delete` but custom allocators (e.g., pool, arena, stack allocators using `std::pmr::memory_resource` or custom implementations) are crucial for high-performance game development to control memory layout, reduce fragmentation, and improve cache performance.)*
 - **Arena Allocation:** Bulk memory management for related objects
 - **Pool Allocation:** Reusing fixed-size blocks
 - **Stack Allocators:** LIFO memory management for temporary operations
 - **Generational Approaches:** Age-based memory management
 
 #### Garbage Collection
-- **Reference Counting:** Tracking object usage
+- **Reference Counting:** Tracking object usage. *(C++ uses RAII and smart pointers like `std::shared_ptr` for reference counting and `std::unique_ptr` for unique ownership, rather than a traditional garbage collector. Careful design is needed to avoid circular references with `std::shared_ptr`.)*
 - **Deferred Cleanup:** Batched processing of no-longer-needed data
 - **Weak Reference Systems:** Non-owning references to prevent cycles
 - **Deterministic Destruction:** Predictable cleanup timing
@@ -251,8 +251,8 @@ The Data Structures system forms the technical foundation of Voxel Fortress, pro
 - **Outlier Detection:** Finding unusual allocation behaviors
 
 #### Platform Optimization
-- **Cache Line Alignment:** Structuring data for specific hardware
-- **SIMD-Friendly Layout:** Organization supporting vector operations
+- **Cache Line Alignment:** Structuring data for specific hardware. *(C++ allows for explicit alignment using `alignas` or compiler-specific attributes to optimize for cache lines.)*
+- **SIMD-Friendly Layout:** Organization supporting vector operations. *(Data structures can be designed for Single Instruction, Multiple Data (SIMD) operations, and C++ compilers often provide intrinsics for direct SIMD programming.)*
 - **Memory Mapping:** Efficient use of virtual memory systems
 - **Platform-Specific Allocators:** Taking advantage of OS capabilities
 - **Hardware Acceleration:** Using specialized memory features when available
@@ -260,7 +260,7 @@ The Data Structures system forms the technical foundation of Voxel Fortress, pro
 ### Serialization & Storage
 
 #### Data Formats
-- **Binary Encoding:** Compact, efficient representation
+- **Binary Encoding:** Compact, efficient representation. *(Libraries like Boost.Serialization, Cereal, FlatBuffers, or custom binary writers are common in C++. Consider endianness and versioning.)*
 - **Compression Techniques:** Algorithms for specific data types
 - **Streaming Format:** Supporting incremental loading/saving
 - **Validation Features:** Error detection and correction
@@ -291,7 +291,7 @@ The Data Structures system forms the technical foundation of Voxel Fortress, pro
 
 #### Profiling & Analysis
 - **Access Pattern Tracking:** Monitoring how data is used
-- **Performance Metrics:** Measuring speed of different operations
+- **Performance Metrics:** Measuring speed of different operations. *(C++ profiling tools like Valgrind (Cachegrind, Massif), Perf, or platform-specific profilers (e.g., VTune, Instruments) are essential.)*
 - **Memory Footprint Analysis:** Tracking size and fragmentation
 - **Bottleneck Identification:** Finding performance limitations
 - **Comparative Benchmarking:** Testing alternative implementations

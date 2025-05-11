@@ -239,21 +239,21 @@ The Control Systems framework establishes how players interact with and command 
 ## Technical Implementation Considerations
 
 ### Input Handling Architecture
-- **Control Mapping:** Flexible system for associating inputs with actions
+- **Control Mapping:** Flexible system for associating inputs with actions. *(Consider using C++ libraries like SDL, SFML, or a custom input manager for handling diverse input devices and remapping.)*
 - **Context Sensitivity:** Input interpretation based on current state and mode
 - **Input Buffering:** Handling rapid or complex input sequences
 - **Error Tolerance:** Graceful handling of ambiguous or problematic inputs
 - **Accessibility Options:** Alternative control schemes for different needs
 
 ### Command Processing
-- **Command Queue:** Efficient processing of pending instructions
+- **Command Queue:** Efficient processing of pending instructions. *(C++ standard library containers like `std::queue` or `std::deque` can be used, or custom lock-free queues for multithreaded scenarios.)*
 - **Priority Resolution:** Algorithms for determining action order
 - **Validation System:** Checking commands for feasibility before execution
 - **Cancellation Handling:** Clean abortion of in-progress actions
 - **Dependency Chains:** Managing actions that require prerequisites
 
 ### Simulation Interface
-- **State Synchronization:** Keeping UI and simulation data consistent
+- **State Synchronization:** Keeping UI and simulation data consistent. *(C++ allows for direct memory manipulation, which can be leveraged for efficient state updates, but requires careful management to avoid race conditions or stale data. Consider event-based systems or observer patterns.)*
 - **Update Optimization:** Efficient information flow between systems
 - **Event Communication:** Notifying control systems of relevant changes
 - **Prediction Models:** Anticipating outcomes of potential commands

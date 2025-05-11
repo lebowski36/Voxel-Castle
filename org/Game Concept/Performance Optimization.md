@@ -197,6 +197,8 @@ The Rendering Systems of Voxel Fortress form the technical backbone of the game'
 
 ## Technical Implementation Considerations
 
+<!-- C++ Note: The rendering architecture will heavily rely on a C++ graphics API like Vulkan (recommended for custom engines) or OpenGL. Efficient multi-threading for mesh generation and LOD calculation can be achieved using C++ standard library features (std::thread, std::async) or dedicated tasking libraries. GPU utilization will involve writing shaders in GLSL/HLSL and managing GPU resources (buffers, textures) via the chosen graphics API. C++ math libraries (e.g., GLM) will be essential for geometric computations. Memory management for caching meshes and textures will require careful C++ design to balance performance and footprint. -->
+
 ### Rendering Architecture
 
 #### Multi-threaded Approach

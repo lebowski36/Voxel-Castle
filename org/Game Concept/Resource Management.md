@@ -228,22 +228,23 @@ The Resource Management system is a fundamental component of Voxel Fortress that
 ## Technical Implementation Considerations
 
 ### Data Structures
-- **Resource Database:** Efficient storage and querying of inventory data
-- **Production Recipe System:** Modular definition of crafting requirements
-- **Quality Calculation Models:** Algorithms for determining output quality
-- **Pathfinding Integration:** For optimal resource movement routes
+- **Resource Database:** Efficient storage and querying of inventory data. In C++, this could involve `std::map` or `std::unordered_map` for tracking resource types and quantities, potentially with custom allocators for performance-critical sections. For larger datasets, a more database-like approach or an in-memory data grid might be considered.
+- **Production Recipe System:** Modular definition of crafting requirements. This could be represented by C++ structs or classes, possibly loaded from configuration files (e.g., JSON, XML) at startup.
+- **Quality Calculation Models:** Algorithms for determining output quality. Implemented as C++ functions or methods, potentially involving random number generation and skill-based modifiers.
+- **Pathfinding Integration:** For optimal resource movement routes. Requires integration with the pathfinding system (e.g., A*), with C++ data structures representing the world graph.
 
 ### Simulation Systems
-- **Production Tick Rate:** How frequently production processes update
-- **Resource Flow Simulation:** Modeling movement through the colony
-- **Decay & Spoilage:** Time-based deterioration of certain resources
-- **Supply/Demand Modeling:** For internal economy and trading system
+- **Production Tick Rate:** How frequently production processes update. Managed by the main game loop or a dedicated simulation thread in C++.
+- **Resource Flow Simulation:** Modeling movement through the colony. This involves updating entity states and resource locations, potentially using an event-driven system or direct state manipulation in C++.
+- **Decay & Spoilage:** Time-based deterioration of certain resources. Implemented by tracking item age and applying decay rules in C++ during simulation ticks.
+- **Supply/Demand Modeling:** For internal economy and trading system. This could involve C++ algorithms that adjust prices or availability based on simulated supply and demand.
 
 ### Performance Optimization
-- **Batch Processing:** Updating similar resources together
-- **Caching Resource Paths:** Remembering optimal routes for repeated tasks
-- **Simplified Distant Simulation:** Less detailed modeling for far-away processes
-- **Update Prioritization:** More frequent updates for critical resources
+- **Batch Processing:** Updating similar resources together. C++ data structures that group similar items (e.g., `std::vector` of a specific resource type) can facilitate this.
+- **Caching Resource Paths:** Remembering optimal routes for repeated tasks. C++ maps or hash tables can store cached paths.
+- **Simplified Distant Simulation:** Less detailed modeling for far-away processes. Implemented in C++ by conditionally executing less complex logic for distant entities or systems.
+- **Update Prioritization:** More frequent updates for critical resources. A C++ priority queue or similar data structure could manage update scheduling.
+- **Memory Layout:** Consider data-oriented design principles in C++ to improve cache performance when processing large amounts of resource data (e.g., storing related data contiguously in arrays).
 
 ## Design Goals & Principles
 

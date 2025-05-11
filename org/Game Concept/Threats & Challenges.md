@@ -186,22 +186,23 @@ The Threats & Challenges system introduces meaningful obstacles and dangers to V
 ## Technical Implementation Considerations
 
 ### Threat Generation Systems
-- **Procedural Challenge Creation:** Algorithms for generating appropriate threats
-- **Difficulty Scaling Functions:** Mathematical models for progressive challenge
-- **Distribution Patterns:** Spatial and temporal placement of threats
-- **Behavior Trees:** AI decision making for intelligent threats
+- **Procedural Challenge Creation:** Algorithms for generating appropriate threats. In C++, this could involve functions that use random number generation, weighted tables, and game state evaluation to select and configure threats.
+- **Difficulty Scaling Functions:** Mathematical models for progressive challenge. Implemented as C++ functions that adjust threat parameters (e.g., enemy count, health, damage) based on game progression metrics (e.g., colony wealth, time elapsed).
+- **Distribution Patterns:** Spatial and temporal placement of threats. C++ logic would determine spawn locations and timing, possibly using influence maps or heatmaps to guide placement away from or towards certain areas.
+- **Behavior Trees:** AI decision making for intelligent threats. C++ implementations of behavior tree libraries or custom solutions would define enemy AI logic.
 
 ### Resource Impact Modeling
-- **Damage Calculation:** Systems for determining harm to structures and colonists
-- **Economic Disruption:** Modeling the ripple effects of targeted resource loss
-- **Recovery Timeline Estimation:** Projecting the recovery period after different events
-- **Vulnerability Analysis:** Identifying critical points of colony infrastructure
+- **Damage Calculation:** Systems for determining harm to structures and colonists. C++ functions would calculate damage based on weapon stats, armor, resistances, and other factors, updating entity health components.
+- **Economic Disruption:** Modeling the ripple effects of targeted resource loss. This would involve C++ code that simulates the impact on production chains and colonist needs when resources are destroyed or access is cut off.
+- **Recovery Timeline Estimation:** Projecting the recovery period after different events. C++ algorithms could estimate rebuild times based on available resources and labor.
+- **Vulnerability Analysis:** Identifying critical points of colony infrastructure. This might involve graph-based analysis in C++ to find chokepoints or critical dependencies in the colony's layout and systems.
 
 ### Player Feedback Mechanisms
-- **Risk Indicators:** UI elements showing threat potential and current dangers
-- **Pattern Recognition Tools:** Helping players identify recurring threat signatures
-- **Impact Visualization:** Clear representation of damage and effects
-- **Learning Opportunities:** Information on how to better prepare for future instances
+- **Risk Indicators:** UI elements showing threat potential and current dangers. Managed by C++ UI code that queries game state for threat levels.
+- **Pattern Recognition Tools:** Helping players identify recurring threat signatures. Potentially C++ systems that log event patterns and provide summaries or alerts to the player.
+- **Impact Visualization:** Clear representation of damage and effects. Handled by the C++ rendering engine, displaying decals, particle effects, and changes to entity states.
+- **Learning Opportunities:** Information on how to better prepare for future instances. Could be part of a C++-driven tutorial or hint system that analyzes past events.
+- **Event System:** A robust C++ event system or message bus would be crucial for decoupling threat generation, AI behavior, impact simulation, and UI feedback, allowing different game modules to react to threats and their consequences independently.
 
 ## Design Goals & Principles
 

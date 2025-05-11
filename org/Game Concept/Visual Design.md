@@ -197,42 +197,42 @@ The Visual Design system defines the aesthetic approach and artistic style of Vo
 ### Art Pipeline
 
 #### Asset Creation Workflow
-- **Modeling Approach:** Block modeling techniques and tools
-- **Texturing Standards:** Resolution, color depth, file format specifications
-- **Animation Systems:** Rigging and animation approach for characters
-- **Integration Process:** Workflow from art creation to game implementation
+- **Modeling Approach:** Block modeling techniques and tools. The C++ engine will need to support common 3D model formats (e.g., .obj, .fbx, .gltf) if pre-made assets are used, or have tools/APIs for procedural generation of block-based geometry.
+- **Texturing Standards:** Resolution, color depth, file format specifications (e.g., PNG, DDS for compressed textures). The C++ rendering system will need to load and manage these textures.
+- **Animation Systems:** Rigging and animation approach for characters. The C++ engine would need an animation system capable of playing back skeletal animations, possibly with blending and state machines.
+- **Integration Process:** Workflow from art creation to game implementation. This involves C++ tools or scripts for asset conversion, packing, and loading into the game engine.
 
 #### Style Guide Documentation
-- **Color Palettes:** Defined color schemes with RGB values
-- **Texture Standards:** Pattern libraries and texture creation guidelines
-- **Proportional Systems:** Size relationships and scaling rules
-- **Visual Language Reference:** Collected examples of the approved style
+- **Color Palettes:** Defined color schemes with RGB values. These can be stored in C++ data structures or configuration files.
+- **Texture Standards:** Pattern libraries and texture creation guidelines.
+- **Proportional Systems:** Size relationships and scaling rules.
+- **Visual Language Reference:** Collected examples of the approved style.
 
 #### Performance Optimization
-- **Texture Atlas System:** Efficient packing of textures to minimize draw calls
-- **LOD Management:** Appropriate detail reduction for distant elements
-- **Polygon Budget:** Guidelines for model complexity at different scales
-- **Effect Limitations:** Parameters for particle systems and visual effects
+- **Texture Atlas System:** Efficient packing of textures to minimize draw calls. The C++ rendering engine would implement or use libraries for texture atlasing.
+- **LOD Management:** Appropriate detail reduction for distant elements. The C++ engine's rendering and culling systems will manage LOD transitions.
+- **Polygon Budget:** Guidelines for model complexity at different scales.
+- **Effect Limitations:** Parameters for particle systems and visual effects, managed by the C++ particle and effects systems.
 
 ### Rendering Techniques
 
 #### Material System
-- **PBR vs. Stylized:** Appropriate rendering approach for the game's aesthetic
-- **Shader Complexity:** Balance between visual quality and performance
-- **Material Properties:** Consistent system for representing different substances
-- **Surface Detail:** Normal mapping, ambient occlusion, and other techniques
+- **PBR vs. Stylized:** Appropriate rendering approach for the game's aesthetic. The C++ engine's material system would define shader properties and how they are interpreted (e.g., using GLSL, HLSL, or SPIR-V shaders).
+- **Shader Complexity:** Balance between visual quality and performance. Shaders are written in languages like GLSL/HLSL and compiled for the GPU, managed by the C++ application.
+- **Material Properties:** Consistent system for representing different substances (e.g., roughness, metallic, emissive values in C++ data structures passed to shaders).
+- **Surface Detail:** Normal mapping, ambient occlusion, and other techniques implemented via shaders.
 
 #### Lighting Model
-- **Global Illumination:** Approach to ambient light and indirect lighting
-- **Dynamic Lighting:** Handling of moving light sources and shadows
-- **Time of Day:** Implementation of natural lighting cycles
-- **Underground Lighting:** Specialized approach for subterranean environments
+- **Global Illumination:** Approach to ambient light and indirect lighting. Could range from simple ambient terms to more complex C++ implementations of SSAO, light probes, or even ray-traced GI if the engine supports it.
+- **Dynamic Lighting:** Handling of moving light sources and shadows (e.g., shadow mapping techniques implemented in C++ and shaders).
+- **Time of Day:** Implementation of natural lighting cycles, driven by C++ game logic updating light parameters.
+- **Underground Lighting:** Specialized approach for subterranean environments, possibly using different light attenuation models or ambient settings in C++.
 
 #### Special Rendering Features
-- **Volumetrics:** Fog, god rays, and atmospheric effects
-- **Reflections:** Water surfaces and other reflective materials
-- **Transparency Handling:** Layered transparency and alpha sorting
-- **Post-Processing:** Color grading, bloom, and other image enhancements
+- **Volumetrics:** Fog, god rays, and atmospheric effects, implemented as C++ post-processing effects or volumetric rendering techniques.
+- **Reflections:** Water surfaces and other reflective materials (e.g., screen-space reflections, reflection probes implemented in C++).
+- **Transparency Handling:** Layered transparency and alpha sorting, managed by the C++ rendering pipeline.
+- **Post-Processing:** Color grading, bloom, and other image enhancements applied as shader passes in C++.
 
 ## Design Goals & Principles
 

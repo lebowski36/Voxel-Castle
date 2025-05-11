@@ -1,9 +1,25 @@
-# Rust/Cargo
-/voxel_fortress/target/
-**/*.rs.bk
-/voxel_fortress/Cargo.lock
+# C++/CMake
+/build/
+/_build/
+/out/
+CMakeCache.txt
+CMakeFiles/
+cmake_install.cmake
+Makefile
+compile_commands.json
+*.o
+*.obj
+*.exe
+*.dll
+*.so
+*.dylib
 
-
+# Rust/Cargo (keeping for historical reference, can be removed later if desired)
+# /voxel_fortress/target/
+# **/*.rs.bk
+# /voxel_fortress/Cargo.lock
+# /voxel_engine/target/
+# /voxel_engine/Cargo.lock
 
 # IDE/editor
 .vscode/
@@ -15,7 +31,7 @@
 Thumbs.db
 
 # Logs
-bevy_error.log
+# bevy_error.log (Covered by *.log)
 *.log
 
 # Misc

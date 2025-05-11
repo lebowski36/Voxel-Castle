@@ -214,9 +214,8 @@ Our ECS implementation follows strict data-oriented design principles:
 #### Type-Based Optimization
 - **Component Type Analysis:** Specialized handling based on component characteristics
 - **Static Dispatch:** Using compile-time polymorphism where possible
-- **Monomorphization Benefits:** Taking advantage of Rust's compile-time specialization
 - **Const Generics:** Size optimizations for fixed-size components
-- **Trait Specialization:** Different implementations for different component types
+- **Template Specialization:** Different implementations for different component types
 
 #### Macro System
 - **Component Registration Macros:** Reducing boilerplate for component definition
@@ -278,17 +277,70 @@ Our ECS implementation follows strict data-oriented design principles:
 - "Overwatch Gameplay Architecture and Netcode" by Timothy Ford
 - "Building a Data-Oriented Entity System" by Niklas Gray
 - "Practical Examples in Data Oriented Design" by Dice
-- "Rust ECS Programming" by various Rust game development resources
 
 ### Open Source Inspirations
-- bevy_ecs - Core design inspirations and API patterns
 - EnTT - Archetype design and sparse sets
-- flecs - System dependencies and relationship handling
-- Legion - Query design and execution strategies
-- specs - Component storage and parallel execution
+- Flecs - System dependencies and relationship handling
+- Articles by Mike Acton - C++ DOD/ECS insights
 
 ### Voxel-Specific Adaptations
 - Minecraft entity systems - Chunk-entity relationship examples
 - Factorio technical blog - Entity optimization techniques
 - Vintage Story - Entity-block interaction approaches
 - Dwarf Fortress - Simulation depth reference points
+
+---
+
+## Technical Implementation Considerations (C++)
+
+Implementing this ECS architecture in C++ requires careful attention to performance, memory management, and API design. Here are key C++ specific considerations:
+
+*   **Core Language & Performance:**
+    *   **Modern C++ Standards:** Utilize C++17/20/23 features. `if constexpr` can be powerful for compile-time decisions in generic ECS code. Concepts can constrain template parameters for systems and components.
+    *   **Memory Layout & Cache Coherency:** This is paramount. C++ gives direct control over memory. Ensure component arrays are tightly packed. Use `alignas` for SIMD-friendly alignment.
+    *   **Pointer Indirection:** Minimize pointer chasing. Store components directly in arrays within archetypes/chunks where possible.
+    *   **Templates & Metaprogramming:** Heavily use templates for generic component storage, system definitions, and query systems. Compile-time type information is key to an efficient C++ ECS.
+
+*   **Entity & Component Management:**
+    *   **Entity IDs:** `uint32_t` or `uint64_t` for entity IDs, possibly with a generation/version counter packed in to detect stale IDs.
+    *   **Component Storage:**
+        *   **Archetypes:** Store components in contiguous arrays per archetype. `std::vector<ComponentType>` or custom contiguous containers can be used for each component type within an archetype.
+        *   **Sparse Sets:** Often used for mapping entity IDs to their row index within an archetype's component arrays. This provides O(1) lookup.
+        *   **Memory Allocation:** Custom allocators (arena, pool) for component data within archetypes to control memory layout and reduce fragmentation. `std::pmr` can be a foundation.
+    *   **Type Erasure (Carefully):** While C++ ECS often relies on static typing, some form of type erasure might be needed for very dynamic scenarios or tooling, but it should be avoided in hot paths if it impacts performance.
+
+*   **System Implementation:**
+    *   **System Signature:** Systems typically define the set of components they operate on (e.g., via template parameters or a tuple of component types).
+    *   **Iteration:** Systems iterate over entities matching their component signature. This often involves iterating through relevant archetypes and then their component arrays.
+    *   **Function Pointers/`std::function`:** Can be used to store system update logic, though direct templated calls are often faster.
+
+*   **Query System:**
+    *   **Compile-Time Queries:** Leverage C++ templates and type traits to define and resolve queries at compile time for maximum performance.
+    *   **Query DSL:** Potentially create a Domain Specific Language (DSL) using C++ expression templates or chained function calls to build queries (e.g., `world.query<Position, Velocity>().without<Static>()`).
+    *   **Query Caching:** Cache archetype matching for queries.
+
+*   **Concurrency & Parallelism:**
+    *   **System Dependencies:** Clearly define read/write dependencies for each system on component types. A graph of systems can then be used to schedule parallel execution.
+    *   **Parallel Iteration:** For systems that can run in parallel, divide the work of iterating over entities/archetypes among threads. Libraries like Intel TBB or custom job schedulers are essential.
+    *   **Atomic Operations / Lock-Free Structures:** Use `std::atomic` for simple flags or counters. Lock-free data structures for command buffers or event queues can be beneficial but are complex to implement correctly.
+    *   **Thread-Local Storage:** For temporary data used during system updates to avoid contention.
+
+*   **Event & Messaging System:**
+    *   **Event Types:** Define event types as simple structs.
+    *   **Event Queues:** Use thread-safe queues (potentially lock-free) for inter-system communication or for deferred event processing.
+    *   **Observer Pattern:** `std::function` or signal/slot mechanisms (e.g., from Boost.Signals2 or a custom implementation) can implement observer patterns for component changes.
+
+*   **Serialization:**
+    *   **Reflection:** A C++ reflection system (e.g., `rttr`, or a custom one using macros and templates) is invaluable for automatically serializing components.
+    *   **Binary Serialization:** For performance, prefer binary serialization formats (e.g., Cereal, Boost.Serialization, or a custom format).
+
+*   **Debugging & Tooling:**
+    *   **Debug Names:** Store debug names for entities and components (can be stripped in release builds).
+    *   **Visualization:** Use ImGui or similar to create in-engine inspectors for entity components and system states.
+
+*   **Rust-Specific Points to Adapt/Remove:**
+    *   **Monomorphization Benefits (Rust):** While C++ templates also lead to specialized code, the term "monomorphization" is very specific to Rust's generics. The underlying principle of generating specialized code for specific types is shared.
+    *   **Trait Specialization (Rust):** C++ has template specialization and SFINAE/concepts which serve similar purposes for providing different implementations based on types.
+    *   **`bevy_ecs`, `Legion`, `specs` (Rust ECS libraries):** These are inspirations. For C++, look at `EnTT`, `Flecs`, or articles by people like Mike Acton for C++ DOD/ECS insights.
+
+Popular C++ ECS libraries like `EnTT` or `Flecs` provide excellent examples of how these concepts are implemented and can serve as strong references or be used directly.
