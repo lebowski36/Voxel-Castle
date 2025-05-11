@@ -62,10 +62,10 @@ This file tracks our immediate high-level tasks and progress. Detailed sub-tasks
   - [x] Research and select C++ ECS library (e.g., EnTT, Flecs) or design custom solution
   - [x] Define entity and component structures
   - [x] Set up system management/scheduler
-- [ ] Create voxel data structures
+- [x] Create voxel data structures
   - [x] Design chunk structure *(Covers Voxel, ChunkSegment, ChunkColumn design)*
   - [x] Implement voxel storage *(Covers Voxel, ChunkSegment, ChunkColumn, WorldManager implementation)*
-  - [ ] Add spatial partitioning (e.g., octrees)
+  - [ ] Add spatial partitioning (e.g., octrees) // To be addressed later if needed
 - [ ] Build mesh generation system
   - [ ] Create mesh from voxel data
   - [ ] Implement greedy meshing or other optimization
@@ -147,8 +147,9 @@ This file tracks our immediate high-level tasks and progress. Detailed sub-tasks
 **General Operational Guidelines:**
 *   **ABSOLUTELY CRITICAL: Clear Console with Command!** Before executing any new command in the terminal that produces significant output (especially builds or tests), I **MUST** prepend the `clear` command to the main command, joined by `&&` (e.g., `clear && cmake --build build`). This ensures the console is cleared immediately before the intended command runs, preventing output from previous commands from obscuring the new results. I will explicitly state that the command includes clearing the console.
 *   **CRITICAL - Update Task Files:** I **MUST ALWAYS** update this file (`CURRENT_TODO.md`) and, most importantly, the relevant detailed task files in `development_tasks/` (by checking off completed sub-tasks and updating their status) after each development step is confirmed complete. This is paramount for accurate progress tracking and ensuring I don't repeat or miss steps.
-*   **Problem Persistence:** IF A PROBLEM PERSISTS after initial attempts, I will search for solutions online before asking the user for help or trying the same fix repeatedly.
+*   **Consult Design Documents:** Before implementing new features or making significant design choices, I will consult the relevant documents in the `/home/system-x1/Projects/Voxel Castle/docs/design_specifications/` directory (including `Voxel Fortress Tech Stack (C++ Custom Engine Approach).md`, `Voxel Fortress Game Concept Details.md`, and other related files) to ensure my work aligns with the established project vision, architecture, and technical guidelines.
 *   **Crucial Decisions:** ALWAYS CONFIRM CRUCIAL DECISIONS WITH THE USER. Before making significant choices (e.g., selecting a library, deciding on a core architectural pattern), present the options, your recommendation (if any), and ask for the user's input and confirmation.
+*   **Problem Persistence:** IF A PROBLEM PERSISTS after initial attempts, I will search for solutions online before asking the user for help or trying the same fix repeatedly.
 *   **Documentation:** DOCUMENTATION IS CRUCIAL! With every implementation step, update relevant documentation.
 *   **Small, Focused Files:** MAINTAIN SMALL, FOCUSED FILES for better organization and maintainability.
 

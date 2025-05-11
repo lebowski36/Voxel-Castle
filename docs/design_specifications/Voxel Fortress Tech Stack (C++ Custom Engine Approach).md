@@ -67,8 +67,14 @@ The selection of specific technologies, libraries, and architectural patterns fo
 ## 7. World Generation & Management
 
 *   **Procedural Generation:** Noise algorithms (Perlin, Simplex, etc.) for terrain, biomes, and resource placement.
-*   **Voxel Data Structures:** Optimized structures for storing and querying vast voxel worlds (e.g., chunk-based systems, octrees, spatial hashing).
-    *   **Rationale:** Essential for managing the immense scale of the game world, supporting efficient modifications, and enabling fast spatial queries.
+*   **Voxel Data Structures:** Optimized structures for storing and querying vast voxel worlds.
+    *   **Implementation Details:**
+        *   **`Voxel` (in `VoxelEngine::World`):** A struct representing a single voxel, currently holding a `uint8_t id` for its type (see `VoxelType`). Located in `engine/include/world/voxel.h`.
+        *   **`VoxelType` (in `VoxelEngine::World`):** An enum class (`uint8_t` underlying type) defining basic voxel types like `AIR`, `STONE`, `DIRT`, `GRASS`, etc. Located in `engine/include/world/voxel_types.h`.
+        *   **`ChunkSegment` (in `VoxelCastle::World`):** Represents a fixed-size 3D array (currently 32x32x32) of `Voxel` objects. Manages local voxel access within its bounds. Located in `engine/include/world/chunk_segment.h` and `engine/src/world/chunk_segment.cpp`.
+        *   **`ChunkColumn` (in `VoxelCastle::World`):** Represents a vertical stack of `ChunkSegment`s (e.g., 8 segments high, for a 256-voxel world height) at a specific XZ world coordinate. Manages its constituent segments. Located in `engine/include/world/chunk_column.h` and `engine/src/world/chunk_column.cpp`.
+        *   **`WorldManager` (in `VoxelCastle::World`):** Manages a collection of `ChunkColumn`s, typically stored in a `std::map` keyed by their XZ world coordinates. Provides global access to voxels (get/set) by translating world coordinates to the appropriate `ChunkColumn` and `ChunkSegment`. Handles lazy creation of chunks and segments as needed. Located in `engine/include/world/world_manager.h` and `engine/src/world/world_manager.cpp`.
+    *   **Rationale:** Essential for managing the immense scale of the game world, supporting efficient modifications, and enabling fast spatial queries. The current structure provides a foundation for these goals. Future enhancements might include spatial partitioning (e.g., octrees) if performance profiling indicates a need for more advanced culling or querying capabilities beyond simple chunk management.
 *   **Streaming:** Asynchronous loading/unloading of world chunks.
 
 > For detailed information on how voxel data is structured, stored, accessed, and managed, including compression techniques and spatial indexing, see:
