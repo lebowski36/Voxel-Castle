@@ -63,8 +63,8 @@ This file tracks our immediate high-level tasks and progress. Detailed sub-tasks
   - [x] Define entity and component structures
   - [x] Set up system management/scheduler
 - [ ] Create voxel data structures
-  - [ ] Design chunk structure
-  - [ ] Implement voxel storage
+  - [x] Design chunk structure *(Covers Voxel, ChunkSegment, ChunkColumn design)*
+  - [x] Implement voxel storage *(Covers Voxel, ChunkSegment, ChunkColumn, WorldManager implementation)*
   - [ ] Add spatial partitioning (e.g., octrees)
 - [ ] Build mesh generation system
   - [ ] Create mesh from voxel data
@@ -146,7 +146,7 @@ This file tracks our immediate high-level tasks and progress. Detailed sub-tasks
 
 **General Operational Guidelines:**
 *   **ABSOLUTELY CRITICAL: Clear Console with Command!** Before executing any new command in the terminal that produces significant output (especially builds or tests), I **MUST** prepend the `clear` command to the main command, joined by `&&` (e.g., `clear && cmake --build build`). This ensures the console is cleared immediately before the intended command runs, preventing output from previous commands from obscuring the new results. I will explicitly state that the command includes clearing the console.
-*   **Update Task Files:** WE MUST update this file (`CURRENT_TODO.md`) and the relevant detailed task files in `development_tasks/` after each development step is confirmed complete.
+*   **CRITICAL - Update Task Files:** I **MUST ALWAYS** update this file (`CURRENT_TODO.md`) and, most importantly, the relevant detailed task files in `development_tasks/` (by checking off completed sub-tasks and updating their status) after each development step is confirmed complete. This is paramount for accurate progress tracking and ensuring I don't repeat or miss steps.
 *   **Problem Persistence:** IF A PROBLEM PERSISTS after initial attempts, I will search for solutions online before asking the user for help or trying the same fix repeatedly.
 *   **Crucial Decisions:** ALWAYS CONFIRM CRUCIAL DECISIONS WITH THE USER. Before making significant choices (e.g., selecting a library, deciding on a core architectural pattern), present the options, your recommendation (if any), and ask for the user's input and confirmation.
 *   **Documentation:** DOCUMENTATION IS CRUCIAL! With every implementation step, update relevant documentation.

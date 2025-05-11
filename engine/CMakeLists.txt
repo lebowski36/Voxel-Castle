@@ -10,6 +10,7 @@ add_library(VoxelEngine STATIC
     src/ecs/systems/movement_system.cpp
     src/world/chunk_segment.cpp # Added ChunkSegment source
     src/world/chunk_column.cpp # Added ChunkColumn source
+    src/world/world_manager.cpp # Added WorldManager source
     # Add GLAD source file if compiling it directly
     # Or link against a pre-built GLAD library later
     # For example, if GLAD source is in external/glad/src/glad.c relative to root:

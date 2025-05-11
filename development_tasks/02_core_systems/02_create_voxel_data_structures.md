@@ -46,14 +46,14 @@ This task focuses on designing and implementing the core data structures for sto
     *   [x] **3.2.11.** Test build after `ChunkColumn` implementation.
 
 ### 3.3. Implement World/Chunk Management
-*   **Status:** TODO
+*   **Status:** Completed
 *   **Description:** Implement a basic system for managing `ChunkColumn`s and `ChunkSegment`s.
-    *   [ ] **3.3.1.** Design a `World` or `ChunkManager` class (e.g., `engine/include/world/world_manager.h` and `engine/src/world/world_manager.cpp`).
-    *   [ ] **3.3.2.** Implement a simple storage mechanism for active `ChunkColumn`s (e.g., `std::unordered_map<WorldCoordXZ, std::unique_ptr<ChunkColumn>>`).
-    *   [ ] **3.3.3.** Implement methods to load/generate a new `ChunkColumn` (and its initial `ChunkSegment`s) at given XZ world coordinates.
+    *   [x] **3.3.1.** Design a `World` or `ChunkManager` class (e.g., `engine/include/world/world_manager.h` and `engine/src/world/world_manager.cpp`). *(Completed with WorldManager.h/cpp)*
+    *   [x] **3.3.2.** Implement a simple storage mechanism for active `ChunkColumn`s (e.g., `std::unordered_map<WorldCoordXZ, std::unique_ptr<ChunkColumn>>`). *(Completed with `std::map` in WorldManager)*
+    *   [x] **3.3.3.** Implement methods to load/generate a new `ChunkColumn` (and its initial `ChunkSegment`s) at given XZ world coordinates. *(Completed with `getOrCreateChunkColumn` in WorldManager)*
         *   For now, this can just allocate new `ChunkColumn` and `ChunkSegment` objects, perhaps filled with air or a solid material.
-    *   [ ] **3.3.4.** Implement methods to get a `ChunkColumn` by its XZ world coordinates.
-    *   [ ] **3.3.5.** Implement methods to get/set a voxel at world coordinates (delegating to the appropriate `ChunkColumn` and then `ChunkSegment`).
+    *   [x] **3.3.4.** Implement methods to get a `ChunkColumn` by its XZ world coordinates. *(Completed with `getOrCreateChunkColumn` in WorldManager)*
+    *   [x] **3.3.5.** Implement methods to get/set a voxel at world coordinates (delegating to the appropriate `ChunkColumn` and then `ChunkSegment`). *(Completed with `getVoxel` and `setVoxel` in WorldManager)*
 
 ### 3.4. Initial Voxel Types
 *   **Status:** TODO
