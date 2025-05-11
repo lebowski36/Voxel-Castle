@@ -3,16 +3,26 @@
 /_build/
 /out/
 CMakeCache.txt
+**/CMakeCache.txt
 CMakeFiles/
+**/CMakeFiles/
 cmake_install.cmake
+**/cmake_install.cmake
 Makefile
 compile_commands.json
+**/compile_commands.json
+**/CTestTestfile.cmake
+*.make
 *.o
 *.obj
+
+# Executables and libraries
 *.exe
 *.dll
 *.so
 *.dylib
+*.a
+*.lib
 
 # Rust/Cargo (keeping for historical reference, can be removed later if desired)
 # /voxel_fortress/target/
@@ -25,6 +35,11 @@ compile_commands.json
 .vscode/
 .idea/
 *.swp
+*.suo
+*.user
+*.sln
+*.vcxproj
+*.vcxproj.filters
 
 # OS files
 .DS_Store

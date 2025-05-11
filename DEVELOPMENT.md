@@ -51,4 +51,8 @@ Building upon the foundational engine, Phase 2 will expand the world's complexit
 *   **Documentation:** Maintain clear documentation for engine architecture, systems, and APIs.
 *   **Version Control:** Utilize Git for version control, with a clear branching and merging strategy.
 
+## Version Control
+
+Regularly commit changes to Git. Each commit should represent a logical unit of work. Write clear and concise commit messages.
+
 This document provides a high-level strategic overview. Detailed technical designs for specific systems will be maintained in their respective documentation within the `org/Tech Stack/` directory.
