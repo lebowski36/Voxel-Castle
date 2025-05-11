@@ -12,6 +12,7 @@ add_library(VoxelEngine STATIC
     src/world/chunk_column.cpp # Added ChunkColumn source
     src/world/world_manager.cpp # Added WorldManager source
     src/rendering/mesh_builder.cpp # Added MeshBuilder source
+    src/rendering/mesh_renderer.cpp # Added MeshRenderer source
     # Add GLAD source file if compiling it directly
     # Or link against a pre-built GLAD library later
     # For example, if GLAD source is in external/glad/src/glad.c relative to root:
@@ -20,26 +21,12 @@ add_library(VoxelEngine STATIC
 
 target_include_directories(VoxelEngine
     PUBLIC
-        # For headers intended to be used by the game from engine/include (if any)
-        # e.g., if you move Window.h to engine/include/platform/Window.h,
-        # then game/src/main.cpp could use #include <platform/Window.h>
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
         $<INSTALL_INTERFACE:include>
-
-        # To allow game to include "platform/Window.h" directly from engine/src
-        # This makes 'engine/src' an include path for consumers.
-        # So, game/src/main.cpp can use #include "platform/Window.h"
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src>
-        # Add GLAD include directory if it's vendored
-        # For example, if GLAD headers are in external/glad/include relative to root:
         $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/external/glad/include> 
-        # Add GLM include directory (header-only library)
         $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/external/glm> 
     PRIVATE
-        # Add Flecs include directory (propagated by linking with flecs::flecs or flecs_static/flecs_shared)
-        # For the engine's own internal includes.
-        # This makes 'engine/src' an include path for VoxelEngine's own .cpp files.
-        # e.g., engine/src/platform/Window.cpp can use #include "platform/Window.h"
         ${CMAKE_CURRENT_SOURCE_DIR}/src
 )
 

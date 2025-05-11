@@ -117,16 +117,21 @@ This file tracks our immediate high-level tasks and progress. Detailed sub-tasks
 
 ## 📝 Near-Term Priority Tasks
 *This section should be updated regularly with the most immediate goals, typically pointing to the current high-level task from the list above.*
-1.  **Debug Greedy Meshing:** Analyze the test failures for `buildGreedyMesh` in `game/src/main.cpp` and fix the implementation in `engine/src/rendering/mesh_builder.cpp`. The current output shows it consistently produces a small, incorrect mesh.  
-    - [x] Identified that only one face direction per axis was being generated (classic greedy meshing bug).
-    - [x] Updated the implementation to sweep both positive and negative face directions for each axis.
-    - [x] Adjusted mask and face-detection logic to ensure all exposed faces are generated.
-    - [x] Cleaned up and clarified the greedy meshing loop for maintainability.
-2.  **Re-test Greedy Meshing:** After applying fixes, re-run the tests in `game/src/main.cpp`.
-    - [x] Built the project and ran all mesh generation tests.
-    - [x] Confirmed that all greedy meshing tests now PASS (single block, lines, planes, cubes).
-    - [x] Verified mesh vertex and index counts match expected values for all test cases.
-    - [x] Confirmed no regressions in naive meshing or voxel system tests.
+
+### ✅ Greedy Meshing Debug & Verification (May 11, 2025)
+
+- [x] **Analyzed test failures** for `buildGreedyMesh` in `game/src/main.cpp` and implementation in `engine/src/rendering/mesh_builder.cpp`.
+- [x] **Identified** that only one face direction per axis was being generated (classic greedy meshing bug).
+- [x] **Updated implementation** to sweep both positive and negative face directions for each axis.
+- [x] **Adjusted mask and face-detection logic** to ensure all exposed faces are generated.
+- [x] **Cleaned up and clarified** the greedy meshing loop for maintainability.
+- [x] **Built the project** and ran all mesh generation tests.
+- [x] **Confirmed all greedy meshing tests now PASS** (single block, lines, planes, cubes).
+- [x] **Verified mesh vertex and index counts** match expected values for all test cases.
+- [x] **Confirmed no regressions** in naive meshing or voxel system tests.
+
+**Summary:**
+Greedy meshing is now correct and fully tested. All mesh generation tests pass, and the implementation is robust for all basic voxel shapes. Documentation and task tracking have been updated accordingly.
 
 ## 📊 Progress Tracking (C++ Phase)
 *This section will track progress for the C++ engine development at a high level.*

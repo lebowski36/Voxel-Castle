@@ -20,6 +20,7 @@
 // Mesh Generation
 #include "rendering/mesh_builder.h" // For VoxelEngine::Rendering::MeshBuilder
 #include "world/chunk_segment.h"    // For VoxelCastle::World::ChunkSegment
+#include "rendering/mesh_renderer.h"
 
 // GLM Headers - Will be used by other engine systems, keep includes for now if generally useful
 #define GLM_FORCE_SILENT_WARNINGS // Optional: To suppress GLM warnings if any
@@ -217,20 +218,64 @@ int main(int argc, char* argv[]) {
     }
     std::cout << "--- Mesh Generation Test End ---" << std::endl;
 
-    Window gameWindow("Voxel Fortress - Alpha", 800, 600);
+    // Use a larger window size for visibility
+    Window gameWindow("Voxel Fortress - Alpha", 1280, 720);
 
     if (!gameWindow.init()) {
         std::cerr << "Failed to initialize the game window!" << std::endl;
         return -1;
     }
 
+
+    // --- OpenGL State Setup ---
+    // Enable depth testing for correct 3D rendering
+    glEnable(GL_DEPTH_TEST);
+    // Disable face culling for debug (see all faces)
+    glDisable(GL_CULL_FACE);
+    // Set wireframe mode for debugging
+    glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+
+    // --- Mesh Rendering Setup ---
+    // Build a test mesh (2x2x2 cube)
+    VoxelCastle::World::ChunkSegment cubeSegment;
+    for (int x = 0; x < 2; ++x) {
+        for (int y = 0; y < 2; ++y) {
+            for (int z = 0; z < 2; ++z) {
+                cubeSegment.setVoxel(x, y, z, VoxelEngine::World::Voxel(static_cast<uint8_t>(VoxelEngine::World::VoxelType::STONE)));
+            }
+        }
+    }
+    VoxelEngine::Rendering::VoxelMesh greedyMeshCube = VoxelEngine::Rendering::MeshBuilder::buildGreedyMesh(cubeSegment);
+
+    // MeshRenderer setup
+    VoxelEngine::Rendering::MeshRenderer meshRenderer;
+    meshRenderer.uploadMesh(greedyMeshCube);
+
+    // Camera setup
+    glm::mat4 model = glm::mat4(1.0f);
+    glm::mat4 view = glm::lookAt(glm::vec3(4, 4, 8), glm::vec3(1, 1, 1), glm::vec3(0, 1, 0));
+    float aspect = static_cast<float>(gameWindow.getWidth()) / static_cast<float>(gameWindow.getHeight());
+    glm::mat4 proj = glm::perspective(glm::radians(45.0f), aspect, 0.1f, 100.0f);
+
+    // Print first few mesh vertex positions for debug
+    std::cout << "First 8 mesh vertex positions:" << std::endl;
+    for (size_t i = 0; i < std::min<size_t>(8, greedyMeshCube.vertices.size()); ++i) {
+        const auto& v = greedyMeshCube.vertices[i];
+        std::cout << "  [" << i << "] (" << v.position.x << ", " << v.position.y << ", " << v.position.z << ")" << std::endl;
+    }
+
     while (gameWindow.isRunning()) {
         gameWindow.handleEvents();
 
         // ECS: Progress systems
-        ecs.progress(); // This runs all registered systems
+        ecs.progress();
 
         gameWindow.update();
+
+        // Clear and render mesh
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        meshRenderer.draw(model, view, proj);
+
         gameWindow.render();
     }
 

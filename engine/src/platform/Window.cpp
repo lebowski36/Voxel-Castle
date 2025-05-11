@@ -71,8 +71,8 @@ bool Window::init() {
 
     // Set up the viewport
     glViewport(0, 0, windowWidth, windowHeight);
-    // Set the clear color (e.g., dark blue, will be used in render())
-    glClearColor(0.0f, 0.0f, 0.2f, 1.0f); // Dark blue
+    // Set the clear color to black for debug contrast
+    glClearColor(0.0f, 0.0f, 0.0f, 1.0f); // Black
 
     running = true;
     return true;
@@ -98,9 +98,6 @@ void Window::update() {
 }
 
 void Window::render() {
-    // Clear the screen
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); // Also clear depth buffer if using depth testing
-
     // Rendering game objects would happen here using OpenGL calls
 
     // Swap buffers
