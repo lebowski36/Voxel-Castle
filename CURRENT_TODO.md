@@ -117,8 +117,16 @@ This file tracks our immediate high-level tasks and progress. Detailed sub-tasks
 
 ## 📝 Near-Term Priority Tasks
 *This section should be updated regularly with the most immediate goals, typically pointing to the current high-level task from the list above.*
-1.  **Debug Greedy Meshing:** Analyze the test failures for `buildGreedyMesh` in `game/src/main.cpp` and fix the implementation in `engine/src/rendering/mesh_builder.cpp`. The current output shows it consistently produces a small, incorrect mesh.
+1.  **Debug Greedy Meshing:** Analyze the test failures for `buildGreedyMesh` in `game/src/main.cpp` and fix the implementation in `engine/src/rendering/mesh_builder.cpp`. The current output shows it consistently produces a small, incorrect mesh.  
+    - [x] Identified that only one face direction per axis was being generated (classic greedy meshing bug).
+    - [x] Updated the implementation to sweep both positive and negative face directions for each axis.
+    - [x] Adjusted mask and face-detection logic to ensure all exposed faces are generated.
+    - [x] Cleaned up and clarified the greedy meshing loop for maintainability.
 2.  **Re-test Greedy Meshing:** After applying fixes, re-run the tests in `game/src/main.cpp`.
+    - [x] Built the project and ran all mesh generation tests.
+    - [x] Confirmed that all greedy meshing tests now PASS (single block, lines, planes, cubes).
+    - [x] Verified mesh vertex and index counts match expected values for all test cases.
+    - [x] Confirmed no regressions in naive meshing or voxel system tests.
 
 ## 📊 Progress Tracking (C++ Phase)
 *This section will track progress for the C++ engine development at a high level.*
@@ -133,7 +141,7 @@ This file tracks our immediate high-level tasks and progress. Detailed sub-tasks
 *   **Ran Executable & Initial Tests:**
     *   Voxel System Tests: PASSED
     *   Naive Meshing Tests: PASSED
-    *   Greedy Meshing Tests: FAILED (All tests produced incorrect mesh counts, e.g., 12 vertices, 18 indices for a single block instead of 24/36)
+    *   Greedy Meshing Tests: PASSED (All tests produce correct mesh counts, e.g., 24 vertices, 36 indices for a single block, and correct merging for larger shapes)
 *   **Fix Build Errors in `engine/src/rendering/mesh_builder.cpp`:** Corrected type qualifications for `VoxelPosition` and `Normal` in `buildGreedyMesh`.
 *   Implemented `MeshBuilder::buildGreedyMesh` and `MeshBuilder::addQuad`.
 *   Corrected `addQuad` and `addFace` signatures in `mesh_builder.h` and `mesh_builder.cpp`.
