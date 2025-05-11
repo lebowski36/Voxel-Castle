@@ -2,49 +2,50 @@
 #include <iostream> // For basic error reporting
 
 Window::Window(const std::string &title, int width, int height)
-    : windowTitle(title), windowWidth(width), windowHeight(height), running(false) {}
+    : windowTitle(title), windowWidth(width), windowHeight(height), 
+      sdlWindow(nullptr), sdlRenderer(nullptr), running(false) {}
 
 Window::~Window() {
     cleanUp();
 }
 
 bool Window::init() {
-    // Just print that we're starting initialization
-    std::cout << "Initializing window..." << std::endl;
-    std::cout << "Current directory: ";
-    system("pwd");
-    std::cout << "Environment: ";
-    system("env | grep -E 'DISPLAY|WAYLAND_DISPLAY|XDG_SESSION|SDL'");
-    
-    std::cout << "Graphics drivers: ";
-    system("ls -l /dev/dri/ 2>&1");
-    
-    // Try initializing with just video subsystem
-    if (SDL_Init(SDL_INIT_VIDEO) != 0) {
-        std::cerr << "SDL could not initialize! SDL_Error: " << SDL_GetError() << std::endl;
-        std::cerr << "Additional debug info: SDL initialization failed. This could be due to missing drivers or permissions." << std::endl;
-        
-        // Try fallback options (for testing purposes)
-        std::cerr << "Attempting to initialize with minimal flags..." << std::endl;
-        if (SDL_Init(0) != 0) {
-            std::cerr << "Even minimal SDL initialization failed: " << SDL_GetError() << std::endl;
-            return false;
-        }
-    }
+    std::cout << "Initializing SDL..." << std::endl;
 
-    // Try creating a window with minimum flags
-    sdlWindow = SDL_CreateWindow(windowTitle.c_str(), windowWidth, windowHeight, 0);
-    if (sdlWindow == nullptr) {
-        std::cerr << "Window could not be created! SDL_Error: " << SDL_GetError() << std::endl;
-        SDL_Quit();
+    // Initialize SDL video subsystem
+    if (SDL_Init(SDL_INIT_VIDEO) < 0) {
+        std::cerr << "Failed to initialize SDL video. SDL_Error: " << SDL_GetError() << std::endl;
         return false;
     }
+    std::cout << "SDL video subsystem initialized successfully." << std::endl;
 
-    // Try creating a basic renderer
-    sdlRenderer = SDL_CreateRenderer(sdlWindow, NULL);
+    // Create window
+    sdlWindow = SDL_CreateWindow(
+        windowTitle.c_str(),
+        windowWidth,
+        windowHeight,
+        0 // Using 0 for basic window flags. Specific flags like SDL_WINDOW_OPENGL can be added later.
+    );
+
+    if (sdlWindow == nullptr) {
+        std::cerr << "Window could not be created! SDL_Error: " << SDL_GetError() << std::endl;
+        SDL_Quit(); // Clean up SDL subsystems if window creation fails
+        return false;
+    }
+    std::cout << "Window created successfully." << std::endl;
+
+    // Create renderer
+    // The SDL3 version being used appears to expect only two arguments:
+    // SDL_Window* and const char* (for renderer name, or nullptr for default).
+    sdlRenderer = SDL_CreateRenderer(sdlWindow, nullptr); 
     if (sdlRenderer == nullptr) {
-        std::cerr << "Renderer could not be created! SDL Error: " << SDL_GetError() << std::endl;
-        std::cerr << "Will continue without a renderer for now." << std::endl;
+        std::cerr << "Basic renderer could not be created! SDL_Error: " << SDL_GetError() << std::endl;
+        SDL_DestroyWindow(sdlWindow);
+        sdlWindow = nullptr;
+        SDL_Quit();
+        return false;
+    } else {
+        std::cout << "Basic renderer created successfully." << std::endl;
     }
     
     running = true;
@@ -60,7 +61,7 @@ void Window::handleEvents() {
 
         // Example: Handle keyboard input
         if (e.type == SDL_EVENT_KEY_DOWN) {
-            if (e.key.key == SDLK_ESCAPE) { // Changed from e.key.keysym.sym to e.key.key
+            if (e.key.key == SDLK_ESCAPE) {
                 running = false;
             }
         }
@@ -89,11 +90,14 @@ void Window::cleanUp() {
     if (sdlRenderer) {
         SDL_DestroyRenderer(sdlRenderer);
         sdlRenderer = nullptr;
+        std::cout << "Renderer destroyed." << std::endl;
     }
     if (sdlWindow) {
         SDL_DestroyWindow(sdlWindow);
         sdlWindow = nullptr;
+        std::cout << "Window destroyed." << std::endl;
     }
-    SDL_Quit();
+    SDL_Quit(); // SDL_Quit should be called after destroying windows and renderers.
+    std::cout << "SDL quit." << std::endl;
     running = false;
 }

@@ -25,6 +25,8 @@ We need to choose a cross-platform library to handle windowing, OpenGL/Vulkan co
 
 **ACTION REQUIRED (User): Please choose which library you'd prefer to use (e.g., SDL, SFML, GLFW).**
 
+**Note on SDL Versions:** We are currently attempting to use SDL3. If significant issues persist that cannot be resolved in a timely manner, we will consider falling back to the more established SDL2 library.
+
 ## 2. Library Integration
 
 Once a library is chosen, we will:

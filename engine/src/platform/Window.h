@@ -28,10 +28,11 @@ private:
     std::string windowTitle;
     int windowWidth;
     int windowHeight;
-    bool running;
-
+    
     SDL_Window* sdlWindow = nullptr;
     SDL_Renderer* sdlRenderer = nullptr; // For basic SDL rendering
+
+    bool running; // Moved running to be after SDL objects
 };
 
 #endif // WINDOW_H
