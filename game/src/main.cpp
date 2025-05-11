@@ -189,6 +189,9 @@ int main(int argc, char* argv[]) {
             for (int y = 0; y < 2; ++y) {
                 for (int z = 0; z < 2; ++z) {
                     cubeSegment.setVoxel(x, y, z, VoxelEngine::World::Voxel(static_cast<uint8_t>(VoxelEngine::World::VoxelType::STONE)));
+                    // Log voxel initialization
+                    auto voxel = cubeSegment.getVoxel(x, y, z);
+                    std::cout << "Initialized voxel at (" << x << ", " << y << ", " << z << ") with ID: " << static_cast<int>(voxel.id) << std::endl;
                 }
             }
         }

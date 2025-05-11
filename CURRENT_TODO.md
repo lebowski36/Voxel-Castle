@@ -117,7 +117,8 @@ This file tracks our immediate high-level tasks and progress. Detailed sub-tasks
 
 ## 📝 Near-Term Priority Tasks
 *This section should be updated regularly with the most immediate goals, typically pointing to the current high-level task from the list above.*
-1.  Focus on "Implement Core Systems (C++)" - specifically, "Build mesh generation system".
+1.  **Debug Greedy Meshing:** Analyze the test failures for `buildGreedyMesh` in `game/src/main.cpp` and fix the implementation in `engine/src/rendering/mesh_builder.cpp`. The current output shows it consistently produces a small, incorrect mesh.
+2.  **Re-test Greedy Meshing:** After applying fixes, re-run the tests in `game/src/main.cpp`.
 
 ## 📊 Progress Tracking (C++ Phase)
 *This section will track progress for the C++ engine development at a high level.*
@@ -125,6 +126,22 @@ This file tracks our immediate high-level tasks and progress. Detailed sub-tasks
 - [x] Window management implemented.
 - [x] Basic rendering pipeline established.
 - [x] ECS selected/designed.
+- [x] Project successfully builds.
+
+## Recently Completed:
+*   **Build Project:** Compiled the project.
+*   **Ran Executable & Initial Tests:**
+    *   Voxel System Tests: PASSED
+    *   Naive Meshing Tests: PASSED
+    *   Greedy Meshing Tests: FAILED (All tests produced incorrect mesh counts, e.g., 12 vertices, 18 indices for a single block instead of 24/36)
+*   **Fix Build Errors in `engine/src/rendering/mesh_builder.cpp`:** Corrected type qualifications for `VoxelPosition` and `Normal` in `buildGreedyMesh`.
+*   Implemented `MeshBuilder::buildGreedyMesh` and `MeshBuilder::addQuad`.
+*   Corrected `addQuad` and `addFace` signatures in `mesh_builder.h` and `mesh_builder.cpp`.
+*   Defined `VoxelPosition` and `Normal` type aliases in `voxel.h`.
+*   Fixed `VoxelType` include issue in `voxel.h`.
+*   Implemented and tested `MeshBuilder::buildNaiveMesh`.
+*   Implemented `Voxel`, `VoxelType`, `ChunkSegment`, `ChunkColumn`, `WorldManager` and tested.
+*   Integrated Flecs ECS and implemented basic components/systems.
 
 ## 🧠 Note to Self (Agent)
 **Agent Self-Correction/Reminder:** Per user instruction, I will always execute necessary commands directly using the appropriate tool. I will not ask the user to run commands manually.

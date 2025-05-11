@@ -6,6 +6,9 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/type_ptr.hpp> // For glm::value_ptr if needed later
 
+#include <iostream> // DEBUGGING
+#include <vector> // DEBUGGING (already implicitly included, but good for clarity)
+
 namespace VoxelEngine {
     namespace Rendering {
 
@@ -172,174 +175,112 @@ namespace VoxelEngine {
             using VoxelEngine::World::VoxelType;
             using ::VoxelEngine::World::Voxel;
 
-            // Iterate over each of the 3 dimensions (X, Y, Z)
-            for (int d = 0; d < 3; ++d) { // d is the dimension normal to the face (0=X, 1=Y, 2=Z)
-                int u = (d + 1) % 3; // u-axis (secondary axis of the slice)
-                int v = (d + 2) % 3; // v-axis (primary axis of the slice)
+            // For each axis (d = 0:X, 1:Y, 2:Z)
+            for (int d = 0; d < 3; ++d) {
+                int u = (d + 1) % 3;
+                int v = (d + 2) % 3;
 
-                int x[3] = {0, 0, 0}; // Current voxel coordinates
-                int q[3] = {0, 0, 0}; // Offset in direction d
-                q[d] = 1;
+                // Sweep both directions: +1 (front face), -1 (back face)
+                for (int dir = -1; dir <= 1; dir += 2) {
+                    int x[3] = {0, 0, 0};
+                    int q[3] = {0, 0, 0};
+                    q[d] = dir;
 
-                // Mask to keep track of visited voxels on the current 2D slice
-                // Dimensions of the mask depend on u and v axes for the current slice
-                std::vector<bool> mask(chunk_dims[u] * chunk_dims[v], false);
-                
-                // Iterate over the dimension d (slices of the chunk)
-                // x[d] goes from -1 (representing boundary before chunk) to chunk_dims[d]-1 (last layer in chunk)
-                // This allows checking faces on both ends of the chunk.
-                for (x[d] = -1; x[d] < chunk_dims[d]; ++x[d]) {
-                    int n = 0; // Mask index
+                    std::vector<bool> mask(chunk_dims[u] * chunk_dims[v], false);
 
-                    // Iterate over the v-axis of the slice
-                    for (x[v] = 0; x[v] < chunk_dims[v]; ++x[v]) {
-                        // Iterate over the u-axis of the slice
-                        for (x[u] = 0; x[u] < chunk_dims[u]; ++x[u], ++n) {
-                            if (mask[n]) {
-                                continue; // Already meshed
-                            }
+                    // For each slice along d
+                    for (x[d] = (dir == 1 ? -1 : 0); x[d] < (dir == 1 ? chunk_dims[d] : chunk_dims[d]); ++x[d]) {
+                        int n = 0;
+                        for (x[v] = 0; x[v] < chunk_dims[v]; ++x[v]) {
+                            for (x[u] = 0; x[u] < chunk_dims[u]; ++x[u], ++n) {
+                                if (mask[n]) continue;
 
-                            // Get voxel types on both sides of the potential face
-                            // Voxel 1: current voxel at x (potentially x[d]=-1, handled by getVoxel)
-                            // Voxel 2: neighbor voxel at x + q (potentially x[d]+q[d]=chunk_dims[d], handled by getVoxel)
-                            ::VoxelEngine::World::Voxel voxel1 = segment.getVoxel(x[0], x[1], x[2]);
-                            ::VoxelEngine::World::Voxel voxel2 = segment.getVoxel(x[0] + q[0], x[1] + q[1], x[2] + q[2]);
-                            
-                            bool is_voxel1_solid = (voxel1.id != static_cast<uint8_t>(VoxelType::AIR));
-                            bool is_voxel2_solid = (voxel2.id != static_cast<uint8_t>(VoxelType::AIR));
+                                Voxel voxel1 = segment.getVoxel(x[0], x[1], x[2]);
+                                Voxel voxel2 = segment.getVoxel(x[0] + q[0], x[1] + q[1], x[2] + q[2]);
+                                bool is_voxel1_solid = (voxel1.id != static_cast<uint8_t>(VoxelType::AIR));
+                                bool is_voxel2_solid = (voxel2.id != static_cast<uint8_t>(VoxelType::AIR));
 
-                            if (is_voxel1_solid == is_voxel2_solid) {
-                                continue; // Both same (solid-solid or air-air), no face here
-                            }
+                                // Only generate a face if one is solid and the other is air, and the face is oriented correctly for this sweep
+                                if ((dir == 1 && is_voxel1_solid && !is_voxel2_solid) || (dir == -1 && !is_voxel1_solid && is_voxel2_solid)) {
+                                    VoxelType current_face_voxel_type = (dir == 1) ? static_cast<VoxelType>(voxel1.id) : static_cast<VoxelType>(voxel2.id);
 
-                            // Determine face properties
-                            ::VoxelEngine::World::VoxelType current_face_voxel_type;
-                            bool process_front_face; // Face of voxel1 in +d direction
-
-                            if (is_voxel1_solid) { // voxel1 solid, voxel2 air -> front face of voxel1
-                                current_face_voxel_type = static_cast<::VoxelEngine::World::VoxelType>(voxel1.id);
-                                process_front_face = true;
-                            } else { // voxel1 air, voxel2 solid -> "back" face of voxel2 (effectively front face of voxel2 in -d direction)
-                                current_face_voxel_type = static_cast<::VoxelEngine::World::VoxelType>(voxel2.id);
-                                process_front_face = false;
-                            }
-
-                            // Greedily expand in u-direction (height of quad on the slice)
-                            int h_quad;
-                            for (h_quad = 1; x[u] + h_quad < chunk_dims[u]; ++h_quad) {
-                                int mask_check_idx_h = n + h_quad; // Mask index for (x[u]+h_quad, x[v])
-                                if (mask[mask_check_idx_h]) {
-                                    break; // Already part of another mesh
-                                }
-
-                                // Voxel on "this" side of the face, extended along u
-                                int cur_coords_u_ext[3] = {x[0], x[1], x[2]};
-                                cur_coords_u_ext[u] += h_quad;
-                                ::VoxelEngine::World::Voxel v_strip_1 = segment.getVoxel(cur_coords_u_ext[0], cur_coords_u_ext[1], cur_coords_u_ext[2]);
-
-                                // Voxel on "other" side of the face, extended along u
-                                int other_coords_u_ext[3] = {x[0] + q[0], x[1] + q[1], x[2] + q[2]};
-                                other_coords_u_ext[u] += h_quad;
-                                ::VoxelEngine::World::Voxel v_strip_2 = segment.getVoxel(other_coords_u_ext[0], other_coords_u_ext[1], other_coords_u_ext[2]);
-                                
-                                bool v_strip_1_solid = (v_strip_1.id != static_cast<uint8_t>(VoxelType::AIR));
-                                bool v_strip_2_solid = (v_strip_2.id != static_cast<uint8_t>(VoxelType::AIR));
-
-                                if (process_front_face) {
-                                    if (!v_strip_1_solid || v_strip_2_solid || static_cast<::VoxelEngine::World::VoxelType>(v_strip_1.id) != current_face_voxel_type) {
-                                        break;
-                                    }
-                                } else { // back face
-                                    if (v_strip_1_solid || !v_strip_2_solid || static_cast<::VoxelEngine::World::VoxelType>(v_strip_2.id) != current_face_voxel_type) {
-                                        break;
-                                    }
-                                }
-                            }
-
-                            // Greedily expand in v-direction (width of quad on the slice)
-                            int w_quad;
-                            bool done_w = false;
-                            for (w_quad = 1; x[v] + w_quad < chunk_dims[v]; ++w_quad) {
-                                for (int k_u = 0; k_u < h_quad; ++k_u) { // Check all cells in the current quad's height
-                                    // Mask index for (x[u]+k_u, x[v]+w_quad)
-                                    int mask_check_idx_w = (x[v] + w_quad) * chunk_dims[u] + (x[u] + k_u);
-                                    if (mask[mask_check_idx_w]) {
-                                        done_w = true; break;
-                                    }
-
-                                    // Voxel on "this" side, extended along u and v
-                                    int cur_coords_uv_ext[3] = {x[0], x[1], x[2]};
-                                    cur_coords_uv_ext[u] += k_u;
-                                    cur_coords_uv_ext[v] += w_quad;
-                                    ::VoxelEngine::World::Voxel v_scan_1 = segment.getVoxel(cur_coords_uv_ext[0], cur_coords_uv_ext[1], cur_coords_uv_ext[2]);
-
-                                    // Voxel on "other" side, extended along u and v
-                                    int other_coords_uv_ext[3] = {x[0] + q[0], x[1] + q[1], x[2] + q[2]};
-                                    other_coords_uv_ext[u] += k_u;
-                                    other_coords_uv_ext[v] += w_quad;
-                                    ::VoxelEngine::World::Voxel v_scan_2 = segment.getVoxel(other_coords_uv_ext[0], other_coords_uv_ext[1], other_coords_uv_ext[2]);
-
-                                    bool v_scan_1_solid = (v_scan_1.id != static_cast<uint8_t>(VoxelType::AIR));
-                                    bool v_scan_2_solid = (v_scan_2.id != static_cast<uint8_t>(VoxelType::AIR));
-
-                                    if (process_front_face) {
-                                        if (!v_scan_1_solid || v_scan_2_solid || static_cast<::VoxelEngine::World::VoxelType>(v_scan_1.id) != current_face_voxel_type) {
-                                            done_w = true; break;
+                                    // Find width (h_quad) in u direction
+                                    int h_quad;
+                                    for (h_quad = 1; x[u] + h_quad < chunk_dims[u]; ++h_quad) {
+                                        int mask_check_idx_h = n + h_quad;
+                                        if (mask[mask_check_idx_h]) break;
+                                        int cur_coords_u_ext[3] = {x[0], x[1], x[2]}; cur_coords_u_ext[u] += h_quad;
+                                        Voxel v_strip_1 = segment.getVoxel(cur_coords_u_ext[0], cur_coords_u_ext[1], cur_coords_u_ext[2]);
+                                        Voxel v_strip_2 = segment.getVoxel(cur_coords_u_ext[0] + q[0], cur_coords_u_ext[1] + q[1], cur_coords_u_ext[2] + q[2]);
+                                        bool v_strip_1_solid = (v_strip_1.id != static_cast<uint8_t>(VoxelType::AIR));
+                                        bool v_strip_2_solid = (v_strip_2.id != static_cast<uint8_t>(VoxelType::AIR));
+                                        if ((dir == 1 && (!v_strip_1_solid || v_strip_2_solid || static_cast<VoxelType>(v_strip_1.id) != current_face_voxel_type)) ||
+                                            (dir == -1 && (v_strip_1_solid || !v_strip_2_solid || static_cast<VoxelType>(v_strip_2.id) != current_face_voxel_type))) {
+                                            break;
                                         }
-                                    } else { // back face
-                                        if (v_scan_1_solid || !v_scan_2_solid || static_cast<::VoxelEngine::World::VoxelType>(v_scan_2.id) != current_face_voxel_type) {
-                                            done_w = true; break;
+                                    }
+
+                                    // Find height (w_quad) in v direction
+                                    int w_quad;
+                                    bool done_w = false;
+                                    for (w_quad = 1; x[v] + w_quad < chunk_dims[v]; ++w_quad) {
+                                        for (int k_u = 0; k_u < h_quad; ++k_u) {
+                                            int mask_check_idx_w = (x[v] + w_quad) * chunk_dims[u] + (x[u] + k_u);
+                                            if (mask[mask_check_idx_w]) { done_w = true; break; }
+                                            int cur_coords_uv_ext[3] = {x[0], x[1], x[2]}; cur_coords_uv_ext[u] += k_u; cur_coords_uv_ext[v] += w_quad;
+                                            Voxel v_scan_1 = segment.getVoxel(cur_coords_uv_ext[0], cur_coords_uv_ext[1], cur_coords_uv_ext[2]);
+                                            Voxel v_scan_2 = segment.getVoxel(cur_coords_uv_ext[0] + q[0], cur_coords_uv_ext[1] + q[1], cur_coords_uv_ext[2] + q[2]);
+                                            bool v_scan_1_solid = (v_scan_1.id != static_cast<uint8_t>(VoxelType::AIR));
+                                            bool v_scan_2_solid = (v_scan_2.id != static_cast<uint8_t>(VoxelType::AIR));
+                                            if ((dir == 1 && (!v_scan_1_solid || v_scan_2_solid || static_cast<VoxelType>(v_scan_1.id) != current_face_voxel_type)) ||
+                                                (dir == -1 && (v_scan_1_solid || !v_scan_2_solid || static_cast<VoxelType>(v_scan_2.id) != current_face_voxel_type))) {
+                                                done_w = true; break;
+                                            }
+                                        }
+                                        if (done_w) break;
+                                    }
+
+                                    // Compute quad corners
+                                    float quad_base_pos_on_plane[3];
+                                    quad_base_pos_on_plane[d] = static_cast<float>(x[d] + (dir == 1 ? 1 : 0));
+                                    quad_base_pos_on_plane[u] = static_cast<float>(x[u]);
+                                    quad_base_pos_on_plane[v] = static_cast<float>(x[v]);
+
+                                    float du_vec[3] = {0,0,0}; du_vec[u] = static_cast<float>(h_quad);
+                                    float dv_vec[3] = {0,0,0}; dv_vec[v] = static_cast<float>(w_quad);
+
+                                    ::VoxelEngine::World::VoxelPosition vp1 = {quad_base_pos_on_plane[0], quad_base_pos_on_plane[1], quad_base_pos_on_plane[2]};
+                                    ::VoxelEngine::World::VoxelPosition vp2 = {quad_base_pos_on_plane[0] + dv_vec[0], quad_base_pos_on_plane[1] + dv_vec[1], quad_base_pos_on_plane[2] + dv_vec[2]};
+                                    ::VoxelEngine::World::VoxelPosition vp3 = {quad_base_pos_on_plane[0] + dv_vec[0] + du_vec[0], quad_base_pos_on_plane[1] + dv_vec[1] + du_vec[1], quad_base_pos_on_plane[2] + dv_vec[2] + du_vec[2]};
+                                    ::VoxelEngine::World::VoxelPosition vp4 = {quad_base_pos_on_plane[0] + du_vec[0], quad_base_pos_on_plane[1] + du_vec[1], quad_base_pos_on_plane[2] + du_vec[2]};
+
+                                    ::VoxelEngine::World::Normal normal_val;
+                                    normal_val.x = static_cast<float>(q[0]);
+                                    normal_val.y = static_cast<float>(q[1]);
+                                    normal_val.z = static_cast<float>(q[2]);
+
+                                    if (dir == 1) {
+                                        addQuad(mesh, vp1, vp2, vp3, vp4, normal_val, current_face_voxel_type);
+                                    } else {
+                                        // Reverse winding for back face
+                                        addQuad(mesh, vp1, vp4, vp3, vp2, normal_val, current_face_voxel_type);
+                                    }
+
+                                    // Mark mask
+                                    for (int l_v = 0; l_v < w_quad; ++l_v) {
+                                        for (int m_u = 0; m_u < h_quad; ++m_u) {
+                                            int mask_index = (x[v] + l_v) * chunk_dims[u] + (x[u] + m_u);
+                                            mask[mask_index] = true;
                                         }
                                     }
                                 }
-                                if (done_w) {
-                                    break;
-                                }
                             }
-
-                            // Add the quad
-                            // Quad base position is on the boundary plane: x[d] + q[d] (which is x[d]+1.0f)
-                            // The coordinates x[u] and x[v] are the starting corner on that plane.
-                            float quad_base_pos_on_plane[3];
-                            quad_base_pos_on_plane[d] = static_cast<float>(x[d] + q[d]); // e.g. x_coord + 1.0f
-                            quad_base_pos_on_plane[u] = static_cast<float>(x[u]);
-                            quad_base_pos_on_plane[v] = static_cast<float>(x[v]);
-
-                            float du_vec[3] = {0,0,0}; du_vec[u] = static_cast<float>(h_quad); // Vector along u-axis for height
-                            float dv_vec[3] = {0,0,0}; dv_vec[v] = static_cast<float>(w_quad); // Vector along v-axis for width
-
-                            // Vertices of the quad on the plane
-                            ::VoxelEngine::World::VoxelPosition vp1 = {quad_base_pos_on_plane[0], quad_base_pos_on_plane[1], quad_base_pos_on_plane[2]};
-                            ::VoxelEngine::World::VoxelPosition vp2 = {quad_base_pos_on_plane[0] + dv_vec[0], quad_base_pos_on_plane[1] + dv_vec[1], quad_base_pos_on_plane[2] + dv_vec[2]}; // vp1 + dv
-                            ::VoxelEngine::World::VoxelPosition vp3 = {quad_base_pos_on_plane[0] + dv_vec[0] + du_vec[0], quad_base_pos_on_plane[1] + dv_vec[1] + du_vec[1], quad_base_pos_on_plane[2] + dv_vec[2] + du_vec[2]}; // vp1 + dv + du
-                            ::VoxelEngine::World::VoxelPosition vp4 = {quad_base_pos_on_plane[0] + du_vec[0], quad_base_pos_on_plane[1] + du_vec[1], quad_base_pos_on_plane[2] + du_vec[2]}; // vp1 + du
-                            
-                            ::VoxelEngine::World::Normal normal_val;
-                            if (process_front_face) { // Normal points in +d direction
-                                normal_val.x = static_cast<float>(q[0]);
-                                normal_val.y = static_cast<float>(q[1]);
-                                normal_val.z = static_cast<float>(q[2]);
-                                addQuad(mesh, vp1, vp2, vp3, vp4, normal_val, current_face_voxel_type);
-                            } else { // Normal points in -d direction
-                                normal_val.x = -static_cast<float>(q[0]);
-                                normal_val.y = -static_cast<float>(q[1]);
-                                normal_val.z = -static_cast<float>(q[2]);
-                                // Reversed winding for back face (vp1, vp4, vp3, vp2) to keep CCW from normal's view
-                                addQuad(mesh, vp1, vp4, vp3, vp2, normal_val, current_face_voxel_type);
-                            }
-
-                            // Mark voxels in mask
-                            for (int l_v = 0; l_v < w_quad; ++l_v) {
-                                for (int m_u = 0; m_u < h_quad; ++m_u) {
-                                    mask[(x[v] + l_v) * chunk_dims[u] + (x[u] + m_u)] = true;
-                                }
-                            }
-                        } // End u-axis iteration
-                    } // End v-axis iteration
-                } // End d-axis slice iteration
-            } // End dimension iteration (d)
+                        }
+                    }
+                }
+            }
             return mesh;
         }
 
-    } // namespace Rendering
-} // namespace VoxelEngine
+    } 
+}
