@@ -48,11 +48,11 @@ This file tracks our immediate high-level tasks and progress. Detailed sub-tasks
   - [x] Create window with proper configuration
   - [x] Set up event loop
   - [x] Implement basic input handling
-- [ ] Set up rendering API (e.g., OpenGL, Vulkan, DirectX)
-  - [ ] Initialize graphics device and context
-  - [ ] Create swap chain/surface
-  - [ ] Set up initial render pipeline
-  - [ ] Define strategy for shader management
+- [x] Set up rendering API (e.g., OpenGL, Vulkan, DirectX)
+  - [x] Initialize graphics device and context
+  - [x] Create swap chain/surface
+  - [x] Set up initial render pipeline
+  - [x] Define strategy for shader management
 - [ ] Select/Implement C++ Math Library (e.g., GLM, Eigen)
 
 ### 2. Implement Core Systems (C++)
@@ -122,10 +122,8 @@ This file tracks our immediate high-level tasks and progress. Detailed sub-tasks
 *This section will track progress for the C++ engine development at a high level.*
 - [x] Project structure and build system defined.
 - [x] Window management implemented.
-- [ ] Basic rendering pipeline established.
+- [x] Basic rendering pipeline established.
 - [ ] ECS selected/designed.
-- [ ] Initial voxel data structures implemented.
-- [ ] Camera system functional.
 
 ## 🧠 Note to Self (Agent)
 **Agent Self-Correction/Reminder:** Per user instruction, I will always execute necessary commands directly using the appropriate tool. I will not ask the user to run commands manually.
@@ -161,4 +159,4 @@ This file tracks our immediate high-level tasks and progress. Detailed sub-tasks
 5. Results in more maintainable and testable code
 
 ---
-Last updated: May 11, 2025
+Last updated: May 12, 2025

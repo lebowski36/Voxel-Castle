@@ -47,9 +47,9 @@
     *   [x] **Decision:** For now, we will assume we are moving fully to OpenGL for rendering within the main window.
 
 7.  **Testing:**
-    *   [ ] Compile and run the application.
-    *   [ ] Verify that the window appears and is cleared to the color set by `glClearColor`.
-    *   [ ] Verify OpenGL version, GLSL version, Vendor, and Renderer are printed to console.
+    *   [x] Compile and run the application.
+    *   [x] Verify that the window appears and is cleared to the color set by `glClearColor`.
+    *   [x] Verify OpenGL version, GLSL version, Vendor, and Renderer are printed to console.
 
 ## ✅ Completion Criteria:
 - The application compiles without errors.
