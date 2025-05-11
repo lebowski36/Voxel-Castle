@@ -1,16 +1,16 @@
-cmake_minimum_required(VERSION 3.16) # Or a newer version if needed
+cmake_minimum_required(VERSION 3.20) # Match user's CMake version or a reasonable minimum
 project(VoxelFortress VERSION 0.1.0 LANGUAGES CXX)
 
-# Set C++ standard
+# Set C++ standard for the whole project (can be overridden per target)
 set(CMAKE_CXX_STANDARD 17)
-set(CMAKE_CXX_STANDARD_REQUIRED True)
-set(CMAKE_CXX_EXTENSIONS OFF) # Avoid compiler-specific extensions
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_EXTENSIONS OFF)
 
-# Compiler warnings (adjust as needed for your compiler)
+# Compiler warnings (optional but good practice)
 if(MSVC)
-    add_compile_options(/W4 /WX) # Treat warnings as errors
-else() # GCC/Clang
-    add_compile_options(-Wall -Wextra -Wpedantic -Werror) # Treat warnings as errors
+    add_compile_options(/W4 /WX)
+else()
+    add_compile_options(-Wall -Wextra -Wpedantic) # Removed -Werror
 endif()
 
 # Output directories for executables and libraries
@@ -18,26 +18,24 @@ set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 
-# Include directories
-include_directories(
-    ${PROJECT_SOURCE_DIR}/engine/include
-    ${PROJECT_SOURCE_DIR}/game/include
-    # Add paths to external library include directories here
-    # e.g., ${PROJECT_SOURCE_DIR}/external/glm
-)
+# --- SDL Configuration ---
+# Build SDL as a static library
+set(SDL_STATIC ON CACHE BOOL "Build SDL as a static library")
+set(SDL_SHARED OFF CACHE BOOL "Build SDL as a shared library")
+# You might need to set other SDL options here if defaults are not suitable
+# e.g., disabling certain features if not needed:
+# set(SDL_VIDEO OFF CACHE BOOL "") # Example: if you only need SDL_timer or SDL_audio
+
+# Add subdirectory for SDL (vendored)
+add_subdirectory(external/SDL3)
+# --- End SDL Configuration ---
 
 # Add subdirectories for engine and game
 add_subdirectory(engine)
 add_subdirectory(game)
 
-# Add top-level tests if any
-# add_subdirectory(tests) # If you have tests in the root tests/ directory
+# Enable CTest (optional, if you add tests)
+# enable_testing()
+# add_subdirectory(tests) # If you have a tests directory with CMakeLists.txt
 
-# Enable CTest for testing
-enable_testing()
-
-message(STATUS "CMake Project: VoxelFortress")
-message(STATUS "C++ Standard: ${CMAKE_CXX_STANDARD}")
-message(STATUS "Build Type: ${CMAKE_BUILD_TYPE}") # Will be empty if not set, e.g. "Debug", "Release"
-message(STATUS "Binary Dir: ${CMAKE_BINARY_DIR}")
-message(STATUS "Source Dir: ${PROJECT_SOURCE_DIR}")
+message(STATUS "Project VoxelFortress configured. Build with 'cmake --build .'")

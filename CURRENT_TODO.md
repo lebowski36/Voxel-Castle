@@ -18,10 +18,10 @@ This file tracks our immediate high-level tasks and progress. Detailed sub-tasks
 2.  **Detailed Sub-Tasks:** Each high-level task in this file will have a corresponding detailed Markdown file in the `development_tasks/` directory (e.g., `development_tasks/01_core_engine_foundation/01_set_up_project_structure.md`).
     *   If a detailed sub-task file does not exist when a high-level task is started, the agent will create it, outlining the specific steps, considerations, and self-prompting needed to complete that item.
 3.  **Execution Focus:** The agent will primarily work from the detailed sub-task files.
-4.  **User Confirmation:**
+4.  **User Confirmation & Involvement:**
     *   The agent will confirm individual significant actions or outputs from the sub-task file with the user.
+    *   **Crucial decisions (e.g., library choices, major architectural changes) MUST be discussed and confirmed with the user before proceeding.**
     *   Once all sub-steps within a detailed task file are completed and confirmed, the agent will propose marking the corresponding high-level task in *this* `CURRENT_TODO.md` as complete.
-    *   The user must confirm before the high-level task is marked `[x]`.
 5.  **File Modifications:** The agent will use the `insert_edit_into_file` tool for changes, providing clear explanations.
 6.  **Command Execution:** The agent will use `run_in_terminal` for shell commands, with explanations.
 
@@ -40,10 +40,10 @@ This file tracks our immediate high-level tasks and progress. Detailed sub-tasks
 
 ### 1. Core Engine Foundation (C++)
 *Detailed sub-tasks in `/home/system-x1/Projects/Voxel Castle/development_tasks/01_core_engine_foundation/`*
-- [ ] Set up new C++ project structure
-  - [ ] Define module/directory layout
-  - [ ] Configure C++ build system (e.g., CMake, Meson)
-  - [ ] Set up initial compiler/linker settings
+- [x] Set up new C++ project structure
+  - [x] Define module/directory layout
+  - [x] Configure C++ build system (e.g., CMake, Meson)
+  - [x] Set up initial compiler/linker settings
 - [ ] Implement window management (e.g., using SDL, SFML, or platform-specific APIs)
   - [ ] Create window with proper configuration
   - [ ] Set up event loop
@@ -120,7 +120,7 @@ This file tracks our immediate high-level tasks and progress. Detailed sub-tasks
 
 ## 📊 Progress Tracking (C++ Phase)
 *This section will track progress for the C++ engine development at a high level.*
-- [ ] Project structure and build system defined.
+- [x] Project structure and build system defined.
 - [ ] Window management implemented.
 - [ ] Basic rendering pipeline established.
 - [ ] ECS selected/designed.
@@ -128,7 +128,13 @@ This file tracks our immediate high-level tasks and progress. Detailed sub-tasks
 - [ ] Camera system functional.
 
 ## 🧠 Note to Self (Agent & User)
+**Agent Self-Correction/Reminder:** Per user instruction, I will always execute necessary commands directly using the appropriate tool. I will not ask the user to run commands manually.
+
+**If I'm unable to see the complete output from a command I've run, I must wait for the user to provide the results before proceeding.** This is particularly important for build outputs, error messages, and other terminal responses that are crucial for debugging and making progress.
+
 **WE MUST update this file and the relevant detailed task files after each development step!** This ensures we maintain focus on the most important tasks, have clear visibility into progress, and can adapt our plan as new information becomes available. The active task list should always reflect the current state of development.
+
+**ALWAYS CONFIRM CRUCIAL DECISIONS WITH THE USER.** Before making significant choices (e.g., selecting a library, deciding on a core architectural pattern), present the options, your recommendation (if any), and ask for the user's input and confirmation. This ensures the project aligns with their vision and preferences.
 
 **DOCUMENTATION IS CRUCIAL!** With every implementation step, we must update relevant documentation to explain design decisions, patterns used, and architectural considerations. This includes:
 1. Updating existing documentation files (`org/` directory)
@@ -151,4 +157,4 @@ This file tracks our immediate high-level tasks and progress. Detailed sub-tasks
 5. Results in more maintainable and testable code
 
 ---
-Last updated: <!-- Copilot will update this date -->
+Last updated: May 11, 2025

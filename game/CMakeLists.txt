@@ -12,6 +12,12 @@ add_executable(VoxelFortressGame
 # Link the game against the engine library
 target_link_libraries(VoxelFortressGame PRIVATE VoxelEngine)
 
+# Explicitly include SDL3 directories for the game module
+target_include_directories(VoxelFortressGame PRIVATE 
+    ${CMAKE_BINARY_DIR}/external/SDL3/include-revision
+    ${CMAKE_SOURCE_DIR}/external/SDL3/include
+)
+
 # Link other dependencies if any (e.g., external libraries used directly by the game)
 # target_link_libraries(VoxelFortressGame PRIVATE SomeExternalLibForGame)
 
