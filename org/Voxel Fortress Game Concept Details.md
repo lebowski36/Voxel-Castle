@@ -206,18 +206,18 @@ Creating Voxel Fortress presents significant challenges that require innovative 
 
 ## E. Technical Implementation
 
-Bringing Voxel Fortress to life requires a robust, performant, and flexible technical foundation. After careful evaluation of available options, we've chosen to develop a custom engine using Rust as our primary implementation language.
+Bringing Voxel Fortress to life requires a robust, performant, and flexible technical foundation. After careful evaluation of available options, we've chosen to develop a custom engine using **C++** as our primary implementation language.
 
 This approach provides several key advantages for our specific requirements:
-- Performance optimization at the lowest levels of the technology stack
-- Memory safety without garbage collection interruptions
-- Excellent concurrency support for our heavily multithreaded architecture
-- Direct control over rendering pipeline and memory management
-- Strong typing and ownership model to manage complex simulation state
+- Performance optimization at the lowest levels of the technology stack, crucial for complex simulations and rendering.
+- Direct memory management and control over system resources.
+- Excellent concurrency support for a heavily multithreaded architecture.
+- Mature and extensive libraries for graphics, physics, audio, and more.
+- A large talent pool and extensive community support.
 
 The complete technical approach, including engine architecture, technology selections, and implementation strategies is detailed in our technical stack document:
 
-- [Voxel Fortress Tech Stack (Rust Custom Engine Approach)](./Voxel%20Fortress%20Tech%20Stack%20\(Rust%20Custom%20Engine%20Approach\).md)
+- [Voxel Fortress Tech Stack (C++ Custom Engine Approach)](./Voxel%20Fortress%20Tech%20Stack%20(C++%20Custom%20Engine%20Approach).md)
 
 ## F. Game Concept Documents Index
 

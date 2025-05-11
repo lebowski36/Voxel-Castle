@@ -1,0 +1,323 @@
+// filepath: /home/system-x1/Projects/Voxel Castle/voxel_fortress/src/plugins/ui.rs
+use bevy::prelude::*;
+use crate::chunk::ChunkManager;
+
+/// Game states to control application flow
+#[derive(Debug, Clone, Copy, Default, Eq, PartialEq, Hash, States)]
+pub enum GameState {
+    #[default]
+    Loading,
+    Playing,
+    Paused,
+}
+
+/// UI plugin for Voxel Fortress
+pub struct UiPlugin;
+
+/// Component to mark the loading UI root
+#[derive(Component)]
+pub struct LoadingUiRoot;
+
+/// Component to mark the playing UI root
+#[derive(Component)]
+pub struct PlayingUiRoot;
+
+/// Component to mark the pause menu UI root
+#[derive(Component)]
+pub struct PauseUiRoot;
+
+impl Plugin for UiPlugin {
+    fn build(&self, app: &mut App) {
+        app
+            .init_state::<GameState>()
+            .add_systems(Startup, setup_ui)
+            .add_systems(Update, check_loading_complete.run_if(in_state(GameState::Loading)))
+            .add_systems(OnEnter(GameState::Playing), setup_playing_ui)
+            .add_systems(OnEnter(GameState::Paused), setup_pause_ui);
+    }
+}
+
+/// Sets up a minimal UI for loading indication
+fn setup_ui(mut commands: Commands) {
+    // Create a UI root node
+    commands.spawn((
+        LoadingUiRoot,
+        NodeBundle {
+            style: Style {
+                width: Val::Percent(100.0),
+                height: Val::Percent(100.0),
+                justify_content: JustifyContent::Center,
+                align_items: AlignItems::Center,
+                ..default()
+            },
+            background_color: Color::rgba(0.0, 0.0, 0.0, 0.5).into(),
+            ..default()
+        },
+    ))
+    .with_children(|parent| {
+        // Add loading text as a child of the root node
+        parent.spawn(
+            TextBundle::from_section(
+                "Loading...", 
+                TextStyle {
+                    font_size: 30.0,
+                    color: Color::WHITE,
+                    ..default()
+                }
+            )
+        );
+    });
+}
+
+/// System to check if loading is complete and transition to Playing state
+fn check_loading_complete(
+    chunk_manager: Res<ChunkManager>,
+    mut next_state: ResMut<NextState<GameState>>,
+    mut commands: Commands,
+    loading_ui_query: Query<Entity, With<LoadingUiRoot>>,
+) {
+    let total = ((chunk_manager.radius as i64 * 2 + 1).pow(3)) as usize;
+    if total == 0 { return; }
+
+    let loaded = chunk_manager.loaded_chunks.len();
+
+    // If all chunks are loaded, move to the Playing state and despawn loading UI
+    if loaded >= total {
+        next_state.set(GameState::Playing);
+        
+        // Despawn the loading UI
+        for entity in loading_ui_query.iter() {
+            commands.entity(entity).despawn_recursive();
+        }
+    }
+}
+
+/// Setup UI elements for the playing state
+fn setup_playing_ui(mut commands: Commands) {
+    // Create the playing UI root
+    commands.spawn((
+        PlayingUiRoot,
+        NodeBundle {
+            style: Style {
+                width: Val::Percent(100.0),
+                height: Val::Percent(100.0),
+                padding: UiRect::all(Val::Px(10.0)),
+                // We want UI elements at the top right
+                justify_content: JustifyContent::FlexEnd,
+                align_items: AlignItems::FlexStart,
+                ..default()
+            },
+            // Transparent background
+            background_color: Color::NONE.into(),
+            ..default()
+        },
+    ))
+    .with_children(|parent| {
+        // Add a game UI panel in the top right corner
+        parent.spawn(
+            NodeBundle {
+                style: Style {
+                    width: Val::Px(200.0),
+                    height: Val::Auto,
+                    padding: UiRect::all(Val::Px(10.0)),
+                    flex_direction: FlexDirection::Column,
+                    align_items: AlignItems::FlexStart,
+                    ..default()
+                },
+                background_color: Color::rgba(0.1, 0.1, 0.1, 0.7).into(),
+                ..default()
+            }
+        )
+        .with_children(|parent| {
+            // Add game info text
+            parent.spawn(
+                TextBundle::from_section(
+                    "Game UI", 
+                    TextStyle {
+                        font_size: 20.0,
+                        color: Color::WHITE,
+                        ..default()
+                    }
+                )
+            );
+
+            // Add a pause button
+            parent.spawn((
+                ButtonBundle {
+                    style: Style {
+                        width: Val::Px(120.0),
+                        height: Val::Px(30.0),
+                        margin: UiRect::all(Val::Px(5.0)),
+                        justify_content: JustifyContent::Center,
+                        align_items: AlignItems::Center,
+                        ..default()
+                    },
+                    background_color: Color::rgb(0.3, 0.3, 0.7).into(),
+                    ..default()
+                },
+            ))
+            .with_children(|parent| {
+                parent.spawn(
+                    TextBundle::from_section(
+                        "Pause Game", 
+                        TextStyle {
+                            font_size: 16.0,
+                            color: Color::WHITE,
+                            ..default()
+                        }
+                    )
+                );
+            });
+        });
+    });
+}
+
+/// Setup UI elements for the paused state
+fn setup_pause_ui(mut commands: Commands) {
+    // Create a pause menu overlay
+    commands.spawn((
+        PauseUiRoot,
+        NodeBundle {
+            style: Style {
+                width: Val::Percent(100.0),
+                height: Val::Percent(100.0),
+                position_type: PositionType::Absolute,
+                justify_content: JustifyContent::Center,
+                align_items: AlignItems::Center,
+                ..default()
+            },
+            background_color: Color::rgba(0.0, 0.0, 0.0, 0.7).into(),
+            ..default()
+        },
+    ))
+    .with_children(|parent| {
+        // Create the pause menu panel
+        parent.spawn(
+            NodeBundle {
+                style: Style {
+                    width: Val::Px(300.0),
+                    height: Val::Auto,
+                    flex_direction: FlexDirection::Column,
+                    align_items: AlignItems::Center,
+                    padding: UiRect::all(Val::Px(20.0)),
+                    ..default()
+                },
+                background_color: Color::rgb(0.1, 0.1, 0.2).into(),
+                ..default()
+            }
+        )
+        .with_children(|parent| {
+            // Title
+            parent.spawn(
+                TextBundle::from_section(
+                    "Game Paused",
+                    TextStyle {
+                        font_size: 24.0,
+                        color: Color::WHITE,
+                        ..default()
+                    }
+                )
+                .with_style(Style {
+                    margin: UiRect {
+                        bottom: Val::Px(20.0),
+                        ..default()
+                    },
+                    ..default()
+                })
+            );
+
+            // Resume button
+            parent.spawn((
+                ButtonBundle {
+                    style: Style {
+                        width: Val::Px(200.0),
+                        height: Val::Px(40.0),
+                        margin: UiRect {
+                            bottom: Val::Px(10.0),
+                            ..default()
+                        },
+                        justify_content: JustifyContent::Center,
+                        align_items: AlignItems::Center,
+                        ..default()
+                    },
+                    background_color: Color::rgb(0.3, 0.5, 0.3).into(),
+                    ..default()
+                },
+            ))
+            .with_children(|parent| {
+                parent.spawn(
+                    TextBundle::from_section(
+                        "Resume Game", 
+                        TextStyle {
+                            font_size: 18.0,
+                            color: Color::WHITE,
+                            ..default()
+                        }
+                    )
+                );
+            });
+
+            // Settings button
+            parent.spawn((
+                ButtonBundle {
+                    style: Style {
+                        width: Val::Px(200.0),
+                        height: Val::Px(40.0),
+                        margin: UiRect {
+                            bottom: Val::Px(10.0),
+                            ..default()
+                        },
+                        justify_content: JustifyContent::Center,
+                        align_items: AlignItems::Center,
+                        ..default()
+                    },
+                    background_color: Color::rgb(0.4, 0.4, 0.5).into(),
+                    ..default()
+                },
+            ))
+            .with_children(|parent| {
+                parent.spawn(
+                    TextBundle::from_section(
+                        "Settings", 
+                        TextStyle {
+                            font_size: 18.0,
+                            color: Color::WHITE,
+                            ..default()
+                        }
+                    )
+                );
+            });
+
+            // Quit button
+            parent.spawn((
+                ButtonBundle {
+                    style: Style {
+                        width: Val::Px(200.0),
+                        height: Val::Px(40.0),
+                        margin: UiRect {
+                            bottom: Val::Px(10.0),
+                            ..default()
+                        },
+                        justify_content: JustifyContent::Center,
+                        align_items: AlignItems::Center,
+                        ..default()
+                    },
+                    background_color: Color::rgb(0.5, 0.3, 0.3).into(),
+                    ..default()
+                },
+            ))
+            .with_children(|parent| {
+                parent.spawn(
+                    TextBundle::from_section(
+                        "Quit Game", 
+                        TextStyle {
+                            font_size: 18.0,
+                            color: Color::WHITE,
+                            ..default()
+                        }
+                    )
+                );
+            });
+        });
+    });
+}

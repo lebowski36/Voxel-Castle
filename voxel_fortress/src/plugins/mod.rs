@@ -7,6 +7,7 @@ mod terrain;
 
 pub use camera::CameraPlugin;
 pub use world::WorldPlugin;
+// Re-export GameState and UiPlugin from ui module
 pub use ui::{UiPlugin, GameState};
 pub use terrain::TerrainPlugin;
 

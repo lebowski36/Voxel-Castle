@@ -24,9 +24,9 @@ pub enum Voxel {
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum ChunkLodState {
-    Active,   // High detail, full mesh
+    Active,   // Full detail, full mesh
     LOD,      // Low detail, heightmap mesh
-    Unloaded, // Not loaded/generated
+    Unloaded  // Not loaded/generated
 }
 
 pub struct Chunk {
@@ -516,16 +516,16 @@ impl WorldGen {
             // Hot biomes
             (t, r) if t > 0.7 && r > 0.7 => 0,  // Jungle
             (t, r) if t > 0.7 && r > 0.3 => 1,  // Savanna
-            (t, r) if t > 0.7 => 3,             // Desert
+            (t, _r) if t > 0.7 => 3,             // Desert
             
             // Temperate biomes
             (t, r) if t > 0.4 && r > 0.6 => 0,  // Forest
             (t, r) if t > 0.4 && r > 0.3 => 1,  // Plains
-            (t, r) if t > 0.4 => 3,             // Badlands
+            (t, _r) if t > 0.4 => 3,            // Badlands
             
             // Cold biomes
             (t, r) if t > 0.2 && r > 0.5 => 2,  // Taiga
-            (t, r) if t > 0.2 => 1,             // Tundra
+            (t, _r) if t > 0.2 => 1,            // Tundra
             
             // Very cold
             _ => 2,                             // Snow fields

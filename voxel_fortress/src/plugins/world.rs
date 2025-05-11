@@ -8,7 +8,8 @@ use futures_lite::future;
 use crate::chunk::{ChunkManager, ChunkState, ManagedChunk};
 use crate::terrain::{Voxel, WorldGen, VOXEL_SIZE_METERS, Chunk, CHUNK_SIZE};
 use crate::plugins::camera::PlayerCamera;
-use crate::plugins::ui::GameState;
+// Import GameState directly from the plugins module where it's re-exported
+use crate::plugins::GameState;
 
 pub struct WorldPlugin;
 

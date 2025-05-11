@@ -1,0 +1,12 @@
+MUST-READ INSTRUCTIONS FOR FIXING BUGS
+
+When fixing bugs in this codebase, follow these guidelines:
+
+1. Fix one problem at a time for clarity and precision
+2. If multiple problems are interconnected, they can be fixed together
+3. After fixing each problem, submit the changes before moving to the next issue
+4. Document findings and solutions in appropriate markdown files
+5. Break down complex issues into manageable steps
+6. Test thoroughly after each fix to ensure it resolves the intended issue
+
+This approach will help maintain a clean history of changes and make troubleshooting more systematic.
