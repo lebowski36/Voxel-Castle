@@ -17,6 +17,10 @@
 #include "world/voxel_types.h" // Defines VoxelEngine::World::VoxelType
 #include "world/voxel.h"       // Defines VoxelEngine::World::Voxel
 
+// Mesh Generation
+#include "rendering/mesh_builder.h" // For VoxelEngine::Rendering::MeshBuilder
+#include "world/chunk_segment.h"    // For VoxelCastle::World::ChunkSegment
+
 // GLM Headers - Will be used by other engine systems, keep includes for now if generally useful
 #define GLM_FORCE_SILENT_WARNINGS // Optional: To suppress GLM warnings if any
 #include <glm/glm.hpp>
@@ -69,6 +73,53 @@ int main(int argc, char* argv[]) {
 
     std::cout << "--- Voxel System Test End ---" << std::endl;
     // --- End Basic Voxel/Chunk Testing ---
+
+    // --- Mesh Generation Test ---
+    std::cout << "\n--- Mesh Generation Test Start ---" << std::endl;
+    {
+        VoxelCastle::World::ChunkSegment testSegment;
+        // Place a single stone block at local coordinates (1,1,1) within the segment
+        std::cout << "Setting a single STONE voxel at (1,1,1) in test segment." << std::endl;
+        testSegment.setVoxel(1, 1, 1, VoxelEngine::World::Voxel(static_cast<uint8_t>(VoxelEngine::World::VoxelType::STONE)));
+
+        std::cout << "Building naive mesh for the test segment..." << std::endl;
+        VoxelEngine::Rendering::VoxelMesh generatedMesh = VoxelEngine::Rendering::MeshBuilder::buildNaiveMesh(testSegment);
+
+        std::cout << "Mesh generated:" << std::endl;
+        std::cout << "  Vertices: " << generatedMesh.vertices.size() << std::endl;
+        std::cout << "  Indices: " << generatedMesh.indices.size() << std::endl;
+        std::cout << "  Triangles: " << generatedMesh.indices.size() / 3 << std::endl;
+
+        // Expected for a single block: 24 vertices, 36 indices (12 triangles)
+        if (generatedMesh.vertices.size() == 24 && generatedMesh.indices.size() == 36) {
+            std::cout << "  Result: PASSED (matches expected counts for a single block)" << std::endl;
+        } else {
+            std::cout << "  Result: FAILED (expected 24 vertices and 36 indices for a single block)" << std::endl;
+        }
+
+        // Test with a 2x1x1 line of blocks
+        VoxelCastle::World::ChunkSegment lineSegment;
+        std::cout << "\nSetting a 2x1x1 line of DIRT voxels at (1,1,1) and (2,1,1) in new test segment." << std::endl;
+        lineSegment.setVoxel(1, 1, 1, VoxelEngine::World::Voxel(static_cast<uint8_t>(VoxelEngine::World::VoxelType::DIRT)));
+        lineSegment.setVoxel(2, 1, 1, VoxelEngine::World::Voxel(static_cast<uint8_t>(VoxelEngine::World::VoxelType::DIRT)));
+        
+        std::cout << "Building naive mesh for the line segment..." << std::endl;
+        VoxelEngine::Rendering::VoxelMesh lineMesh = VoxelEngine::Rendering::MeshBuilder::buildNaiveMesh(lineSegment);
+
+        std::cout << "Line Mesh generated:" << std::endl;
+        std::cout << "  Vertices: " << lineMesh.vertices.size() << std::endl;
+        std::cout << "  Indices: " << lineMesh.indices.size() << std::endl;
+        std::cout << "  Triangles: " << lineMesh.indices.size() / 3 << std::endl;
+        // Expected for 2 adjacent blocks: 10 faces * 4 vertices/face = 40 vertices. 10 faces * 2 triangles/face * 3 indices/triangle = 60 indices (20 triangles)
+        if (lineMesh.vertices.size() == 40 && lineMesh.indices.size() == 60) {
+            std::cout << "  Result: PASSED (matches expected counts for a 2x1x1 line of blocks)" << std::endl;
+        } else {
+            std::cout << "  Result: FAILED (expected 40 vertices and 60 indices for a 2x1x1 line)" << std::endl;
+        }
+
+    }
+    std::cout << "--- Mesh Generation Test End ---" << std::endl;
+    // --- End Mesh Generation Test ---
 
     Window gameWindow("Voxel Fortress - Alpha", 800, 600);
 

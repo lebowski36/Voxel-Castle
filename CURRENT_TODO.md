@@ -67,7 +67,7 @@ This file tracks our immediate high-level tasks and progress. Detailed sub-tasks
   - [x] Implement voxel storage *(Covers Voxel, ChunkSegment, ChunkColumn, WorldManager implementation)*
   - [ ] Add spatial partitioning (e.g., octrees) // To be addressed later if needed
 - [ ] Build mesh generation system
-  - [ ] Create mesh from voxel data
+  - [x] Create mesh from voxel data // Naive meshing implemented and tested
   - [ ] Implement greedy meshing or other optimization
   - [ ] Add texture mapping support
   - [ ] Implement texture atlas system
@@ -117,7 +117,7 @@ This file tracks our immediate high-level tasks and progress. Detailed sub-tasks
 
 ## 📝 Near-Term Priority Tasks
 *This section should be updated regularly with the most immediate goals, typically pointing to the current high-level task from the list above.*
-1.  Focus on "Core Engine Foundation (C++)".
+1.  Focus on "Implement Core Systems (C++)" - specifically, "Build mesh generation system".
 
 ## 📊 Progress Tracking (C++ Phase)
 *This section will track progress for the C++ engine development at a high level.*
