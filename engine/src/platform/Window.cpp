@@ -1,9 +1,11 @@
-#include "platform/Window.h" // Assuming Window.h is in platform directory relative to engine src
-#include <iostream> // For basic error reporting
+#include "platform/Window.h" 
+#include <iostream> 
+#include <glad/glad.h> // Should be included before SDL_opengl.h
+#include <SDL3/SDL_opengl.h>
 
 Window::Window(const std::string &title, int width, int height)
     : windowTitle(title), windowWidth(width), windowHeight(height), 
-      sdlWindow(nullptr), sdlRenderer(nullptr), running(false) {}
+      sdlWindow(nullptr), glContext(nullptr), running(false) {}
 
 Window::~Window() {
     cleanUp();
@@ -12,42 +14,66 @@ Window::~Window() {
 bool Window::init() {
     std::cout << "Initializing SDL..." << std::endl;
 
-    // Initialize SDL video subsystem
     if (SDL_Init(SDL_INIT_VIDEO) < 0) {
         std::cerr << "Failed to initialize SDL video. SDL_Error: " << SDL_GetError() << std::endl;
         return false;
     }
     std::cout << "SDL video subsystem initialized successfully." << std::endl;
 
-    // Create window
+    // Set OpenGL attributes
+    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
+    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 3);
+    SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
+    // SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1); // Usually enabled by default
+    // SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 24); // For depth testing
+
+    std::cout << "Creating window with OpenGL support..." << std::endl;
     sdlWindow = SDL_CreateWindow(
         windowTitle.c_str(),
         windowWidth,
         windowHeight,
-        0 // Using 0 for basic window flags. Specific flags like SDL_WINDOW_OPENGL can be added later.
+        SDL_WINDOW_OPENGL // Use OpenGL flag
     );
 
     if (sdlWindow == nullptr) {
         std::cerr << "Window could not be created! SDL_Error: " << SDL_GetError() << std::endl;
-        SDL_Quit(); // Clean up SDL subsystems if window creation fails
+        SDL_Quit(); 
         return false;
     }
     std::cout << "Window created successfully." << std::endl;
 
-    // Create renderer
-    // The SDL3 version being used appears to expect only two arguments:
-    // SDL_Window* and const char* (for renderer name, or nullptr for default).
-    sdlRenderer = SDL_CreateRenderer(sdlWindow, nullptr); 
-    if (sdlRenderer == nullptr) {
-        std::cerr << "Basic renderer could not be created! SDL_Error: " << SDL_GetError() << std::endl;
+    glContext = SDL_GL_CreateContext(sdlWindow);
+    if (glContext == nullptr) {
+        std::cerr << "OpenGL context could not be created! SDL_Error: " << SDL_GetError() << std::endl;
         SDL_DestroyWindow(sdlWindow);
         sdlWindow = nullptr;
         SDL_Quit();
         return false;
-    } else {
-        std::cout << "Basic renderer created successfully." << std::endl;
     }
-    
+    std::cout << "OpenGL context created successfully." << std::endl;
+
+    // Initialize GLAD
+    // Note: SDL_GL_GetProcAddress is the correct way to get GL function pointers with SDL
+    if (!gladLoadGLLoader((GLADloadproc)SDL_GL_GetProcAddress)) {
+        SDL_Log("Failed to initialize GLAD: error code %u", glGetError()); // Changed from %s to %u
+        SDL_GL_DestroyContext(glContext); // Changed from SDL_GL_DeleteContext
+        SDL_DestroyWindow(sdlWindow);
+        sdlWindow = nullptr;
+        SDL_Quit();
+        return false;
+    }
+    std::cout << "GLAD initialized successfully." << std::endl;
+    std::cout << "OpenGL Version: " << glGetString(GL_VERSION) << std::endl;
+    std::cout << "GLSL Version: " << glGetString(GL_SHADING_LANGUAGE_VERSION) << std::endl;
+    std::cout << "Vendor: " << glGetString(GL_VENDOR) << std::endl;
+    std::cout << "Renderer: " << glGetString(GL_RENDERER) << std::endl;
+
+
+    // Set up the viewport
+    glViewport(0, 0, windowWidth, windowHeight);
+    // Set the clear color (e.g., dark blue, will be used in render())
+    glClearColor(0.0f, 0.0f, 0.2f, 1.0f); // Dark blue
+
     running = true;
     return true;
 }
@@ -59,7 +85,6 @@ void Window::handleEvents() {
             running = false;
         }
 
-        // Example: Handle keyboard input
         if (e.type == SDL_EVENT_KEY_DOWN) {
             if (e.key.key == SDLK_ESCAPE) {
                 running = false;
@@ -73,31 +98,26 @@ void Window::update() {
 }
 
 void Window::render() {
-    if (sdlRenderer) {
-        SDL_SetRenderDrawColor(sdlRenderer, 0x00, 0x33, 0x66, 0xFF); // A dark blue background
-        SDL_RenderClear(sdlRenderer);
+    // Clear the screen
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); // Also clear depth buffer if using depth testing
 
-        // Rendering game objects would happen here
+    // Rendering game objects would happen here using OpenGL calls
 
-        SDL_RenderPresent(sdlRenderer);
-    } else {
-        // If no renderer (e.g. using OpenGL directly), swap buffers if applicable
-        // SDL_GL_SwapWindow(sdlWindow); // This is an SDL2 function, SDL3 uses SDL_GL_SwapWindow or similar with context
-    }
+    // Swap buffers
+    SDL_GL_SwapWindow(sdlWindow);
 }
 
 void Window::cleanUp() {
-    if (sdlRenderer) {
-        SDL_DestroyRenderer(sdlRenderer);
-        sdlRenderer = nullptr;
-        std::cout << "Renderer destroyed." << std::endl;
+    if (glContext) {
+        SDL_GL_DestroyContext(glContext); // Changed from SDL_GL_DeleteContext
+        glContext = nullptr;
+        std::cout << "OpenGL context destroyed." << std::endl;
     }
     if (sdlWindow) {
         SDL_DestroyWindow(sdlWindow);
         sdlWindow = nullptr;
         std::cout << "Window destroyed." << std::endl;
     }
-    SDL_Quit(); // SDL_Quit should be called after destroying windows and renderers.
+    SDL_Quit(); 
     std::cout << "SDL quit." << std::endl;
-    running = false;
 }

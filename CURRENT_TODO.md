@@ -44,10 +44,10 @@ This file tracks our immediate high-level tasks and progress. Detailed sub-tasks
   - [x] Define module/directory layout
   - [x] Configure C++ build system (e.g., CMake, Meson)
   - [x] Set up initial compiler/linker settings
-- [ ] Implement window management (e.g., using SDL, SFML, or platform-specific APIs)
-  - [ ] Create window with proper configuration
-  - [ ] Set up event loop
-  - [ ] Implement basic input handling
+- [x] Implement window management (e.g., using SDL, SFML, or platform-specific APIs)
+  - [x] Create window with proper configuration
+  - [x] Set up event loop
+  - [x] Implement basic input handling
 - [ ] Set up rendering API (e.g., OpenGL, Vulkan, DirectX)
   - [ ] Initialize graphics device and context
   - [ ] Create swap chain/surface
@@ -121,7 +121,7 @@ This file tracks our immediate high-level tasks and progress. Detailed sub-tasks
 ## 📊 Progress Tracking (C++ Phase)
 *This section will track progress for the C++ engine development at a high level.*
 - [x] Project structure and build system defined.
-- [ ] Window management implemented.
+- [x] Window management implemented.
 - [ ] Basic rendering pipeline established.
 - [ ] ECS selected/designed.
 - [ ] Initial voxel data structures implemented.

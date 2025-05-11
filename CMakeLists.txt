@@ -30,6 +30,13 @@ set(SDL_SHARED OFF CACHE BOOL "Build SDL as a shared library")
 add_subdirectory(external/SDL3)
 # --- End SDL Configuration ---
 
+# --- GLAD Configuration ---
+add_subdirectory(external/glad)
+# --- End GLAD Configuration ---
+
+# Find OpenGL
+find_package(OpenGL REQUIRED)
+
 # Add subdirectories for engine and game
 add_subdirectory(engine)
 add_subdirectory(game)

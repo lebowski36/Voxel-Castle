@@ -3,10 +3,7 @@
 
 #include <string>
 #include <SDL3/SDL.h> // Use SDL3 specific path
-
-// Forward declaration if SDL_Window and SDL_Renderer are pointers
-// struct SDL_Window;
-// struct SDL_Renderer;
+#include <glad/glad.h> // Include GLAD header
 
 class Window {
 public:
@@ -22,7 +19,7 @@ public:
     bool isRunning() const { return running; }
     int getWidth() const { return windowWidth; }
     int getHeight() const { return windowHeight; }
-    SDL_Window* getSDLWindow() const { return sdlWindow; } // Optional: if needed externally
+    SDL_Window* getSDLWindow() const { return sdlWindow; }
 
 private:
     std::string windowTitle;
@@ -30,9 +27,9 @@ private:
     int windowHeight;
     
     SDL_Window* sdlWindow = nullptr;
-    SDL_Renderer* sdlRenderer = nullptr; // For basic SDL rendering
+    SDL_GLContext glContext = nullptr; // OpenGL context
 
-    bool running; // Moved running to be after SDL objects
+    bool running;
 };
 
 #endif // WINDOW_H

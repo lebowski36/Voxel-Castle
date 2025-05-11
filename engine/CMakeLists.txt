@@ -7,7 +7,10 @@ project(VoxelEngine LANGUAGES CXX)
 add_library(VoxelEngine STATIC
     src/core/engine_core.cpp
     src/platform/Window.cpp
-    # Add other engine source files here
+    # Add GLAD source file if compiling it directly
+    # Or link against a pre-built GLAD library later
+    # For example, if GLAD source is in external/glad/src/glad.c relative to root:
+    # ${CMAKE_SOURCE_DIR}/external/glad/src/glad.c 
 )
 
 target_include_directories(VoxelEngine
@@ -22,6 +25,9 @@ target_include_directories(VoxelEngine
         # This makes 'engine/src' an include path for consumers.
         # So, game/src/main.cpp can use #include "platform/Window.h"
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src>
+        # Add GLAD include directory if it's vendored
+        # For example, if GLAD headers are in external/glad/include relative to root:
+        $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/external/glad/include> 
     PRIVATE
         # For the engine's own internal includes.
         # This makes 'engine/src' an include path for VoxelEngine's own .cpp files.
@@ -35,12 +41,28 @@ target_include_directories(VoxelEngine PRIVATE
     ${CMAKE_SOURCE_DIR}/external/SDL3/include
 )
 
-# Link against SDL3 (static)
-# The target name SDL3::SDL3-static is common when SDL3 is built as a static library via CMake.
-target_link_libraries(VoxelEngine PRIVATE SDL3::SDL3-static)
+# Link against SDL3 (static) and OpenGL
+target_link_libraries(VoxelEngine PRIVATE 
+    SDL3::SDL3-static
+    OpenGL::GL # Standard CMake target for OpenGL
+    glad
+)
 
 # Set C++ standard for the engine
 target_compile_features(VoxelEngine PRIVATE cxx_std_17)
 
 # Ensure the engine's public include directory exists, even if empty for now
 file(MAKE_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/include)
+
+# --- GLAD --- 
+# If you are building GLAD from source directly within this target (not recommended for modularity)
+# you would add its .c file to add_library and its include path to target_include_directories.
+
+# If GLAD is built as a separate library (e.g., in external/glad with its own CMakeLists.txt)
+# you would link against it: target_link_libraries(VoxelEngine PRIVATE glad)
+# And ensure its include directory is propagated: target_include_directories(VoxelEngine PUBLIC/PRIVATE path/to/glad/include)
+
+# For now, assuming GLAD headers will be made available globally or handled by the user.
+# If you have downloaded GLAD and put it in, for example, 'external/glad_src_and_include':
+# target_sources(VoxelEngine PRIVATE ${CMAKE_SOURCE_DIR}/external/glad_src_and_include/src/glad.c)
+# target_include_directories(VoxelEngine PUBLIC ${CMAKE_SOURCE_DIR}/external/glad_src_and_include/include)
