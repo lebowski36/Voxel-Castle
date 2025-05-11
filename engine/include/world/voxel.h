@@ -1,31 +1,55 @@
 // filepath: engine/include/world/voxel.h
-#pragma once
+#ifndef VOXEL_ENGINE_VOXEL_H
+#define VOXEL_ENGINE_VOXEL_H
 
 #include <cstdint>
 
+/**
+ * @brief Namespace for core voxel engine functionalities, including world representation.
+ */
 namespace VoxelEngine {
-    namespace World {
+/**
+ * @brief Namespace for world-related structures and management, such as voxels, chunks, and world data.
+ */
+namespace World {
 
-        // Represents a single voxel in the world
-        struct Voxel {
-            // Type ID for the voxel (e.g., 0 for air, 1 for stone, 2 for dirt)
-            uint8_t id; 
-            // Add other per-voxel data here in the future, e.g.:
-            // uint8_t light_level;
-            // uint8_t health;
+/**
+ * @struct Voxel
+ * @brief Represents a single voxel in the game world.
+ *
+ * This structure defines the basic unit of the voxel world. Currently, it only
+ * contains an ID representing the type of the voxel.
+ */
+struct Voxel {
+    /**
+     * @brief The type identifier for this voxel.
+     *
+     * This ID typically corresponds to an entry in an enum or a lookup table
+     * that defines the voxel's properties (e.g., material, texture, solidity).
+     * See VoxelType enum in voxel_types.h.
+     */
+    uint8_t id;
+    // Future additions could include:
+    // uint8_t light_level;
+    // uint8_t orientation;
+    // etc.
 
-            // Default constructor: initializes to an air block (or inactive)
-            Voxel() : id(0) {}
+    /**
+     * @brief Default constructor. Initializes voxel to a default state (e.g., AIR).
+     *
+     * By default, a voxel is initialized with an ID of 0, which typically
+     * represents 'AIR' or an empty voxel.
+     */
+    Voxel() : id(0) {}
 
-            // Constructor with a specific type
-            Voxel(uint8_t type_id) : id(type_id) {}
+    /**
+     * @brief Constructs a Voxel with a specific type ID.
+     * @param type_id The ID representing the voxel's type.
+     */
+    explicit Voxel(uint8_t type_id) : id(type_id) {}
+};
 
-            // Check if the voxel is active (e.g., not air)
-            // Assumes id 0 is 'air' or 'inactive'
-            bool isActive() const {
-                return id != 0;
-            }
-        };
-
-    } // namespace World
+} // namespace World
 } // namespace VoxelEngine
+
+#endif //VOXEL_ENGINE_VOXEL_H

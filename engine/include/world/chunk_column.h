@@ -7,17 +7,32 @@
 #include <memory>
 #include <cstdint> // For int_fast32_t, int_fast64_t
 
+/**
+ * @brief Namespace for Voxel Castle specific game logic and world representation.
+ */
 namespace VoxelCastle
 {
+    /**
+     * @brief Namespace for world-related structures and management within the Voxel Castle context.
+     */
     namespace World
     {
-        // Using a struct for simple XZ coordinate pair
+        /**
+         * @struct ChunkColumnCoord
+         * @brief Represents a simple XZ coordinate pair for chunk columns.
+         *
+         * Used as a key in std::map or std::unordered_map.
+         */
         struct ChunkColumnCoord
         {
-            int_fast64_t x;
-            int_fast64_t z;
+            int_fast64_t x; ///< X-coordinate of the chunk column.
+            int_fast64_t z; ///< Z-coordinate of the chunk column.
 
-            // For use as a key in std::map or std::unordered_map
+            /**
+             * @brief Comparison operator for sorting ChunkColumnCoord.
+             * @param other The other ChunkColumnCoord to compare against.
+             * @return True if this coordinate is less than the other.
+             */
             bool operator<(const ChunkColumnCoord& other) const
             {
                 if (x < other.x) return true;
@@ -26,43 +41,110 @@ namespace VoxelCastle
             }
         };
 
+        /**
+         * @class ChunkColumn
+         * @brief Represents a column of ChunkSegments, extending vertically through the world.
+         *
+         * A ChunkColumn manages a stack of ChunkSegments at a specific XZ world coordinate.
+         * It is responsible for creating, accessing, and managing these segments.
+         */
         class ChunkColumn
         {
         public:
-            // Constructor: Requires the XZ world coordinates of this column
+            /**
+             * @brief Constructs a ChunkColumn at the given XZ world coordinates.
+             *
+             * Initializes the column, potentially pre-allocating or lazily loading its ChunkSegments.
+             * @param worldX The X-coordinate of this column in the world.
+             * @param worldZ The Z-coordinate of this column in the world.
+             */
             ChunkColumn(int_fast64_t worldX, int_fast64_t worldZ);
 
-            // Get the XZ coordinates of this chunk column
+            /**
+             * @brief Gets the XZ coordinates of this chunk column.
+             * @return The ChunkColumnCoord representing the XZ coordinates.
+             */
             ChunkColumnCoord getCoordinates() const;
 
-            // Get a specific voxel from the column using world coordinates.
-            // The worldY coordinate will determine which segment to access.
+            /**
+             * @brief Gets a specific voxel from the column using world coordinates.
+             *
+             * The worldY coordinate will determine which segment to access.
+             * @param worldX The world X-coordinate.
+             * @param worldY The world Y-coordinate.
+             * @param worldZ The world Z-coordinate.
+             * @return The VoxelEngine::World::Voxel at the given coordinates.
+             */
             ::VoxelEngine::World::Voxel getVoxel(int_fast64_t worldX, int_fast64_t worldY, int_fast64_t worldZ) const;
 
-            // Set a specific voxel in the column using world coordinates.
-            // The worldY coordinate will determine which segment to access or create.
+            /**
+             * @brief Sets a specific voxel in the column using world coordinates.
+             *
+             * The worldY coordinate will determine which segment to access or create.
+             * @param worldX The world X-coordinate.
+             * @param worldY The world Y-coordinate.
+             * @param worldZ The world Z-coordinate.
+             * @param voxel The VoxelEngine::World::Voxel to set.
+             */
             void setVoxel(int_fast64_t worldX, int_fast64_t worldY, int_fast64_t worldZ, const ::VoxelEngine::World::Voxel& voxel);
 
-            // Get a segment by its Y index (0 for segment at world Y 0-31, 1 for 32-63, etc.)
-            // Returns nullptr if the segment doesn't exist.
+            /**
+             * @brief Gets a segment by its Y index.
+             *
+             * 0 for segment at world Y 0-31, 1 for 32-63, etc.
+             * @param segmentYIndex The Y index of the segment.
+             * @return A pointer to the ChunkSegment. Returns nullptr if the segment doesn't exist.
+             */
             ::VoxelCastle::World::ChunkSegment* getSegment(int_fast32_t segmentYIndex);
+
+            /**
+             * @brief Gets a segment by its Y index (const version).
+             *
+             * 0 for segment at world Y 0-31, 1 for 32-63, etc.
+             * @param segmentYIndex The Y index of the segment.
+             * @return A const pointer to the ChunkSegment. Returns nullptr if the segment doesn't exist.
+             */
             const ::VoxelCastle::World::ChunkSegment* getSegment(int_fast32_t segmentYIndex) const;
 
-            // Get or create a segment by its Y index.
-            // If the segment doesn't exist, it will be created.
+            /**
+             * @brief Gets or creates a segment by its Y index.
+             *
+             * If the segment doesn't exist, it will be created.
+             * @param segmentYIndex The Y index of the segment.
+             * @return A pointer to the ChunkSegment.
+             */
             ::VoxelCastle::World::ChunkSegment* getOrCreateSegment(int_fast32_t segmentYIndex);
 
-            // Helper to convert world Y coordinate to segment Y index
+            /**
+             * @brief Converts world Y coordinate to segment Y index.
+             * @param worldY The world Y-coordinate.
+             * @return The segment Y index.
+             */
             static int_fast32_t worldYToSegmentYIndex(int_fast64_t worldY);
 
-            // Helper to convert world coordinates to local segment coordinates
+            /**
+             * @brief Converts world coordinates to local segment coordinates.
+             *
+             * @param worldX The world X-coordinate.
+             * @param worldY The world Y-coordinate.
+             * @param worldZ The world Z-coordinate.
+             * @param segmentX Reference to store the local X-coordinate.
+             * @param segmentY Reference to store the local Y-coordinate.
+             * @param segmentZ Reference to store the local Z-coordinate.
+             * @param columnWorldX The world X-coordinate of the column.
+             * @param columnWorldZ The world Z-coordinate of the column.
+             */
             static void worldToLocalSegmentCoords(int_fast64_t worldX, int_fast64_t worldY, int_fast64_t worldZ,
                                                 int_fast32_t& segmentX, int_fast32_t& segmentY, int_fast32_t& segmentZ,
                                                 int_fast64_t columnWorldX, int_fast64_t columnWorldZ);
 
         private:
-            ChunkColumnCoord m_coordinates; // World XZ coordinates of this column (at its origin 0,0)
-            // Map of segment Y-index to ChunkSegment. Y-index is worldY / SEGMENT_HEIGHT.
+            ChunkColumnCoord m_coordinates; ///< World XZ coordinates of this column (at its origin 0,0).
+            /**
+             * @brief Map of segment Y-index to ChunkSegment.
+             *
+             * Y-index is worldY / SEGMENT_HEIGHT.
+             */
             std::map<int_fast32_t, std::unique_ptr<::VoxelCastle::World::ChunkSegment>> m_segments;
         };
 

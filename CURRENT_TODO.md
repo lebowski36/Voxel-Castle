@@ -134,14 +134,14 @@ This file tracks our immediate high-level tasks and progress. Detailed sub-tasks
 2.  Specific feedback on a completed segment of work is needed before proceeding.
 3.  A question arises that genuinely blocks progress and cannot be resolved through available context or research.
 4.  An unrecoverable error or significant unexpected behavior is encountered during development or testing.
-5.  **After implementing a significant feature, component, or a set of related changes, I will initiate a build and/or relevant tests. I will then pause and explicitly await user confirmation of the build/test results (success, failure, or observations) before proceeding to the next task. I will not move on if a test fails or if the outcome is unclear without user feedback.**
+5.  **After implementing a significant feature, component, or a set of related changes, I will initiate a build and/or relevant tests (which includes running the main executable if applicable to observe behavior). I will then pause and explicitly await user confirmation of the build/test results (success, failure, or observations) before proceeding to the next task. I will not move on if a test fails or if the outcome is unclear without user feedback.**
 
 **Testing Best Practices (To be followed diligently):**
-*   **Test Regularly:** Compile and run the code after implementing each significant feature or component to ensure it works as expected. Never let untested code accumulate.
+*   **Test Regularly:** Compile and **run the application** after implementing each significant feature or component to ensure it works as expected. Never let untested code accumulate.
     *   After a new module or system: Compile and run to test it works.
-    *   After changes to existing functionality: Verify nothing broke.
-    *   After complex algorithms or critical systems: Add specific tests if feasible, or at least perform thorough manual checks.
-    *   After integrating multiple components: Test their integration together.
+    *   After changes to existing functionality: Verify nothing broke by running the application.
+    *   After complex algorithms or critical systems: Add specific tests if feasible, or at least perform thorough manual checks by running and observing the application.
+    *   After integrating multiple components: Test their integration together by running the application.
 *   **Awaiting Test Output:** If I'm unable to see the complete output from a command I've run (especially build outputs or error messages), I **must wait for the user to provide the results** before proceeding.
 
 **General Operational Guidelines:**

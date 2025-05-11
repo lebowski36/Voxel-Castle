@@ -56,17 +56,18 @@ This task focuses on designing and implementing the core data structures for sto
     *   [x] **3.3.5.** Implement methods to get/set a voxel at world coordinates (delegating to the appropriate `ChunkColumn` and then `ChunkSegment`). *(Completed with `getVoxel` and `setVoxel` in WorldManager)*
 
 ### 3.4. Initial Voxel Types
-*   **Status:** TODO
+*   **Status:** Completed
 *   **Description:** Define a few basic voxel types.
-    *   [ ] **3.4.1.** Create an enum or constants for basic voxel types (e.g., `AIR`, `STONE`, `DIRT`, `GRASS`) in a suitable header (e.g., `engine/include/world/voxel_types.h`).
+    *   [x] **3.4.1.** Create an enum or constants for basic voxel types (e.g., `AIR`, `STONE`, `DIRT`, `GRASS`) in a suitable header (e.g., `engine/include/world/voxel_types.h`). *(Completed)*
 
 ### 3.5. Integration and Testing (Basic)
-*   **Status:** TODO
+*   **Status:** Completed
 *   **Description:** Perform basic tests of the voxel, segment, and column structures.
-    *   [ ] **3.5.1.** In `main.cpp` or a test file, create a `WorldManager` instance.
-    *   [ ] **3.5.2.** Request a few `ChunkColumn`s (and implicitly `ChunkSegment`s) to be generated.
-    *   [ ] **3.5.3.** Set and get some voxel types within these segments using world coordinates.
-    *   [ ] **3.5.4.** Print or log the results to verify correctness.
+    *   [x] **3.5.1.** In `main.cpp` or a test file, create a `WorldManager` instance. *(Implemented in main.cpp)*
+    *   [x] **3.5.2.** Request a few `ChunkColumn`s (and implicitly `ChunkSegment`s) to be generated. *(Implemented in main.cpp via setVoxel)*
+    *   [x] **3.5.3.** Set and get some voxel types within these segments using world coordinates. *(Implemented in main.cpp)*
+    *   [x] **3.5.4.** Print or log the results to verify correctness. *(Implemented in main.cpp)*
+    *   [x] **3.5.5.** Build and run to confirm basic functionality. *(Completed)*
 
 ### 3.6. Documentation
 *   **Status:** TODO
