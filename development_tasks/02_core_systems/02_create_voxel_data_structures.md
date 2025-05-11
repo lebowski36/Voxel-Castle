@@ -70,9 +70,19 @@ This task focuses on designing and implementing the core data structures for sto
     *   [x] **3.5.5.** Build and run to confirm basic functionality. *(Completed)*
 
 ### 3.6. Documentation
-*   **Status:** TODO
-*   **Description:** Document the voxel, segment, and column data structures.
-    *   [ ] **3.6.1.** Add a section to `docs/design_specifications/Tech Stack/Voxel Data Structures Details.md` (create if it doesn't exist) describing the `Voxel`, `ChunkSegment`, and `ChunkColumn` structures, their rationale, and how they are managed.
+*   **Status:** Completed
+*   **Description:** Add Doxygen-style comments to the new data structure headers.
+    *   [x] **3.6.1.** Add comments to `voxel.h`. *(Completed)*
+    *   [x] **3.6.2.** Add comments to `chunk_segment.h`. *(Completed)*
+    *   [x] **3.6.3.** Add comments to `chunk_column.h`. *(Completed)*
+    *   [x] **3.6.4.** Add comments to `world_manager.h`. *(Completed)*
+    *   [x] **3.6.5.** Add comments to `voxel_types.h`. *(Completed)*
+
+### 3.7. Review and Refactor (Optional)
+*   **Status:** Not Started
+*   **Description:** Review the implemented voxel data structures for any immediate refactoring opportunities or improvements.
+    *   [ ] **3.7.1.** Check for code clarity, consistency, and potential optimizations.
+    *   [ ] **3.7.2.** Ensure naming conventions are followed.
 
 ## 4. Considerations
 *   **Memory Layout:** Optimize for cache coherency. A flat array for voxels within a `Chunk Segment` is generally good.

@@ -45,10 +45,10 @@ int main(int argc, char* argv[]) {
 
     // Set some voxels
     std::cout << "Setting voxels..." << std::endl;
-    worldManager.setVoxel(p1x, p1y, p1z, {static_cast<uint8_t>(VoxelEngine::World::VoxelType::STONE)});
-    worldManager.setVoxel(p2x, p2y, p2z, {static_cast<uint8_t>(VoxelEngine::World::VoxelType::DIRT)});
-    worldManager.setVoxel(p3x, p3y, p3z, {static_cast<uint8_t>(VoxelEngine::World::VoxelType::GRASS)});
-    worldManager.setVoxel(p4x, p4y, p4z, {static_cast<uint8_t>(VoxelEngine::World::VoxelType::AIR)});
+    worldManager.setVoxel(p1x, p1y, p1z, VoxelEngine::World::Voxel(static_cast<uint8_t>(VoxelEngine::World::VoxelType::STONE)));
+    worldManager.setVoxel(p2x, p2y, p2z, VoxelEngine::World::Voxel(static_cast<uint8_t>(VoxelEngine::World::VoxelType::DIRT)));
+    worldManager.setVoxel(p3x, p3y, p3z, VoxelEngine::World::Voxel(static_cast<uint8_t>(VoxelEngine::World::VoxelType::GRASS)));
+    worldManager.setVoxel(p4x, p4y, p4z, VoxelEngine::World::Voxel(static_cast<uint8_t>(VoxelEngine::World::VoxelType::AIR)));
 
     // Get and print voxel types
     std::cout << "Retrieving voxels..." << std::endl;
