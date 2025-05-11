@@ -3,6 +3,10 @@
 #define VOXEL_ENGINE_VOXEL_H
 
 #include <cstdint>
+#include "world/voxel_types.h" // Added to ensure VoxelEngine::World::VoxelType is declared
+#include <glm/glm.hpp>      // For glm::ivec3 and glm::vec3
+#include <glm/vec3.hpp>     // For glm::vec3 specifically (can be redundant if glm/glm.hpp is used)
+#include <glm/gtc/type_ptr.hpp> // For type_ptr if needed, good to have with GLM
 
 /**
  * @brief Namespace for core voxel engine functionalities, including world representation.
@@ -48,6 +52,18 @@ struct Voxel {
      */
     explicit Voxel(uint8_t type_id) : id(type_id) {}
 };
+
+/**
+ * @typedef VoxelPosition
+ * @brief Represents the position of a voxel in the world using GLM's ivec3.
+ */
+using VoxelPosition = glm::ivec3;
+
+/**
+ * @typedef Normal
+ * @brief Represents a normal vector using GLM's vec3.
+ */
+using Normal = glm::vec3;
 
 } // namespace World
 } // namespace VoxelEngine

@@ -67,8 +67,8 @@ This file tracks our immediate high-level tasks and progress. Detailed sub-tasks
   - [x] Implement voxel storage *(Covers Voxel, ChunkSegment, ChunkColumn, WorldManager implementation)*
   - [ ] Add spatial partitioning (e.g., octrees)
 - [ ] Build mesh generation system
-  - [ ] Create mesh from voxel data // Naive meshing implemented and tested, but part of the larger item
-  - [ ] Implement greedy meshing or other optimization
+  - [x] Create mesh from voxel data // Naive meshing implemented and tested, but part of the larger item
+  - [x] Implement greedy meshing or other optimization
   - [ ] Add texture mapping support
   - [ ] Implement texture atlas system
 

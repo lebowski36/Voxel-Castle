@@ -24,10 +24,8 @@ namespace VoxelCastle
         {
             if (!areCoordinatesValid(x, y, z))
             {
-                // Option 1: Throw an exception
-                throw std::out_of_range("Voxel coordinates are out of segment bounds.");
-                // Option 2: Return a default/error Voxel type
-                // return ::VoxelEngine::World::Voxel{ERROR_VOXEL_TYPE_ID}; 
+                // Return AIR for out-of-bounds access, crucial for meshing algorithms
+                return ::VoxelEngine::World::Voxel{static_cast<uint8_t>(::VoxelEngine::World::VoxelType::AIR)};
             }
             return m_voxels[getIndex(x, y, z)];
         }
@@ -77,6 +75,15 @@ namespace VoxelCastle
             return static_cast<std::size_t>(x) * (SEGMENT_HEIGHT * SEGMENT_DEPTH) +
                    static_cast<std::size_t>(y) * SEGMENT_DEPTH +
                    static_cast<std::size_t>(z);
+        }
+
+        int ChunkSegment::getDimension(int axis) {
+            switch (axis) {
+                case 0: return VoxelCastle::World::ChunkSegment::getWidth();  // X-axis
+                case 1: return VoxelCastle::World::ChunkSegment::getHeight(); // Y-axis
+                case 2: return VoxelCastle::World::ChunkSegment::getDepth();  // Z-axis
+                default: throw std::out_of_range("Invalid axis for getDimension. Must be 0, 1, or 2.");
+            }
         }
 
     } // namespace World

@@ -29,6 +29,17 @@ namespace World {
      */
     class ChunkSegment {
     public:
+        static const int CHUNK_WIDTH = 32;
+        static const int CHUNK_HEIGHT = 32;
+        static const int CHUNK_DEPTH = 32;
+
+        /**
+         * @brief Gets the dimension of the chunk segment based on the axis.
+         * @param axis The axis (0 for X, 1 for Y, 2 for Z).
+         * @return The dimension of the chunk segment for the given axis.
+         */
+        static int getDimension(int axis);
+
         /**
          * @brief Default constructor.
          *

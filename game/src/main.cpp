@@ -117,9 +117,102 @@ int main(int argc, char* argv[]) {
             std::cout << "  Result: FAILED (expected 40 vertices and 60 indices for a 2x1x1 line)" << std::endl;
         }
 
+        // --- Greedy Meshing Tests ---
+        std::cout << "\n--- Greedy Meshing Tests Start ---" << std::endl;
+
+        // Test 1: Single Block (same as naive test segment)
+        std::cout << "\nTest 1: Single STONE voxel at (1,1,1)" << std::endl;
+        VoxelEngine::Rendering::VoxelMesh greedyMeshSingle = VoxelEngine::Rendering::MeshBuilder::buildGreedyMesh(testSegment);
+        std::cout << "Greedy Mesh (Single Block):" << std::endl;
+        std::cout << "  Vertices: " << greedyMeshSingle.vertices.size() << std::endl;
+        std::cout << "  Indices: " << greedyMeshSingle.indices.size() << std::endl;
+        std::cout << "  Triangles: " << greedyMeshSingle.indices.size() / 3 << std::endl;
+        // Expected for a single block (Greedy should be same as Naive): 6 faces * 4 vertices/face = 24 vertices. 6 faces * 2 triangles/face * 3 indices/triangle = 36 indices (12 triangles)
+        if (greedyMeshSingle.vertices.size() == 24 && greedyMeshSingle.indices.size() == 36) {
+            std::cout << "  Result: PASSED" << std::endl;
+        } else {
+            std::cout << "  Result: FAILED (Expected 24 vertices, 36 indices)" << std::endl;
+        }
+
+        // Test 2: 2x1x1 Line of Blocks (same as naive lineSegment)
+        std::cout << "\nTest 2: 2x1x1 line of DIRT voxels at (1,1,1) and (2,1,1)" << std::endl;
+        VoxelEngine::Rendering::VoxelMesh greedyMeshLine = VoxelEngine::Rendering::MeshBuilder::buildGreedyMesh(lineSegment);
+        std::cout << "Greedy Mesh (2x1x1 Line):" << std::endl;
+        std::cout << "  Vertices: " << greedyMeshLine.vertices.size() << std::endl;
+        std::cout << "  Indices: " << greedyMeshLine.indices.size() << std::endl;
+        std::cout << "  Triangles: " << greedyMeshLine.indices.size() / 3 << std::endl;
+        // Expected for 2x1x1 line:
+        // Top/Bottom faces: 2 quads of 2x1 -> 2 * 4 = 8 vert
+        // Front/Back faces: 2 quads of 2x1 -> 2 * 4 = 8 vert
+        // Left/Right faces: 2 quads of 1x1 -> 2 * 4 = 8 vert
+        // Total faces = 6. Total Vertices = 6 * 4 = 24. Total Indices = 6 * 6 = 36.
+        // This is because the internal face is culled, and the adjacent faces are merged.
+        // It should form one 2x1x1 cuboid.
+        if (greedyMeshLine.vertices.size() == 24 && greedyMeshLine.indices.size() == 36) {
+            std::cout << "  Result: PASSED" << std::endl;
+        } else {
+            std::cout << "  Result: FAILED (Expected 24 vertices, 36 indices for a merged 2x1x1 cuboid)" << std::endl;
+        }
+
+        // Test 3: 2x2x1 Flat Plane
+        VoxelCastle::World::ChunkSegment planeSegment;
+        std::cout << "\nTest 3: 2x2x1 GRASS plane at y=1" << std::endl;
+        planeSegment.setVoxel(0, 1, 0, VoxelEngine::World::Voxel(static_cast<uint8_t>(VoxelEngine::World::VoxelType::GRASS)));
+        planeSegment.setVoxel(1, 1, 0, VoxelEngine::World::Voxel(static_cast<uint8_t>(VoxelEngine::World::VoxelType::GRASS)));
+        planeSegment.setVoxel(0, 1, 1, VoxelEngine::World::Voxel(static_cast<uint8_t>(VoxelEngine::World::VoxelType::GRASS)));
+        planeSegment.setVoxel(1, 1, 1, VoxelEngine::World::Voxel(static_cast<uint8_t>(VoxelEngine::World::VoxelType::GRASS)));
+
+        VoxelEngine::Rendering::VoxelMesh naiveMeshPlane = VoxelEngine::Rendering::MeshBuilder::buildNaiveMesh(planeSegment);
+        std::cout << "Naive Mesh (2x2x1 Plane): Vertices: " << naiveMeshPlane.vertices.size() << ", Indices: " << naiveMeshPlane.indices.size() << std::endl;
+
+        VoxelEngine::Rendering::VoxelMesh greedyMeshPlane = VoxelEngine::Rendering::MeshBuilder::buildGreedyMesh(planeSegment);
+        std::cout << "Greedy Mesh (2x2x1 Plane):" << std::endl;
+        std::cout << "  Vertices: " << greedyMeshPlane.vertices.size() << std::endl;
+        std::cout << "  Indices: " << greedyMeshPlane.indices.size() << std::endl;
+        std::cout << "  Triangles: " << greedyMeshPlane.indices.size() / 3 << std::endl;
+        // Expected for 2x2x1 plane (4 blocks):
+        // Top face: 1 quad of 2x2 -> 4 vert
+        // Bottom face: 1 quad of 2x2 -> 4 vert
+        // Side faces: 4 quads of 2x1 -> 4 * 4 = 16 vert
+        // Total faces = 1 (top) + 1 (bottom) + 4 (sides) = 6 faces.
+        // Total Vertices = 6 * 4 = 24. Total Indices = 6 * 6 = 36.
+        if (greedyMeshPlane.vertices.size() == 24 && greedyMeshPlane.indices.size() == 36) {
+            std::cout << "  Result: PASSED" << std::endl;
+        } else {
+            std::cout << "  Result: FAILED (Expected 24 vertices, 36 indices for a 2x2x1 merged plane)" << std::endl;
+        }
+
+        // Test 4: 2x2x2 Cube
+        VoxelCastle::World::ChunkSegment cubeSegment;
+        std::cout << "\nTest 4: 2x2x2 STONE cube" << std::endl;
+        for (int x = 0; x < 2; ++x) {
+            for (int y = 0; y < 2; ++y) {
+                for (int z = 0; z < 2; ++z) {
+                    cubeSegment.setVoxel(x, y, z, VoxelEngine::World::Voxel(static_cast<uint8_t>(VoxelEngine::World::VoxelType::STONE)));
+                }
+            }
+        }
+        VoxelEngine::Rendering::VoxelMesh naiveMeshCube = VoxelEngine::Rendering::MeshBuilder::buildNaiveMesh(cubeSegment);
+        std::cout << "Naive Mesh (2x2x2 Cube): Vertices: " << naiveMeshCube.vertices.size() << ", Indices: " << naiveMeshCube.indices.size() << std::endl;
+
+        VoxelEngine::Rendering::VoxelMesh greedyMeshCube = VoxelEngine::Rendering::MeshBuilder::buildGreedyMesh(cubeSegment);
+        std::cout << "Greedy Mesh (2x2x2 Cube):" << std::endl;
+        std::cout << "  Vertices: " << greedyMeshCube.vertices.size() << std::endl;
+        std::cout << "  Indices: " << greedyMeshCube.indices.size() << std::endl;
+        std::cout << "  Triangles: " << greedyMeshCube.indices.size() / 3 << std::endl;
+        // Expected for 2x2x2 cube (8 blocks):
+        // Each of the 6 faces of the cube will be a single 2x2 quad.
+        // Total faces = 6. Total Vertices = 6 * 4 = 24. Total Indices = 6 * 6 = 36.
+        if (greedyMeshCube.vertices.size() == 24 && greedyMeshCube.indices.size() == 36) {
+            std::cout << "  Result: PASSED" << std::endl;
+        } else {
+            std::cout << "  Result: FAILED (Expected 24 vertices, 36 indices for a 2x2x2 merged cube)" << std::endl;
+        }
+        std::cout << "--- Greedy Meshing Tests End ---" << std::endl;
+
+
     }
     std::cout << "--- Mesh Generation Test End ---" << std::endl;
-    // --- End Mesh Generation Test ---
 
     Window gameWindow("Voxel Fortress - Alpha", 800, 600);
 

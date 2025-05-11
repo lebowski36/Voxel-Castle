@@ -43,18 +43,14 @@ namespace VoxelEngine {
              * @brief Helper to add a face to the mesh.
              *
              * @param mesh The VoxelMesh to add the face to.
-             * @param x1, y1, z1 Coordinates of the first vertex.
-             * @param x2, y2, z2 Coordinates of the second vertex.
-             * @param x3, y3, z3 Coordinates of the third vertex.
-             * @param x4, y4, z4 Coordinates of the fourth vertex.
-             * @param nx, ny, nz Normal vector of the face.
+             * @param base_pos Base position of the face.
+             * @param vertices Array of 4 vertices defining the face.
+             * @param normal Normal vector of the face.
              */
             static void addFace(VoxelMesh& mesh,
-                                float x1, float y1, float z1,
-                                float x2, float y2, float z2,
-                                float x3, float y3, float z3,
-                                float x4, float y4, float z4,
-                                float nx, float ny, float nz);
+                                const glm::vec3& base_pos, // Changed from individual floats
+                                const glm::vec3* vertices, // Changed to represent 4 vertices
+                                const glm::vec3& normal);  // Changed from individual floats
 
             /**
              * @brief Helper to add a quad to the mesh.
@@ -65,10 +61,10 @@ namespace VoxelEngine {
              * @param voxelType Type of the voxel (for potential future use, e.g., texture selection).
              */
             static void addQuad(VoxelMesh& mesh,
-                                const Voxel::VoxelPosition& p1, const Voxel::VoxelPosition& p2,
-                                const Voxel::VoxelPosition& p3, const Voxel::VoxelPosition& p4,
-                                const Voxel::Normal& normal,
-                                VoxelType voxelType);
+                                const ::VoxelEngine::World::VoxelPosition& p1, const ::VoxelEngine::World::VoxelPosition& p2,
+                                const ::VoxelEngine::World::VoxelPosition& p3, const ::VoxelEngine::World::VoxelPosition& p4,
+                                const ::VoxelEngine::World::Normal& normal,
+                                ::VoxelEngine::World::VoxelType voxelType);
         };
 
     } // namespace Rendering
