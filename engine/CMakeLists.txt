@@ -7,6 +7,7 @@ project(VoxelEngine LANGUAGES CXX)
 add_library(VoxelEngine STATIC
     src/core/engine_core.cpp
     src/platform/Window.cpp
+    src/ecs/systems/movement_system.cpp # Added MovementSystem
     # Add GLAD source file if compiling it directly
     # Or link against a pre-built GLAD library later
     # For example, if GLAD source is in external/glad/src/glad.c relative to root:

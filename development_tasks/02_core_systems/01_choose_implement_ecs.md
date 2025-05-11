@@ -82,39 +82,39 @@ For "Voxel Castle," which will likely involve complex structures and potentially
     *   [x] **3.3.1.** Define basic components.
         *   Create header files for a few simple components (e.g., `PositionComponent.h`, `VelocityComponent.h`, `RenderableComponent.h`) within the engine's module structure (e.g., `engine/include/ecs/components/`).
         *   Example `PositionComponent`: `struct PositionComponent { glm::vec3 position; };`
-    *   [ ] **3.3.2.** Define basic systems.
+    *   [x] **3.3.2.** Define basic systems.
         *   Create header/source files for a few simple systems (e.g., `MovementSystem.h/.cpp`) within the engine's module structure (e.g., `engine/src/ecs/systems/`).
         *   Example `MovementSystem`: A system that iterates over entities with `PositionComponent` and `VelocityComponent` and updates positions.
-    *   [ ] **3.3.3.** Set up ECS registry/world.
-        *   Instantiate the ECS registry (e.g., `entt::registry registry;`) in an appropriate place (e.g., a future `Engine` class or temporarily in `main.cpp`).
-    *   [ ] **3.3.4.** Implement system execution logic.
-        *   Create a basic mechanism to update systems in the game loop.
+    *   [x] **3.3.3.** Set up ECS registry/world.
+        *   Instantiate the ECS registry (e.g., `flecs::world ecs;`) in an appropriate place (e.g., a future `Engine` class or temporarily in `main.cpp`).
+    *   [x] **3.3.4.** Implement system execution logic.
+        *   Create a basic mechanism to update systems in the game loop (e.g., `ecs.progress();`).
 
 ### 3.4. Testing and Verification
 *   **Priority:** High
 *   **Assigned To:** Agent
 *   **Description:** Test the integrated ECS with the initial components and systems.
-    *   [ ] **3.4.1.** Add temporary test code.
+    *   [x] **3.4.1.** Add temporary test code.
         *   In `game/src/main.cpp` (or a dedicated test file):
             *   Create a few entities.
             *   Add components to these entities with initial values.
-            *   Run the systems (e.g., call the `MovementSystem::update()` method).
-    *   [ ] **3.4.2.** Verify system effects.
+            *   Run the systems (e.g., call the `MovementSystem::update()` method via `ecs.progress()`).
+    *   [x] **3.4.2.** Verify system effects.
         *   Print component values (e.g., positions) before and after system execution to confirm they are being modified as expected.
         *   Log messages from systems.
-    *   [ ] **3.4.3.** Confirm basic ECS functionality.
+    *   [x] **3.4.3.** Confirm basic ECS functionality.
         *   Ensure entities can be created, components added/removed/retrieved, and systems can query and modify components.
 
 ### 3.5. Documentation and Cleanup
 *   **Priority:** Medium
 *   **Assigned To:** Agent
 *   **Description:** Document the ECS choice and clean up temporary test code.
-    *   [ ] **3.5.1.** Update project documentation.
+    *   [x] **3.5.1.** Update project documentation.
         *   Add a section to `docs/design_specifications/Voxel Fortress Tech Stack (C++ Custom Engine Approach).md` detailing the chosen ECS, its rationale, and basic usage patterns within the engine.
-    *   [ ] **3.5.2.** Remove temporary test code from `main.cpp` or test files.
+    *   [x] **3.5.2.** Remove temporary test code from `main.cpp` or test files.
         *   Plan for how ECS initialization and system updates will be handled in the main engine loop or dedicated game state managers.
-    *   [ ] **3.5.3.** Mark the high-level ECS task as complete in `CURRENT_TODO.md`.
-    *   [ ] **3.5.4.** Update "Last updated" date in `CURRENT_TODO.md`.
+    *   [x] **3.5.3.** Mark the high-level ECS task as complete in `CURRENT_TODO.md`.
+    *   [x] **3.5.4.** Update "Last updated" date in `CURRENT_TODO.md`.
 
 ## 4. Considerations
 *   **Performance:** Pay close attention to the performance implications of the chosen ECS, especially regarding iteration over components and entity creation/destruction.
@@ -137,4 +137,4 @@ For "Voxel Castle," which will likely involve complex structures and potentially
 *   **Custom ECS Solution:** Decided against. The development overhead and risk of introducing bugs or performance issues are too high compared to leveraging a mature, well-tested library.
 
 ---
-**Last Updated:** 2025-05-11
+**Last Updated:** 2025-05-12

@@ -58,10 +58,10 @@ This file tracks our immediate high-level tasks and progress. Detailed sub-tasks
 
 ### 2. Implement Core Systems (C++)
 *Detailed sub-tasks in `/home/system-x1/Projects/Voxel Castle/development_tasks/02_core_systems/`*
-- [ ] Choose and implement ECS
-  - [ ] Research and select C++ ECS library (e.g., EnTT, Flecs) or design custom solution
-  - [ ] Define entity and component structures
-  - [ ] Set up system management/scheduler
+- [x] Choose and implement ECS
+  - [x] Research and select C++ ECS library (e.g., EnTT, Flecs) or design custom solution
+  - [x] Define entity and component structures
+  - [x] Set up system management/scheduler
 - [ ] Create voxel data structures
   - [ ] Design chunk structure
   - [ ] Implement voxel storage
@@ -128,6 +128,8 @@ This file tracks our immediate high-level tasks and progress. Detailed sub-tasks
 
 ## 🧠 Note to Self (Agent)
 **Agent Self-Correction/Reminder:** Per user instruction, I will always execute necessary commands directly using the appropriate tool. I will not ask the user to run commands manually.
+
+**Continuous Operation Preference:** I will proceed with tasks autonomously, pausing only when user input is strictly necessary for decisions, when results need to be communicated, or if an unrecoverable issue is encountered. My default is to continue working through the defined sub-tasks unless a clear stopping point or need for user interaction arises.
 
 **I should always clear the console before running a new command** to ensure clean output and prevent confusion between different command results.
 

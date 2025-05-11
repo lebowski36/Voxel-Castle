@@ -10,7 +10,10 @@ add_executable(VoxelFortressGame
 )
 
 # Link the game against the engine library
-target_link_libraries(VoxelFortressGame PRIVATE VoxelEngine)
+target_link_libraries(VoxelFortressGame PRIVATE 
+    VoxelEngine
+    flecs::flecs # Add Flecs here so the game target can find flecs.h
+)
 
 # Explicitly include SDL3 directories for the game module
 target_include_directories(VoxelFortressGame PRIVATE 

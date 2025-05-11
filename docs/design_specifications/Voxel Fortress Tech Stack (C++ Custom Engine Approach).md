@@ -49,8 +49,9 @@ The selection of specific technologies, libraries, and architectural patterns fo
 
 ## 5. Entity Component System (ECS)
 
-*   **ECS Framework:** A high-performance C++ ECS, potentially EnTT or a custom-developed solution.
-    *   **Rationale:** To manage game entities and their behaviors with a data-oriented design, maximizing cache efficiency and enabling parallel processing.
+*   **ECS Framework:** Flecs (https://github.com/SanderMertens/flecs)
+    *   **Rationale:** Flecs is a fast and lightweight C++11 Entity Component System. It was chosen for its high performance, small footprint, extensive feature set (including hierarchies, prefabs, systems, queries, and a reflection module), excellent documentation, and active development. Its data-oriented design aligns well with the performance goals of Voxel Fortress, maximizing cache efficiency and enabling parallel processing for managing game entities and their behaviors.
+    *   **Integration:** Added as a git submodule in `external/flecs` and integrated into the CMake build system. Core game logic will leverage Flecs for entity management, component definition, and system processing.
 
 > For a detailed discussion of the ECS architecture, design patterns, and integration with other engine systems, see:
 > - [**Entity Component System Details**](./Tech%20Stack/Entity%20Component%20System.md)
@@ -99,7 +100,7 @@ The Voxel Fortress engine will be custom-built in C++ to achieve the specific pe
 *   **Layered Design:**
     1.  **Foundation Layer (C++):** Custom memory allocators (arena, pool, stack for specific use cases), core math libraries (e.g., GLM or custom SIMD-optimized math), logging, platform abstraction (windowing, input via libraries like SDL2 or GLFW, or direct platform APIs).
     2.  **Systems Layer (C++):**
-        *   **Entity Component System (ECS):** A high-performance C++ ECS (e.g., EnTT, Flecs, or a custom implementation tailored to our needs) will be the backbone for game objects and their behaviors.
+        *   **Entity Component System (ECS):** Flecs, a high-performance C++ ECS (integrated via `external/flecs`), will be the backbone for game objects and their behaviors.
         *   **Rendering System:** See dedicated Rendering Pipeline section.
         *   **Physics Engine:** See dedicated Physics System section.
         *   **Input Management:** Mapping raw input to game actions.
