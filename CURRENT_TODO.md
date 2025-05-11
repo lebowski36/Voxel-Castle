@@ -130,6 +130,8 @@ This file tracks our immediate high-level tasks and progress. Detailed sub-tasks
 ## 🧠 Note to Self (Agent & User)
 **Agent Self-Correction/Reminder:** Per user instruction, I will always execute necessary commands directly using the appropriate tool. I will not ask the user to run commands manually.
 
+**I should always clear the console before running a new command** to ensure clean output and prevent confusion between different command results.
+
 **If I'm unable to see the complete output from a command I've run, I must wait for the user to provide the results before proceeding.** This is particularly important for build outputs, error messages, and other terminal responses that are crucial for debugging and making progress.
 
 **WE MUST update this file and the relevant detailed task files after each development step!** This ensures we maintain focus on the most important tasks, have clear visibility into progress, and can adapt our plan as new information becomes available. The active task list should always reflect the current state of development.

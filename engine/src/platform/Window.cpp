@@ -9,28 +9,42 @@ Window::~Window() {
 }
 
 bool Window::init() {
-    // SDL_Init returns 0 on success, or -1 on error.
-    if (SDL_Init(SDL_INIT_VIDEO) != 0) { // Changed from < 0 to != 0 for SDL3 style/warning
+    // Just print that we're starting initialization
+    std::cout << "Initializing window..." << std::endl;
+    std::cout << "Current directory: ";
+    system("pwd");
+    std::cout << "Environment: ";
+    system("env | grep -E 'DISPLAY|WAYLAND_DISPLAY|XDG_SESSION|SDL'");
+    
+    std::cout << "Graphics drivers: ";
+    system("ls -l /dev/dri/ 2>&1");
+    
+    // Try initializing with just video subsystem
+    if (SDL_Init(SDL_INIT_VIDEO) != 0) {
         std::cerr << "SDL could not initialize! SDL_Error: " << SDL_GetError() << std::endl;
         std::cerr << "Additional debug info: SDL initialization failed. This could be due to missing drivers or permissions." << std::endl;
-        return false;
+        
+        // Try fallback options (for testing purposes)
+        std::cerr << "Attempting to initialize with minimal flags..." << std::endl;
+        if (SDL_Init(0) != 0) {
+            std::cerr << "Even minimal SDL initialization failed: " << SDL_GetError() << std::endl;
+            return false;
+        }
     }
 
-    sdlWindow = SDL_CreateWindow(windowTitle.c_str(), windowWidth, windowHeight, SDL_WINDOW_OPENGL);
+    // Try creating a window with minimum flags
+    sdlWindow = SDL_CreateWindow(windowTitle.c_str(), windowWidth, windowHeight, 0);
     if (sdlWindow == nullptr) {
         std::cerr << "Window could not be created! SDL_Error: " << SDL_GetError() << std::endl;
         SDL_Quit();
         return false;
     }
 
-    // Create renderer (optional, if not using OpenGL directly)
-    // SDL3: SDL_CreateRenderer flags like SDL_RENDERER_ACCELERATED are generally not needed,
-    // SDL will pick the best available. Pass NULL for the name for default.
-    sdlRenderer = SDL_CreateRenderer(sdlWindow, NULL); // Removed SDL_RENDERER_ACCELERATED
+    // Try creating a basic renderer
+    sdlRenderer = SDL_CreateRenderer(sdlWindow, NULL);
     if (sdlRenderer == nullptr) {
         std::cerr << "Renderer could not be created! SDL Error: " << SDL_GetError() << std::endl;
-        // We can still run without a renderer for basic windowing, or choose to fail
-        // For now, let's allow it to proceed, but a real engine would likely fail or have a fallback.
+        std::cerr << "Will continue without a renderer for now." << std::endl;
     }
     
     running = true;
