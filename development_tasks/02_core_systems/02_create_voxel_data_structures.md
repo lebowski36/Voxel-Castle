@@ -85,13 +85,31 @@ This task focuses on designing and implementing the core data structures for sto
     *   [ ] **3.7.2.** Ensure naming conventions are followed.
 
 ### 3.8. Add Spatial Partitioning (e.g., Octrees)
-*   **Status:** Not Started
+
+*   **Status:** In Progress
 *   **Description:** Implement a spatial partitioning system to efficiently manage and query `ChunkColumn`s, especially for very large worlds. This will likely involve a structure within `WorldManager`.
-    *   [ ] **3.8.1.** Research suitable spatial partitioning structures for voxel worlds (e.g., Quadtree for XZ plane, Octree if Y-dimension is also sparse and dynamic, or simpler grid-based approaches).
-    *   [ ] **3.8.2.** Design the integration of the chosen structure with `WorldManager` for storing and retrieving `ChunkColumn`s.
-    *   [ ] **3.8.3.** Implement the spatial partitioning structure.
-    *   [ ] **3.8.4.** Update `WorldManager` to use the new structure for `ChunkColumn` management.
-    *   [ ] **3.8.5.** Test the performance and correctness of the spatial partitioning system, especially with operations like loading/unloading chunks and querying chunks in a region.
+
+#### 3.8.1. Research and Recommendation
+After reviewing common spatial partitioning structures:
+  - **Grid:** Simple but not memory efficient for sparse worlds.
+  - **Quadtree:** 2D tree for XZ plane, ideal for vertical chunk columns (as in Minecraft-style worlds).
+  - **Octree:** 3D tree, best if you need to partition in all three axes (X, Y, Z), but more complex and often unnecessary for columnar voxel worlds.
+
+**Decision:** For Voxel Castle, where `ChunkColumn`s are defined by XZ and extend vertically, a **Quadtree** is the best fit. It allows fast queries for all columns in a region, is memory efficient for sparse worlds, and is simpler to implement and maintain than a full Octree.
+
+#### 3.8.2. Implementation Plan
+  - [ ] **3.8.2.1.** Design Quadtree API:
+      - `insert(x, z, ChunkColumn*)`
+      - `remove(x, z)`
+      - `find(x, z)`
+      - `queryRegion(xMin, zMin, xMax, zMax)` (returns all columns in a region)
+  - [ ] **3.8.2.2.** Implement Quadtree in `engine/include/world/quadtree.h` and `engine/src/world/quadtree.cpp`.
+  - [ ] **3.8.2.3.** Integrate Quadtree with `WorldManager` for chunk management (replace or supplement current `std::map`).
+  - [ ] **3.8.2.4.** Add tests for insertion, removal, and region queries.
+  - [ ] **3.8.2.5.** Document and benchmark region queries vs. the old map-based approach.
+
+---
+**Next:** Design and implement the Quadtree data structure and update WorldManager integration.
 
 ## 4. Considerations
 *   **Memory Layout:** Optimize for cache coherency. A flat array for voxels within a `Chunk Segment` is generally good.

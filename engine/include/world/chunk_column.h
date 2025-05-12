@@ -52,6 +52,16 @@ namespace VoxelCastle
         {
         public:
             /**
+             * @brief Returns the base X coordinate of this chunk column.
+             */
+            int_fast64_t getBaseX() const { return m_coordinates.x; }
+
+            /**
+             * @brief Returns the base Z coordinate of this chunk column.
+             */
+            int_fast64_t getBaseZ() const { return m_coordinates.z; }
+        public:
+            /**
              * @brief Constructs a ChunkColumn at the given XZ world coordinates.
              *
              * Initializes the column, potentially pre-allocating or lazily loading its ChunkSegments.

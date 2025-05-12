@@ -75,6 +75,26 @@ int main(int argc, char* argv[]) {
     std::cout << "--- Voxel System Test End ---" << std::endl;
     // --- End Basic Voxel/Chunk Testing ---
 
+    // --- Quadtree/Spatial Partitioning Test ---
+    std::cout << "\n--- Quadtree Spatial Query Test Start ---" << std::endl;
+    // Insert a few more columns in a grid
+    for (int_fast64_t x = -32; x <= 32; x += 32) {
+        for (int_fast64_t z = -32; z <= 32; z += 32) {
+            worldManager.setVoxel(x, 0, z, VoxelEngine::World::Voxel(static_cast<uint8_t>(VoxelEngine::World::VoxelType::STONE)));
+        }
+    }
+    // Query a region that should include all these columns
+    int32_t queryMinX = -40, queryMinZ = -40, queryMaxX = 40, queryMaxZ = 40;
+    auto foundColumns = worldManager.queryChunkColumnsInRegion(queryMinX, queryMinZ, queryMaxX, queryMaxZ);
+    std::cout << "Queried region: X[" << queryMinX << "," << queryMaxX << "] Z[" << queryMinZ << "," << queryMaxZ << "]" << std::endl;
+    std::cout << "Found " << foundColumns.size() << " ChunkColumns:" << std::endl;
+    for (auto* col : foundColumns) {
+        if (col) {
+            std::cout << "  ChunkColumn at X: " << col->getBaseX() << ", Z: " << col->getBaseZ() << std::endl;
+        }
+    }
+    std::cout << "--- Quadtree Spatial Query Test End ---\n" << std::endl;
+
     // --- Mesh Generation Test ---
     std::cout << "\n--- Mesh Generation Test Start ---" << std::endl;
     {

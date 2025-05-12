@@ -59,10 +59,6 @@ void MeshRenderer::uploadMesh(const VoxelMesh& mesh) {
 
 void MeshRenderer::draw(const glm::mat4& model, const glm::mat4& view, const glm::mat4& proj) {
     if (!ready) return;
-    // Print debug info
-    std::cout << "[MeshRenderer::draw] indexCount: " << indexCount
-              << ", vao: " << vao << ", vbo: " << vbo << ", ebo: " << ebo
-              << ", shaderProgram: " << shaderProgram << std::endl;
 
     glUseProgram(shaderProgram);
     glUniformMatrix4fv(glGetUniformLocation(shaderProgram, "uModel"), 1, GL_FALSE, glm::value_ptr(model));

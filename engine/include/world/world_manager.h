@@ -4,6 +4,7 @@
 #include "world/chunk_column.h" // For ::VoxelCastle::World::ChunkColumn and ::VoxelCastle::World::ChunkColumnCoord
 #include "world/voxel.h"      // For ::VoxelEngine::World::Voxel
 #include <map>                // Changed from unordered_map to map
+#include "world/quadtree.h"   // For Quadtree spatial partitioning
 #include <memory>
 #include <cstdint>            // For int_fast64_t
 
@@ -114,15 +115,26 @@ public:
      */
     static int_fast64_t worldToColumnBaseZ(int_fast64_t worldZ);
 
-private:
     /**
      * @brief Map storing all active ChunkColumns, keyed by their XZ world coordinates.
-     *
-     * Uses std::map to keep columns sorted, which might be beneficial for some access patterns
-     * or debugging, though std::unordered_map could be used for potentially faster lookups
-     * if strict ordering is not required.
      */
     std::map< ::VoxelCastle::World::ChunkColumnCoord, std::unique_ptr< ::VoxelCastle::World::ChunkColumn>> m_chunkColumns;
+
+    /**
+     * @brief Quadtree for spatial partitioning of ChunkColumns (XZ plane).
+     */
+    std::unique_ptr<world::Quadtree> m_chunkQuadtree;
+
+public:
+    /**
+     * @brief Query all ChunkColumns in a given XZ region (inclusive).
+     * @param xMin Minimum X of region.
+     * @param zMin Minimum Z of region.
+     * @param xMax Maximum X of region.
+     * @param zMax Maximum Z of region.
+     * @return Vector of pointers to ChunkColumns in the region.
+     */
+    std::vector<ChunkColumn*> queryChunkColumnsInRegion(int32_t xMin, int32_t zMin, int32_t xMax, int32_t zMax) const;
 };
 
 } // namespace World
