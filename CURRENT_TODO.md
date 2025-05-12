@@ -39,81 +39,39 @@ This file tracks our immediate high-level tasks and progress. Detailed sub-tasks
 
 ## 🔄 Active Tasks (New C++ Phase)
 
+**Note on Task Completion:** A main task item (e.g., `- [ ] Implement camera system`) in the lists below is marked as complete (`[x]`) if and only if all its constituent sub-tasks, as detailed in its corresponding markdown file within the `development_tasks/` directory, have been completed and verified.
+
 ### 1. Core Engine Foundation (C++)
-*Detailed sub-tasks in `/home/system-x1/Projects/Voxel Castle/development_tasks/01_core_engine_foundation/`*
+*Detailed sub-tasks in `/home/system-x1/Projects/Voxel Castle/development_tasks/01_core_engine_foundation/`. A main task in this section is marked `[x]` ONLY if ALL its detailed sub-tasks in the corresponding file are complete.*
 - [x] Set up new C++ project structure
-  - [x] Define module/directory layout
-  - [x] Configure C++ build system (e.g., CMake, Meson)
-  - [x] Set up initial compiler/linker settings
-- [x] Implement window management (e.g., using SDL, SFML, or platform-specific APIs)
-  - [x] Create window with proper configuration
-  - [x] Set up event loop
-  - [x] Implement basic input handling
-- [x] Set up rendering API (e.g., OpenGL, Vulkan, DirectX)
-  - [x] Initialize graphics device and context
-  - [x] Create swap chain/surface
-  - [x] Set up initial render pipeline
-  - [x] Define strategy for shader management
-- [x] Select/Implement C++ Math Library (e.g., GLM, Eigen)
+- [x] Implement window management
+- [x] Set up rendering API
+- [x] Select/Implement C++ Math Library
 
 ### 2. Implement Core Systems (C++)
-*Detailed sub-tasks in `/home/system-x1/Projects/Voxel Castle/development_tasks/02_core_systems/`*
+*Detailed sub-tasks in `/home/system-x1/Projects/Voxel Castle/development_tasks/02_core_systems/`. A main task in this section is marked `[x]` ONLY if ALL its detailed sub-tasks in the corresponding file are complete.*
 - [x] Choose and implement ECS
-  - [x] Research and select C++ ECS library (e.g., EnTT, Flecs) or design custom solution
-  - [x] Define entity and component structures
-  - [x] Set up system management/scheduler
 - [ ] Create voxel data structures
-  - [x] Design chunk structure *(Covers Voxel, ChunkSegment, ChunkColumn design)*
-  - [x] Implement voxel storage *(Covers Voxel, ChunkSegment, ChunkColumn, WorldManager implementation)*
-  - [x] Add spatial partitioning (e.g., octrees) // Quadtree implemented for ChunkColumn
 - [ ] Build mesh generation system
-  - [x] Create mesh from voxel data // Naive meshing implemented and tested, but part of the larger item
-  - [x] Implement greedy meshing or other optimization
-  - [ ] Add texture mapping support
-  - [ ] Implement texture atlas system
 
 ### 3. Create Basic Game Structure (C++)
-*Detailed sub-tasks in `/home/system-x1/Projects/Voxel Castle/development_tasks/03_basic_game_structure/`*
+*Detailed sub-tasks in `/home/system-x1/Projects/Voxel Castle/development_tasks/03_basic_game_structure/`. A main task in this section is marked `[x]` ONLY if ALL its detailed sub-tasks in the corresponding file are complete.*
 - [ ] Implement camera system
-  - [ ] Create perspective/orthographic camera
-  - [ ] Add camera controls (e.g., mouse look, movement)
-  - [ ] Handle window resizing and aspect ratio
-  - [ ] Implement frustum culling
 - [ ] Set up basic game loop
-  - [ ] Implement fixed timestep for updates, variable for rendering
-  - [ ] Create update and render phases
 - [ ] Add simple world generation
-  - [ ] Implement noise-based terrain (e.g., Perlin, Simplex)
-  - [ ] Generate basic chunk structure
 - [ ] Implement basic lighting model
 
 ### 4. Essential Game Infrastructure (C++)
-*Detailed sub-tasks in `/home/system-x1/Projects/Voxel Castle/development_tasks/04_essential_game_infrastructure/`*
+*Detailed sub-tasks in `/home/system-x1/Projects/Voxel Castle/development_tasks/04_essential_game_infrastructure/`. A main task in this section is marked `[x]` ONLY if ALL its detailed sub-tasks in the corresponding file are complete.*
 - [ ] Implement Physics System
-  - [ ] Research and select/design C++ physics solution (e.g., Jolt, PhysX, Bullet, custom)
-  - [ ] Integrate basic collision detection
-  - [ ] Implement basic physics response
 - [ ] Develop UI Framework
-  - [ ] Research/select UI library or design custom immediate/retained mode UI system
-  - [ ] Implement basic text rendering
-  - [ ] Create foundational UI elements (buttons, panels)
 - [ ] Implement Game State Management
-  - [ ] Design state machine or manager
-  - [ ] Handle transitions between states (e.g., menu, game, loading)
 
 ### 5. Advanced Engine Features & Game Systems (C++)
-*Detailed sub-tasks in `/home/system-x1/Projects/Voxel Castle/development_tasks/05_advanced_engine_features/`*
+*Detailed sub-tasks in `/home/system-x1/Projects/Voxel Castle/development_tasks/05_advanced_engine_features/`. A main task in this section is marked `[x]` ONLY if ALL its detailed sub-tasks in the corresponding file are complete.*
 - [ ] Implement Level of Detail (LOD) System
-  - [ ] Design distance-based LOD for terrain/objects
-  - [ ] Implement mesh simplification techniques if needed
 - [ ] Implement Save/Load System
-  - [ ] Design save file format
-  - [ ] Implement serialization/deserialization for game state
 - [ ] Performance Profiling and Optimization
-  - [ ] Integrate profiling tools
-  - [ ] Identify and optimize bottlenecks (e.g., chunk generation, rendering)
-  - [ ] Explore multithreading for heavy tasks
-  - [ ] Implement occlusion culling (if not already part of initial rendering/camera)
 
 ## 📝 Near-Term Priority Tasks
 *This section should be updated regularly with the most immediate goals, typically pointing to the current high-level task from the list above.*
@@ -176,7 +134,7 @@ Greedy meshing is now correct and fully tested. All mesh generation tests pass, 
 
 **General Operational Guidelines:**
 *   **ABSOLUTELY CRITICAL: Clear Console with Command!** Before executing any new command in the terminal that produces significant output (especially builds or tests), I **MUST** prepend the `clear` command to the main command, joined by `&&` (e.g., `clear && cmake --build build`). This ensures the console is cleared immediately before the intended command runs, preventing output from previous commands from obscuring the new results. I will explicitly state that the command includes clearing the console.
-*   **CRITICAL - Update Task Files:** I **MUST ALWAYS** update this file (`CURRENT_TODO.md`) and, most importantly, the relevant detailed task files in `development_tasks/` (by checking off completed sub-tasks and updating their status) after each development step is confirmed complete. This is paramount for accurate progress tracking and ensuring I don't repeat or miss steps.
+*   **CRITICAL - Update Task Files:** I **MUST ALWAYS** update this file (`CURRENT_TODO.md`) and, most importantly, the relevant detailed task files in `development_tasks/` (by checking off completed sub-tasks and updating their status) after each development step is confirmed complete. **Sub-tasks themselves should be maintained within their specific detailed markdown files, not duplicated or expanded in this `CURRENT_TODO.md` file.** This `CURRENT_TODO.md` file should only list the main high-level tasks. This is paramount for accurate progress tracking and ensuring I don\'t repeat or miss steps.
 *   **Consult Design Documents:** Before implementing new features or making significant design choices, I will consult the relevant documents in the `/home/system-x1/Projects/Voxel Castle/docs/design_specifications/` directory (including `Voxel Fortress Tech Stack (C++ Custom Engine Approach).md`, `Voxel Fortress Game Concept Details.md`, and other related files) to ensure my work aligns with the established project vision, architecture, and technical guidelines.
 *   **Crucial Decisions:** ALWAYS CONFIRM CRUCIAL DECISIONS WITH THE USER. Before making significant choices (e.g., selecting a library, deciding on a core architectural pattern), present the options, your recommendation (if any), and ask for the user's input and confirmation.
 *   **Problem Persistence:** IF A PROBLEM PERSISTS after initial attempts, I will search for solutions online before asking the user for help or trying the same fix repeatedly.
