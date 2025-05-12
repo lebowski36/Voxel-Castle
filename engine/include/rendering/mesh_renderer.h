@@ -17,7 +17,9 @@ public:
     bool isReady() const { return ready; }
 
 private:
-    GLuint vao = 0, vbo = 0, ebo = 0;
+    GLuint vao = 0; // Changed order
+    GLuint vbo = 0;
+    GLuint ebo = 0;
     GLuint shaderProgram = 0;
     GLuint textureAtlasID = 0; // Added for texture atlas
     size_t indexCount = 0;

@@ -28,11 +28,13 @@
 
 // GLM Headers - Will be used by other engine systems, keep includes for now if generally useful
 #define GLM_FORCE_SILENT_WARNINGS // Optional: To suppress GLM warnings if any
+#define GLM_ENABLE_EXPERIMENTAL // Enable GLM experimental extensions
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
+#include <glm/gtx/string_cast.hpp> // Ensure this is included after enabling experimental extensions
 
-int main(int argc, char* argv[]) {
+int main(int /*argc*/, char* /*argv*/[]) { // Suppress unused parameter warnings
     std::cout << "Starting VoxelFortress Game" << std::endl;
 
     // Initialize Flecs world
@@ -60,12 +62,19 @@ int main(int argc, char* argv[]) {
     }
 
     // --- OpenGL State Setup ---
-    // Enable depth testing for correct 3D rendering
+    // Enable depth testing for proper 3D rendering
     glEnable(GL_DEPTH_TEST);
+    glDepthFunc(GL_LESS);
     // Disable face culling for debug (see all faces)
     glDisable(GL_CULL_FACE);
     // Set filled polygon mode for normal rendering
     glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+    
+    // Debug OpenGL state
+    std::cout << "OpenGL debug: Setting up rendering state" << std::endl;
+    GLint depthTestEnabled;
+    glGetIntegerv(GL_DEPTH_TEST, &depthTestEnabled);
+    std::cout << "Depth testing enabled: " << (depthTestEnabled ? "Yes" : "No") << std::endl;
 
 
     // --- Mesh Rendering Setup ---
@@ -88,15 +97,27 @@ int main(int argc, char* argv[]) {
     VoxelEngine::Rendering::MeshRenderer meshRenderer;
     meshRenderer.uploadMesh(groundMesh);
 
-    // Camera setup
+    // Camera setup with extreme debug positioning
     glm::mat4 model = glm::mat4(1.0f);
-    // Camera above and back, looking down at the center of the ground
+    // Adjust camera position to ensure cubes are visible
     glm::mat4 view = glm::lookAt(
-        glm::vec3(16, 32, 32), // camera position (x, y, z)
-        glm::vec3(16, 0, 16),  // look at center of ground
-        glm::vec3(0, 1, 0));   // up
+        glm::vec3(16, 10, 24), // Move camera slightly higher and further back
+        glm::vec3(16, 0, 16),  // Look at the center of the ground plane
+        glm::vec3(0, 1, 0)     // Up vector
+    );
     float aspect = static_cast<float>(gameWindow.getWidth()) / static_cast<float>(gameWindow.getHeight());
-    glm::mat4 proj = glm::perspective(glm::radians(35.0f), aspect, 0.1f, 300.0f);
+    // Wider field of view to see more
+    glm::mat4 proj = glm::perspective(glm::radians(60.0f), aspect, 0.1f, 300.0f);
+    
+    // Debug: Print camera position and view matrix
+    std::cout << "Camera position adjusted for better visibility." << std::endl;
+    std::cout << "View matrix: " << glm::to_string(view) << std::endl;
+
+    // Debug camera information
+    std::cout << "Camera setup:" << std::endl;
+    std::cout << "  Position: (16, 10, 24)" << std::endl;
+    std::cout << "  Looking at: (16, 0, 16)" << std::endl;
+    std::cout << "  Field of view: 60 degrees" << std::endl;
 
     // Print first few mesh vertex positions for debug
     std::cout << "First 8 mesh vertex positions:" << std::endl;
@@ -105,10 +126,13 @@ int main(int argc, char* argv[]) {
         std::cout << "  [" << i << "] (" << v.position.x << ", " << v.position.y << ", " << v.position.z << ")" << std::endl;
     }
 
-    // Set clear color to light blue for debug
-    glClearColor(0.5f, 0.7f, 1.0f, 1.0f);
+    // Set clear color to bright purple for debug
+    glClearColor(0.8f, 0.0f, 0.8f, 1.0f);
+    
+    std::cout << "Starting main rendering loop" << std::endl;
 
-    while (gameWindow.isRunning()) {
+    int frameCount = 0; // DEBUG: Frame counter
+    while (gameWindow.isRunning() || frameCount < 100) { // DEBUG: Ensure at least 100 frames
         gameWindow.handleEvents();
 
         // ECS: Progress systems
@@ -116,11 +140,23 @@ int main(int argc, char* argv[]) {
 
         gameWindow.update();
 
-        // Clear and render mesh
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        // Clear color buffer only (depth disabled for testing)
+        glClear(GL_COLOR_BUFFER_BIT);
+        
+        // Debug every 10 frames
+        if (frameCount % 10 == 0) {
+            std::cout << "Frame " << frameCount << ": Drawing mesh" << std::endl;
+            // Check for any OpenGL errors before drawing
+            GLenum err = glGetError();
+            if (err != GL_NO_ERROR) {
+                std::cerr << "OpenGL error before draw: 0x" << std::hex << err << std::dec << std::endl;
+            }
+        }
+        
         meshRenderer.draw(model, view, proj);
 
         gameWindow.render();
+        frameCount++; // DEBUG: Increment counter
     }
 
     // cleanUp is called by Window destructor

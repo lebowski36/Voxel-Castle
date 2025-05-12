@@ -9,25 +9,47 @@
 
 #include <SDL3/SDL.h> // Include SDL headers for types like Uint8, Uint16
 
-#include "stb_image.h" // For texture loading (now using our own copy)
+#include "../../external/stb_image.h" // Include stb_image for texture loading without implementation
 
 namespace VoxelEngine {
 namespace Rendering {
 
-MeshRenderer::MeshRenderer() : shaderProgram(0), vao(0), vbo(0), ebo(0), textureAtlasID(0), ready(false) {
-    shaderProgram = createShaderProgram(
-        "assets/shaders/voxel.vert",
-        "assets/shaders/voxel.frag"
-    );
-    if (shaderProgram == 0) {
-        std::cerr << "FATAL: [MeshRenderer] shaderProgram is 0. Shaders failed to load." << std::endl;
-        // 'ready' will remain false due to later checks or default initialization
+static bool textureSamplerWarningLogged = false;
+
+// Define a consistent base directory for asset paths
+const std::string BASE_DIRECTORY = "/home/system-x1/Projects/Voxel Castle/";
+
+MeshRenderer::MeshRenderer() : vao(0), vbo(0), ebo(0), shaderProgram(0), textureAtlasID(0), ready(false) {
+    std::cout << "[MeshRenderer] Constructor started." << std::endl;
+
+    try {
+        std::cout << "[MeshRenderer] Current Working Directory: " << std::filesystem::current_path().string() << std::endl;
+    } catch (const std::filesystem::filesystem_error& e) {
+        std::cerr << "[MeshRenderer] Error retrieving current working directory: " << e.what() << std::endl;
     }
 
-    if (!loadTexture("assets/textures/atlas.png")) {
+    // Correct paths for shaders and texture
+    const std::string projectRoot = BASE_DIRECTORY;
+    const std::string vertexShaderPath = projectRoot + "assets/shaders/voxel.vert";
+    const std::string fragmentShaderPath = projectRoot + "assets/shaders/voxel.frag";
+    const std::string texturePath = BASE_DIRECTORY + "assets/textures/atlas.png";
+
+    std::cout << "[MeshRenderer] Creating shader program from:" << std::endl;
+    std::cout << "  Vertex shader: " << vertexShaderPath << std::endl;
+    std::cout << "  Fragment shader: " << fragmentShaderPath << std::endl;
+
+    shaderProgram = createShaderProgram(vertexShaderPath, fragmentShaderPath);
+
+    if (shaderProgram == 0) {
+        std::cerr << "FATAL: [MeshRenderer] shaderProgram is 0. Shaders failed to load." << std::endl;
+    } else {
+        std::cout << "[MeshRenderer] Shader program created successfully. ID: " << shaderProgram << std::endl;
+    }
+
+    if (!loadTexture(texturePath)) {
         std::cerr << "FATAL: [MeshRenderer] Failed to load texture atlas." << std::endl;
-        // Shader program might be valid, but without texture, it's not fully ready.
-        // Depending on shader, this might be a critical failure.
+    } else {
+        std::cout << "[MeshRenderer] Texture atlas loaded successfully. ID: " << textureAtlasID << std::endl;
     }
 
     glGenVertexArrays(1, &vao);
@@ -36,56 +58,54 @@ MeshRenderer::MeshRenderer() : shaderProgram(0), vao(0), vbo(0), ebo(0), texture
 
     if (vao == 0 || vbo == 0 || ebo == 0) {
         std::cerr << "FATAL: [MeshRenderer] Failed to generate VAO/VBO/EBO." << std::endl;
-        std::cerr << "  VAO: " << vao << ", VBO: " << vbo << ", EBO: " << ebo << std::endl;
-        GLenum err;
-        while((err = glGetError()) != GL_NO_ERROR) {
-            std::cerr << "OpenGL error during glGen*: 0x" << std::hex << err << std::dec << std::endl;
-        }
-        // 'ready' will remain false
     }
-    // Initialize ready state based on fundamental setup
-    ready = (shaderProgram != 0 && vao != 0 && vbo != 0 && ebo != 0 && textureAtlasID != 0); // Added textureAtlasID check
+
+    ready = (shaderProgram != 0 && vao != 0 && vbo != 0 && ebo != 0 && textureAtlasID != 0);
     if (!ready) {
         std::cerr << "[MeshRenderer] Constructor: Renderer not ready due to shader, buffer, or texture generation failure." << std::endl;
+    } else {
+        std::cout << "[MeshRenderer] Constructor: Renderer is ready." << std::endl;
     }
 }
 
 MeshRenderer::~MeshRenderer() {
+    std::cout << "[MeshRenderer] Destructor called." << std::endl;
     glDeleteVertexArrays(1, &vao);
     glDeleteBuffers(1, &vbo);
     glDeleteBuffers(1, &ebo);
     if (shaderProgram) glDeleteProgram(shaderProgram);
-    if (textureAtlasID) glDeleteTextures(1, &textureAtlasID); // Clean up texture
+    if (textureAtlasID) glDeleteTextures(1, &textureAtlasID); 
 }
 
 void MeshRenderer::uploadMesh(const VoxelMesh& mesh) {
+    std::cout << "[MeshRenderer::uploadMesh] Called with mesh (" << mesh.vertices.size() << " vertices, " << mesh.indices.size() << " indices)." << std::endl;
     if (shaderProgram == 0 || vao == 0 || vbo == 0 || ebo == 0) {
         std::cerr << "[MeshRenderer::uploadMesh] Renderer not properly initialized (shader/buffers missing). Cannot upload." << std::endl;
-        ready = false; // Ensure it's marked not ready
+        std::cout << "  Shader Program ID: " << shaderProgram << ", VAO: " << vao << ", VBO: " << vbo << ", EBO: " << ebo << std::endl;
+        ready = false; 
         indexCount = 0;
         return;
     }
 
     if (mesh.indices.size() > 0 && mesh.vertices.size() == 0) {
         std::cerr << "[MeshRenderer::uploadMesh] Error: Mesh has " << mesh.indices.size() << " indices but 0 vertices. Marking as not ready to render this mesh." << std::endl;
-        // Clear potentially old data from buffers to avoid rendering stale data with new (zero) indexCount
         glBindVertexArray(vao);
+        std::cout << "[MeshRenderer::uploadMesh] Clearing VBO and EBO due to inconsistent mesh data." << std::endl;
         glBindBuffer(GL_ARRAY_BUFFER, vbo);
         glBufferData(GL_ARRAY_BUFFER, 0, nullptr, GL_STATIC_DRAW);
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
         glBufferData(GL_ELEMENT_ARRAY_BUFFER, 0, nullptr, GL_STATIC_DRAW);
         indexCount = 0;
-        ready = false; // Not ready to render *this* mesh configuration
+        ready = false; 
         glBindVertexArray(0);
         return;
     }
     
-    if (mesh.vertices.size() == 0) { // Covers (vertices=0, indices=0) and (vertices=0, indices>0 was caught above)
+    if (mesh.vertices.size() == 0) { 
         std::cout << "[MeshRenderer::uploadMesh] Uploading empty mesh (0 vertices, " << mesh.indices.size() << " indices)." << std::endl;
     }
 
-    // Print first 4 vertices as raw floats for debug
-    std::cout << "Raw vertex buffer (first 4 vertices):" << std::endl;
+    std::cout << "[MeshRenderer::uploadMesh] Raw vertex buffer (first " << std::min<size_t>(4, mesh.vertices.size()) << " vertices):" << std::endl;
     const float* raw = reinterpret_cast<const float*>(mesh.vertices.data());
     size_t floatsPerVertex = sizeof(Vertex) / sizeof(float);
     for (size_t i = 0; i < std::min<size_t>(4, mesh.vertices.size()); ++i) {
@@ -113,74 +133,111 @@ void MeshRenderer::uploadMesh(const VoxelMesh& mesh) {
         std::cerr << "[MeshRenderer::uploadMesh] OpenGL error 0x" << std::hex << err << std::dec << " after EBO glBufferData." << std::endl;
     }
 
-    // Enable position, normal, and light attributes
-    glEnableVertexAttribArray(0); // pos
+    glEnableVertexAttribArray(0); 
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(VoxelEngine::Rendering::Vertex), (void*)offsetof(VoxelEngine::Rendering::Vertex, position));
-    glEnableVertexAttribArray(1); // normal
+    glEnableVertexAttribArray(1); 
     glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(VoxelEngine::Rendering::Vertex), (void*)offsetof(VoxelEngine::Rendering::Vertex, normal));
-    glEnableVertexAttribArray(2); // texCoord - UNCOMMENTED AND ENABLED
+    glEnableVertexAttribArray(2); 
     glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(VoxelEngine::Rendering::Vertex), (void*)offsetof(VoxelEngine::Rendering::Vertex, texCoords));
-    glEnableVertexAttribArray(3); // light
+    glEnableVertexAttribArray(3); 
     glVertexAttribPointer(3, 1, GL_FLOAT, GL_FALSE, sizeof(VoxelEngine::Rendering::Vertex), (void*)offsetof(VoxelEngine::Rendering::Vertex, light));
-    err = glGetError(); // Check after last AttribPointer
+    err = glGetError(); 
     if (err != GL_NO_ERROR) {
         std::cerr << "[MeshRenderer::uploadMesh] OpenGL error 0x" << std::hex << err << std::dec << " after glVertexAttribPointer setup." << std::endl;
     }
 
     indexCount = mesh.indices.size();
-    // Re-affirm ready state. If any GL error occurred above, this might be too optimistic.
-    // The crucial part is that shaderProgram, vao, vbo, ebo must be valid.
-    // And the current mesh data must not be inconsistent (like indices w/o vertices).
-    ready = (shaderProgram != 0 && vao != 0 && vbo != 0 && ebo != 0 && textureAtlasID != 0); // Added textureAtlasID check
+    ready = (shaderProgram != 0 && vao != 0 && vbo != 0 && ebo != 0 && textureAtlasID != 0); 
                                 
     if (!ready) {
          std::cerr << "[MeshRenderer::uploadMesh] MeshRenderer determined not ready after upload attempt." << std::endl;
+         std::cout << "  Shader Program ID: " << shaderProgram << std::endl;
+         std::cout << "  VAO ID: " << vao << std::endl;
+         std::cout << "  VBO ID: " << vbo << std::endl;
+         std::cout << "  EBO ID: " << ebo << std::endl;
+         std::cout << "  Texture Atlas ID: " << textureAtlasID << std::endl;
     } else if (indexCount == 0 && mesh.vertices.size() > 0) {
         std::cout << "[MeshRenderer::uploadMesh] Mesh has " << mesh.vertices.size() << " vertices but 0 indices. Will draw 0 elements." << std::endl;
+    } else {
+        std::cout << "[MeshRenderer::uploadMesh] Mesh uploaded successfully. Index count: " << indexCount << ". Renderer is ready: " << std::boolalpha << ready << std::noboolalpha << std::endl;
     }
 
     glBindVertexArray(0);
 }
 
+// Reduce frame counting frequency in draw function
 void MeshRenderer::draw(const glm::mat4& model, const glm::mat4& view, const glm::mat4& proj) {
+    static int retryCount = 0;
+    static bool retriesExhausted = false;
+    static int frameCounter = 0;
+    const int maxRetries = 5;
+    const int frameLogFrequency = 10; // Log every 10 frames
+
+    if (retriesExhausted) {
+        if (frameCounter % frameLogFrequency == 0) {
+            std::cerr << "[MeshRenderer::draw] Renderer not ready. Skipping draw." << std::endl;
+        }
+        frameCounter++;
+        return; // Stop further attempts
+    }
+
     if (!ready) {
-        // std::cout << "[MeshRenderer::draw] Not ready, skipping draw." << std::endl;
+        if (retryCount < maxRetries) {
+            std::cerr << "[MeshRenderer::draw] Renderer not ready. Attempt " << (retryCount + 1) << " of " << maxRetries << "." << std::endl;
+            retryCount++;
+        } else {
+            std::cerr << "[MeshRenderer::draw] Renderer not ready. Max retries reached. No further attempts will be made." << std::endl;
+            retriesExhausted = true;
+        }
         return;
-    }
-    // shaderProgram == 0 should be covered by !ready, but double check for safety.
-    if (shaderProgram == 0 || textureAtlasID == 0) { // Added textureAtlasID check
-        std::cerr << "[MeshRenderer::draw] Critical error: shaderProgram or textureAtlasID is 0 but renderer was marked ready. Skipping draw." << std::endl;
-        return;
-    }
-    if (indexCount == 0) {
-        // std::cout << "[MeshRenderer::draw] indexCount is 0, skipping glDrawElements." << std::endl;
-        return; // Nothing to draw
     }
 
+    retryCount = 0; // Reset retry count if ready
+    retriesExhausted = false; // Reset flag if ready
+    frameCounter = 0; // Reset frame counter if ready
+
+    glUseProgram(shaderProgram);
+
+    GLint texSamplerLoc = glGetUniformLocation(shaderProgram, "uTextureSampler");
+    if (texSamplerLoc == -1) {
+        if (!textureSamplerWarningLogged) {
+            std::cerr << "[MeshRenderer::draw] Warning: Could not get uniform location for uTextureSampler. Location: -1" << std::endl;
+            textureSamplerWarningLogged = true;
+        }
+    } else {
+        glUniform1i(texSamplerLoc, 0);
+    }
+
+    // Use the shader program
     GLenum err;
-
     glUseProgram(shaderProgram);
     err = glGetError();
     if (err != GL_NO_ERROR) {
         std::cerr << "[MeshRenderer::draw] OpenGL error 0x" << std::hex << err << std::dec << " after glUseProgram." << std::endl;
-        // If glUseProgram fails, subsequent calls are likely to fail too.
+        return; 
     }
 
-    // Bind the texture atlas
-    glActiveTexture(GL_TEXTURE0); // Activate texture unit 0
+    // Activate texture unit 0 and bind our texture
+    glActiveTexture(GL_TEXTURE0); 
     glBindTexture(GL_TEXTURE_2D, textureAtlasID);
     err = glGetError();
     if (err != GL_NO_ERROR) {
-        std::cerr << "[MeshRenderer::draw] OpenGL error 0x" << std::hex << err << std::dec << " after glBindTexture." << std::endl;
+        std::cerr << "[MeshRenderer::draw] OpenGL error 0x" << std::hex << err << std::dec << " after glBindTexture. Texture ID: " << textureAtlasID << std::endl;
     }
-    // Set the sampler uniform in the shader to use texture unit 0
-    GLint texSamplerLoc = glGetUniformLocation(shaderProgram, "uTextureSampler");
+    
+    // Set the sampler uniform
+    texSamplerLoc = glGetUniformLocation(shaderProgram, "uTextureSampler");
+    err = glGetError(); 
+    if (err != GL_NO_ERROR) {
+        std::cerr << "[MeshRenderer::draw] OpenGL error 0x" << std::hex << err << std::dec << " after glGetUniformLocation for uTextureSampler." << std::endl;
+    }
+
     if (texSamplerLoc != -1) {
-        glUniform1i(texSamplerLoc, 0); // Tell shader to use texture unit 0
-    } else {
-        // This might not be an error if the shader isn\'t using a texture sampler yet,
-        // but it will be once we update the shader.
-        // std::cerr << "[MeshRenderer::draw] Warning: Could not get uniform location for uTextureSampler." << std::endl;
+        glUniform1i(texSamplerLoc, 0); 
+        err = glGetError();
+        if (err != GL_NO_ERROR) {
+            std::cerr << "[MeshRenderer::draw] OpenGL error 0x" << std::hex << err << std::dec << " after glUniform1i for uTextureSampler." << std::endl;
+        }
     }
 
     GLint modelLoc = glGetUniformLocation(shaderProgram, "uModel");
@@ -190,7 +247,6 @@ void MeshRenderer::draw(const glm::mat4& model, const glm::mat4& view, const glm
     if (modelLoc == -1 || viewLoc == -1 || projLoc == -1) {
         std::cerr << "[MeshRenderer::draw] Error: Could not get one or more uniform locations." << std::endl;
         std::cerr << "  uModel: " << modelLoc << ", uView: " << viewLoc << ", uProjection: " << projLoc << std::endl;
-        // This will cause GL_INVALID_OPERATION on glUniformMatrix4fv if location is -1.
     }
 
     glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
@@ -220,26 +276,27 @@ void MeshRenderer::draw(const glm::mat4& model, const glm::mat4& view, const glm
     glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(indexCount), GL_UNSIGNED_INT, 0);
     err = glGetError(); 
     if (err != GL_NO_ERROR) {
-        // This is the most likely place for the original 0x502 if other checks pass
         std::cerr << "[MeshRenderer::draw] OpenGL error 0x" << std::hex << err << std::dec << " after glDrawElements." << std::endl;
     }
 
     glBindVertexArray(0);
-    err = glGetError(); // Check error from unbinding VAO
+    err = glGetError(); 
     if (err != GL_NO_ERROR) {
         std::cerr << "[MeshRenderer::draw] OpenGL error 0x" << std::hex << err << std::dec << " after unbinding VAO (final operation)." << std::endl;
     }
-    // Unbind texture after drawing (good practice, though not strictly necessary if next draw call rebinds)
     glBindTexture(GL_TEXTURE_2D, 0); 
+
+    // At the end of the session, provide a summary if the warning was logged
+    if (textureSamplerWarningLogged) {
+        std::cerr << "[MeshRenderer::draw] Summary: uTextureSampler uniform location was not found. This may indicate it is not used in the shader." << std::endl;
+    }
 }
 
 GLuint MeshRenderer::loadShader(const std::string& path, GLenum type) {
-    // Attempt to get the absolute path for debugging
     std::string absolute_path_str = "Unknown (filesystem error)";
     try {
         std::filesystem::path p(path);
         if (p.is_relative()) {
-            // If the path is relative, make it absolute based on the current working directory
             absolute_path_str = std::filesystem::absolute(p).string();
         } else {
             absolute_path_str = p.string();
@@ -254,16 +311,15 @@ GLuint MeshRenderer::loadShader(const std::string& path, GLenum type) {
     std::stringstream ss;
     if (file.is_open()) {
         ss << file.rdbuf();
-        file.close(); // Ensure the file is closed before proceeding
+        file.close(); 
     } else {
         std::cerr << "Error: Could not open shader file: " << path << " (Resolved absolute: " << absolute_path_str << ")" << std::endl;
-        // Also print current working directory
         try {
             std::cerr << "Current Working Directory: " << std::filesystem::current_path().string() << std::endl;
         } catch (const std::filesystem::filesystem_error& e) {
             std::cerr << "Filesystem error when getting CWD: " << e.what() << std::endl;
         }
-        return 0; // Return 0 or handle error appropriately
+        return 0; 
     }
     std::string src = ss.str();
     GLuint shader = glCreateShader(type);
@@ -309,10 +365,10 @@ GLuint MeshRenderer::createShaderProgram(const std::string& vertPath, const std:
         char infoLog[512];
         glGetProgramInfoLog(prog, 512, nullptr, infoLog);
         std::cerr << "[MeshRenderer::createShaderProgram] Shader link error:\n" << infoLog << std::endl;
-        glDeleteProgram(prog); // Clean up the failed program
+        glDeleteProgram(prog); 
         glDeleteShader(vert); 
         glDeleteShader(frag);
-        return 0; // Return 0 to indicate failure
+        return 0; 
     }
 
     glDetachShader(prog, vert);
@@ -328,54 +384,50 @@ GLuint MeshRenderer::createShaderProgram(const std::string& vertPath, const std:
     return prog;
 }
 
-// Definition of loadTexture method
-bool MeshRenderer::loadTexture(const std::string& texturePath) {
-    std::filesystem::path fsPath(texturePath);
-    std::string absolutePathStr;
-    if (fsPath.is_absolute()) {
-        absolutePathStr = texturePath;
+bool MeshRenderer::loadTexture(const std::string& path) {
+    std::string resolvedPath;
+    if (std::filesystem::path(path).is_absolute()) {
+        resolvedPath = path; // Use the provided absolute path
     } else {
-        absolutePathStr = texturePath; // Keep it as passed for now, assuming it's correct relative to execution dir.
+        resolvedPath = BASE_DIRECTORY + "assets/textures/" + path; // Prepend the base directory
     }
-    
-    std::cout << "[MeshRenderer::loadTexture] Attempting to load texture from: " << absolutePathStr << std::endl;
 
-    int width, height, nrChannels;
-    stbi_set_flip_vertically_on_load(true); // Important for OpenGL texture coordinates
-    unsigned char *data = stbi_load(absolutePathStr.c_str(), &width, &height, &nrChannels, 0);
+    std::cout << "[MeshRenderer::loadTexture] Base directory: " << BASE_DIRECTORY << std::endl;
+    std::cout << "[MeshRenderer::loadTexture] Resolved path: " << resolvedPath << std::endl;
 
-    if (data) {
-        GLenum format;
-        if (nrChannels == 1) format = GL_RED;
-        else if (nrChannels == 3) format = GL_RGB;
-        else if (nrChannels == 4) format = GL_RGBA;
-        else {
-            std::cerr << "Error loading texture: Unknown number of channels: " << nrChannels << std::endl;
-            stbi_image_free(data);
-            return false;
-        }
-
-        glGenTextures(1, &textureAtlasID);
-        glBindTexture(GL_TEXTURE_2D, textureAtlasID);
-
-        // Set texture wrapping and filtering options
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-        // Use GL_NEAREST for pixel art style
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST_MIPMAP_NEAREST); // Use mipmaps
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-
-        glTexImage2D(GL_TEXTURE_2D, 0, format, width, height, 0, format, GL_UNSIGNED_BYTE, data);
-        glGenerateMipmap(GL_TEXTURE_2D); // Generate mipmaps
-
-        stbi_image_free(data);
-        std::cout << "[MeshRenderer::loadTexture] Texture loaded successfully: " << absolutePathStr << " (ID: " << textureAtlasID << ")" << std::endl;
-        return true;
-    } else {
-        std::cerr << "Error loading texture '" << absolutePathStr << "': stb_image failed to load the image (no further reason available)" << std::endl;
-        textureAtlasID = 0; // Ensure it's zero on failure
+    // Check if file exists and is accessible
+    if (!std::filesystem::exists(resolvedPath)) {
+        std::cerr << "[MeshRenderer::loadTexture] File not found: " << resolvedPath << std::endl;
         return false;
     }
+
+    int width, height, channels;
+    stbi_set_flip_vertically_on_load(true);
+    unsigned char* data = stbi_load(resolvedPath.c_str(), &width, &height, &channels, 0);
+    if (!data) {
+        std::cerr << "[MeshRenderer::loadTexture] Error loading texture '" << resolvedPath << "': " << stbi_failure_reason() << std::endl;
+        return false;
+    }
+
+    std::cout << "[MeshRenderer::loadTexture] Texture loaded successfully. Dimensions: " << width << "x" << height << ", Channels: " << channels << std::endl;
+
+    GLenum format;
+    if (channels == 1) { format = GL_RED; }
+    else if (channels == 3) { format = GL_RGB; }
+    else if (channels == 4) { format = GL_RGBA; }
+    else {
+        std::cerr << "[MeshRenderer::loadTexture] Error loading texture: Unknown number of channels: " << channels << " for texture " << resolvedPath << std::endl;
+        stbi_image_free(data);
+        return false;
+    }
+
+    glGenTextures(1, &textureAtlasID);
+    glBindTexture(GL_TEXTURE_2D, textureAtlasID);
+    glTexImage2D(GL_TEXTURE_2D, 0, format, width, height, 0, format, GL_UNSIGNED_BYTE, data);
+    glGenerateMipmap(GL_TEXTURE_2D);
+
+    stbi_image_free(data);
+    return true;
 }
 
 } // namespace Rendering
