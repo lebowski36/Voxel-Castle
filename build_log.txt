@@ -1,0 +1,22 @@
+[  4%] Built target SDL_uclibc
+[ 47%] Built target SDL3-static
+[ 49%] Built target SDL3_test
+[ 50%] Built target glad
+[ 74%] Built target flecs
+[ 97%] Built target flecs_static
+[100%] Built target VoxelEngine
+[100%] Building CXX object game/CMakeFiles/VoxelFortressGame.dir/src/main.cpp.o
+/home/system-x1/Projects/Voxel Castle/game/src/main.cpp: In function ‘GLuint loadShader(const std::string&, GLenum)’:
+/home/system-x1/Projects/Voxel Castle/game/src/main.cpp:44:28: error: variable ‘std::ifstream file’ has initializer but incomplete type
+   44 |     std::ifstream file(path);
+      |                            ^
+/home/system-x1/Projects/Voxel Castle/game/src/main.cpp:36:1: note: ‘std::ifstream’ is defined in header ‘<fstream>’; this is probably fixable by adding ‘#include <fstream>’
+   35 | #include <glm/gtx/string_cast.hpp> // Ensure this is included after enabling experimental extensions
+  +++ |+#include <fstream>
+   36 | 
+/home/system-x1/Projects/Voxel Castle/game/src/main.cpp:45:23: error: aggregate ‘std::stringstream ss’ has incomplete type and cannot be defined
+   45 |     std::stringstream ss;
+      |                       ^~
+gmake[2]: *** [game/CMakeFiles/VoxelFortressGame.dir/build.make:79: game/CMakeFiles/VoxelFortressGame.dir/src/main.cpp.o] Error 1
+gmake[1]: *** [CMakeFiles/Makefile2:436: game/CMakeFiles/VoxelFortressGame.dir/all] Error 2
+gmake: *** [Makefile:136: all] Error 2

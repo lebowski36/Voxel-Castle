@@ -15,6 +15,7 @@ public:
     void uploadMesh(const VoxelMesh& mesh);
     void draw(const glm::mat4& model, const glm::mat4& view, const glm::mat4& proj);
     bool isReady() const { return ready; }
+    GLuint getTextureAtlasID() const { return textureAtlasID; } // Added getter
 
 private:
     GLuint vao = 0; // Changed order
