@@ -9,13 +9,24 @@ out vec4 FragColor;
 uniform sampler2D uTextureSampler; // Added: Texture sampler
 
 void main() {
-    vec4 texColor = texture(uTextureSampler, vTexCoord); // Sample from texture
+    // --- DEBUG OUTPUT MODES ---
+    // Uncomment ONE of the following blocks at a time to debug:
 
-    // Discard fragment if texture alpha is very low (e.g., for AIR blocks)
-    if(texColor.a < 0.1) {
-        discard;
-    }
+    // 1. Output constant color (should show red floor if shader is running)
+    //FragColor = vec4(1.0, 0.0, 0.0, 1.0); return;
 
-    float light = clamp(vLight, 0.2, 1.0); // Ensure a minimum light level
-    FragColor = vec4(texColor.rgb * light, texColor.a); // Combine texture color with light and use texture alpha
+    // 2. Output UVs as color (should show a gradient if UVs are in [0,1])
+    FragColor = vec4(vTexCoord, 0.0, 1.0); return;
+
+    // 3. Output sampled texture color only (no lighting)
+    vec4 texColor = texture(uTextureSampler, vTexCoord);
+    FragColor = texColor;
+    //return;
+
+    // 4. Output sampled texture color with lighting (original)
+    //if(texColor.a < 0.1) {
+    //    discard;
+    //}
+    //float light = clamp(vLight, 0.2, 1.0);
+    //FragColor = vec4(texColor.rgb * light, texColor.a);
 }

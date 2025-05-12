@@ -37,66 +37,18 @@ struct TextureCoordinates {
 class TextureAtlas {
 public:
     TextureAtlas() {
-        // Initialize texture coordinates for each voxel type
-        // This is a placeholder and needs to be defined based on the actual atlas layout
-        // For simplicity, let's assign them in order of VoxelType enum
-        // This assumes VoxelType enum values are contiguous and start from 0 (AIR).
-
         int tiles_per_row = static_cast<int>(ATLAS_WIDTH_PX / TILE_WIDTH_PX);
 
-        // Example: Map VoxelType::STONE to the first tile (0,0)
-        // VoxelType::GRASS to the second tile (1,0) etc.
-        // Note: AIR (0) might not have a texture or be a fully transparent tile.
-
-        // For VoxelType::STONE (assuming it's 1 after AIR)
-        if (static_cast<uint8_t>(VoxelEngine::World::VoxelType::STONE) < 256) {
-            int stone_idx = static_cast<int>(VoxelEngine::World::VoxelType::STONE);
-            float u_stone = (stone_idx % tiles_per_row) * TILE_UV_WIDTH;
-            float v_stone = (stone_idx / tiles_per_row) * TILE_UV_HEIGHT;
-            m_voxel_texture_coords[VoxelEngine::World::VoxelType::STONE] = {
-                {u_stone, v_stone + TILE_UV_HEIGHT}, // Min (bottom-left in UV, so V is higher)
-                {u_stone + TILE_UV_WIDTH, v_stone}   // Max (top-right in UV, so V is lower)
+        // Map all voxel types (AIR, STONE, DIRT, GRASS, WOOD, LEAVES, WATER, SAND)
+        for (int voxel_id = 0; voxel_id <= 7; ++voxel_id) {
+            VoxelEngine::World::VoxelType type = static_cast<VoxelEngine::World::VoxelType>(voxel_id);
+            float u = (voxel_id % tiles_per_row) * TILE_UV_WIDTH;
+            float v = (voxel_id / tiles_per_row) * TILE_UV_HEIGHT;
+            m_voxel_texture_coords[type] = {
+                {u, v + TILE_UV_HEIGHT}, // uv_min (bottom-left)
+                {u + TILE_UV_WIDTH, v}   // uv_max (top-right)
             };
         }
-        
-        // For VoxelType::DIRT (assuming it's 2)
-         if (static_cast<uint8_t>(VoxelEngine::World::VoxelType::DIRT) < 256) {
-            int dirt_idx = static_cast<int>(VoxelEngine::World::VoxelType::DIRT);
-            float u_dirt = (dirt_idx % tiles_per_row) * TILE_UV_WIDTH;
-            float v_dirt = (dirt_idx / tiles_per_row) * TILE_UV_HEIGHT;
-            m_voxel_texture_coords[VoxelEngine::World::VoxelType::DIRT] = {
-                {u_dirt, v_dirt + TILE_UV_HEIGHT}, 
-                {u_dirt + TILE_UV_WIDTH, v_dirt}   
-            };
-        }
-
-        // For VoxelType::GRASS (assuming it's 3)
-        // Special case for grass: top, side, bottom might differ
-        // For now, let's use a single texture for all faces.
-        // Later, we can extend this to support VoxelFaceType.
-         if (static_cast<uint8_t>(VoxelEngine::World::VoxelType::GRASS) < 256) {
-            int grass_idx = static_cast<int>(VoxelEngine::World::VoxelType::GRASS); // Example: Grass is the 3rd tile
-            float u_grass = (grass_idx % tiles_per_row) * TILE_UV_WIDTH;
-            float v_grass = (grass_idx / tiles_per_row) * TILE_UV_HEIGHT;
-            m_voxel_texture_coords[VoxelEngine::World::VoxelType::GRASS] = {
-                {u_grass, v_grass + TILE_UV_HEIGHT},
-                {u_grass + TILE_UV_WIDTH, v_grass}
-            };
-        }
-        
-        // For VoxelType::WOOD (assuming it's 4)
-        if (static_cast<uint8_t>(VoxelEngine::World::VoxelType::WOOD) < 256) {
-            int wood_idx = static_cast<int>(VoxelEngine::World::VoxelType::WOOD);
-            float u_wood = (wood_idx % tiles_per_row) * TILE_UV_WIDTH;
-            float v_wood = (wood_idx / tiles_per_row) * TILE_UV_HEIGHT;
-            m_voxel_texture_coords[VoxelEngine::World::VoxelType::WOOD] = {
-                {u_wood, v_wood + TILE_UV_HEIGHT},
-                {u_wood + TILE_UV_WIDTH, v_wood}
-            };
-        }
-        
-        // ... and so on for other voxel types.
-        // A more robust system would load this from a configuration file.
     }
 
     TextureCoordinates getTextureCoordinates(VoxelEngine::World::VoxelType type) const {
