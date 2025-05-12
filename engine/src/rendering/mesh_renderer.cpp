@@ -10,8 +10,8 @@ namespace Rendering {
 
 MeshRenderer::MeshRenderer() {
     shaderProgram = createShaderProgram(
-        "assets/shaders/voxel.vert",
-        "assets/shaders/voxel.frag"
+        "../assets/shaders/voxel.vert",
+        "../assets/shaders/voxel.frag"
     );
     glGenVertexArrays(1, &vao);
     glGenBuffers(1, &vbo);
@@ -82,7 +82,13 @@ void MeshRenderer::draw(const glm::mat4& model, const glm::mat4& view, const glm
 GLuint MeshRenderer::loadShader(const std::string& path, GLenum type) {
     std::ifstream file(path);
     std::stringstream ss;
-    ss << file.rdbuf();
+    if (file.is_open()) {
+        ss << file.rdbuf();
+        file.close(); // Ensure the file is closed before proceeding
+    } else {
+        std::cerr << "Error: Could not open shader file: " << path << std::endl;
+        return 0; // Return 0 or handle error appropriately
+    }
     std::string src = ss.str();
     GLuint shader = glCreateShader(type);
     const char* srcPtr = src.c_str();

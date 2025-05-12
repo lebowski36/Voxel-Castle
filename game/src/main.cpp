@@ -235,32 +235,59 @@ int main(int argc, char* argv[]) {
     // Set wireframe mode for debugging
     glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
+
     // --- Mesh Rendering Setup ---
-    // Build a test mesh (2x2x2 cube)
-    VoxelCastle::World::ChunkSegment cubeSegment;
-    for (int x = 0; x < 2; ++x) {
-        for (int y = 0; y < 2; ++y) {
-            for (int z = 0; z < 2; ++z) {
-                cubeSegment.setVoxel(x, y, z, VoxelEngine::World::Voxel(static_cast<uint8_t>(VoxelEngine::World::VoxelType::STONE)));
-            }
-        }
-    }
-    VoxelEngine::Rendering::VoxelMesh greedyMeshCube = VoxelEngine::Rendering::MeshBuilder::buildGreedyMesh(cubeSegment);
+    // Edge Case 3: Voxels only along edges or corners (should render only the outermost edges/corners)
+    VoxelCastle::World::ChunkSegment edgeSegment;
+    // Place voxels at the 8 corners of the chunk segment
+    int maxX = VoxelCastle::World::SEGMENT_WIDTH - 1;
+    int maxY = VoxelCastle::World::SEGMENT_HEIGHT - 1;
+    int maxZ = VoxelCastle::World::SEGMENT_DEPTH - 1;
+    edgeSegment.setVoxel(0,    0,    0,    VoxelEngine::World::Voxel(static_cast<uint8_t>(VoxelEngine::World::VoxelType::STONE)));
+    edgeSegment.setVoxel(maxX, 0,    0,    VoxelEngine::World::Voxel(static_cast<uint8_t>(VoxelEngine::World::VoxelType::STONE)));
+    edgeSegment.setVoxel(0,    maxY, 0,    VoxelEngine::World::Voxel(static_cast<uint8_t>(VoxelEngine::World::VoxelType::STONE)));
+    edgeSegment.setVoxel(0,    0,    maxZ, VoxelEngine::World::Voxel(static_cast<uint8_t>(VoxelEngine::World::VoxelType::STONE)));
+    edgeSegment.setVoxel(maxX, maxY, 0,    VoxelEngine::World::Voxel(static_cast<uint8_t>(VoxelEngine::World::VoxelType::STONE)));
+    edgeSegment.setVoxel(maxX, 0,    maxZ, VoxelEngine::World::Voxel(static_cast<uint8_t>(VoxelEngine::World::VoxelType::STONE)));
+    edgeSegment.setVoxel(0,    maxY, maxZ, VoxelEngine::World::Voxel(static_cast<uint8_t>(VoxelEngine::World::VoxelType::STONE)));
+    edgeSegment.setVoxel(maxX, maxY, maxZ, VoxelEngine::World::Voxel(static_cast<uint8_t>(VoxelEngine::World::VoxelType::STONE)));
+
+    // Optionally, add voxels along the 12 edges for a more visible "frame" (uncomment to test):
+    // for (int i = 0; i <= maxX; ++i) {
+    //     edgeSegment.setVoxel(i, 0, 0, VoxelEngine::World::Voxel(static_cast<uint8_t>(VoxelEngine::World::VoxelType::STONE)));
+    //     edgeSegment.setVoxel(i, 0, maxZ, VoxelEngine::World::Voxel(static_cast<uint8_t>(VoxelEngine::World::VoxelType::STONE)));
+    //     edgeSegment.setVoxel(i, maxY, 0, VoxelEngine::World::Voxel(static_cast<uint8_t>(VoxelEngine::World::VoxelType::STONE)));
+    //     edgeSegment.setVoxel(i, maxY, maxZ, VoxelEngine::World::Voxel(static_cast<uint8_t>(VoxelEngine::World::VoxelType::STONE)));
+    // }
+    // for (int j = 0; j <= maxY; ++j) {
+    //     edgeSegment.setVoxel(0, j, 0, VoxelEngine::World::Voxel(static_cast<uint8_t>(VoxelEngine::World::VoxelType::STONE)));
+    //     edgeSegment.setVoxel(maxX, j, 0, VoxelEngine::World::Voxel(static_cast<uint8_t>(VoxelEngine::World::VoxelType::STONE)));
+    //     edgeSegment.setVoxel(0, j, maxZ, VoxelEngine::World::Voxel(static_cast<uint8_t>(VoxelEngine::World::VoxelType::STONE)));
+    //     edgeSegment.setVoxel(maxX, j, maxZ, VoxelEngine::World::Voxel(static_cast<uint8_t>(VoxelEngine::World::VoxelType::STONE)));
+    // }
+    // for (int k = 0; k <= maxZ; ++k) {
+    //     edgeSegment.setVoxel(0, 0, k, VoxelEngine::World::Voxel(static_cast<uint8_t>(VoxelEngine::World::VoxelType::STONE)));
+    //     edgeSegment.setVoxel(maxX, 0, k, VoxelEngine::World::Voxel(static_cast<uint8_t>(VoxelEngine::World::VoxelType::STONE)));
+    //     edgeSegment.setVoxel(0, maxY, k, VoxelEngine::World::Voxel(static_cast<uint8_t>(VoxelEngine::World::VoxelType::STONE)));
+    //     edgeSegment.setVoxel(maxX, maxY, k, VoxelEngine::World::Voxel(static_cast<uint8_t>(VoxelEngine::World::VoxelType::STONE)));
+    // }
+
+    VoxelEngine::Rendering::VoxelMesh greedyMeshEdge = VoxelEngine::Rendering::MeshBuilder::buildGreedyMesh(edgeSegment);
 
     // MeshRenderer setup
     VoxelEngine::Rendering::MeshRenderer meshRenderer;
-    meshRenderer.uploadMesh(greedyMeshCube);
+    meshRenderer.uploadMesh(greedyMeshEdge);
 
     // Camera setup
     glm::mat4 model = glm::mat4(1.0f);
-    glm::mat4 view = glm::lookAt(glm::vec3(4, 4, 8), glm::vec3(1, 1, 1), glm::vec3(0, 1, 0));
+    glm::mat4 view = glm::lookAt(glm::vec3(32, 32, 96), glm::vec3(16, 16, 16), glm::vec3(0, 1, 0));
     float aspect = static_cast<float>(gameWindow.getWidth()) / static_cast<float>(gameWindow.getHeight());
-    glm::mat4 proj = glm::perspective(glm::radians(45.0f), aspect, 0.1f, 100.0f);
+    glm::mat4 proj = glm::perspective(glm::radians(45.0f), aspect, 0.1f, 300.0f);
 
     // Print first few mesh vertex positions for debug
     std::cout << "First 8 mesh vertex positions:" << std::endl;
-    for (size_t i = 0; i < std::min<size_t>(8, greedyMeshCube.vertices.size()); ++i) {
-        const auto& v = greedyMeshCube.vertices[i];
+    for (size_t i = 0; i < std::min<size_t>(8, greedyMeshEdge.vertices.size()); ++i) {
+        const auto& v = greedyMeshEdge.vertices[i];
         std::cout << "  [" << i << "] (" << v.position.x << ", " << v.position.y << ", " << v.position.z << ")" << std::endl;
     }
 
