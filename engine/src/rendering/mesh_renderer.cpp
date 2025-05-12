@@ -196,12 +196,7 @@ void MeshRenderer::draw(const glm::mat4& model, const glm::mat4& view, const glm
     retryCount = 0; // Reset retry count if ready
     retriesExhausted = false; // Reset flag if ready
 
-    // Log less frequently and add more detailed debug info on first frame
-    if (frameCounter % frameLogFrequency == 0) {
-        std::cout << "Frame " << frameCounter << ": Drawing mesh in MeshRenderer" << std::endl;
-    }
-    
-    // One-time detailed debug on first successful frame
+    // Only do detailed debug on first successful frame - removed redundant frame logging
     if (!initialDebugDone) {
         std::cout << "\n==== MESH RENDERER DETAILED DEBUG ====" << std::endl;
         std::cout << "Texture Atlas ID: " << textureAtlasID << std::endl;

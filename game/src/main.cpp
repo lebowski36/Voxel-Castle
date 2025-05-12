@@ -125,8 +125,8 @@ int main(int /*argc*/, char* /*argv*/[]) { // Suppress unused parameter warnings
 
     // Debug camera information
     std::cout << "Camera setup:" << std::endl;
-    std::cout << "  Position: (16, 10, 24)" << std::endl;
-    std::cout << "  Looking at: (16, 0, 16)" << std::endl;
+    std::cout << "  Position: (0, 5, 15)" << std::endl;
+    std::cout << "  Looking at: (0, 0, 0)" << std::endl;
     std::cout << "  Field of view: 60 degrees" << std::endl;
 
     // Print first few mesh vertex positions for debug
@@ -154,9 +154,9 @@ int main(int /*argc*/, char* /*argv*/[]) { // Suppress unused parameter warnings
         // Clear both color buffer and depth buffer
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         
-        // Debug every 100 frames (reduced from 10 to match MeshRenderer)
+        // Debug every 100 frames
         if (frameCount % 100 == 0) {
-            std::cout << "Frame " << frameCount << ": Drawing mesh from main loop" << std::endl;
+            std::cout << "Frame " << frameCount << ": Rendering scene" << std::endl;
             // Check for any OpenGL errors before drawing
             GLenum err = glGetError();
             if (err != GL_NO_ERROR) {
