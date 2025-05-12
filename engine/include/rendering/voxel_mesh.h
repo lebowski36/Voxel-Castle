@@ -22,22 +22,14 @@ namespace VoxelEngine {
             glm::vec3 position;    ///< 3D position of the vertex.
             glm::vec3 normal;      ///< Normal vector of the vertex.
             glm::vec2 texCoords;   ///< UV texture coordinates.
+            float light = 1.0f;    ///< Per-vertex light (0.0 = dark, 1.0 = max brightness)
 
-            /**
-             * @brief Default constructor.
-             */
             Vertex() = default;
-
-            /**
-             * @brief Constructs a Vertex with specified attributes.
-             * @param pos The 3D position of the vertex.
-             * @param norm The normal vector of the vertex (defaults to Z-up if unspecified and pos is zero, otherwise needs calculation).
-             * @param uv The UV texture coordinates (defaults to (0,0)).
-             */
             Vertex(const glm::vec3& pos,
                    const glm::vec3& norm,
-                   const glm::vec2& uv = glm::vec2(0.0f))
-                : position(pos), normal(norm), texCoords(uv) {}
+                   const glm::vec2& uv = glm::vec2(0.0f),
+                   float l = 1.0f)
+                : position(pos), normal(norm), texCoords(uv), light(l) {}
         };
 
         /**

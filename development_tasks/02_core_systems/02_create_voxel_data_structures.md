@@ -18,12 +18,13 @@ This task focuses on designing and implementing the core data structures for sto
 ## 3. Sub-Tasks
 
 ### 3.1. Define Voxel Structure
-*   **Status:** In Progress
+*   **Status:** Completed
 *   **Description:** Define the data structure for a single voxel.
-    *   [ ] **3.1.1.** Determine the information each voxel needs to store (e.g., type ID, active state, potentially lighting, health, etc.). (Initial `type_id` is set).
+    *   [x] **3.1.1.** Determine the information each voxel needs to store (e.g., type ID, active state, potentially lighting, health, etc.).
+        *   **Decision:** The voxel now stores a `type_id` and a packed `light_level` byte (4 bits sunlight, 4 bits block light). This supports both basic rendering and future lighting features. See helpers in `Voxel` struct for manipulating light values.
     *   [x] **3.1.2.** Create `Voxel.h` (e.g., in `engine/include/world/voxel.h` or similar). *(Completed)*
-    *   [x] **3.1.3.** Implement the `Voxel` struct/class. Keep it lightweight. *(Completed with initial struct)*
-        *   Example: `struct Voxel { uint8_t type_id; /* other data */ };`
+    *   [x] **3.1.3.** Implement the `Voxel` struct/class. Keep it lightweight. *(Completed with type_id and light_level)*
+        *   Example: `struct Voxel { uint8_t type_id; uint8_t light_level; /* helpers */ };`
 
 ### 3.2. Design Chunk Segment and Chunk Column Structures
 *   **Status:** Completed
@@ -68,6 +69,7 @@ This task focuses on designing and implementing the core data structures for sto
     *   [x] **3.5.3.** Set and get some voxel types within these segments using world coordinates. *(Implemented in main.cpp)*
     *   [x] **3.5.4.** Print or log the results to verify correctness. *(Implemented in main.cpp)*
     *   [x] **3.5.5.** Build and run to confirm basic functionality. *(Completed)*
+    *   [ ] **3.5.6.** **When testing future features (e.g., lighting), ensure that tests include visible results in the rendered output, not just wireframe or console output. Visual feedback is required for lighting and mesh features.**
 
 ### 3.6. Documentation
 *   **Status:** Completed

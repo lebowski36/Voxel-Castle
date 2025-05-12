@@ -24,6 +24,14 @@ namespace World {
  * This structure defines the basic unit of the voxel world. Currently, it only
  * contains an ID representing the type of the voxel.
  */
+
+/**
+ * @struct Voxel
+ * @brief Represents a single voxel in the game world.
+ *
+ * Contains the type ID and packed lighting information.
+ * Lighting is stored as a single byte: upper 4 bits = sunlight, lower 4 bits = block light.
+ */
 struct Voxel {
     /**
      * @brief The type identifier for this voxel.
@@ -33,24 +41,40 @@ struct Voxel {
      * See VoxelType enum in voxel_types.h.
      */
     uint8_t id;
-    // Future additions could include:
-    // uint8_t light_level;
-    // uint8_t orientation;
-    // etc.
 
     /**
-     * @brief Default constructor. Initializes voxel to a default state (e.g., AIR).
-     *
-     * By default, a voxel is initialized with an ID of 0, which typically
-     * represents 'AIR' or an empty voxel.
+     * @brief Packed lighting information.
+     * Upper 4 bits: sunlight (0-15), lower 4 bits: block light (0-15).
      */
-    Voxel() : id(0) {}
+    uint8_t light_level;
 
     /**
-     * @brief Constructs a Voxel with a specific type ID.
+     * @brief Default constructor. Initializes voxel to a default state (e.g., AIR, no light).
+     */
+    Voxel() : id(0), light_level(0) {}
+
+    /**
+     * @brief Constructs a Voxel with a specific type ID and optional light level.
      * @param type_id The ID representing the voxel's type.
+     * @param light The packed light value (default 0).
      */
-    explicit Voxel(uint8_t type_id) : id(type_id) {}
+    explicit Voxel(uint8_t type_id, uint8_t light = 0) : id(type_id), light_level(light) {}
+
+    // --- Lighting helpers ---
+    static constexpr uint8_t MAX_LIGHT = 15;
+
+    void setSunlight(uint8_t level) {
+        light_level = (light_level & 0x0F) | ((level & 0x0F) << 4);
+    }
+    uint8_t getSunlight() const {
+        return (light_level >> 4) & 0x0F;
+    }
+    void setBlockLight(uint8_t level) {
+        light_level = (light_level & 0xF0) | (level & 0x0F);
+    }
+    uint8_t getBlockLight() const {
+        return light_level & 0x0F;
+    }
 };
 
 /**

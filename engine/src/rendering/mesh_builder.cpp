@@ -22,19 +22,27 @@ namespace VoxelEngine {
                      const glm::vec3 face_vertices[4], // The 4 vertices of the face, relative to (0,0,0) if voxel_pos is origin
                      const glm::vec3& normal) {
             
-            uint32_t base_index = static_cast<uint32_t>(mesh.vertices.size());
+    uint32_t base_index = static_cast<uint32_t>(mesh.vertices.size());
 
-            for (int i = 0; i < 4; ++i) {
-                mesh.vertices.emplace_back(voxel_pos + face_vertices[i], normal, glm::vec2(0.0f)); // UVs placeholder for now
-            }
+    // For now, just sample the light from the voxel at voxel_pos (rounded down)
+    int vx = static_cast<int>(voxel_pos.x);
+    int vy = static_cast<int>(voxel_pos.y);
+    int vz = static_cast<int>(voxel_pos.z);
+    float light = 1.0f;
+    // Try to get the light value from the segment if available (TODO: pass segment ref if needed)
+    // For now, just use max light for demonstration
 
-            mesh.indices.push_back(base_index);
-            mesh.indices.push_back(base_index + 1);
-            mesh.indices.push_back(base_index + 2);
+    for (int i = 0; i < 4; ++i) {
+        mesh.vertices.emplace_back(voxel_pos + face_vertices[i], normal, glm::vec2(0.0f), light);
+    }
 
-            mesh.indices.push_back(base_index);
-            mesh.indices.push_back(base_index + 2);
-            mesh.indices.push_back(base_index + 3);
+    mesh.indices.push_back(base_index);
+    mesh.indices.push_back(base_index + 1);
+    mesh.indices.push_back(base_index + 2);
+
+    mesh.indices.push_back(base_index);
+    mesh.indices.push_back(base_index + 2);
+    mesh.indices.push_back(base_index + 3);
         }
 
         // Implementation for the new addQuad helper
@@ -46,21 +54,23 @@ namespace VoxelEngine {
             // voxelType is currently unused but kept for future texture mapping etc.
             (void)voxelType; // Mark as unused to prevent compiler warnings
 
-            uint32_t base_index = static_cast<uint32_t>(mesh.vertices.size());
+    uint32_t base_index = static_cast<uint32_t>(mesh.vertices.size());
 
-            mesh.vertices.emplace_back(p1, normal, glm::vec2(0.0f, 0.0f)); // UVs placeholder
-            mesh.vertices.emplace_back(p2, normal, glm::vec2(1.0f, 0.0f)); // UVs placeholder (width)
-            mesh.vertices.emplace_back(p3, normal, glm::vec2(1.0f, 1.0f)); // UVs placeholder (width, height)
-            mesh.vertices.emplace_back(p4, normal, glm::vec2(0.0f, 1.0f)); // UVs placeholder (height)
+    // For now, just use max light for demonstration (later: sample from voxel)
+    float light = 1.0f;
+    mesh.vertices.emplace_back(p1, normal, glm::vec2(0.0f, 0.0f), light);
+    mesh.vertices.emplace_back(p2, normal, glm::vec2(1.0f, 0.0f), light);
+    mesh.vertices.emplace_back(p3, normal, glm::vec2(1.0f, 1.0f), light);
+    mesh.vertices.emplace_back(p4, normal, glm::vec2(0.0f, 1.0f), light);
 
-            // Standard quad triangulation (ensure CCW winding order as seen from the direction of the normal)
-            mesh.indices.push_back(base_index);     // p1
-            mesh.indices.push_back(base_index + 1); // p2
-            mesh.indices.push_back(base_index + 2); // p3
+    // Standard quad triangulation (ensure CCW winding order as seen from the direction of the normal)
+    mesh.indices.push_back(base_index);     // p1
+    mesh.indices.push_back(base_index + 1); // p2
+    mesh.indices.push_back(base_index + 2); // p3
 
-            mesh.indices.push_back(base_index);     // p1
-            mesh.indices.push_back(base_index + 2); // p3
-            mesh.indices.push_back(base_index + 3); // p4
+    mesh.indices.push_back(base_index);     // p1
+    mesh.indices.push_back(base_index + 2); // p3
+    mesh.indices.push_back(base_index + 3); // p4
         }
 
         VoxelMesh MeshBuilder::buildNaiveMesh(const VoxelCastle::World::ChunkSegment& segment) {
