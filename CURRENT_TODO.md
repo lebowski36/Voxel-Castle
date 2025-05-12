@@ -51,7 +51,7 @@ This file tracks our immediate high-level tasks and progress. Detailed sub-tasks
 ### 2. Implement Core Systems (C++)
 *Detailed sub-tasks in `/home/system-x1/Projects/Voxel Castle/development_tasks/02_core_systems/`. A main task in this section is marked `[x]` ONLY if ALL its detailed sub-tasks in the corresponding file are complete.*
 - [x] Choose and implement ECS
-- [ ] Create voxel data structures
+- [x] Create voxel data structures
 - [ ] Build mesh generation system
 
 ### 3. Create Basic Game Structure (C++)
@@ -140,6 +140,11 @@ Greedy meshing is now correct and fully tested. All mesh generation tests pass, 
 *   **Problem Persistence:** IF A PROBLEM PERSISTS after initial attempts, I will search for solutions online before asking the user for help or trying the same fix repeatedly.
 *   **Documentation:** DOCUMENTATION IS CRUCIAL! With every implementation step, update relevant documentation.
 *   **Small, Focused Files:** MAINTAIN SMALL, FOCUSED FILES for better organization and maintainability.
+*   **Build and Run Instructions:**
+    *   The project root directory is: `/home/system-x1/Projects/Voxel Castle/`. While the commands below use absolute paths, it's generally good practice to operate from the project root.
+    *   To build the project (CMake must have been configured in the `build` directory previously): `cmake --build "/home/system-x1/Projects/Voxel Castle/build"`
+    *   To run the executable after building: `"/home/system-x1/Projects/Voxel Castle/build/bin/VoxelFortressGame"`
+    *   Combined command for clearing console, building, and running: `clear && cmake --build "/home/system-x1/Projects/Voxel Castle/build" && "/home/system-x1/Projects/Voxel Castle/build/bin/VoxelFortressGame"`
 
 ---
-Last updated: May 11, 2025 // Updated agent guidelines for console clearing and command execution.
+Last updated: May 12, 2025 // Updated build/run commands to use absolute paths.
