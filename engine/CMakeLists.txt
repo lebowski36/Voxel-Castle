@@ -11,7 +11,10 @@ add_library(VoxelEngine STATIC
     src/world/chunk_segment.cpp # Added ChunkSegment source
     src/world/chunk_column.cpp # Added ChunkColumn source
     src/world/world_manager.cpp # Added WorldManager source
-   src/world/quadtree.cpp      # Added Quadtree source
+    src/world/quadtree.cpp      # Added Quadtree source
+    src/world/test_quadtree.cpp # Added Quadtree test source
+    src/world/test_voxel_system.cpp # Added Voxel System test source
+    src/world/test_mesh_generation.cpp # Added Mesh Generation test source
     src/rendering/mesh_builder.cpp # Added MeshBuilder source
     src/rendering/mesh_renderer.cpp # Added MeshRenderer source
     # Add GLAD source file if compiling it directly

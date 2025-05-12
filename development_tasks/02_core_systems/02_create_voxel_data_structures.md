@@ -98,14 +98,14 @@ After reviewing common spatial partitioning structures:
 **Decision:** For Voxel Castle, where `ChunkColumn`s are defined by XZ and extend vertically, a **Quadtree** is the best fit. It allows fast queries for all columns in a region, is memory efficient for sparse worlds, and is simpler to implement and maintain than a full Octree.
 
 #### 3.8.2. Implementation Plan
-  - [ ] **3.8.2.1.** Design Quadtree API:
+  - [x] **3.8.2.1.** Design Quadtree API:
       - `insert(x, z, ChunkColumn*)`
       - `remove(x, z)`
       - `find(x, z)`
       - `queryRegion(xMin, zMin, xMax, zMax)` (returns all columns in a region)
-  - [ ] **3.8.2.2.** Implement Quadtree in `engine/include/world/quadtree.h` and `engine/src/world/quadtree.cpp`.
-  - [ ] **3.8.2.3.** Integrate Quadtree with `WorldManager` for chunk management (replace or supplement current `std::map`).
-  - [ ] **3.8.2.4.** Add tests for insertion, removal, and region queries.
+  - [x] **3.8.2.2.** Implement Quadtree in `engine/include/world/quadtree.h` and `engine/src/world/quadtree.cpp`.
+  - [x] **3.8.2.3.** Integrate Quadtree with `WorldManager` for chunk management (replace or supplement current `std::map`).
+  - [x] **3.8.2.4.** Add tests for insertion, removal, and region queries.
   - [ ] **3.8.2.5.** Document and benchmark region queries vs. the old map-based approach.
 
 ---

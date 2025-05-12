@@ -65,7 +65,7 @@ This file tracks our immediate high-level tasks and progress. Detailed sub-tasks
 - [ ] Create voxel data structures
   - [x] Design chunk structure *(Covers Voxel, ChunkSegment, ChunkColumn design)*
   - [x] Implement voxel storage *(Covers Voxel, ChunkSegment, ChunkColumn, WorldManager implementation)*
-  - [ ] Add spatial partitioning (e.g., octrees)
+  - [x] Add spatial partitioning (e.g., octrees) // Quadtree implemented for ChunkColumn
 - [ ] Build mesh generation system
   - [x] Create mesh from voxel data // Naive meshing implemented and tested, but part of the larger item
   - [x] Implement greedy meshing or other optimization
