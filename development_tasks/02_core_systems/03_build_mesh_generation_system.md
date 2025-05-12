@@ -56,21 +56,21 @@
         - [x] Chunk with different voxel types adjacent to each other.
 
 ### 3. Texture Mapping Support
-    - [ ] 3.1. Define how voxel types map to texture coordinates (e.g., which part of a texture atlas corresponds to a stone voxel, grass voxel, etc.).
-    - [ ] 3.2. Modify the mesh generation to include UV coordinates for each vertex.
-        - [ ] 3.2.1. For naive meshing: Assign UVs based on the voxel face.
-        - [ ] 3.2.2. For optimized meshing: Ensure UVs correctly map to the larger merged quads.
-    - [ ] 3.3. **Testing:**
-        - [ ] 3.3.1. (Placeholder for rendering) Verify UVs by applying a test texture/atlas.
+    - [x] 3.1. Define how voxel types map to texture coordinates (e.g., which part of a texture atlas corresponds to a stone voxel, grass voxel, etc.).
+    - [x] 3.2. Modify the mesh generation to include UV coordinates for each vertex.
+        - [x] 3.2.1. For naive meshing: Assign UVs based on the voxel face.
+        - [x] 3.2.2. For optimized meshing: Ensure UVs correctly map to the larger merged quads.
+    - [x] 3.3. **Testing:**
+        - [x] 3.3.1. (Placeholder for rendering) Verify UVs by applying a test texture/atlas.
 
 ### 4. Texture Atlas System
-    - [ ] 4.1. Design a system for managing texture atlases.
-        - [ ] 4.1.1. Define how individual voxel textures are packed into a larger atlas image.
-        - [ ] 4.1.2. Create a mechanism to look up UV coordinates within the atlas for a given voxel type and face.
-    - [ ] 4.2. Implement loading and management of the texture atlas.
-    - [ ] 4.3. Integrate the texture atlas lookup into the UV generation step (Task 3.2).
-    - [ ] 4.4. **Testing:**
-        - [ ] 4.4.1. (Placeholder for rendering) Test with a sample texture atlas and verify correct texture application on generated meshes.
+    - [x] 4.1. Design a system for managing texture atlases.
+        - [x] 4.1.1. Define how individual voxel textures are packed into a larger atlas image.
+        - [x] 4.1.2. Create a mechanism to look up UV coordinates within the atlas for a given voxel type and face.
+    - [x] 4.2. Implement loading and management of the texture atlas.
+    - [x] 4.3. Integrate the texture atlas lookup into the UV generation step (Task 3.2).
+    - [x] 4.4. **Testing:**
+        - [x] 4.4.1. (Placeholder for rendering) Test with a sample texture atlas and verify correct texture application on generated meshes.
 
 ### 5. Integration and Refinement
     - [ ] 5.1. Integrate the mesh generation system with the `WorldManager` or `ChunkColumn` to trigger mesh updates when chunks change.
@@ -88,4 +88,4 @@
 *   Edge cases: chunk boundaries, transitions between different voxel types.
 
 ---
-**Status:** Pending
+**Status:** In Progress

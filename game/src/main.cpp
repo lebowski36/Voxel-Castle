@@ -24,6 +24,7 @@
 #include "rendering/mesh_builder.h" // For VoxelEngine::Rendering::MeshBuilder
 #include "world/chunk_segment.h"    // For VoxelCastle::World::ChunkSegment
 #include "rendering/mesh_renderer.h"
+#include "rendering/texture_atlas.h" // Added for TextureAtlas
 
 // GLM Headers - Will be used by other engine systems, keep includes for now if generally useful
 #define GLM_FORCE_SILENT_WARNINGS // Optional: To suppress GLM warnings if any
@@ -100,7 +101,8 @@ int main(int argc, char* argv[]) {
     //     edgeSegment.setVoxel(maxX, maxY, k, VoxelEngine::World::Voxel(static_cast<uint8_t>(VoxelEngine::World::VoxelType::STONE)));
     // }
 
-    VoxelEngine::Rendering::VoxelMesh greedyMeshEdge = VoxelEngine::Rendering::MeshBuilder::buildGreedyMesh(edgeSegment);
+    VoxelEngine::Rendering::TextureAtlas atlas; // Added TextureAtlas instance
+    VoxelEngine::Rendering::VoxelMesh greedyMeshEdge = VoxelEngine::Rendering::MeshBuilder::buildGreedyMesh(edgeSegment, atlas); // Pass atlas
 
     // MeshRenderer setup
     VoxelEngine::Rendering::MeshRenderer meshRenderer;

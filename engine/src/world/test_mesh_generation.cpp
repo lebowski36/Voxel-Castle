@@ -5,6 +5,7 @@
 #include "world/chunk_segment.h" // Added for ChunkSegment type and constants
 #include "rendering/mesh_builder.h"
 #include "rendering/voxel_mesh.h" // Changed from chunk_mesh.h
+#include "rendering/texture_atlas.h" // Added include
 #include <iostream>
 #include <cassert>
 
@@ -29,7 +30,8 @@ void VoxelCastle::World::runMeshGenerationTests() {
     assert(segment != nullptr && "Failed to get chunk segment for mesh test");
 
     std::cout << "Building mesh for segment 0,0,0..." << std::endl;
-    VoxelEngine::Rendering::VoxelMesh resultMesh = VoxelEngine::Rendering::MeshBuilder::buildNaiveMesh(*segment);
+    VoxelEngine::Rendering::TextureAtlas atlas; // Added TextureAtlas instance
+    VoxelEngine::Rendering::VoxelMesh resultMesh = VoxelEngine::Rendering::MeshBuilder::buildNaiveMesh(*segment, atlas); // Pass atlas
 
     // Basic assertions: Check if any vertices or indices were generated.
     // Expected faces for a 2x2x2 structure at segment origin (0,0,0)-(1,1,1)
@@ -62,7 +64,7 @@ void VoxelCastle::World::runMeshGenerationTests() {
         }
     }
     std::cout << "Building mesh for solid segment..." << std::endl;
-    VoxelEngine::Rendering::VoxelMesh solidResultMesh = VoxelEngine::Rendering::MeshBuilder::buildNaiveMesh(*solidSegment);
+    VoxelEngine::Rendering::VoxelMesh solidResultMesh = VoxelEngine::Rendering::MeshBuilder::buildNaiveMesh(*solidSegment, atlas); // Pass atlas
     std::cout << "Solid Mesh generated. Vertices: " << solidResultMesh.vertices.size()
               << ", Indices: " << solidResultMesh.indices.size() << std::endl;
     // For a solid chunk with no neighbors considered, it should generate faces for all 6 sides of the chunk.
@@ -85,8 +87,8 @@ void VoxelCastle::World::runMeshGenerationTests() {
     // --- Edge Case 1: Empty Chunk ---
     {
         VoxelCastle::World::ChunkSegment emptySegment;
-        auto meshNaive = VoxelEngine::Rendering::MeshBuilder::buildNaiveMesh(emptySegment);
-        auto meshGreedy = VoxelEngine::Rendering::MeshBuilder::buildGreedyMesh(emptySegment);
+        auto meshNaive = VoxelEngine::Rendering::MeshBuilder::buildNaiveMesh(emptySegment, atlas); // Pass atlas
+        auto meshGreedy = VoxelEngine::Rendering::MeshBuilder::buildGreedyMesh(emptySegment, atlas); // Pass atlas
         assert(meshNaive.vertices.empty() && "NaiveMesh: Empty chunk should produce 0 vertices");
         assert(meshNaive.indices.empty() && "NaiveMesh: Empty chunk should produce 0 indices");
         assert(meshGreedy.vertices.empty() && "GreedyMesh: Empty chunk should produce 0 vertices");
@@ -109,8 +111,8 @@ void VoxelCastle::World::runMeshGenerationTests() {
         edgeSegment.setVoxel(0, maxY, maxZ, VoxelEngine::World::Voxel(static_cast<uint8_t>(VoxelEngine::World::VoxelType::STONE)));
         edgeSegment.setVoxel(maxX, 0, maxZ, VoxelEngine::World::Voxel(static_cast<uint8_t>(VoxelEngine::World::VoxelType::STONE)));
         edgeSegment.setVoxel(maxX, maxY, maxZ, VoxelEngine::World::Voxel(static_cast<uint8_t>(VoxelEngine::World::VoxelType::STONE)));
-        auto meshNaive = VoxelEngine::Rendering::MeshBuilder::buildNaiveMesh(edgeSegment);
-        auto meshGreedy = VoxelEngine::Rendering::MeshBuilder::buildGreedyMesh(edgeSegment);
+        auto meshNaive = VoxelEngine::Rendering::MeshBuilder::buildNaiveMesh(edgeSegment, atlas); // Pass atlas
+        auto meshGreedy = VoxelEngine::Rendering::MeshBuilder::buildGreedyMesh(edgeSegment, atlas); // Pass atlas
         // Each corner voxel should have 6 faces exposed, each face = 4 verts, 6 indices
         constexpr int corners = 8, faces_per_voxel = 6, verts_per_face = 4, indices_per_face = 6;
         int expectedVerts = corners * faces_per_voxel * verts_per_face;
@@ -132,8 +134,8 @@ void VoxelCastle::World::runMeshGenerationTests() {
         // Place two different types next to each other
         typeSegment.setVoxel(0, 0, 0, VoxelEngine::World::Voxel(static_cast<uint8_t>(VoxelEngine::World::VoxelType::STONE)));
         typeSegment.setVoxel(1, 0, 0, VoxelEngine::World::Voxel(static_cast<uint8_t>(VoxelEngine::World::VoxelType::DIRT)));
-        auto meshNaive = VoxelEngine::Rendering::MeshBuilder::buildNaiveMesh(typeSegment);
-        auto meshGreedy = VoxelEngine::Rendering::MeshBuilder::buildGreedyMesh(typeSegment);
+        auto meshNaive = VoxelEngine::Rendering::MeshBuilder::buildNaiveMesh(typeSegment, atlas); // Pass atlas
+        auto meshGreedy = VoxelEngine::Rendering::MeshBuilder::buildGreedyMesh(typeSegment, atlas); // Pass atlas
         // Naive Mesh: Assumes internal faces between different solid types are not culled.
         // This results in a 2x1x1 block shape with 10 exposed faces.
         // Each face has 4 distinct vertices for naive meshing.

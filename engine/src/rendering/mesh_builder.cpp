@@ -1,6 +1,7 @@
 #include "rendering/mesh_builder.h"
 #include "world/voxel_types.h" // For VoxelType::AIR
 #include "world/chunk_segment.h" // For CHUNK_SIZE constants
+#include "rendering/texture_atlas.h" // Added for TextureAtlas
 
 // GLM is already included via voxel_mesh.h, but good to be explicit if direct glm types are used
 #include <glm/glm.hpp>
@@ -20,20 +21,31 @@ namespace VoxelEngine {
         void MeshBuilder::addFace(VoxelMesh& mesh,
                      const glm::vec3& voxel_pos, // Base position of the voxel (e.g., its minimum corner)
                      const glm::vec3 face_vertices[4], // The 4 vertices of the face, relative to (0,0,0) if voxel_pos is origin
-                     const glm::vec3& normal) {
+                     const glm::vec3& normal,
+                     VoxelEngine::World::VoxelType voxelType,
+                     const TextureAtlas& atlas) {
             
     uint32_t base_index = static_cast<uint32_t>(mesh.vertices.size());
 
-    // For now, just sample the light from the voxel at voxel_pos (rounded down)
-    int vx = static_cast<int>(voxel_pos.x);
-    int vy = static_cast<int>(voxel_pos.y);
-    int vz = static_cast<int>(voxel_pos.z);
     float light = 1.0f;
     // Try to get the light value from the segment if available (TODO: pass segment ref if needed)
     // For now, just use max light for demonstration
 
+    TextureCoordinates texCoords = atlas.getTextureCoordinates(voxelType);
+
+    // Standard UV coordinates for a quad. These will be transformed by texCoords.
+    // Order: Bottom-Left, Bottom-Right, Top-Right, Top-Left (matching face_vertices definition)
+    glm::vec2 uv_coords[4] = {
+        glm::vec2(0.0f, 0.0f), // Bottom-left
+        glm::vec2(1.0f, 0.0f), // Bottom-right
+        glm::vec2(1.0f, 1.0f), // Top-right
+        glm::vec2(0.0f, 1.0f)  // Top-left
+    };
+
     for (int i = 0; i < 4; ++i) {
-        mesh.vertices.emplace_back(voxel_pos + face_vertices[i], normal, glm::vec2(0.0f), light);
+        // Transform standard UVs to atlas UVs
+        glm::vec2 actual_uv = texCoords.uv_min + uv_coords[i] * (texCoords.uv_max - texCoords.uv_min);
+        mesh.vertices.emplace_back(voxel_pos + face_vertices[i], normal, actual_uv, light);
     }
 
     mesh.indices.push_back(base_index);
@@ -50,18 +62,22 @@ namespace VoxelEngine {
                                   const ::VoxelEngine::World::VoxelPosition& p1, const ::VoxelEngine::World::VoxelPosition& p2,
                                   const ::VoxelEngine::World::VoxelPosition& p3, const ::VoxelEngine::World::VoxelPosition& p4,
                                   const ::VoxelEngine::World::Normal& normal,
-                                  ::VoxelEngine::World::VoxelType voxelType) {
-            // voxelType is currently unused but kept for future texture mapping etc.
-            (void)voxelType; // Mark as unused to prevent compiler warnings
+                                  ::VoxelEngine::World::VoxelType voxelType,
+                                  const TextureAtlas& atlas) { // Added TextureAtlas parameter
 
     uint32_t base_index = static_cast<uint32_t>(mesh.vertices.size());
 
     // For now, just use max light for demonstration (later: sample from voxel)
     float light = 1.0f;
-    mesh.vertices.emplace_back(p1, normal, glm::vec2(0.0f, 0.0f), light);
-    mesh.vertices.emplace_back(p2, normal, glm::vec2(1.0f, 0.0f), light);
-    mesh.vertices.emplace_back(p3, normal, glm::vec2(1.0f, 1.0f), light);
-    mesh.vertices.emplace_back(p4, normal, glm::vec2(0.0f, 1.0f), light);
+    TextureCoordinates texCoords = atlas.getTextureCoordinates(voxelType);
+
+    // UVs for a quad, assuming p1=BL, p2=BR, p3=TR, p4=TL (if looking at front face)
+    // This needs to be consistent with how quads are defined and how UVs are expected.
+
+    mesh.vertices.emplace_back(p1, normal, texCoords.getBottomLeft(), light);   // p1 -> Bottom-Left UV
+    mesh.vertices.emplace_back(p2, normal, texCoords.getBottomRight(), light);  // p2 -> Bottom-Right UV
+    mesh.vertices.emplace_back(p3, normal, texCoords.getTopRight(), light);     // p3 -> Top-Right UV
+    mesh.vertices.emplace_back(p4, normal, texCoords.getTopLeft(), light);      // p4 -> Top-Left UV
 
     // Standard quad triangulation (ensure CCW winding order as seen from the direction of the normal)
     mesh.indices.push_back(base_index);     // p1
@@ -73,7 +89,7 @@ namespace VoxelEngine {
     mesh.indices.push_back(base_index + 3); // p4
         }
 
-        VoxelMesh MeshBuilder::buildNaiveMesh(const VoxelCastle::World::ChunkSegment& segment) {
+        VoxelMesh MeshBuilder::buildNaiveMesh(const VoxelCastle::World::ChunkSegment& segment, const TextureAtlas& atlas) { // Added atlas
             VoxelMesh mesh;
             mesh.clear(); // Ensure it's empty
 
@@ -138,32 +154,33 @@ namespace VoxelEngine {
                         if (current_voxel_type == static_cast<uint8_t>(VoxelType::AIR)) {
                             continue; // Skip air voxels
                         }
+                        VoxelEngine::World::VoxelType currentVoxelEnum = static_cast<VoxelEngine::World::VoxelType>(current_voxel_type);
 
                         glm::vec3 voxel_world_pos(static_cast<float>(x), static_cast<float>(y), static_cast<float>(z));
 
                         // Check +X neighbor (Right)
                         if (segment.getVoxel(x + 1, y, z).id == static_cast<uint8_t>(VoxelType::AIR)) {
-                            addFace(mesh, voxel_world_pos, right_face_verts, right_normal);
+                            addFace(mesh, voxel_world_pos, right_face_verts, right_normal, currentVoxelEnum, atlas);
                         }
                         // Check -X neighbor (Left)
                         if (segment.getVoxel(x - 1, y, z).id == static_cast<uint8_t>(VoxelType::AIR)) {
-                            addFace(mesh, voxel_world_pos, left_face_verts, left_normal);
+                            addFace(mesh, voxel_world_pos, left_face_verts, left_normal, currentVoxelEnum, atlas);
                         }
                         // Check +Y neighbor (Top)
                         if (segment.getVoxel(x, y + 1, z).id == static_cast<uint8_t>(VoxelType::AIR)) {
-                            addFace(mesh, voxel_world_pos, top_face_verts, top_normal);
+                            addFace(mesh, voxel_world_pos, top_face_verts, top_normal, currentVoxelEnum, atlas);
                         }
                         // Check -Y neighbor (Bottom)
                         if (segment.getVoxel(x, y - 1, z).id == static_cast<uint8_t>(VoxelType::AIR)) {
-                            addFace(mesh, voxel_world_pos, bottom_face_verts, bottom_normal);
+                            addFace(mesh, voxel_world_pos, bottom_face_verts, bottom_normal, currentVoxelEnum, atlas);
                         }
                         // Check +Z neighbor (Front)
                         if (segment.getVoxel(x, y, z + 1).id == static_cast<uint8_t>(VoxelType::AIR)) {
-                            addFace(mesh, voxel_world_pos, front_face_verts, front_normal);
+                            addFace(mesh, voxel_world_pos, front_face_verts, front_normal, currentVoxelEnum, atlas);
                         }
                         // Check -Z neighbor (Back)
                         if (segment.getVoxel(x, y, z - 1).id == static_cast<uint8_t>(VoxelType::AIR)) {
-                            addFace(mesh, voxel_world_pos, back_face_verts, back_normal);
+                            addFace(mesh, voxel_world_pos, back_face_verts, back_normal, currentVoxelEnum, atlas);
                         }
                     }
                 }
@@ -172,7 +189,7 @@ namespace VoxelEngine {
         }
 
         // Greedy Meshing Implementation
-        VoxelMesh MeshBuilder::buildGreedyMesh(const VoxelCastle::World::ChunkSegment& segment) {
+        VoxelMesh MeshBuilder::buildGreedyMesh(const VoxelCastle::World::ChunkSegment& segment, const TextureAtlas& atlas) { // Added atlas
             VoxelMesh mesh;
             mesh.clear();
 
@@ -270,10 +287,10 @@ namespace VoxelEngine {
                                     normal_val.z = static_cast<float>(q[2]);
 
                                     if (dir == 1) {
-                                        addQuad(mesh, vp1, vp2, vp3, vp4, normal_val, current_face_voxel_type);
+                                        addQuad(mesh, vp1, vp2, vp3, vp4, normal_val, current_face_voxel_type, atlas);
                                     } else {
                                         // Reverse winding for back face
-                                        addQuad(mesh, vp1, vp4, vp3, vp2, normal_val, current_face_voxel_type);
+                                        addQuad(mesh, vp1, vp4, vp3, vp2, normal_val, current_face_voxel_type, atlas);
                                     }
 
                                     // Mark mask
