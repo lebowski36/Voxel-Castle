@@ -10,8 +10,8 @@ namespace VoxelEngine {
 namespace Rendering {
 
 // Assuming a 256x256 texture atlas with 16x16 pixel tiles.
-const float ATLAS_WIDTH_PX = 256.0f;
-const float ATLAS_HEIGHT_PX = 256.0f;
+const float ATLAS_WIDTH_PX = 256.0f; // Corrected: 16 tiles * 16px/tile = 256px
+const float ATLAS_HEIGHT_PX = 256.0f;  // Corrected: 16 rows * 16px/tile = 256px
 const float TILE_WIDTH_PX = 16.0f;
 const float TILE_HEIGHT_PX = 16.0f;
 
@@ -45,8 +45,8 @@ public:
             float u = (voxel_id % tiles_per_row) * TILE_UV_WIDTH;
             float v = (voxel_id / tiles_per_row) * TILE_UV_HEIGHT;
             m_voxel_texture_coords[type] = {
-                {u, v + TILE_UV_HEIGHT}, // uv_min (bottom-left)
-                {u + TILE_UV_WIDTH, v}   // uv_max (top-right)
+                {u, v}, // uv_min (bottom-left of the tile)
+                {u + TILE_UV_WIDTH, v + TILE_UV_HEIGHT}   // uv_max (top-right of the tile)
             };
         }
     }
@@ -56,10 +56,12 @@ public:
         if (it != m_voxel_texture_coords.end()) {
             return it->second;
         }
-        // Return a default/error texture coordinate (e.g., a magenta square)
-        // For now, returning stone if not found, or a specific debug tile.
-        // Let's use tile (0,0) as a fallback for unmapped types.
-        return {{0.0f, TILE_UV_HEIGHT}, {TILE_UV_WIDTH, 0.0f}};
+        // Return a default/error texture coordinate
+        // For now, let's return coordinates for the first tile (ID 0) as a fallback.
+        int tiles_per_row = static_cast<int>(ATLAS_WIDTH_PX / TILE_WIDTH_PX);
+        float u_fallback = (0 % tiles_per_row) * TILE_UV_WIDTH;
+        float v_fallback = (0 / tiles_per_row) * TILE_UV_HEIGHT;
+        return {{u_fallback, v_fallback}, {u_fallback + TILE_UV_WIDTH, v_fallback + TILE_UV_HEIGHT}};
     }
 
 private:

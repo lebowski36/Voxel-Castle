@@ -2,31 +2,30 @@
 out vec4 FragColor;
 
 in vec2 vTexCoord;
-in vec3 Normal; // Renamed from vNormal to match vertex shader output
-in vec3 FragPos; // Added to match vertex shader output
-in float vLight; // Added to match vertex shader output
+// in vec3 Normal; // Unused for now
+// in vec3 FragPos; // Unused for now
+// in float vLight; // Unused for now
 
-uniform sampler2D uTextureSampler; // The texture sampler uniform
-// uniform vec3 uLightPos; // Example, if lighting is added
-// uniform vec3 uViewPos;  // Example, if lighting is added
-// uniform vec3 uLightColor; // Example, if lighting is added
+uniform sampler2D uTextureSampler;
 
 void main() {
-    vec4 sampledColor = texture(uTextureSampler, vTexCoord);
-    
-    // Apply lighting to make texture more visible
-    float lightIntensity = max(0.5, vLight); // Ensure minimum lighting
-    
-    // Simply render the texture color with lighting applied
-    FragColor = vec4(sampledColor.rgb * lightIntensity, sampledColor.a);
-    
-    // Add a small debug indicator in the bottom-left corner
-    if (vTexCoord.x < 0.02 && vTexCoord.y < 0.02) {
-        FragColor = vec4(1.0, 1.0, 0.0, 1.0); // Yellow dot to verify shader execution
+    // Check for invalid texture coordinates first.
+    if (vTexCoord.x < 0.0 || vTexCoord.x > 1.0 || vTexCoord.y < 0.0 || vTexCoord.y > 1.0) {
+        FragColor = vec4(1.0, 0.0, 1.0, 1.0); // Magenta for out-of-bounds UVs
+        return;
     }
-    
-    // Fallback - if we get invalid texture coordinates or transparent pixels, show a solid color
-    if (vTexCoord.x < 0.0 || vTexCoord.x > 1.0 || vTexCoord.y < 0.0 || vTexCoord.y > 1.0 || sampledColor.a < 0.1) {
-        FragColor = vec4(0.7, 0.3, 0.3, 1.0); // Red-brown fallback color
+
+    vec4 sampledColor = texture(uTextureSampler, vTexCoord);
+    FragColor = sampledColor; // Output raw texture color
+
+    // If raw texture color's alpha is very low, make it red to see if it's transparent (like AIR)
+    if (FragColor.a < 0.1) {
+        FragColor = vec4(1.0, 0.0, 0.0, 1.0); // Red for transparent
+    } else {
+        // If it's opaque, but its RGB is black, make it blue
+        if (FragColor.r < 0.01 && FragColor.g < 0.01 && FragColor.b < 0.01) {
+            FragColor = vec4(0.0, 0.0, 1.0, 1.0); // Blue for opaque black
+        }
+        // Otherwise, FragColor remains the sampledColor (should be grey for STONE)
     }
 }

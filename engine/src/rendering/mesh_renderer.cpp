@@ -193,6 +193,10 @@ void MeshRenderer::draw(const glm::mat4& model, const glm::mat4& view, const glm
         return;
     }
 
+    // Enable blending for transparency
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
     retryCount = 0; // Reset retry count if ready
     retriesExhausted = false; // Reset flag if ready
 
@@ -298,6 +302,9 @@ void MeshRenderer::draw(const glm::mat4& model, const glm::mat4& view, const glm
         std::cerr << "[MeshRenderer::draw] OpenGL error 0x" << std::hex << err << std::dec << " after unbinding VAO (final operation)." << std::endl;
     }
     glBindTexture(GL_TEXTURE_2D, 0); 
+
+    // Disable blending after drawing if it was enabled here
+    glDisable(GL_BLEND);
 
     // At the end of the session, provide a summary if the warning was logged
     if (textureSamplerWarningLogged) {
