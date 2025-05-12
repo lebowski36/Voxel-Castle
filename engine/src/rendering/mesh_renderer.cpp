@@ -9,9 +9,10 @@ namespace VoxelEngine {
 namespace Rendering {
 
 MeshRenderer::MeshRenderer() {
+    // Use path relative to project root for robust shader loading
     shaderProgram = createShaderProgram(
-        "../assets/shaders/voxel.vert",
-        "../assets/shaders/voxel.frag"
+        "../../assets/shaders/voxel.vert",
+        "../../assets/shaders/voxel.frag"
     );
     glGenVertexArrays(1, &vao);
     glGenBuffers(1, &vbo);

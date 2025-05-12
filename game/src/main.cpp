@@ -63,24 +63,22 @@ int main(int argc, char* argv[]) {
     glEnable(GL_DEPTH_TEST);
     // Disable face culling for debug (see all faces)
     glDisable(GL_CULL_FACE);
-    // Set wireframe mode for debugging
-    glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+    // Set filled polygon mode for normal rendering
+    glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
     // --- Mesh Rendering Setup ---
-    // Edge Case 3: Voxels only along edges or corners (should render only the outermost edges/corners)
+    // Place a 2x2x2 cube of voxels at the center of the chunk for visibility
     VoxelCastle::World::ChunkSegment edgeSegment;
-    // Place voxels at the 8 corners of the chunk segment
-    int maxX = VoxelCastle::World::SEGMENT_WIDTH - 1;
-    int maxY = VoxelCastle::World::SEGMENT_HEIGHT - 1;
-    int maxZ = VoxelCastle::World::SEGMENT_DEPTH - 1;
-    edgeSegment.setVoxel(0,    0,    0,    VoxelEngine::World::Voxel(static_cast<uint8_t>(VoxelEngine::World::VoxelType::STONE)));
-    edgeSegment.setVoxel(maxX, 0,    0,    VoxelEngine::World::Voxel(static_cast<uint8_t>(VoxelEngine::World::VoxelType::STONE)));
-    edgeSegment.setVoxel(0,    maxY, 0,    VoxelEngine::World::Voxel(static_cast<uint8_t>(VoxelEngine::World::VoxelType::STONE)));
-    edgeSegment.setVoxel(0,    0,    maxZ, VoxelEngine::World::Voxel(static_cast<uint8_t>(VoxelEngine::World::VoxelType::STONE)));
-    edgeSegment.setVoxel(maxX, maxY, 0,    VoxelEngine::World::Voxel(static_cast<uint8_t>(VoxelEngine::World::VoxelType::STONE)));
-    edgeSegment.setVoxel(maxX, 0,    maxZ, VoxelEngine::World::Voxel(static_cast<uint8_t>(VoxelEngine::World::VoxelType::STONE)));
-    edgeSegment.setVoxel(0,    maxY, maxZ, VoxelEngine::World::Voxel(static_cast<uint8_t>(VoxelEngine::World::VoxelType::STONE)));
-    edgeSegment.setVoxel(maxX, maxY, maxZ, VoxelEngine::World::Voxel(static_cast<uint8_t>(VoxelEngine::World::VoxelType::STONE)));
+    int centerX = VoxelCastle::World::SEGMENT_WIDTH / 2 - 1;
+    int centerY = VoxelCastle::World::SEGMENT_HEIGHT / 2 - 1;
+    int centerZ = VoxelCastle::World::SEGMENT_DEPTH / 2 - 1;
+    for (int x = centerX; x <= centerX + 1; ++x) {
+        for (int y = centerY; y <= centerY + 1; ++y) {
+            for (int z = centerZ; z <= centerZ + 1; ++z) {
+                edgeSegment.setVoxel(x, y, z, VoxelEngine::World::Voxel(static_cast<uint8_t>(VoxelEngine::World::VoxelType::STONE)));
+            }
+        }
+    }
 
     // Optionally, add voxels along the 12 edges for a more visible "frame" (uncomment to test):
     // for (int i = 0; i <= maxX; ++i) {
@@ -110,9 +108,10 @@ int main(int argc, char* argv[]) {
 
     // Camera setup
     glm::mat4 model = glm::mat4(1.0f);
-    glm::mat4 view = glm::lookAt(glm::vec3(32, 32, 96), glm::vec3(16, 16, 16), glm::vec3(0, 1, 0));
+    // Move camera closer and reduce FOV for larger, more prominent blocks
+    glm::mat4 view = glm::lookAt(glm::vec3(24, 24, 48), glm::vec3(16, 16, 16), glm::vec3(0, 1, 0));
     float aspect = static_cast<float>(gameWindow.getWidth()) / static_cast<float>(gameWindow.getHeight());
-    glm::mat4 proj = glm::perspective(glm::radians(45.0f), aspect, 0.1f, 300.0f);
+    glm::mat4 proj = glm::perspective(glm::radians(35.0f), aspect, 0.1f, 300.0f);
 
     // Print first few mesh vertex positions for debug
     std::cout << "First 8 mesh vertex positions:" << std::endl;
