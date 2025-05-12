@@ -17,6 +17,7 @@ add_library(VoxelEngine STATIC
     src/world/test_mesh_generation.cpp # Added Mesh Generation test source
     src/rendering/mesh_builder.cpp # Added MeshBuilder source
     src/rendering/mesh_renderer.cpp # Added MeshRenderer source
+    src/external/stb_image_impl.cpp # Added stb_image implementation
     # Add GLAD source file if compiling it directly
     # Or link against a pre-built GLAD library later
     # For example, if GLAD source is in external/glad/src/glad.c relative to root:
@@ -30,6 +31,7 @@ target_include_directories(VoxelEngine
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src>
         $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/external/glad/include> 
         $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/external/glm> 
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/external> # For stb_image.h
     PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/src
 )

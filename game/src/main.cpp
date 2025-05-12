@@ -67,60 +67,46 @@ int main(int argc, char* argv[]) {
     // Set filled polygon mode for normal rendering
     glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
+
     // --- Mesh Rendering Setup ---
-    // Place a 2x2x2 cube of voxels at the center of the chunk for visibility
-    VoxelCastle::World::ChunkSegment edgeSegment;
-    int centerX = VoxelCastle::World::SEGMENT_WIDTH / 2 - 1;
-    int centerY = VoxelCastle::World::SEGMENT_HEIGHT / 2 - 1;
-    int centerZ = VoxelCastle::World::SEGMENT_DEPTH / 2 - 1;
-    for (int x = centerX; x <= centerX + 1; ++x) {
-        for (int y = centerY; y <= centerY + 1; ++y) {
-            for (int z = centerZ; z <= centerZ + 1; ++z) {
-                edgeSegment.setVoxel(x, y, z, VoxelEngine::World::Voxel(static_cast<uint8_t>(VoxelEngine::World::VoxelType::STONE)));
-            }
+    // Create a visible ground plane (16x16, y=8) alternating between DIRT and STONE
+    VoxelCastle::World::ChunkSegment groundSegment;
+    int groundY = 0;
+    for (int x = 0; x < VoxelCastle::World::SEGMENT_WIDTH; ++x) {
+        for (int z = 0; z < VoxelCastle::World::SEGMENT_DEPTH; ++z) {
+            uint8_t type = ((x + z) % 2 == 0)
+                ? static_cast<uint8_t>(VoxelEngine::World::VoxelType::DIRT)
+                : static_cast<uint8_t>(VoxelEngine::World::VoxelType::STONE);
+            groundSegment.setVoxel(x, groundY, z, VoxelEngine::World::Voxel(type));
         }
     }
 
-    // Optionally, add voxels along the 12 edges for a more visible "frame" (uncomment to test):
-    // for (int i = 0; i <= maxX; ++i) {
-    //     edgeSegment.setVoxel(i, 0, 0, VoxelEngine::World::Voxel(static_cast<uint8_t>(VoxelEngine::World::VoxelType::STONE)));
-    //     edgeSegment.setVoxel(i, 0, maxZ, VoxelEngine::World::Voxel(static_cast<uint8_t>(VoxelEngine::World::VoxelType::STONE)));
-    //     edgeSegment.setVoxel(i, maxY, 0, VoxelEngine::World::Voxel(static_cast<uint8_t>(VoxelEngine::World::VoxelType::STONE)));
-    //     edgeSegment.setVoxel(i, maxY, maxZ, VoxelEngine::World::Voxel(static_cast<uint8_t>(VoxelEngine::World::VoxelType::STONE)));
-    // }
-    // for (int j = 0; j <= maxY; ++j) {
-    //     edgeSegment.setVoxel(0, j, 0, VoxelEngine::World::Voxel(static_cast<uint8_t>(VoxelEngine::World::VoxelType::STONE)));
-    //     edgeSegment.setVoxel(maxX, j, 0, VoxelEngine::World::Voxel(static_cast<uint8_t>(VoxelEngine::World::VoxelType::STONE)));
-    //     edgeSegment.setVoxel(0, j, maxZ, VoxelEngine::World::Voxel(static_cast<uint8_t>(VoxelEngine::World::VoxelType::STONE)));
-    //     edgeSegment.setVoxel(maxX, j, maxZ, VoxelEngine::World::Voxel(static_cast<uint8_t>(VoxelEngine::World::VoxelType::STONE)));
-    // }
-    // for (int k = 0; k <= maxZ; ++k) {
-    //     edgeSegment.setVoxel(0, 0, k, VoxelEngine::World::Voxel(static_cast<uint8_t>(VoxelEngine::World::VoxelType::STONE)));
-    //     edgeSegment.setVoxel(maxX, 0, k, VoxelEngine::World::Voxel(static_cast<uint8_t>(VoxelEngine::World::VoxelType::STONE)));
-    //     edgeSegment.setVoxel(0, maxY, k, VoxelEngine::World::Voxel(static_cast<uint8_t>(VoxelEngine::World::VoxelType::STONE)));
-    //     edgeSegment.setVoxel(maxX, maxY, k, VoxelEngine::World::Voxel(static_cast<uint8_t>(VoxelEngine::World::VoxelType::STONE)));
-    // }
-
-    VoxelEngine::Rendering::TextureAtlas atlas; // Added TextureAtlas instance
-    VoxelEngine::Rendering::VoxelMesh greedyMeshEdge = VoxelEngine::Rendering::MeshBuilder::buildGreedyMesh(edgeSegment, atlas); // Pass atlas
+    VoxelEngine::Rendering::TextureAtlas atlas;
+    VoxelEngine::Rendering::VoxelMesh groundMesh = VoxelEngine::Rendering::MeshBuilder::buildGreedyMesh(groundSegment, atlas);
 
     // MeshRenderer setup
     VoxelEngine::Rendering::MeshRenderer meshRenderer;
-    meshRenderer.uploadMesh(greedyMeshEdge);
+    meshRenderer.uploadMesh(groundMesh);
 
     // Camera setup
     glm::mat4 model = glm::mat4(1.0f);
-    // Move camera closer and reduce FOV for larger, more prominent blocks
-    glm::mat4 view = glm::lookAt(glm::vec3(24, 24, 48), glm::vec3(16, 16, 16), glm::vec3(0, 1, 0));
+    // Camera above and back, looking down at the center of the ground
+    glm::mat4 view = glm::lookAt(
+        glm::vec3(16, 32, 32), // camera position (x, y, z)
+        glm::vec3(16, 0, 16),  // look at center of ground
+        glm::vec3(0, 1, 0));   // up
     float aspect = static_cast<float>(gameWindow.getWidth()) / static_cast<float>(gameWindow.getHeight());
     glm::mat4 proj = glm::perspective(glm::radians(35.0f), aspect, 0.1f, 300.0f);
 
     // Print first few mesh vertex positions for debug
     std::cout << "First 8 mesh vertex positions:" << std::endl;
-    for (size_t i = 0; i < std::min<size_t>(8, greedyMeshEdge.vertices.size()); ++i) {
-        const auto& v = greedyMeshEdge.vertices[i];
+    for (size_t i = 0; i < std::min<size_t>(8, groundMesh.vertices.size()); ++i) {
+        const auto& v = groundMesh.vertices[i];
         std::cout << "  [" << i << "] (" << v.position.x << ", " << v.position.y << ", " << v.position.z << ")" << std::endl;
     }
+
+    // Set clear color to light blue for debug
+    glClearColor(0.5f, 0.7f, 1.0f, 1.0f);
 
     while (gameWindow.isRunning()) {
         gameWindow.handleEvents();

@@ -142,9 +142,8 @@ Greedy meshing is now correct and fully tested. All mesh generation tests pass, 
 *   **Small, Focused Files:** MAINTAIN SMALL, FOCUSED FILES for better organization and maintainability.
 *   **Build and Run Instructions:**
     *   The project root directory is: `/home/system-x1/Projects/Voxel Castle/`. While the commands below use absolute paths, it's generally good practice to operate from the project root.
-    *   To build the project (CMake must have been configured in the `build` directory previously): `cmake --build "/home/system-x1/Projects/Voxel Castle/build"`
-    *   To run the executable after building: `"/home/system-x1/Projects/Voxel Castle/build/bin/VoxelFortressGame"`
-    *   Combined command for clearing console, building, and running: `clear && cmake --build "/home/system-x1/Projects/Voxel Castle/build" && "/home/system-x1/Projects/Voxel Castle/build/bin/VoxelFortressGame"`
+    *   To clear console and build the project (CMake must have been configured in the `build` directory previously): `clear && cmake --build "/home/system-x1/Projects/Voxel Castle/build"`
+    *   To clear console and run the executable after building: `clear && "/home/system-x1/Projects/Voxel Castle/build/bin/VoxelFortressGame"`
 
 ---
-Last updated: May 12, 2025 // Updated build/run commands to use absolute paths.
+Last updated: May 12, 2025 // Updated build/run commands to use absolute paths and be separate.

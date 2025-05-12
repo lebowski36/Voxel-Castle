@@ -71,6 +71,9 @@
     - [x] 4.3. Integrate the texture atlas lookup into the UV generation step (Task 3.2).
     - [x] 4.4. **Testing:**
         - [x] 4.4.1. (Placeholder for rendering) Test with a sample texture atlas and verify correct texture application on generated meshes.
+    - [ ] 4.4. Create a sample texture atlas image (`atlas.png`)
+        - [ ] 4.4.1. Generate procedural textures for the atlas (e.g., stone, dirt, grass, wood, leaves, water, sand)
+        - [ ] 4.4.2. Test with a sample texture atlas and verify correct texture application on voxels.
 
 ### 5. Integration and Refinement
     - [ ] 5.1. Integrate the mesh generation system with the `WorldManager` or `ChunkColumn` to trigger mesh updates when chunks change.

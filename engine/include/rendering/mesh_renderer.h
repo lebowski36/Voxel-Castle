@@ -19,11 +19,13 @@ public:
 private:
     GLuint vao = 0, vbo = 0, ebo = 0;
     GLuint shaderProgram = 0;
+    GLuint textureAtlasID = 0; // Added for texture atlas
     size_t indexCount = 0;
     bool ready = false;
 
     GLuint loadShader(const std::string& path, GLenum type);
     GLuint createShaderProgram(const std::string& vertPath, const std::string& fragPath);
+    bool loadTexture(const std::string& texturePath); // Added for loading texture
 };
 
 } // namespace Rendering
