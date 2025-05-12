@@ -165,13 +165,14 @@ void MeshRenderer::uploadMesh(const VoxelMesh& mesh) {
     glBindVertexArray(0);
 }
 
-// Reduce frame counting frequency in draw function
+// Draw function with improved debugging and logging
 void MeshRenderer::draw(const glm::mat4& model, const glm::mat4& view, const glm::mat4& proj) {
     static int retryCount = 0;
     static bool retriesExhausted = false;
     static int frameCounter = 0;
+    static bool initialDebugDone = false;
     const int maxRetries = 5;
-    const int frameLogFrequency = 10; // Log every 10 frames
+    const int frameLogFrequency = 100; // Log every 100 frames
 
     if (retriesExhausted) {
         if (frameCounter % frameLogFrequency == 0) {
@@ -194,7 +195,24 @@ void MeshRenderer::draw(const glm::mat4& model, const glm::mat4& view, const glm
 
     retryCount = 0; // Reset retry count if ready
     retriesExhausted = false; // Reset flag if ready
-    frameCounter = 0; // Reset frame counter if ready
+
+    // Log less frequently and add more detailed debug info on first frame
+    if (frameCounter % frameLogFrequency == 0) {
+        std::cout << "Frame " << frameCounter << ": Drawing mesh in MeshRenderer" << std::endl;
+    }
+    
+    // One-time detailed debug on first successful frame
+    if (!initialDebugDone) {
+        std::cout << "\n==== MESH RENDERER DETAILED DEBUG ====" << std::endl;
+        std::cout << "Texture Atlas ID: " << textureAtlasID << std::endl;
+        std::cout << "Shader Program ID: " << shaderProgram << std::endl;
+        std::cout << "VAO: " << vao << ", VBO: " << vbo << ", EBO: " << ebo << std::endl;
+        std::cout << "Index Count: " << indexCount << std::endl;
+        std::cout << "======================================\n" << std::endl;
+        initialDebugDone = true;
+    }
+    
+    frameCounter++;
 
     glUseProgram(shaderProgram);
 

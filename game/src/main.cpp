@@ -72,10 +72,14 @@ int main(int /*argc*/, char* /*argv*/[]) { // Suppress unused parameter warnings
     
     // Debug OpenGL state
     std::cout << "OpenGL debug: Setting up rendering state" << std::endl;
-    GLint depthTestEnabled;
-    glGetIntegerv(GL_DEPTH_TEST, &depthTestEnabled);
+    // Properly check if depth test is enabled
+    GLboolean depthTestEnabled = glIsEnabled(GL_DEPTH_TEST);
     std::cout << "Depth testing enabled: " << (depthTestEnabled ? "Yes" : "No") << std::endl;
-
+    
+    // Force enable depth test again to be sure
+    glEnable(GL_DEPTH_TEST);
+    depthTestEnabled = glIsEnabled(GL_DEPTH_TEST);
+    std::cout << "Depth testing enabled after forcing: " << (depthTestEnabled ? "Yes" : "No") << std::endl;
 
     // --- Mesh Rendering Setup ---
     // Create a visible ground plane (16x16, y=8) alternating between DIRT and STONE
@@ -98,12 +102,18 @@ int main(int /*argc*/, char* /*argv*/[]) { // Suppress unused parameter warnings
     meshRenderer.uploadMesh(groundMesh);
 
     // Camera setup with extreme debug positioning
+    // Apply model transformations to position the mesh properly
     glm::mat4 model = glm::mat4(1.0f);
-    // Adjust camera position to ensure cubes are visible
+    // Scale to make the mesh more visible
+    model = glm::scale(model, glm::vec3(0.5f, 0.5f, 0.5f));
+    // Translate to center in view (based on first vertex position at 32,0,0)
+    model = glm::translate(model, glm::vec3(-32.0f, -1.0f, -16.0f));
+    
+    // Position camera to look at the mesh
     glm::mat4 view = glm::lookAt(
-        glm::vec3(16, 10, 24), // Move camera slightly higher and further back
-        glm::vec3(16, 0, 16),  // Look at the center of the ground plane
-        glm::vec3(0, 1, 0)     // Up vector
+        glm::vec3(0, 5, 15), // Position camera at a good viewing angle
+        glm::vec3(0, 0, 0),  // Look at the center of our scene
+        glm::vec3(0, 1, 0)   // Up vector
     );
     float aspect = static_cast<float>(gameWindow.getWidth()) / static_cast<float>(gameWindow.getHeight());
     // Wider field of view to see more
@@ -126,8 +136,9 @@ int main(int /*argc*/, char* /*argv*/[]) { // Suppress unused parameter warnings
         std::cout << "  [" << i << "] (" << v.position.x << ", " << v.position.y << ", " << v.position.z << ")" << std::endl;
     }
 
-    // Set clear color to bright purple for debug
-    glClearColor(0.8f, 0.0f, 0.8f, 1.0f);
+    // Set clear color to dark blue - changed from magenta to help debug texture issues
+    glClearColor(0.0f, 0.0f, 0.2f, 1.0f);
+    std::cout << "Clear color set to dark blue (0.0, 0.0, 0.2)" << std::endl;
     
     std::cout << "Starting main rendering loop" << std::endl;
 
@@ -140,12 +151,12 @@ int main(int /*argc*/, char* /*argv*/[]) { // Suppress unused parameter warnings
 
         gameWindow.update();
 
-        // Clear color buffer only (depth disabled for testing)
-        glClear(GL_COLOR_BUFFER_BIT);
+        // Clear both color buffer and depth buffer
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         
-        // Debug every 10 frames
-        if (frameCount % 10 == 0) {
-            std::cout << "Frame " << frameCount << ": Drawing mesh" << std::endl;
+        // Debug every 100 frames (reduced from 10 to match MeshRenderer)
+        if (frameCount % 100 == 0) {
+            std::cout << "Frame " << frameCount << ": Drawing mesh from main loop" << std::endl;
             // Check for any OpenGL errors before drawing
             GLenum err = glGetError();
             if (err != GL_NO_ERROR) {
