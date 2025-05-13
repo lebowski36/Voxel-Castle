@@ -39,7 +39,7 @@ This task covers the implementation of a camera system and the initial steps to 
 
 ### 3.4. Integrate Mesh Generation and Rendering
     *   [x] **3.4.1.** In the main loop (or a test setup), generate a test chunk and build its mesh (e.g., using the greedy meshing system).
-    *   [ ] **3.4.2.** Upload the mesh to OpenGL buffers using the `MeshRenderer`.
+    *   [x] **3.4.2.** Upload the mesh to OpenGL buffers using the `MeshRenderer`. *(Note: Deferred fine-tuning for later)*
     *   [ ] **3.4.3.** Render the mesh each frame, applying camera transformations.
 
 ### 3.5. Test and Verify
