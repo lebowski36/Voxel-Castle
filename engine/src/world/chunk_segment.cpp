@@ -61,6 +61,24 @@ namespace VoxelCastle
             return mIsDirty;
         }
 
+        /**
+         * @brief Rebuilds the renderable mesh for this chunk segment.
+         *
+         * This method is called when the segment is marked as dirty (e.g., after voxel changes).
+         * It utilizes the provided `TextureAtlas` for texture coordinate information and the
+         * `MeshBuilder` to construct the actual mesh geometry (e.g., using Greedy Meshing).
+         *
+         * If no mesh exists yet (i.e., `mMesh` is `nullptr`), a new `VoxelMesh` instance is created.
+         * The chosen meshing algorithm (e.g., `buildGreedyMesh`) from the `meshBuilder` is then invoked,
+         * passing this `ChunkSegment` and the `atlas` as sources of voxel and texture data.
+         * The resulting `VoxelMesh` data is assigned to this segment's `mMesh`.
+         *
+         * After the mesh is successfully rebuilt, the segment's dirty flag is cleared.
+         * Performance timing for the mesh generation is also logged to standard output.
+         *
+         * @param atlas The `TextureAtlas` containing texture information for different voxel types.
+         * @param meshBuilder The `MeshBuilder` responsible for generating the mesh vertices and indices.
+         */
         void ChunkSegment::rebuildMesh(VoxelEngine::Rendering::TextureAtlas& atlas, VoxelEngine::Rendering::MeshBuilder& meshBuilder) {
             auto startTime = std::chrono::high_resolution_clock::now();
 

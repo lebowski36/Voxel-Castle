@@ -13,11 +13,24 @@
 namespace VoxelEngine {
     namespace Rendering {
 
-        // Helper to add a quad (two triangles) for a given face.
-        // Vertices are defined in local voxel coordinates (0 to 1 range for the face)
-        // and then offset by voxel_pos.
-        // Normal is the same for all 4 vertices of a flat face.
-        // Winding order: v1-v2-v3, v1-v3-v4 (CCW from outside)
+        /**
+         * @brief Adds a single face (composed of two triangles) to the given VoxelMesh.
+         *
+         * This is a helper function used by meshing algorithms (e.g., Naive Meshing).
+         * It constructs four vertices for the face, calculates their world positions based on `voxel_pos`
+         * and `face_vertices` (which define the face's shape relative to the voxel's origin).
+         * It also applies texture coordinates from the `atlas` based on the `voxelType`.
+         * The face is defined by `face_vertices` in a specific winding order (typically counter-clockwise
+         * when viewed from outside) to ensure correct normal orientation.
+         *
+         * @param mesh The VoxelMesh to which the face's vertices and indices will be added.
+         * @param voxel_pos The world position of the minimum corner of the voxel to which this face belongs.
+         * @param face_vertices An array of 4 glm::vec3 defining the corners of the face, relative to (0,0,0) if voxel_pos is the origin.
+         *                      The order should be consistent (e.g., bottom-left, bottom-right, top-right, top-left).
+         * @param normal The normal vector for this face.
+         * @param voxelType The type of the voxel, used to determine texture coordinates from the atlas.
+         * @param atlas The TextureAtlas providing texture coordinates for different voxel types.
+         */
         void MeshBuilder::addFace(VoxelMesh& mesh,
                      const glm::vec3& voxel_pos, // Base position of the voxel (e.g., its minimum corner)
                      const glm::vec3 face_vertices[4], // The 4 vertices of the face, relative to (0,0,0) if voxel_pos is origin
@@ -57,7 +70,26 @@ namespace VoxelEngine {
     mesh.indices.push_back(base_index + 3);
         }
 
-        // Implementation for the new addQuad helper
+        /**
+         * @brief Adds a quadrilateral (quad) defined by four points to the VoxelMesh.
+         *
+         * This helper function is primarily used by the Greedy Meshing algorithm.
+         * It takes four explicit corner positions (p1, p2, p3, p4) that form the quad,
+         * a normal vector, the voxel type (for texturing), and the texture atlas.
+         * It creates four vertices with appropriate texture coordinates and adds two triangles
+         * to the mesh's index buffer to render the quad.
+         * The order of points p1-p4 should define the quad with a counter-clockwise winding
+         * when viewed from the direction of the normal.
+         *
+         * @param mesh The VoxelMesh to which the quad's vertices and indices will be added.
+         * @param p1 The first vertex position of the quad.
+         * @param p2 The second vertex position of the quad.
+         * @param p3 The third vertex position of the quad.
+         * @param p4 The fourth vertex position of the quad.
+         * @param normal The normal vector for this quad.
+         * @param voxelType The type of the voxel, used to determine texture coordinates from the atlas.
+         * @param atlas The TextureAtlas providing texture coordinates for different voxel types.
+         */
         void MeshBuilder::addQuad(VoxelMesh& mesh,
                                   const ::VoxelEngine::World::VoxelPosition& p1, const ::VoxelEngine::World::VoxelPosition& p2,
                                   const ::VoxelEngine::World::VoxelPosition& p3, const ::VoxelEngine::World::VoxelPosition& p4,
