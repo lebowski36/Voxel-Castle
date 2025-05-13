@@ -287,10 +287,10 @@ namespace VoxelEngine {
                                     normal_val.z = static_cast<float>(q[2]);
 
                                     if (dir == 1) {
-                                        addQuad(mesh, vp1, vp2, vp3, vp4, normal_val, current_face_voxel_type, atlas);
+                                        addQuad(mesh, vp4, vp3, vp2, vp1, normal_val, current_face_voxel_type, atlas);
                                     } else {
                                         // Reverse winding for back face
-                                        addQuad(mesh, vp1, vp4, vp3, vp2, normal_val, current_face_voxel_type, atlas);
+                                        addQuad(mesh, vp2, vp3, vp4, vp1, normal_val, current_face_voxel_type, atlas);
                                     }
 
                                     // Mark mask
