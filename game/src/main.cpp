@@ -106,10 +106,9 @@ int main(int /*argc*/, char* /*argv*/[]) { // Suppress unused parameter warnings
     VoxelEngine::Rendering::MeshRenderer meshRenderer;
 
     // Setup debug atlas quad
-    // Pass projectRoot, SCREEN_WIDTH, SCREEN_HEIGHT
     const std::string projectRoot = "/home/system-x1/Projects/Voxel Castle/";
     VoxelEngine::Rendering::Debug::setupDebugAtlasQuad(projectRoot, SCREEN_WIDTH, SCREEN_HEIGHT);
-    VoxelEngine::Rendering::Debug::setupSingleTileDebugQuad(SCREEN_WIDTH, SCREEN_HEIGHT); // Pass SCREEN_WIDTH, SCREEN_HEIGHT
+    VoxelEngine::Rendering::Debug::setupSingleTileDebugQuad(SCREEN_WIDTH, SCREEN_HEIGHT);
 
     // Camera setup (SpectatorCamera)
     SpectatorCamera camera(
