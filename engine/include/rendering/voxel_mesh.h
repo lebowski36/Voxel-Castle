@@ -61,6 +61,22 @@ namespace VoxelEngine {
             bool isEmpty() const {
                 return vertices.empty();
             }
+
+            /**
+             * @brief Gets the number of vertices in the mesh.
+             * @return The count of vertices.
+             */
+            size_t getVertexCount() const {
+                return vertices.size();
+            }
+
+            /**
+             * @brief Gets the number of indices in the mesh.
+             * @return The count of indices.
+             */
+            size_t getIndexCount() const {
+                return indices.size();
+            }
         };
 
     } // namespace Rendering

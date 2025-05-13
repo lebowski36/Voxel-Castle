@@ -7,6 +7,14 @@
 #include "world/quadtree.h"   // For Quadtree spatial partitioning
 #include <memory>
 #include <cstdint>            // For int_fast64_t
+#include <vector>             // Added for std::vector
+
+// Forward declarations for rendering components
+namespace VoxelEngine { namespace Rendering {
+    class TextureAtlas;
+    class MeshBuilder;
+    class VoxelMesh;
+}}
 
 /**
  * @brief Namespace for Voxel Castle specific game logic and world representation.
@@ -47,7 +55,7 @@ struct WorldCoordXZ {
  *
  * The WorldManager is the primary interface for interacting with the game world's voxel data.
  * It handles the creation and storage of ChunkColumns and provides methods to get/set individual voxels
- * at world coordinates.
+ * at world coordinates. It also manages the mesh generation for dirty chunk segments.
  */
 class WorldManager {
 public:
@@ -74,13 +82,27 @@ public:
      *
      * This method determines the correct ChunkColumn and ChunkSegment for the given coordinates
      * and updates the voxel data. It will create the necessary ChunkColumn and ChunkSegment
-     * if they do not already exist.
+     * if they do not already exist. The affected ChunkSegment will be marked as dirty.
      * @param worldX The global X-coordinate of the voxel.
      * @param worldY The global Y-coordinate of the voxel.
      * @param worldZ The global Z-coordinate of the voxel.
      * @param voxel The VoxelEngine::World::Voxel data to set at the specified location.
      */
     void setVoxel(int_fast64_t worldX, int_fast64_t worldY, int_fast64_t worldZ, const ::VoxelEngine::World::Voxel& voxel);
+
+    /**
+     * @brief Sets the voxel at the specified world coordinates using a VoxelType.
+     *
+     * This method determines the correct ChunkColumn and ChunkSegment for the given coordinates
+     * and updates the voxel data. It will create the necessary ChunkColumn and ChunkSegment
+     * if they do not already exist. The affected ChunkSegment will be marked as dirty.
+     * A Voxel object will be created from the provided VoxelType.
+     * @param worldX The global X-coordinate of the voxel.
+     * @param worldY The global Y-coordinate of the voxel.
+     * @param worldZ The global Z-coordinate of the voxel.
+     * @param type The VoxelEngine::World::VoxelType to set at the specified location.
+     */
+    void setVoxel(int_fast64_t worldX, int_fast64_t worldY, int_fast64_t worldZ, ::VoxelEngine::World::VoxelType type);
 
     /**
      * @brief Retrieves an existing ChunkColumn at the given XZ coordinates.
@@ -95,11 +117,25 @@ public:
 
     /**
      * @brief Retrieves an existing ChunkColumn or creates a new one if it doesn't exist at the given XZ coordinates.
+     * If a new ChunkColumn is created, its segments are initialized with a checkerboard pattern.
      * @param worldX The global X-coordinate of the ChunkColumn.
      * @param worldZ The global Z-coordinate of the ChunkColumn.
      * @return A pointer to the ChunkColumn at the specified coordinates.
      */
     ::VoxelCastle::World::ChunkColumn* getOrCreateChunkColumn(int_fast64_t worldX, int_fast64_t worldZ);
+
+    /**
+     * @brief Iterates through all chunk segments and rebuilds their meshes if they are marked dirty.
+     * @param atlas The texture atlas to use for mesh generation.
+     * @param meshBuilder The mesh builder to use for generating mesh data.
+     */
+    void updateDirtyMeshes(VoxelEngine::Rendering::TextureAtlas& atlas, VoxelEngine::Rendering::MeshBuilder& meshBuilder);
+
+    /**
+     * @brief Retrieves all valid VoxelMesh pointers from all chunk segments.
+     * @return A vector of const pointers to VoxelMesh objects.
+     */
+    std::vector<const VoxelEngine::Rendering::VoxelMesh*> getAllSegmentMeshes() const;
 
     /**
      * @brief Converts global world X coordinate to ChunkColumn base X coordinate.

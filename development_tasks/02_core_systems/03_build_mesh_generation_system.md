@@ -75,6 +75,19 @@
 
 ### 5. Integration and Refinement
     - [ ] 5.1. Integrate the mesh generation system with the `WorldManager` or `ChunkColumn` to trigger mesh updates when chunks change.
+        - **Goal:** Shift mesh generation and update responsibility from manual calls in `main.cpp` to the `WorldManager`.
+        - **Architectural Changes:**
+            - `ChunkSegment` should manage its own `VoxelMesh` (or a reference/pointer to it) and a "dirty" flag indicating if its mesh needs rebuilding.
+            - `ChunkSegment` should have a method like `rebuildMesh(TextureAtlas& atlas, MeshBuilder& meshBuilder)` that regenerates its mesh based on its current voxel data. (Passing `MeshBuilder` as a parameter is preferred).
+            - `WorldManager` will be responsible for:
+                - Holding `ChunkColumn`s (which in turn hold `ChunkSegment`s).
+                - Initializing `ChunkSegment`s with voxel data (e.g., the current checkerboard pattern for initial testing).
+                - Calling `rebuildMesh()` on `ChunkSegment`s when they are first created or when their voxel data changes (marked as dirty).
+                - Providing access to the generated meshes for rendering.
+        - **Dynamic Update Testing Strategy (Option B):**
+            - **Initial State:** `WorldManager` creates and meshes a `ChunkSegment` with the existing checkerboard pattern. This mesh is rendered.
+            - **Delayed Trigger:** Approximately 3 seconds after the initial render, a mechanism (e.g., a new `WorldManager::setVoxelAt(worldX, worldY, worldZ, voxelType)` method called from `main.cpp` for testing) will modify a voxel in a `ChunkSegment`. This modification should mark the segment as "dirty".
+            - **Verification:** The `WorldManager`'s update logic should detect the dirty segment and trigger a mesh rebuild. The subsequent render should display the updated mesh, visually confirming that changes to voxel data dynamically update the rendered geometry after the delay.
     - [ ] 5.2. Consider asynchronous mesh generation to avoid stalling the main thread.
     - [ ] 5.3. Profile and optimize mesh generation performance.
     - [ ] 5.4. Add Doxygen-style comments to new classes and functions.

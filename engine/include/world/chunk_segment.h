@@ -4,7 +4,17 @@
 #include <array>
 #include <cstddef> // For std::size_t
 #include <cstdint> // For int_fast32_t
+#include <memory>  // For std::unique_ptr
 #include "world/voxel.h" // Defines ::VoxelEngine::World::Voxel
+#include "rendering/voxel_mesh.h" // For VoxelEngine::Rendering::VoxelMesh
+
+// Forward declarations
+namespace VoxelEngine {
+    namespace Rendering {
+        class MeshBuilder;
+        class TextureAtlas;
+    }
+}
 
 /**
  * @brief Namespace for Voxel Castle specific game logic and world representation.
@@ -79,6 +89,33 @@ namespace World {
         void setVoxel(int_fast32_t x, int_fast32_t y, int_fast32_t z, const ::VoxelEngine::World::Voxel& voxel);
 
         /**
+         * @brief Marks the chunk segment as dirty, indicating its mesh needs to be rebuilt.
+         * @param dirty True to mark as dirty, false otherwise.
+         */
+        void markDirty(bool dirty = true);
+
+        /**
+         * @brief Checks if the chunk segment is dirty.
+         * @return True if the segment is dirty, false otherwise.
+         */
+        bool isDirty() const;
+
+        /**
+         * @brief Rebuilds the mesh for this chunk segment.
+         * Uses the provided TextureAtlas and MeshBuilder.
+         * Clears the dirty flag upon successful completion.
+         * @param atlas The texture atlas to use for UV mapping.
+         * @param meshBuilder The mesh builder to generate the mesh.
+         */
+        void rebuildMesh(VoxelEngine::Rendering::TextureAtlas& atlas, VoxelEngine::Rendering::MeshBuilder& meshBuilder);
+
+        /**
+         * @brief Gets a pointer to the generated mesh.
+         * @return A const pointer to the VoxelMesh, or nullptr if no mesh has been generated.
+         */
+        const VoxelEngine::Rendering::VoxelMesh* getMesh() const;
+
+        /**
          * @brief Checks if the given coordinates are valid within the segment.
          *
          * @param x The x-coordinate to check.
@@ -124,6 +161,9 @@ namespace World {
          * @return The 1D index corresponding to the 3D coordinates.
          */
         static std::size_t getIndex(int_fast32_t x, int_fast32_t y, int_fast32_t z);
+
+        std::unique_ptr<VoxelEngine::Rendering::VoxelMesh> mMesh;
+        bool mIsDirty = true; // Default to true so mesh is built on first opportunity
     };
 
 } // namespace World

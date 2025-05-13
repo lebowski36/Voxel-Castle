@@ -51,6 +51,9 @@ namespace VoxelCastle
         class ChunkColumn
         {
         public:
+            // Define how many segments are stacked vertically in a column
+            static constexpr uint8_t CHUNKS_PER_COLUMN = 16;
+
             /**
              * @brief Returns the base X coordinate of this chunk column.
              */
@@ -97,6 +100,15 @@ namespace VoxelCastle
              * @param voxel The VoxelEngine::World::Voxel to set.
              */
             void setVoxel(int_fast64_t worldX, int_fast64_t worldY, int_fast64_t worldZ, const ::VoxelEngine::World::Voxel& voxel);
+
+            /**
+             * @brief Retrieves a pointer to a ChunkSegment by its vertical index within the column.
+             *
+             * @param segmentIndex The vertical index of the segment (0 to CHUNKS_PER_COLUMN - 1).
+             * @return A pointer to the ChunkSegment if it exists and the index is valid, otherwise nullptr.
+             */
+            ChunkSegment* getSegmentByIndex(uint8_t segmentIndex);
+            const ChunkSegment* getSegmentByIndex(uint8_t segmentIndex) const;
 
             /**
              * @brief Gets a segment by its Y index.

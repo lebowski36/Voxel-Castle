@@ -1,5 +1,7 @@
 #include "world/chunk_segment.h"
 #include <stdexcept> // For std::out_of_range
+#include "rendering/mesh_builder.h" // For VoxelEngine::Rendering::MeshBuilder
+#include "rendering/texture_atlas.h" // For VoxelEngine::Rendering::TextureAtlas
 
 namespace VoxelCastle
 {
@@ -11,13 +13,16 @@ namespace VoxelCastle
             // Default initialize all voxels. Assuming Voxel has a default constructor
             // that might set it to 'air' or an 'uninitialized' state.
             // For explicit initialization to 'air' (e.g., type_id 0):
-            ::VoxelEngine::World::Voxel airVoxel{0}; // Assuming 0 is air
+            ::VoxelEngine::World::Voxel airVoxel{static_cast<uint8_t>(::VoxelEngine::World::VoxelType::AIR)}; // Ensure AIR is used
             m_voxels.fill(airVoxel);
+            mIsDirty = true; // New segments are dirty by default
+            // mMesh is implicitly nullptr by default for std::unique_ptr
         }
 
         ChunkSegment::ChunkSegment(const ::VoxelEngine::World::Voxel& initialVoxel)
         {
             m_voxels.fill(initialVoxel);
+            mIsDirty = true; // New segments are dirty by default
         }
 
         ::VoxelEngine::World::Voxel ChunkSegment::getVoxel(int_fast32_t x, int_fast32_t y, int_fast32_t z) const
@@ -39,7 +44,37 @@ namespace VoxelCastle
                 // Option 2: Do nothing or log an error
                 // return;
             }
-            m_voxels[getIndex(x, y, z)] = voxel;
+            // Only mark dirty if the voxel actually changes.
+            if (m_voxels[getIndex(x, y, z)].id != voxel.id) {
+                m_voxels[getIndex(x, y, z)] = voxel;
+                markDirty(); // Mark the segment as dirty if a voxel changes
+            }
+        }
+
+        void ChunkSegment::markDirty(bool dirty) {
+            mIsDirty = dirty;
+        }
+
+        bool ChunkSegment::isDirty() const {
+            return mIsDirty;
+        }
+
+        void ChunkSegment::rebuildMesh(VoxelEngine::Rendering::TextureAtlas& atlas, VoxelEngine::Rendering::MeshBuilder& meshBuilder) {
+            if (!mMesh) {
+                mMesh = std::make_unique<VoxelEngine::Rendering::VoxelMesh>();
+            }
+            // For now, let's use Greedy Meshing as it's the more advanced one we have.
+            // If issues arise, we can switch to buildNaiveMesh for simpler debugging.
+            *mMesh = meshBuilder.buildGreedyMesh(*this, atlas);
+            // Potentially, MeshBuilder methods could take a VoxelMesh& to fill directly
+            // instead of returning by value, to avoid a copy if VoxelMesh is large.
+            // For now, the assignment from the returned VoxelMesh is fine.
+
+            markDirty(false); // Mesh is now up-to-date
+        }
+
+        const VoxelEngine::Rendering::VoxelMesh* ChunkSegment::getMesh() const {
+            return mMesh.get();
         }
 
         bool ChunkSegment::areCoordinatesValid(int_fast32_t x, int_fast32_t y, int_fast32_t z)
@@ -51,27 +86,6 @@ namespace VoxelCastle
 
         std::size_t ChunkSegment::getIndex(int_fast32_t x, int_fast32_t y, int_fast32_t z)
         {
-            // Using X-Major order: index = (x * HEIGHT * DEPTH) + (y * DEPTH) + z
-            // Using Y-Major order: index = (y * WIDTH * DEPTH) + (x * DEPTH) + z
-            // Using Z-Major order (or row-major like C arrays): index = (z * WIDTH * HEIGHT) + (y * WIDTH) + x
-            // Let's stick to Z-Major as it's common for 3D arrays laid out linearly.
-            // Or, if thinking [height][row][col] -> [y][x][z] or [y][z][x]
-            // If m_voxels[y][x][z] was the mental model for a 3D std::array, then flat is y * (WIDTH*DEPTH) + x * DEPTH + z
-            // If m_voxels[x][y][z] was the mental model, then flat is x * (HEIGHT*DEPTH) + y * DEPTH + z
-
-            // The current constants are SEGMENT_WIDTH (X), SEGMENT_HEIGHT (Y), SEGMENT_DEPTH (Z).
-            // Standard linear mapping for a 3D array A[H][W][D] with indices (y,x,z) is y*W*D + x*D + z.
-            // Or for A[W][H][D] with indices (x,y,z) is x*H*D + y*D + z.
-            // Let's assume indexing m_voxels[x][y][z] conceptually.
-            // return static_cast<std::size_t>(x) * SEGMENT_HEIGHT * SEGMENT_DEPTH +
-            //        static_cast<std::size_t>(y) * SEGMENT_DEPTH +
-            //        static_cast<std::size_t>(z);
-
-            // Let's use the layout that corresponds to iterating X, then Y, then Z (column-major style for the first dimension)
-            // Or more simply, if we consider the dimensions as (dim1, dim2, dim3) and access (i, j, k)
-            // index = i * (dim2*dim3) + j * dim3 + k
-            // If our dimensions are (WIDTH, HEIGHT, DEPTH) for (X, Y, Z)
-            // index = x * (HEIGHT*DEPTH) + y * DEPTH + z
             return static_cast<std::size_t>(x) * (SEGMENT_HEIGHT * SEGMENT_DEPTH) +
                    static_cast<std::size_t>(y) * SEGMENT_DEPTH +
                    static_cast<std::size_t>(z);

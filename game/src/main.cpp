@@ -23,13 +23,13 @@
 #include "world/voxel.h"       // Defines VoxelEngine::World::Voxel
 #include "world/test_quadtree.h" // Added for Quadtree tests
 #include "world/test_voxel_system.h" // Added for Voxel System tests
-#include "world/test_mesh_generation.h" // Added for Mesh Generation tests
 
 // Mesh Generation
 #include "rendering/mesh_builder.h" // For VoxelEngine::Rendering::MeshBuilder
-#include "world/chunk_segment.h"    // For VoxelCastle::World::ChunkSegment
 #include "rendering/mesh_renderer.h"
 #include "rendering/texture_atlas.h" // Added for TextureAtlas
+#include <chrono> // For std::chrono for timing
+#include <thread> // For std::this_thread::sleep_for
 
 // GLM Headers - Will be used by other engine systems, keep includes for now if generally useful
 #define GLM_FORCE_SILENT_WARNINGS // Optional: To suppress GLM warnings if any
@@ -280,12 +280,11 @@ int main(int /*argc*/, char* /*argv*/[]) { // Suppress unused parameter warnings
 
     VoxelCastle::World::WorldManager worldManager; // Keep a single instance for the game
 
-    // Run all tests
-    std::cout << "--- Running All Tests ---" << std::endl;
+    // Run all tests (excluding mesh generation tests that might rely on old direct building)
+    std::cout << "--- Running Core Tests ---" << std::endl;
     VoxelCastle::World::runQuadtreeTests();     // Run Quadtree tests
     VoxelCastle::World::runVoxelSystemTests();  // Run Voxel System tests
-    VoxelCastle::World::runMeshGenerationTests(); // Run Mesh Generation tests
-    std::cout << "--- All Tests Completed ---" << std::endl;
+    std::cout << "--- Core Tests Completed ---" << std::endl;
 
     // Use a larger window size for visibility
     Window gameWindow("Voxel Fortress - Alpha", SCREEN_WIDTH, SCREEN_HEIGHT);
@@ -299,8 +298,10 @@ int main(int /*argc*/, char* /*argv*/[]) { // Suppress unused parameter warnings
     // Enable depth testing for proper 3D rendering
     glEnable(GL_DEPTH_TEST);
     glDepthFunc(GL_LESS);
-    // Disable face culling for debug (see all faces)
-    glDisable(GL_CULL_FACE);
+    // Enable face culling for performance (render only front faces)
+    glEnable(GL_CULL_FACE);
+    glCullFace(GL_BACK); 
+    glFrontFace(GL_CCW); // Define front faces by counter-clockwise winding order
     // Set filled polygon mode for normal rendering
     glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
     
@@ -309,88 +310,95 @@ int main(int /*argc*/, char* /*argv*/[]) { // Suppress unused parameter warnings
     // Properly check if depth test is enabled
     GLboolean depthTestEnabled = glIsEnabled(GL_DEPTH_TEST);
     std::cout << "Depth testing enabled: " << (depthTestEnabled ? "Yes" : "No") << std::endl;
+    GLboolean cullFaceEnabled = glIsEnabled(GL_CULL_FACE);
+    std::cout << "Face culling enabled: " << (cullFaceEnabled ? "Yes" : "No") << std::endl;
     
-    // Force enable depth test again to be sure
-    glEnable(GL_DEPTH_TEST);
-    depthTestEnabled = glIsEnabled(GL_DEPTH_TEST);
-    std::cout << "Depth testing enabled after forcing: " << (depthTestEnabled ? "Yes" : "No") << std::endl;
 
-    // --- Mesh Rendering Setup ---
-    // Create a visible ground plane (16x16, y=8) alternating between DIRT and STONE
-    VoxelCastle::World::ChunkSegment groundSegment;
-    int groundY = 0;
-    for (int x = 0; x < VoxelCastle::World::SEGMENT_WIDTH; ++x) {
-        for (int z = 0; z < VoxelCastle::World::SEGMENT_DEPTH; ++z) {
-            uint8_t type = ((x + z) % 2 == 0)
-                ? static_cast<uint8_t>(VoxelEngine::World::VoxelType::DIRT)
-                : static_cast<uint8_t>(VoxelEngine::World::VoxelType::STONE);
-            groundSegment.setVoxel(x, groundY, z, VoxelEngine::World::Voxel(type));
-        }
-    }
+    // --- World and Rendering Setup ---
+    VoxelEngine::Rendering::TextureAtlas atlas; // Create texture atlas
+    VoxelEngine::Rendering::MeshBuilder meshBuilder; // Create mesh builder
 
-    VoxelEngine::Rendering::TextureAtlas atlas;
-    VoxelEngine::Rendering::VoxelMesh groundMesh = VoxelEngine::Rendering::MeshBuilder::buildGreedyMesh(groundSegment, atlas);
+    // Initialize a 1x1x1 chunk area (one ChunkColumn)
+    worldManager.getOrCreateChunkColumn(0, 0); 
 
-    // MeshRenderer setup
+    // Initial mesh build for all dirty segments
+    worldManager.updateDirtyMeshes(atlas, meshBuilder);
+
+    // MeshRenderer setup - it will now manage multiple meshes
     VoxelEngine::Rendering::MeshRenderer meshRenderer;
-    meshRenderer.uploadMesh(groundMesh);
 
     // Setup debug atlas quad
     setupDebugAtlasQuad();
     setupSingleTileDebugQuad(); // Setup the new quad
 
     // Camera setup
-    // New camera settings for better view of a potential 32x32x32 chunk centered around (16,0,16)
-    glm::vec3 cameraPos   = glm::vec3(48.0f, 30.0f, 48.0f); 
-    glm::vec3 cameraTarget = glm::vec3(16.0f, 0.0f, 16.0f);
+    glm::vec3 cameraPos   = glm::vec3(16.0f, 24.0f, 48.0f); // Adjusted for better view
+    glm::vec3 cameraTarget = glm::vec3(8.0f, 8.0f, 8.0f);   // Look at the center of the first segment
     glm::vec3 cameraUp    = glm::vec3(0.0f, 1.0f, 0.0f);
-    glm::mat4 view = glm::lookAt(cameraPos, cameraTarget, cameraUp);
 
-    float fov = 60.0f; // Field of view
+    float fov = 70.0f; // Field of view
 
     float aspect = static_cast<float>(SCREEN_WIDTH) / static_cast<float>(SCREEN_HEIGHT);
-    glm::mat4 proj = glm::perspective(glm::radians(fov), aspect, 0.1f, 300.0f); // Increased far plane to 300
+    glm::mat4 proj = glm::perspective(glm::radians(fov), aspect, 0.1f, 500.0f); // Increased far plane
     
     std::cout << "  Field of view: " << fov << " degrees" << std::endl;
 
-    std::cout << "First 8 mesh vertex positions:" << std::endl;
-    for (size_t i = 0; i < std::min<size_t>(8, groundMesh.vertices.size()); ++i) {
-        const auto& v = groundMesh.vertices[i];
-        std::cout << "  [" << i << "] (" << v.position.x << ", " << v.position.y << ", " << v.position.z << ")" << std::endl;
-    }
-
-    glClearColor(0.0f, 0.0f, 0.2f, 1.0f);
-    std::cout << "Clear color set to dark blue (0.0, 0.0, 0.2)" << std::endl;
+    glClearColor(0.1f, 0.2f, 0.3f, 1.0f); // A slightly more pleasant blue
+    std::cout << "Clear color set to (0.1, 0.2, 0.3)" << std::endl;
     
     std::cout << "Starting main rendering loop" << std::endl;
 
-    int frameCount = 0; // DEBUG: Frame counter
-    glm::mat4 model = glm::mat4(1.0f); // Define model matrix for the main mesh
+    int frameCount = 0;
+    glm::mat4 model = glm::mat4(1.0f); // Model matrix for meshes (identity, as positions are world coords)
 
-    while (gameWindow.isRunning() || frameCount < 100) { // DEBUG: Ensure at least 100 frames
+    auto startTime = std::chrono::steady_clock::now();
+    bool voxelChanged = false;
+
+    // Main loop
+    while (gameWindow.isRunning()) {
         gameWindow.handleEvents();
-
         ecs.progress();
-
         gameWindow.update();
 
+        // --- Camera & View Matrix Update ---
+        // Potentially update cameraPos, cameraTarget, cameraUp here if camera moves
+        glm::mat4 view = glm::lookAt(cameraPos, cameraTarget, cameraUp);
+
+        // --- Game Logic & Mesh Updates ---
+        auto currentTime = std::chrono::steady_clock::now();
+        auto elapsedTime = std::chrono::duration_cast<std::chrono::seconds>(currentTime - startTime).count();
+
+        if (!voxelChanged && elapsedTime >= 3) {
+            std::cout << "3 seconds elapsed. Changing a voxel..." << std::endl;
+            worldManager.setVoxel(0, 0, 0, {static_cast<VoxelEngine::World::VoxelType>(3)}); // Use VoxelType 3
+            voxelChanged = true;
+            std::cout << "Voxel at (0,0,0) changed. WorldManager will mark segment dirty." << std::endl;
+        }
+
+        // Update meshes if any segments are dirty
+        worldManager.updateDirtyMeshes(atlas, meshBuilder);
+
+        // --- Rendering ---
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         
-        if (frameCount % 100 == 0) {
-            std::cout << "Frame " << frameCount << ": Rendering scene" << std::endl;
-            GLenum err = glGetError();
-            if (err != GL_NO_ERROR) {
-                std::cerr << "OpenGL error before draw: 0x" << std::hex << err << std::dec << std::endl;
+        // Render all segment meshes
+        auto meshesToRender = worldManager.getAllSegmentMeshes();
+        for (const auto* vMesh : meshesToRender) {
+            if (vMesh) { // Ensure mesh is not null
+                 meshRenderer.uploadMesh(*vMesh); // Re-upload mesh data (can be optimized)
+                 meshRenderer.draw(model, view, proj);
             }
         }
         
-        meshRenderer.draw(model, view, proj);
-
-        drawDebugAtlasQuad(meshRenderer.getTextureAtlasID());
-        drawSingleTileDebugQuad(meshRenderer.getTextureAtlasID()); // Draw the new quad
+        // Debug Atlas Rendering (optional)
+        // drawDebugAtlasQuad(atlas.getTextureID()); 
+        // drawSingleTileDebugQuad(atlas.getTextureID());
 
         gameWindow.render();
         frameCount++;
+
+        // Optional: Cap framerate or yield
+        // std::this_thread::sleep_for(std::chrono::milliseconds(16)); 
     }
 
     if (debugAtlasVAO != 0) glDeleteVertexArrays(1, &debugAtlasVAO);

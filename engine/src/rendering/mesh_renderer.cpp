@@ -78,7 +78,7 @@ MeshRenderer::~MeshRenderer() {
 }
 
 void MeshRenderer::uploadMesh(const VoxelMesh& mesh) {
-    std::cout << "[MeshRenderer::uploadMesh] Called with mesh (" << mesh.vertices.size() << " vertices, " << mesh.indices.size() << " indices)." << std::endl;
+    // if (shaderProgram == 0 || vao == 0 || vbo == 0 || ebo == 0) {
     if (shaderProgram == 0 || vao == 0 || vbo == 0 || ebo == 0) {
         std::cerr << "[MeshRenderer::uploadMesh] Renderer not properly initialized (shader/buffers missing). Cannot upload." << std::endl;
         std::cout << "  Shader Program ID: " << shaderProgram << ", VAO: " << vao << ", VBO: " << vbo << ", EBO: " << ebo << std::endl;
@@ -102,19 +102,19 @@ void MeshRenderer::uploadMesh(const VoxelMesh& mesh) {
     }
     
     if (mesh.vertices.size() == 0) { 
-        std::cout << "[MeshRenderer::uploadMesh] Uploading empty mesh (0 vertices, " << mesh.indices.size() << " indices)." << std::endl;
+        // std::cout << "[MeshRenderer::uploadMesh] Uploading empty mesh (0 vertices, " << mesh.indices.size() << " indices)." << std::endl;
     }
 
-    std::cout << "[MeshRenderer::uploadMesh] Raw vertex buffer (first " << std::min<size_t>(4, mesh.vertices.size()) << " vertices):" << std::endl;
-    const float* raw = reinterpret_cast<const float*>(mesh.vertices.data());
-    size_t floatsPerVertex = sizeof(Vertex) / sizeof(float);
-    for (size_t i = 0; i < std::min<size_t>(4, mesh.vertices.size()); ++i) {
-        std::cout << "  [" << i << "] ";
-        for (size_t j = 0; j < floatsPerVertex; ++j) {
-            std::cout << raw[i * floatsPerVertex + j] << " ";
-        }
-        std::cout << std::endl;
-    }
+    // std::cout << "[MeshRenderer::uploadMesh] Raw vertex buffer (first " << std::min<size_t>(4, mesh.vertices.size()) << " vertices):" << std::endl;
+    // const float* raw = reinterpret_cast<const float*>(mesh.vertices.data());
+    // size_t floatsPerVertex = sizeof(Vertex) / sizeof(float);
+    // for (size_t i = 0; i < std::min<size_t>(4, mesh.vertices.size()); ++i) {
+    //     std::cout << "  [" << i << "] ";
+    //     for (size_t j = 0; j < floatsPerVertex; ++j) {
+    //         std::cout << raw[i * floatsPerVertex + j] << " ";
+    //     }
+    //     std::cout << std::endl;
+    // }
 
     glBindVertexArray(vao);
     GLenum err; 
@@ -159,7 +159,7 @@ void MeshRenderer::uploadMesh(const VoxelMesh& mesh) {
     } else if (indexCount == 0 && mesh.vertices.size() > 0) {
         std::cout << "[MeshRenderer::uploadMesh] Mesh has " << mesh.vertices.size() << " vertices but 0 indices. Will draw 0 elements." << std::endl;
     } else {
-        std::cout << "[MeshRenderer::uploadMesh] Mesh uploaded successfully. Index count: " << indexCount << ". Renderer is ready: " << std::boolalpha << ready << std::noboolalpha << std::endl;
+        // std::cout << "[MeshRenderer::uploadMesh] Mesh uploaded successfully. Index count: " << indexCount << ". Renderer is ready: " << std::boolalpha << ready << std::noboolalpha << std::endl;
     }
 
     glBindVertexArray(0);
