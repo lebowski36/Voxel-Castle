@@ -38,7 +38,7 @@ This task covers the implementation of a camera system and the initial steps to 
     *   [ ] **3.3.6.** (Optional) Implement frustum culling.
 
 ### 3.4. Integrate Mesh Generation and Rendering
-    *   [ ] **3.4.1.** In the main loop (or a test setup), generate a test chunk and build its mesh (e.g., using the greedy meshing system).
+    *   [x] **3.4.1.** In the main loop (or a test setup), generate a test chunk and build its mesh (e.g., using the greedy meshing system).
     *   [ ] **3.4.2.** Upload the mesh to OpenGL buffers using the `MeshRenderer`.
     *   [ ] **3.4.3.** Render the mesh each frame, applying camera transformations.
 
