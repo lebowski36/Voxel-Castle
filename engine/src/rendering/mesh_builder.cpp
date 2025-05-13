@@ -40,25 +40,26 @@ namespace VoxelEngine {
             
     uint32_t base_index = static_cast<uint32_t>(mesh.vertices.size());
 
-    float light = 1.0f;
-    // Try to get the light value from the segment if available (TODO: pass segment ref if needed)
-    // For now, just use max light for demonstration
+    // DEBUG: Assign color based on normal
+    glm::vec3 debug_color = glm::abs(normal); // Simple color based on normal vector
+    if (normal.x > 0.9f) debug_color = glm::vec3(1.0f, 0.0f, 0.0f); // Right = Red
+    else if (normal.x < -0.9f) debug_color = glm::vec3(0.0f, 1.0f, 0.0f); // Left = Green
+    else if (normal.y > 0.9f) debug_color = glm::vec3(0.0f, 0.0f, 1.0f); // Top = Blue
+    else if (normal.y < -0.9f) debug_color = glm::vec3(1.0f, 1.0f, 0.0f); // Bottom = Yellow
+    else if (normal.z > 0.9f) debug_color = glm::vec3(1.0f, 0.0f, 1.0f); // Front = Magenta
+    else if (normal.z < -0.9f) debug_color = glm::vec3(0.0f, 1.0f, 1.0f); // Back = Cyan
 
-    TextureCoordinates texCoords = atlas.getTextureCoordinates(voxelType);
-
-    // Standard UV coordinates for a quad. These will be transformed by texCoords.
-    // Order: Bottom-Left, Bottom-Right, Top-Right, Top-Left (matching face_vertices definition)
-    glm::vec2 uv_coords[4] = {
-        glm::vec2(0.0f, 0.0f), // Bottom-left
-        glm::vec2(1.0f, 0.0f), // Bottom-right
-        glm::vec2(1.0f, 1.0f), // Top-right
-        glm::vec2(0.0f, 1.0f)  // Top-left
-    };
+    // For this debug, we'll pass the color as texture coordinates and modify the fragment shader
+    // Or, more simply, modify the vertex structure to include color and use that.
+    // For now, let's assume we will modify the fragment shader to interpret vTexCoord as color.
+    // The actual UVs are not important for this specific debug.
+    // We will send the debug_color components as if they were UVs. For simplicity, just use x and y.
+    // This requires a temporary change in the fragment shader.
 
     for (int i = 0; i < 4; ++i) {
-        // Transform standard UVs to atlas UVs
-        glm::vec2 actual_uv = texCoords.uv_min + uv_coords[i] * (texCoords.uv_max - texCoords.uv_min);
-        mesh.vertices.emplace_back(voxel_pos + face_vertices[i], normal, actual_uv, light);
+        // Pass debug_color components as UVs for shader debugging
+        // This is a HACK. The fragment shader will need to be adjusted to use these as color.
+        mesh.vertices.emplace_back(voxel_pos + face_vertices[i], normal, glm::vec2(debug_color.r, debug_color.g), debug_color.b); // Store blue in light temporarily
     }
 
     mesh.indices.push_back(base_index);
@@ -136,45 +137,51 @@ namespace VoxelEngine {
             // Order: Bottom-Left, Bottom-Right, Top-Right, Top-Left (when looking at the face from outside)
             // This standard order helps with UV mapping later.
 
-            // +X face (Right)
+            // +X face (Right) - View from +X towards -X
+            // BL: (1,0,1), BR: (1,0,0), TR: (1,1,0), TL: (1,1,1)
             const glm::vec3 right_face_verts[4] = {
-                glm::vec3(1.0f, 0.0f, 0.0f), glm::vec3(1.0f, 0.0f, 1.0f),
-                glm::vec3(1.0f, 1.0f, 1.0f), glm::vec3(1.0f, 1.0f, 0.0f)
+                glm::vec3(1.0f, 0.0f, 1.0f), glm::vec3(1.0f, 0.0f, 0.0f),
+                glm::vec3(1.0f, 1.0f, 0.0f), glm::vec3(1.0f, 1.0f, 1.0f)
             };
             const glm::vec3 right_normal(1.0f, 0.0f, 0.0f);
 
-            // -X face (Left)
+            // -X face (Left) - View from -X towards +X
+            // BL: (0,0,0), BR: (0,0,1), TR: (0,1,1), TL: (0,1,0)
             const glm::vec3 left_face_verts[4] = {
-                glm::vec3(0.0f, 0.0f, 1.0f), glm::vec3(0.0f, 0.0f, 0.0f),
-                glm::vec3(0.0f, 1.0f, 0.0f), glm::vec3(0.0f, 1.0f, 1.0f)
+                glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f),
+                glm::vec3(0.0f, 1.0f, 1.0f), glm::vec3(0.0f, 1.0f, 0.0f)
             };
             const glm::vec3 left_normal(-1.0f, 0.0f, 0.0f);
 
-            // +Y face (Top)
+            // +Y face (Top) - View from +Y towards -Y
+            // BL: (0,1,1), BR: (1,1,1), TR: (1,1,0), TL: (0,1,0)
             const glm::vec3 top_face_verts[4] = {
-                glm::vec3(0.0f, 1.0f, 0.0f), glm::vec3(1.0f, 1.0f, 0.0f),
-                glm::vec3(1.0f, 1.0f, 1.0f), glm::vec3(0.0f, 1.0f, 1.0f)
+                glm::vec3(0.0f, 1.0f, 1.0f), glm::vec3(1.0f, 1.0f, 1.0f),
+                glm::vec3(1.0f, 1.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f)
             };
             const glm::vec3 top_normal(0.0f, 1.0f, 0.0f);
 
-            // -Y face (Bottom)
+            // -Y face (Bottom) - View from -Y towards +Y
+            // BL: (0,0,0), BR: (1,0,0), TR: (1,0,1), TL: (0,0,1)
             const glm::vec3 bottom_face_verts[4] = {
-                glm::vec3(0.0f, 0.0f, 1.0f), glm::vec3(1.0f, 0.0f, 1.0f),
-                glm::vec3(1.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 0.0f)
+                glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(1.0f, 0.0f, 0.0f),
+                glm::vec3(1.0f, 0.0f, 1.0f), glm::vec3(0.0f, 0.0f, 1.0f)
             };
             const glm::vec3 bottom_normal(0.0f, -1.0f, 0.0f);
 
-            // +Z face (Front)
+            // +Z face (Front) - View from +Z towards -Z
+            // BL: (0,0,1), BR: (1,0,1), TR: (1,1,1), TL: (0,1,1)
             const glm::vec3 front_face_verts[4] = {
-                glm::vec3(1.0f, 0.0f, 1.0f), glm::vec3(0.0f, 0.0f, 1.0f),
-                glm::vec3(0.0f, 1.0f, 1.0f), glm::vec3(1.0f, 1.0f, 1.0f)
+                glm::vec3(0.0f, 0.0f, 1.0f), glm::vec3(1.0f, 0.0f, 1.0f),
+                glm::vec3(1.0f, 1.0f, 1.0f), glm::vec3(0.0f, 1.0f, 1.0f)
             };
             const glm::vec3 front_normal(0.0f, 0.0f, 1.0f);
 
-            // -Z face (Back)
+            // -Z face (Back) - View from -Z towards +X
+            // BL: (1,0,0), BR: (0,0,0), TR: (0,1,0), TL: (1,1,0)
             const glm::vec3 back_face_verts[4] = {
-                glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(1.0f, 0.0f, 0.0f),
-                glm::vec3(1.0f, 1.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f)
+                glm::vec3(1.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 0.0f),
+                glm::vec3(0.0f, 1.0f, 0.0f), glm::vec3(1.0f, 1.0f, 0.0f)
             };
             const glm::vec3 back_normal(0.0f, 0.0f, -1.0f);
 
