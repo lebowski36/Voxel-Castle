@@ -86,7 +86,7 @@
             - Verification: `WorldManager` update rebuilds mesh; render shows change.
         - **Sub-Sub-Tasks for 5.1:**
             - [x] **5.1.1. `ChunkSegment`: Add `voxelMesh` member (`std::unique_ptr<VoxelEngine::Rendering::VoxelMesh>`) and `isMeshDirty` flag (`bool`).**
-            - [ ] **5.1.2. `ChunkSegment`: Implement `rebuildMesh(TextureAtlas& atlas, MeshBuilder& meshBuilder)` method (stub for now, just clear dirty flag).**
+            - [x] **5.1.2. `ChunkSegment`: Implement `rebuildMesh(TextureAtlas& atlas, MeshBuilder& meshBuilder)` method. (Note: Existing implementation already builds mesh and clears dirty flag, exceeding initial stub requirement).**
             - [ ] **5.1.3. `WorldManager`: Enhance to create `ChunkSegment`s and trigger initial mesh generation.**
                 - Action: Ensure `WorldManager` creates `ChunkSegment` instances.
                 - Action: When a new `ChunkSegment` is created and populated with initial voxel data, call its `rebuildMesh()` method.
