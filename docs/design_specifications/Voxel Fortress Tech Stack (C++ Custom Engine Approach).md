@@ -33,6 +33,11 @@ The selection of specific technologies, libraries, and architectural patterns fo
 *   **Shader Language:** GLSL (compiled to SPIR-V for Vulkan)
 *   **Windowing & Input:** SDL2 (Simple DirectMedia Layer) or GLFW
 *   **Mesh Generation:** Custom algorithms for voxel meshing.
+    *   **Implementation Details:**
+        *   **`MeshBuilder` (in `VoxelEngine::Rendering`):** A dedicated class responsible for constructing `VoxelMesh` objects from `ChunkSegment` data. It provides methods for different meshing strategies, such as:
+            *   `buildNaiveMesh()`: Generates a simple mesh where each voxel face is a distinct quad.
+            *   `buildGreedyMesh()`: Implements a greedy meshing algorithm to merge adjacent coplanar faces of the same voxel type, significantly reducing vertex count.
+        *   The `MeshBuilder` utilizes a `TextureAtlas` to correctly map UV coordinates to the voxel faces based on voxel type.
 *   **LOD System:** Custom implementation.
 
 > For a detailed breakdown of the rendering pipeline, including specific algorithms, data flows, and optimization strategies, see:
@@ -71,9 +76,15 @@ The selection of specific technologies, libraries, and architectural patterns fo
     *   **Implementation Details:**
         *   **`Voxel` (in `VoxelEngine::World`):** A struct representing a single voxel, currently holding a `uint8_t id` for its type (see `VoxelType`). Located in `engine/include/world/voxel.h`.
         *   **`VoxelType` (in `VoxelEngine::World`):** An enum class (`uint8_t` underlying type) defining basic voxel types like `AIR`, `STONE`, `DIRT`, `GRASS`, etc. Located in `engine/include/world/voxel_types.h`.
-        *   **`ChunkSegment` (in `VoxelCastle::World`):** Represents a fixed-size 3D array (currently 32x32x32) of `Voxel` objects. Manages local voxel access within its bounds. Located in `engine/include/world/chunk_segment.h` and `engine/src/world/chunk_segment.cpp`.
+        *   **`ChunkSegment` (in `VoxelCastle::World`):** Represents a fixed-size 3D array (currently 32x32x32) of `Voxel` objects. Manages local voxel access within its bounds.
+            *   Each `ChunkSegment` owns a `std::unique_ptr<VoxelEngine::Rendering::VoxelMesh>` representing its renderable geometry.
+            *   It maintains an `isMeshDirty` flag, set to `true` when its voxel data changes, indicating the mesh needs rebuilding.
+            *   The `rebuildMesh(TextureAtlas& atlas, MeshBuilder& meshBuilder)` method is responsible for invoking the `MeshBuilder` to regenerate its `VoxelMesh` using the provided `atlas`.
+            *   Located in `engine/include/world/chunk_segment.h` and `engine/src/world/chunk_segment.cpp`.
         *   **`ChunkColumn` (in `VoxelCastle::World`):** Represents a vertical stack of `ChunkSegment`s (e.g., 8 segments high, for a 256-voxel world height) at a specific XZ world coordinate. Manages its constituent segments. Located in `engine/include/world/chunk_column.h` and `engine/src/world/chunk_column.cpp`.
-        *   **`WorldManager` (in `VoxelCastle::World`):** Manages a collection of `ChunkColumn`s, typically stored in a `std::map` keyed by their XZ world coordinates. Provides global access to voxels (get/set) by translating world coordinates to the appropriate `ChunkColumn` and `ChunkSegment`. Handles lazy creation of chunks and segments as needed. Located in `engine/include/world/world_manager.h` and `engine/src/world/world_manager.cpp`.
+        *   **`WorldManager` (in `VoxelCastle::World`):** Manages a collection of `ChunkColumn`s, typically stored in a `std::map` keyed by their XZ world coordinates. Provides global access to voxels (get/set) by translating world coordinates to the appropriate `ChunkColumn` and `ChunkSegment`. Handles lazy creation of chunks and segments as needed.
+            *   The `WorldManager` is responsible for orchestrating mesh updates. Its update logic iterates through managed `ChunkSegment`s and calls `rebuildMesh()` on any segment marked as dirty.
+            *   Located in `engine/include/world/world_manager.h` and `engine/src/world/world_manager.cpp`.
     *   **Rationale:** Essential for managing the immense scale of the game world, supporting efficient modifications, and enabling fast spatial queries. The current structure provides a foundation for these goals. Future enhancements might include spatial partitioning (e.g., octrees) if performance profiling indicates a need for more advanced culling or querying capabilities beyond simple chunk management.
 *   **Streaming:** Asynchronous loading/unloading of world chunks.
 

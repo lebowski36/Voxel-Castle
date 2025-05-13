@@ -64,7 +64,7 @@ This protocol outlines how the AI agent (GitHub Copilot) operates. Adherence to 
 *Detailed sub-tasks in `/home/system-x1/Projects/Voxel Castle/development_tasks/02_core_systems/`. A main task in this section is marked `[x]` ONLY if ALL its detailed sub-tasks in the corresponding file are complete.*
 - [x] Choose and implement ECS
 - [x] Create voxel data structures
-- [ ] Build mesh generation system  
+- [x] Build mesh generation system  
 
 ### 3. Create Basic Game Structure (C++)
 *Detailed sub-tasks in `/home/system-x1/Projects/Voxel Castle/development_tasks/03_basic_game_structure/`. A main task in this section is marked `[x]` ONLY if ALL its detailed sub-tasks in the corresponding file are complete.*
