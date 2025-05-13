@@ -352,7 +352,7 @@ int main(int /*argc*/, char* /*argv*/[]) { // Suppress unused parameter warnings
     glm::mat4 model = glm::mat4(1.0f); // Model matrix for meshes (identity, as positions are world coords)
 
     auto startTime = std::chrono::steady_clock::now();
-    bool voxelChanged = false;
+    static bool manualVoxelChangeRequested = false; // Added for M key trigger
 
     // Main loop
     // --- Input State ---
@@ -387,6 +387,9 @@ int main(int /*argc*/, char* /*argv*/[]) { // Suppress unused parameter warnings
                     case SDL_SCANCODE_LSHIFT: speedMultiplier = 3.0f; break;
                     case SDL_SCANCODE_SPACE: up = true; break;
                     case SDL_SCANCODE_LCTRL: down = true; break;
+                    case SDL_SCANCODE_M: // Added M key handling
+                        manualVoxelChangeRequested = true;
+                        break;
                     default: break;
                 }
             }
@@ -427,14 +430,45 @@ int main(int /*argc*/, char* /*argv*/[]) { // Suppress unused parameter warnings
         glm::mat4 proj = camera.getProjectionMatrix();
 
         // --- Game Logic & Mesh Updates ---
-        auto currentTime = std::chrono::steady_clock::now();
-        auto elapsedTime = std::chrono::duration_cast<std::chrono::seconds>(currentTime - startTime).count();
+        if (manualVoxelChangeRequested) {
+            std::cout << "M key pressed. Inverting checkerboard pattern in segment (0,0,0)..." << std::endl;
+            VoxelCastle::World::ChunkColumn* column = worldManager.getChunkColumn(0, 0);
+            if (column) {
+                VoxelCastle::World::ChunkSegment* segment = column->getSegmentByIndex(0); // Target the first segment
+                if (segment) {
+                    for (uint8_t lsy = 0; lsy < VoxelCastle::World::ChunkSegment::CHUNK_HEIGHT; ++lsy) {
+                        for (uint8_t lsz = 0; lsz < VoxelCastle::World::ChunkSegment::CHUNK_DEPTH; ++lsz) {
+                            for (uint8_t lsx = 0; lsx < VoxelCastle::World::ChunkSegment::CHUNK_WIDTH; ++lsx) {
+                                // For segment at (0,0,0), local coords are world coords
+                                int_fast64_t worldX = static_cast<int_fast64_t>(lsx);
+                                int_fast64_t worldY = static_cast<int_fast64_t>(lsy);
+                                int_fast64_t worldZ = static_cast<int_fast64_t>(lsz);
 
-        if (!voxelChanged && elapsedTime >= 3) {
-            std::cout << "3 seconds elapsed. Changing a voxel..." << std::endl;
-            worldManager.setVoxel(0, 0, 0, {static_cast<VoxelEngine::World::VoxelType>(3)}); // Use VoxelType 3
-            voxelChanged = true;
-            std::cout << "Voxel at (0,0,0) changed. WorldManager will mark segment dirty." << std::endl;
+                                ::VoxelEngine::World::Voxel currentVoxel = worldManager.getVoxel(worldX, worldY, worldZ);
+                                ::VoxelEngine::World::VoxelType currentType = static_cast<::VoxelEngine::World::VoxelType>(currentVoxel.id); // Corrected: type_id to id
+                                ::VoxelEngine::World::VoxelType newType = currentType;
+
+                                // Invert types 1 and 2, leave others (like AIR) alone
+                                if (currentType == static_cast<::VoxelEngine::World::VoxelType>(1)) {
+                                    newType = static_cast<::VoxelEngine::World::VoxelType>(2);
+                                } else if (currentType == static_cast<::VoxelEngine::World::VoxelType>(2)) {
+                                    newType = static_cast<::VoxelEngine::World::VoxelType>(1);
+                                }
+
+                                if (newType != currentType) {
+                                    worldManager.setVoxel(worldX, worldY, worldZ, newType);
+                                }
+                            }
+                        }
+                    }
+                    std::cout << "Checkerboard inversion applied. Segment (0,0,0) marked dirty." << std::endl;
+                } else {
+                    std::cerr << "Error: Could not get segment 0 for inversion." << std::endl;
+                }
+            } else {
+                std::cerr << "Error: Could not get chunk column (0,0) for inversion." << std::endl;
+            }
+            manualVoxelChangeRequested = false; // Reset the flag
         }
 
         // Update meshes if any segments are dirty
