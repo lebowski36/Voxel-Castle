@@ -104,7 +104,8 @@
                 - [x] Action: Initial state: `WorldManager` creates and meshes a segment with a test pattern; mesh is rendered.
                 - [x] Action: Trigger: After a delay or key press, call `WorldManager::setVoxel()` to modify a voxel.
                 - [x] Action: Verification: `WorldManager`'s update logic detects the dirty segment, triggers rebuild. The subsequent render displays the updated mesh.
-    - [ ] 5.2. Consider asynchronous mesh generation to avoid stalling the main thread.
+    - [x] 5.2. Consider asynchronous mesh generation to avoid stalling the main thread.
+        - Considered: A potential approach involves a thread pool managing a queue of mesh generation tasks. Worker threads would generate mesh data (vertices/indices), which would then be queued for the main thread to upload to the GPU. This is currently optional as performance is acceptable.
     - [ ] 5.3. Profile and optimize mesh generation performance.
     - [ ] 5.4. Add Doxygen-style comments to new classes and functions.
     - [ ] 5.5. Update relevant design documents.

@@ -2,6 +2,8 @@
 #include <stdexcept> // For std::out_of_range
 #include "rendering/mesh_builder.h" // For VoxelEngine::Rendering::MeshBuilder
 #include "rendering/texture_atlas.h" // For VoxelEngine::Rendering::TextureAtlas
+#include <chrono> // For timing
+#include <iostream> // For logging time
 
 namespace VoxelCastle
 {
@@ -60,6 +62,8 @@ namespace VoxelCastle
         }
 
         void ChunkSegment::rebuildMesh(VoxelEngine::Rendering::TextureAtlas& atlas, VoxelEngine::Rendering::MeshBuilder& meshBuilder) {
+            auto startTime = std::chrono::high_resolution_clock::now();
+
             if (!mMesh) {
                 mMesh = std::make_unique<VoxelEngine::Rendering::VoxelMesh>();
             }
@@ -71,6 +75,10 @@ namespace VoxelCastle
             // For now, the assignment from the returned VoxelMesh is fine.
 
             markDirty(false); // Mesh is now up-to-date
+
+            auto endTime = std::chrono::high_resolution_clock::now();
+            auto duration = std::chrono::duration_cast<std::chrono::microseconds>(endTime - startTime);
+            std::cout << "[ChunkSegment] RebuildMesh for segment took " << duration.count() << " microseconds.\n";
         }
 
         const VoxelEngine::Rendering::VoxelMesh* ChunkSegment::getMesh() const {
