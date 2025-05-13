@@ -87,11 +87,11 @@
         - **Sub-Sub-Tasks for 5.1:**
             - [x] **5.1.1. `ChunkSegment`: Add `voxelMesh` member (`std::unique_ptr<VoxelEngine::Rendering::VoxelMesh>`) and `isMeshDirty` flag (`bool`).**
             - [x] **5.1.2. `ChunkSegment`: Implement `rebuildMesh(TextureAtlas& atlas, MeshBuilder& meshBuilder)` method. (Note: Existing implementation already builds mesh and clears dirty flag, exceeding initial stub requirement).**
-            - [ ] **5.1.3. `WorldManager`: Enhance to create `ChunkSegment`s and trigger initial mesh generation.**
-                - Action: Ensure `WorldManager` creates `ChunkSegment` instances.
-                - Action: When a new `ChunkSegment` is created and populated with initial voxel data, call its `rebuildMesh()` method.
+            - [x] **5.1.3. `WorldManager`: Enhance to create `ChunkSegment`s and ensure initial mesh generation is triggered.**
+                - Action: Ensure `WorldManager` (via `ChunkColumn`) creates `ChunkSegment` instances and populates them with initial voxel data.
+                - Action: Ensure that newly created and populated `ChunkSegment`s are marked as dirty, so that their mesh will be built during the next `updateDirtyMeshes` call.
             - [ ] **5.1.4. Rendering Loop: Fetch and render meshes from `WorldManager`.**
-                - Action: `WorldManager`: Add method like `std::vector<const VoxelMesh*> getSegmentMeshesToRender() const;`.
+                - Action: `WorldManager`: Add method like `std::vector<const VoxelMesh*> getSegmentMeshesToRender() const;` (Covered by existing `getAllSegmentMeshes()`)
                 - Action: `main.cpp`: Remove old dummy mesh rendering.
                 - Action: `main.cpp`: In render loop, call `worldManager.getSegmentMeshesToRender()` and render the returned meshes.
             - [ ] **5.1.5. `WorldManager`: Implement `setVoxel(world_x, world_y, world_z, voxel_type)` and mark segment dirty.**

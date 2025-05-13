@@ -15,6 +15,7 @@ This protocol outlines how the AI agent (GitHub Copilot) operates. Adherence to 
 ### I. Core Collaborative Workflow (The Primary Loop)
 1.  **Task Identification:** Focus on a single, open sub-task from the relevant `development_tasks/*.md` file.
     *   If a detailed sub-task file is missing for a new high-level task, create it first, outlining steps.
+    *   **If a sub-task involves multiple distinct steps or actions, break it down into clearly defined sub-sub-tasks within the `development_tasks/*.md` file before starting implementation.**
 2.  **Implementation:** Perform coding, documentation, or other actions required for the sub-task.
     *   Consult design documents in `docs/design_specifications/` for new features/major changes.
     *   Maintain small, focused files.
