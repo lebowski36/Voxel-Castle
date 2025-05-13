@@ -34,7 +34,7 @@ This task covers the implementation of a camera system and the initial steps to 
     *   [x] **3.3.3.** Implement WASD (and QE/up-down) movement, speed adjustable, no collision (flying mode).
         *   WASD = horizontal, QE or Space/Ctrl = up/down, Shift = fast.
     *   [x] **3.3.4.** Integrate camera with rendering pipeline (pass view/projection to shaders).
-    *   [ ] **3.3.5.** Handle window resizing and update camera aspect ratio.
+    *   [x] **3.3.5.** Handle window resizing and update camera aspect ratio.
     *   [ ] **3.3.6.** (Optional) Implement frustum culling.
 
 ### 3.4. Integrate Mesh Generation and Rendering

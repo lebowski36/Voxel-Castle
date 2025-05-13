@@ -32,7 +32,7 @@ bool Window::init() {
         windowTitle.c_str(),
         windowWidth,
         windowHeight,
-        SDL_WINDOW_OPENGL // Use OpenGL flag
+        SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE // Use OpenGL flag and add RESIZABLE
     );
 
     if (sdlWindow == nullptr) {
