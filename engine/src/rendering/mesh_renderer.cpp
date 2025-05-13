@@ -208,6 +208,11 @@ void MeshRenderer::draw(const glm::mat4& model, const glm::mat4& view, const glm
         std::cout << "VAO: " << vao << ", VBO: " << vbo << ", EBO: " << ebo << std::endl;
         std::cout << "Index Count: " << indexCount << std::endl;
         std::cout << "======================================\n" << std::endl;
+        
+        // Log the sampler warning summary here, only once
+        if (textureSamplerWarningLogged) {
+            std::cerr << "[MeshRenderer::draw] Summary (logged once): uTextureSampler uniform location was not found. This may indicate it is not used in the shader or an issue with shader compilation/linking." << std::endl;
+        }
         initialDebugDone = true;
     }
     
@@ -218,8 +223,8 @@ void MeshRenderer::draw(const glm::mat4& model, const glm::mat4& view, const glm
     GLint texSamplerLoc = glGetUniformLocation(shaderProgram, "uTextureSampler");
     if (texSamplerLoc == -1) {
         if (!textureSamplerWarningLogged) {
-            std::cerr << "[MeshRenderer::draw] Warning: Could not get uniform location for uTextureSampler. Location: -1" << std::endl;
-            textureSamplerWarningLogged = true;
+            std::cerr << "[MeshRenderer::draw] Warning (logged once): Could not get uniform location for uTextureSampler. Location: -1. This may indicate it is not used in the shader or an issue with shader compilation/linking." << std::endl;
+            textureSamplerWarningLogged = true; // This will trigger the summary log in the initialDebugDone block above
         }
     } else {
         glUniform1i(texSamplerLoc, 0);
@@ -305,11 +310,6 @@ void MeshRenderer::draw(const glm::mat4& model, const glm::mat4& view, const glm
 
     // Disable blending after drawing if it was enabled here
     glDisable(GL_BLEND);
-
-    // At the end of the session, provide a summary if the warning was logged
-    if (textureSamplerWarningLogged) {
-        std::cerr << "[MeshRenderer::draw] Summary: uTextureSampler uniform location was not found. This may indicate it is not used in the shader." << std::endl;
-    }
 }
 
 GLuint MeshRenderer::loadShader(const std::string& path, GLenum type) {

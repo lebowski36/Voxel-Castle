@@ -44,6 +44,9 @@ GLuint debugAtlasVAO = 0;
 GLuint debugAtlasVBO = 0;
 GLuint debugAtlasShaderProgram = 0;
 
+const int SCREEN_WIDTH = 800; // Assuming these are defined or accessible
+const int SCREEN_HEIGHT = 600;
+
 // Function to load and compile shaders (can be moved to a utility file later)
 GLuint loadShader(const std::string& path, GLenum type) {
     std::ifstream file(path);
@@ -106,15 +109,17 @@ void setupDebugAtlasQuad() {
         return;
     }
 
-    float vertices[] = {
-        // positions        // texture coords
-        -1.0f,  0.5f, 0.0f,  0.0f, 1.0f, // top left
-        -1.0f,  1.0f, 0.0f,  0.0f, 0.0f, // bottom left
-         -0.5f,  1.0f, 0.0f,  1.0f, 0.0f, // bottom right
-
-        -1.0f,  0.5f, 0.0f,  0.0f, 1.0f, // top left
-         -0.5f,  1.0f, 0.0f,  1.0f, 0.0f, // bottom right
-         -0.5f,  0.5f, 0.0f,  1.0f, 1.0f  // top right
+    const float quadSize = 256.0f;
+    float quadVertices[] = {
+        // positions    // texCoords
+        // TL
+        0.0f,      0.0f,       0.0f, 1.0f,
+        // BL
+        0.0f,      quadSize,   0.0f, 0.0f,
+        // TR
+        quadSize,  0.0f,       1.0f, 1.0f,
+        // BR
+        quadSize,  quadSize,   1.0f, 0.0f
     };
 
     glGenVertexArrays(1, &debugAtlasVAO);
@@ -123,13 +128,13 @@ void setupDebugAtlasQuad() {
     glBindVertexArray(debugAtlasVAO);
 
     glBindBuffer(GL_ARRAY_BUFFER, debugAtlasVBO);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(quadVertices), quadVertices, GL_STATIC_DRAW);
 
     // position attribute
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)0);
+    glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)0);
     glEnableVertexAttribArray(0);
     // texture coord attribute
-    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(3 * sizeof(float)));
+    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)(2 * sizeof(float)));
     glEnableVertexAttribArray(1);
 
     glBindBuffer(GL_ARRAY_BUFFER, 0);
@@ -139,20 +144,32 @@ void setupDebugAtlasQuad() {
 void drawDebugAtlasQuad(GLuint textureID) {
     if (debugAtlasShaderProgram == 0 || debugAtlasVAO == 0) return;
 
+    GLboolean depthTestEnabled = glIsEnabled(GL_DEPTH_TEST);
+    if (depthTestEnabled) {
+        glDisable(GL_DEPTH_TEST);
+    }
+
     glUseProgram(debugAtlasShaderProgram);
+
+    glm::mat4 orthoProj = glm::ortho(0.0f, static_cast<float>(SCREEN_WIDTH), static_cast<float>(SCREEN_HEIGHT), 0.0f, -1.0f, 1.0f);
+    glm::mat4 modelMatrix = glm::mat4(1.0f);
+
+    glUniformMatrix4fv(glGetUniformLocation(debugAtlasShaderProgram, "projection"), 1, GL_FALSE, &orthoProj[0][0]);
+    glUniformMatrix4fv(glGetUniformLocation(debugAtlasShaderProgram, "model"), 1, GL_FALSE, &modelMatrix[0][0]);
+
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, textureID);
-    glUniform1i(glGetUniformLocation(debugAtlasShaderProgram, "uTextureSampler"), 0);
-
-    // Disable depth testing for UI elements like this debug quad
-    glDisable(GL_DEPTH_TEST);
+    glUniform1i(glGetUniformLocation(debugAtlasShaderProgram, "screenTexture"), 0);
 
     glBindVertexArray(debugAtlasVAO);
-    glDrawArrays(GL_TRIANGLES, 0, 6);
+    glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
     glBindVertexArray(0);
+    glBindTexture(GL_TEXTURE_2D, 0);
+    glUseProgram(0);
 
-    // Re-enable depth testing if it was enabled before
-    glEnable(GL_DEPTH_TEST);
+    if (depthTestEnabled) {
+        glEnable(GL_DEPTH_TEST);
+    }
 }
 
 int main(int /*argc*/, char* /*argv*/[]) { // Suppress unused parameter warnings
@@ -175,7 +192,7 @@ int main(int /*argc*/, char* /*argv*/[]) { // Suppress unused parameter warnings
     std::cout << "--- All Tests Completed ---" << std::endl;
 
     // Use a larger window size for visibility
-    Window gameWindow("Voxel Fortress - Alpha", 1280, 720);
+    Window gameWindow("Voxel Fortress - Alpha", SCREEN_WIDTH, SCREEN_HEIGHT);
 
     if (!gameWindow.init()) {
         std::cerr << "Failed to initialize the game window!" << std::endl;
@@ -228,39 +245,32 @@ int main(int /*argc*/, char* /*argv*/[]) { // Suppress unused parameter warnings
     // Camera setup with extreme debug positioning
     // Apply model transformations to position the mesh properly
     glm::mat4 model = glm::mat4(1.0f);
-    // Scale to make the mesh more visible
     model = glm::scale(model, glm::vec3(0.5f, 0.5f, 0.5f));
-    // Translate to center in view (based on first vertex position at 32,0,0)
     model = glm::translate(model, glm::vec3(-32.0f, -1.0f, -16.0f));
     
-    // Position camera to look at the mesh
-    glm::mat4 view = glm::lookAt(
-        glm::vec3(0, 5, 15), // Position camera at a good viewing angle
-        glm::vec3(0, 0, 0),  // Look at the center of our scene
-        glm::vec3(0, 1, 0)   // Up vector
-    );
-    float aspect = static_cast<float>(gameWindow.getWidth()) / static_cast<float>(gameWindow.getHeight());
-    // Wider field of view to see more
+    glm::vec3 cameraPos = glm::vec3(48.0f, 21.0f, 46.0f);
+    glm::vec3 cameraTarget = glm::vec3(48.0f, 16.0f, 16.0f);
+    glm::vec3 cameraUp = glm::vec3(0.0f, 1.0f, 0.0f);
+    glm::mat4 view = glm::lookAt(cameraPos, cameraTarget, cameraUp);
+
+    std::cout << "Camera position adjusted to view mesh around (48,16,16)." << std::endl;
+    std::cout << "  New Camera Position: (" << cameraPos.x << ", " << cameraPos.y << ", " << cameraPos.z << ")" << std::endl;
+    std::cout << "  New Camera Target: (" << cameraTarget.x << ", " << cameraTarget.y << ", " << cameraTarget.z << ")" << std::endl;
+
+    float aspect = static_cast<float>(SCREEN_WIDTH) / static_cast<float>(SCREEN_HEIGHT);
     glm::mat4 proj = glm::perspective(glm::radians(60.0f), aspect, 0.1f, 300.0f);
     
-    // Debug: Print camera position and view matrix
-    std::cout << "Camera position adjusted for better visibility." << std::endl;
-    std::cout << "View matrix: " << glm::to_string(view) << std::endl;
-
-    // Debug camera information
     std::cout << "Camera setup:" << std::endl;
-    std::cout << "  Position: (0, 5, 15)" << std::endl;
-    std::cout << "  Looking at: (0, 0, 0)" << std::endl;
+    std::cout << "  Position: (48, 21, 46)" << std::endl;
+    std::cout << "  Looking at: (48, 16, 16)" << std::endl;
     std::cout << "  Field of view: 60 degrees" << std::endl;
 
-    // Print first few mesh vertex positions for debug
     std::cout << "First 8 mesh vertex positions:" << std::endl;
     for (size_t i = 0; i < std::min<size_t>(8, groundMesh.vertices.size()); ++i) {
         const auto& v = groundMesh.vertices[i];
         std::cout << "  [" << i << "] (" << v.position.x << ", " << v.position.y << ", " << v.position.z << ")" << std::endl;
     }
 
-    // Set clear color to dark blue - changed from magenta to help debug texture issues
     glClearColor(0.0f, 0.0f, 0.2f, 1.0f);
     std::cout << "Clear color set to dark blue (0.0, 0.0, 0.2)" << std::endl;
     
@@ -270,18 +280,14 @@ int main(int /*argc*/, char* /*argv*/[]) { // Suppress unused parameter warnings
     while (gameWindow.isRunning() || frameCount < 100) { // DEBUG: Ensure at least 100 frames
         gameWindow.handleEvents();
 
-        // ECS: Progress systems
         ecs.progress();
 
         gameWindow.update();
 
-        // Clear both color buffer and depth buffer
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         
-        // Debug every 100 frames
         if (frameCount % 100 == 0) {
             std::cout << "Frame " << frameCount << ": Rendering scene" << std::endl;
-            // Check for any OpenGL errors before drawing
             GLenum err = glGetError();
             if (err != GL_NO_ERROR) {
                 std::cerr << "OpenGL error before draw: 0x" << std::hex << err << std::dec << std::endl;
@@ -290,18 +296,15 @@ int main(int /*argc*/, char* /*argv*/[]) { // Suppress unused parameter warnings
         
         meshRenderer.draw(model, view, proj);
 
-        // Draw the debug atlas quad
-        drawDebugAtlasQuad(1); // Using hardcoded texture ID 1
+        drawDebugAtlasQuad(meshRenderer.getTextureAtlasID());
 
         gameWindow.render();
-        frameCount++; // DEBUG: Increment counter
+        frameCount++;
     }
 
-    // Cleanup debug atlas resources
     if (debugAtlasVAO != 0) glDeleteVertexArrays(1, &debugAtlasVAO);
     if (debugAtlasVBO != 0) glDeleteBuffers(1, &debugAtlasVBO);
     if (debugAtlasShaderProgram != 0) glDeleteProgram(debugAtlasShaderProgram);
 
-    // cleanUp is called by Window destructor
     return 0;
 }
