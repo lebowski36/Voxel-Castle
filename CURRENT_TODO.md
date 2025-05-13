@@ -54,11 +54,10 @@ This file tracks our immediate high-level tasks and progress. Detailed sub-tasks
 - [x] Choose and implement ECS
 - [x] Create voxel data structures
 - [ ] Build mesh generation system  
-    *Paused: Integration with WorldManager deferred while camera system is implemented.*
 
 ### 3. Create Basic Game Structure (C++)
 *Detailed sub-tasks in `/home/system-x1/Projects/Voxel Castle/development_tasks/03_basic_game_structure/`. A main task in this section is marked `[x]` ONLY if ALL its detailed sub-tasks in the corresponding file are complete.*
-- [ ] Implement camera system *(In Progress: Flying spectator camera implementation)*
+- [x] Implement camera system
 - [ ] Set up basic game loop
 - [ ] Add simple world generation
 - [ ] Implement basic lighting model
