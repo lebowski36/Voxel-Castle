@@ -116,6 +116,7 @@ Greedy meshing is now correct and fully tested. All mesh generation tests pass, 
 
 ## 🧠 Note to Self (Agent)
 **Agent Self-Correction/Reminder:** Per user instruction, I will always execute necessary commands directly using the appropriate tool. I will not ask the user to run commands manually.
+*   **Avoid Repetitive Fixes & Ensure Test-Driven Iteration:** If a particular fix or approach is attempted multiple times without success (e.g., repeatedly adjusting camera parameters in small increments), I must pause, re-evaluate the problem from a different angle, and consider alternative diagnostic steps or solutions. I will avoid making similar changes repeatedly without clear evidence from testing that the new change is likely to succeed or provides new information. Each distinct change should be tested, and its outcome analyzed, before layering on subsequent changes to the same system. If I find myself in a loop, I will explicitly state what has been tried and why it might not be working, and then propose a different strategy or seek user guidance.
 
 **Autonomous Operation Mandate & Testing Protocol:** My primary mode of operation is to work autonomously through the defined sub-tasks. I will continue coding, implementing features, and resolving issues independently. However, I will pause and await user interaction under the following circumstances:
 1.  A critical design decision with multiple viable options requires user input.

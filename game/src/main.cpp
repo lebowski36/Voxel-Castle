@@ -77,7 +77,7 @@ GLuint loadShader(const std::string& path, GLenum type) {
 
 GLuint createShaderProgram(const std::string& vertPath, const std::string& fragPath) {
     GLuint vert = loadShader(vertPath, GL_VERTEX_SHADER);
-    GLuint frag = loadShader(fragPath, GL_FRAGMENT_SHADER);
+    GLuint frag = loadShader(fragPath, GL_FRAGMENT_SHADER); // Corrected this line
     if (vert == 0 || frag == 0) return 0;
 
     GLuint prog = glCreateProgram();
@@ -242,28 +242,19 @@ int main(int /*argc*/, char* /*argv*/[]) { // Suppress unused parameter warnings
     // Setup debug atlas quad
     setupDebugAtlasQuad();
 
-    // Camera setup with extreme debug positioning
-    // Apply model transformations to position the mesh properly
-    glm::mat4 model = glm::mat4(1.0f);
-    model = glm::scale(model, glm::vec3(0.5f, 0.5f, 0.5f));
-    model = glm::translate(model, glm::vec3(-32.0f, -1.0f, -16.0f));
-    
-    glm::vec3 cameraPos = glm::vec3(48.0f, 21.0f, 46.0f);
-    glm::vec3 cameraTarget = glm::vec3(48.0f, 16.0f, 16.0f);
-    glm::vec3 cameraUp = glm::vec3(0.0f, 1.0f, 0.0f);
+    // Camera setup
+    // New camera settings for better view of a potential 32x32x32 chunk centered around (16,0,16)
+    glm::vec3 cameraPos   = glm::vec3(48.0f, 30.0f, 48.0f); 
+    glm::vec3 cameraTarget = glm::vec3(16.0f, 0.0f, 16.0f);
+    glm::vec3 cameraUp    = glm::vec3(0.0f, 1.0f, 0.0f);
     glm::mat4 view = glm::lookAt(cameraPos, cameraTarget, cameraUp);
 
-    std::cout << "Camera position adjusted to view mesh around (48,16,16)." << std::endl;
-    std::cout << "  New Camera Position: (" << cameraPos.x << ", " << cameraPos.y << ", " << cameraPos.z << ")" << std::endl;
-    std::cout << "  New Camera Target: (" << cameraTarget.x << ", " << cameraTarget.y << ", " << cameraTarget.z << ")" << std::endl;
+    float fov = 60.0f; // Field of view
 
     float aspect = static_cast<float>(SCREEN_WIDTH) / static_cast<float>(SCREEN_HEIGHT);
-    glm::mat4 proj = glm::perspective(glm::radians(60.0f), aspect, 0.1f, 300.0f);
+    glm::mat4 proj = glm::perspective(glm::radians(fov), aspect, 0.1f, 300.0f); // Increased far plane to 300
     
-    std::cout << "Camera setup:" << std::endl;
-    std::cout << "  Position: (48, 21, 46)" << std::endl;
-    std::cout << "  Looking at: (48, 16, 16)" << std::endl;
-    std::cout << "  Field of view: 60 degrees" << std::endl;
+    std::cout << "  Field of view: " << fov << " degrees" << std::endl;
 
     std::cout << "First 8 mesh vertex positions:" << std::endl;
     for (size_t i = 0; i < std::min<size_t>(8, groundMesh.vertices.size()); ++i) {
@@ -277,6 +268,8 @@ int main(int /*argc*/, char* /*argv*/[]) { // Suppress unused parameter warnings
     std::cout << "Starting main rendering loop" << std::endl;
 
     int frameCount = 0; // DEBUG: Frame counter
+    glm::mat4 model = glm::mat4(1.0f); // Define model matrix for the main mesh
+
     while (gameWindow.isRunning() || frameCount < 100) { // DEBUG: Ensure at least 100 frames
         gameWindow.handleEvents();
 

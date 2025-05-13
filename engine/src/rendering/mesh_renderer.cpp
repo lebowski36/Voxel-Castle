@@ -218,47 +218,41 @@ void MeshRenderer::draw(const glm::mat4& model, const glm::mat4& view, const glm
     
     frameCounter++;
 
-    glUseProgram(shaderProgram);
-
-    GLint texSamplerLoc = glGetUniformLocation(shaderProgram, "uTextureSampler");
-    if (texSamplerLoc == -1) {
-        if (!textureSamplerWarningLogged) {
-            std::cerr << "[MeshRenderer::draw] Warning (logged once): Could not get uniform location for uTextureSampler. Location: -1. This may indicate it is not used in the shader or an issue with shader compilation/linking." << std::endl;
-            textureSamplerWarningLogged = true; // This will trigger the summary log in the initialDebugDone block above
-        }
-    } else {
-        glUniform1i(texSamplerLoc, 0);
-    }
-
     // Use the shader program
     GLenum err;
-    glUseProgram(shaderProgram);
+    glUseProgram(shaderProgram); // This is the one we keep
     err = glGetError();
     if (err != GL_NO_ERROR) {
         std::cerr << "[MeshRenderer::draw] OpenGL error 0x" << std::hex << err << std::dec << " after glUseProgram." << std::endl;
-        return; 
+        return;
     }
 
     // Activate texture unit 0 and bind our texture
-    glActiveTexture(GL_TEXTURE0); 
+    glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, textureAtlasID);
     err = glGetError();
     if (err != GL_NO_ERROR) {
         std::cerr << "[MeshRenderer::draw] OpenGL error 0x" << std::hex << err << std::dec << " after glBindTexture. Texture ID: " << textureAtlasID << std::endl;
     }
-    
+
     // Set the sampler uniform
-    texSamplerLoc = glGetUniformLocation(shaderProgram, "uTextureSampler");
-    err = glGetError(); 
+    GLint texSamplerLoc = glGetUniformLocation(shaderProgram, "uTextureSampler");
+    err = glGetError();
     if (err != GL_NO_ERROR) {
         std::cerr << "[MeshRenderer::draw] OpenGL error 0x" << std::hex << err << std::dec << " after glGetUniformLocation for uTextureSampler." << std::endl;
     }
 
     if (texSamplerLoc != -1) {
-        glUniform1i(texSamplerLoc, 0); 
+        glUniform1i(texSamplerLoc, 0);
         err = glGetError();
         if (err != GL_NO_ERROR) {
             std::cerr << "[MeshRenderer::draw] OpenGL error 0x" << std::hex << err << std::dec << " after glUniform1i for uTextureSampler." << std::endl;
+        }
+    } else {
+        // If uTextureSampler is not found here, texturing will fail.
+        if (!textureSamplerWarningLogged) { // Use the existing static flag to log only once.
+            std::cerr << "[MeshRenderer::draw] Warning (logged once): uTextureSampler uniform not found after glUseProgram. Shader Program ID: " << shaderProgram << ". Texture rendering will likely fail." << std::endl;
+            textureSamplerWarningLogged = true; // This ensures the summary in initialDebugDone also prints if it hasn't already.
         }
     }
 

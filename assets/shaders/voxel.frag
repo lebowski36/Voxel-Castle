@@ -1,23 +1,18 @@
 #version 330 core
 out vec4 FragColor;
 
-in vec2 TexCoords;
-in float Light;
+in vec2 vTexCoord; // Changed from TexCoords to match vertex shader
 
-uniform sampler2D uTextureSampler;
+uniform sampler2D uTextureSampler; // Changed from sampler2DArray
 
-void main() {
-    vec4 texColor = texture(uTextureSampler, TexCoords);
-    
-    // Optional: Magenta for out-of-bounds UVs (helps catch UV issues)
-    if (TexCoords.x < 0.0 || TexCoords.x > 1.0 || TexCoords.y < 0.0 || TexCoords.y > 1.0) {
-        FragColor = vec4(1.0, 0.0, 1.0, 1.0); // Magenta
-        return;
-    }
+void main()
+{
+    // Visualize texture coordinates
+    FragColor = vec4(vTexCoord.x, vTexCoord.y, 0.0, 1.0); 
 
-    if (texColor.a < 0.1) {
-        discard; // Discard transparent fragments
-    }
+    // Original texturing code:
+    // FragColor = texture(uTextureSampler, vTexCoord); // Sample as a 2D texture
 
-    FragColor = texColor * Light;
+    // if (FragColor.a < 0.1)
+    //     discard; // Discard transparent fragments
 }
