@@ -17,6 +17,8 @@ add_library(VoxelEngine STATIC
     src/world/test_mesh_generation.cpp # Added Mesh Generation test source
     src/rendering/mesh_builder.cpp # Added MeshBuilder source
     src/rendering/mesh_renderer.cpp # Added MeshRenderer source
+    src/rendering/render_utils.cpp # Added RenderUtils source
+    src/rendering/debug_utils.cpp # Added DebugUtils source
     src/external/stb_image_impl.cpp # Added stb_image implementation
     # Add GLAD source file if compiling it directly
     # Or link against a pre-built GLAD library later
