@@ -259,9 +259,60 @@ void Game::run() {
 }
 
 void Game::shutdown() {
-    std::cout << "Game::shutdown() called (stub)" << std::endl;
-    // Actual cleanup logic will be migrated here.
-    isRunning_ = false; // Mark as not running
+    std::cout << "Game::shutdown() - Initiating shutdown sequence..." << std::endl;
+
+    // 1. Cleanup Debug Utilities
+    std::cout << "  Shutting down Debug Utilities..." << std::endl;
+    VoxelEngine::Rendering::Debug::cleanupDebugQuads();
+    std::cout << "  Debug Utilities shutdown complete." << std::endl;
+
+    // 2. Cleanup Game Window
+    // This typically involves destroying the SDL window and quitting SDL subsystems
+    // if this was the last window.
+    if (gameWindow_) {
+        std::cout << "  Shutting down Game Window..." << std::endl;
+        gameWindow_->cleanUp(); // This should handle SDL_DestroyWindow and potentially SDL_Quit
+        gameWindow_.reset(); // Release the unique_ptr
+        std::cout << "  Game Window shutdown complete." << std::endl;
+    } else {
+        std::cout << "  Game Window was already null." << std::endl;
+    }
+
+    // 3. Release other resources managed by unique_ptr.
+    // Their destructors will be called automatically when the Game object is destroyed,
+    // but explicit reset() can be used for controlled shutdown order or logging.
+    std::cout << "  Releasing rendering resources..." << std::endl;
+    if (meshRenderer_) {
+        meshRenderer_.reset();
+        std::cout << "    MeshRenderer released." << std::endl;
+    }
+    if (meshBuilder_) {
+        meshBuilder_.reset();
+        std::cout << "    MeshBuilder released." << std::endl;
+    }
+    if (textureAtlas_) {
+        textureAtlas_.reset();
+        std::cout << "    TextureAtlas released." << std::endl;
+    }
+    
+    std::cout << "  Releasing world and ECS..." << std::endl;
+    if (worldManager_) {
+        worldManager_.reset();
+        std::cout << "    WorldManager released." << std::endl;
+    }
+    if (ecs_) {
+        ecs_.reset(); // Flecs world destructor will clean up entities, components, systems.
+        std::cout << "    ECS world released." << std::endl;
+    }
+
+    if (camera_) {
+        camera_.reset();
+        std::cout << "    Camera released." << std::endl;
+    }
+
+    // 4. Mark as not running
+    isRunning_ = false;
+    std::cout << "Game shutdown sequence complete. isRunning_ = false." << std::endl;
 }
 
 void Game::processInput() {

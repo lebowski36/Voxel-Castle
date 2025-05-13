@@ -42,6 +42,7 @@ namespace VoxelEngine {
         struct VoxelMesh {
             std::vector<Vertex> vertices;       ///< List of vertices in the mesh.
             std::vector<uint32_t> indices;      ///< List of indices defining triangles (e.g., for GL_TRIANGLES).
+            bool initialized_ = false;          ///< True if the mesh has been initialized with data.
 
             /**
              * @brief Clears all vertex and index data from the mesh.
@@ -50,6 +51,7 @@ namespace VoxelEngine {
             void clear() {
                 vertices.clear();
                 indices.clear();
+                initialized_ = false;
             }
 
             /**
@@ -60,6 +62,22 @@ namespace VoxelEngine {
              */
             bool isEmpty() const {
                 return vertices.empty();
+            }
+
+            /**
+             * @brief Checks if the mesh has been initialized.
+             * @return True if the mesh has been initialized, false otherwise.
+             */
+            bool isInitialized() const {
+                return initialized_;
+            }
+
+            /**
+             * @brief Marks the mesh as initialized.
+             * Typically called after vertices and indices are populated.
+             */
+            void setInitialized(bool initialized) {
+                initialized_ = initialized;
             }
 
             /**
