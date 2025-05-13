@@ -1,6 +1,7 @@
 #include "world/world_manager.h"
 #include "world/chunk_segment.h" // For SEGMENT_WIDTH, SEGMENT_DEPTH, SEGMENT_HEIGHT and ChunkSegment class
 #include "world/chunk_column.h"  // For ChunkColumn class and CHUNKS_PER_COLUMN
+#include "world/world_generator.h"  // For procedural world generation
 #include "rendering/texture_atlas.h" // For VoxelEngine::Rendering::TextureAtlas
 #include "rendering/mesh_builder.h"  // For VoxelEngine::Rendering::MeshBuilder
 #include "rendering/voxel_mesh.h"    // For VoxelEngine::Rendering::VoxelMesh
@@ -75,38 +76,17 @@ ChunkColumn* WorldManager::getOrCreateChunkColumn(int_fast64_t worldX, int_fast6
         // Column doesn't exist, create it
         auto newColumnUniquePtr = std::make_unique<ChunkColumn>(coord.x, coord.z);
         column = newColumnUniquePtr.get(); // Get raw pointer before moving
-        
-        // Initialize segments with a checkerboard pattern
-        // The ChunkColumn constructor now pre-allocates segments.
+
+        // Procedural world generation for each segment
         for (uint8_t i = 0; i < VoxelCastle::World::ChunkColumn::CHUNKS_PER_COLUMN; ++i) {
             VoxelCastle::World::ChunkSegment* segment = column->getSegmentByIndex(i);
             if (segment) {
-                // Only fill the first segment (i=0) with checkerboard for testing, others air.
-                if (i == 0) { 
-                    for (uint8_t sy = 0; sy < VoxelCastle::World::ChunkSegment::CHUNK_HEIGHT; ++sy) {
-                        for (uint8_t sz = 0; sz < VoxelCastle::World::ChunkSegment::CHUNK_DEPTH; ++sz) {
-                            for (uint8_t sx = 0; sx < VoxelCastle::World::ChunkSegment::CHUNK_WIDTH; ++sx) {
-                                ::VoxelEngine::World::VoxelType voxelType = ((sx + sy + sz) % 2 == 0) 
-                                    ? static_cast<VoxelEngine::World::VoxelType>(1) // e.g., STONE
-                                    : static_cast<VoxelEngine::World::VoxelType>(2); // e.g., DIRT
-                                segment->setVoxel(sx, sy, sz, ::VoxelEngine::World::Voxel{static_cast<uint8_t>(voxelType)});
-                            }
-                        }
-                    }
-                } else {
-                    // Fill other segments with AIR or leave them as default (which should be AIR)
-                    for (uint8_t sy = 0; sy < VoxelCastle::World::ChunkSegment::CHUNK_HEIGHT; ++sy) {
-                        for (uint8_t sz = 0; sz < VoxelCastle::World::ChunkSegment::CHUNK_DEPTH; ++sz) {
-                            for (uint8_t sx = 0; sx < VoxelCastle::World::ChunkSegment::CHUNK_WIDTH; ++sx) {
-                                segment->setVoxel(sx, sy, sz, ::VoxelEngine::World::Voxel{static_cast<uint8_t>(VoxelEngine::World::VoxelType::AIR)});
-                            }
-                        }
-                    }
-                }
+                // Pass world coordinates for this segment
+                VoxelCastle::World::WorldGenerator::generateChunkSegment(*segment, coord.x, i, coord.z);
                 // setVoxel marks the segment dirty, so it will be meshed on the first updateDirtyMeshes call
             }
         }
-        
+
         m_chunkColumns[coord] = std::move(newColumnUniquePtr);
         // Insert into Quadtree for spatial queries
         if (m_chunkQuadtree) {

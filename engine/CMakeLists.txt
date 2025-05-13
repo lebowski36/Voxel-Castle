@@ -11,6 +11,7 @@ add_library(VoxelEngine STATIC
     src/world/chunk_segment.cpp # Added ChunkSegment source
     src/world/chunk_column.cpp # Added ChunkColumn source
     src/world/world_manager.cpp # Added WorldManager source
+    src/world/world_generator.cpp # Added WorldGenerator source
     src/world/quadtree.cpp      # Added Quadtree source
     src/world/test_quadtree.cpp # Added Quadtree test source
     src/world/test_voxel_system.cpp # Added Voxel System test source

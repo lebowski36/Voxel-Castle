@@ -13,10 +13,25 @@ This task focuses on implementing a basic procedural world generation system to 
 *   Generate initial chunk structures based on this noise.
 
 ## 3. Sub-Tasks
-*   [ ] **3.1.** Choose and integrate a noise library or implement a simple noise function.
-*   [ ] **3.2.** Design how noise values map to voxel types (e.g., heightmap-based generation).
-*   [ ] **3.3.** Implement logic in `WorldManager` or a dedicated `WorldGenerator` to fill `ChunkSegment`s with procedurally generated voxels.
-*   [ ] **3.4.** Test generation by creating a few chunks and inspecting their voxel data (or visually, once rendering is available).
+### 3.1. Choose and Integrate Noise Function
+  - [ ] 3.1.1. Research and select a simple noise algorithm (e.g., Perlin, Simplex, Value noise) or a lightweight C++ noise library.
+  - [ ] 3.1.2. If using a library, add it to the project and CMake. If implementing, create a utility header/source (e.g., `engine/include/util/noise.h`).
+  - [ ] 3.1.3. Implement or integrate a function: `float getNoise(float x, float y, float z)`.
+
+### 3.2. Map Noise to Voxel Types
+  - [ ] 3.2.1. Decide on a world generation scheme (e.g., 2D heightmap, 3D density field, caves, etc.).
+  - [ ] 3.2.2. Define thresholds for voxel types (e.g., air, dirt, stone, grass) based on noise value and height.
+  - [ ] 3.2.3. Document the mapping logic in this file for future reference.
+
+### 3.3. Implement World Generation Logic
+  - [ ] 3.3.1. Add a `WorldGenerator` class or static methods to `WorldManager` (document location/decision).
+  - [ ] 3.3.2. Implement a method to fill a `ChunkSegment` with voxels using the noise function and mapping logic.
+  - [ ] 3.3.3. Ensure world generation is triggered for new chunks/segments (e.g., in `WorldManager::getOrCreateChunkColumn`).
+
+### 3.4. Testing and Visualization
+  - [ ] 3.4.1. Write a test to generate a single chunk and print a 2D slice of voxel types to the console.
+  - [ ] 3.4.2. Visually inspect generated terrain in-game (after mesh build and render).
+  - [ ] 3.4.3. Adjust noise parameters and mapping as needed for more interesting terrain.
 
 ## 4. Notes
 *   The sub-tasks from `CURRENT_TODO.md` for world generation are to be detailed here.
