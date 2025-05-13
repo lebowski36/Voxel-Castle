@@ -76,18 +76,33 @@
 ### 5. Integration and Refinement
     - [ ] 5.1. Integrate the mesh generation system with the `WorldManager` or `ChunkColumn` to trigger mesh updates when chunks change.
         - **Goal:** Shift mesh generation and update responsibility from manual calls in `main.cpp` to the `WorldManager`.
-        - **Architectural Changes:**
-            - `ChunkSegment` should manage its own `VoxelMesh` (or a reference/pointer to it) and a "dirty" flag indicating if its mesh needs rebuilding.
-            - `ChunkSegment` should have a method like `rebuildMesh(TextureAtlas& atlas, MeshBuilder& meshBuilder)` that regenerates its mesh based on its current voxel data. (Passing `MeshBuilder` as a parameter is preferred).
-            - `WorldManager` will be responsible for:
-                - Holding `ChunkColumn`s (which in turn hold `ChunkSegment`s).
-                - Initializing `ChunkSegment`s with voxel data (e.g., the current checkerboard pattern for initial testing).
-                - Calling `rebuildMesh()` on `ChunkSegment`s when they are first created or when their voxel data changes (marked as dirty).
-                - Providing access to the generated meshes for rendering.
-        - **Dynamic Update Testing Strategy (Option B):**
-            - **Initial State:** `WorldManager` creates and meshes a `ChunkSegment` with the existing checkerboard pattern. This mesh is rendered.
-            - **Delayed Trigger:** Approximately 3 seconds after the initial render, a mechanism (e.g., a new `WorldManager::setVoxelAt(worldX, worldY, worldZ, voxelType)` method called from `main.cpp` for testing) will modify a voxel in a `ChunkSegment`. This modification should mark the segment as "dirty".
-            - **Verification:** The `WorldManager`'s update logic should detect the dirty segment and trigger a mesh rebuild. The subsequent render should display the updated mesh, visually confirming that changes to voxel data dynamically update the rendered geometry after the delay.
+        - **Architectural Changes (Summary - details in sub-sub-tasks):**
+            - `ChunkSegment` manages its own `VoxelMesh` and dirty flag.
+            - `ChunkSegment` has `rebuildMesh()` method.
+            - `WorldManager` handles `ChunkSegment` creation, initial meshing, calling `rebuildMesh()` on dirty segments, and providing meshes for rendering.
+        - **Dynamic Update Testing Strategy (Option B - Implemented through sub-sub-tasks):**
+            - Initial state: `WorldManager` creates and meshes a `ChunkSegment`; mesh is rendered.
+            - Delayed Trigger: Modify a voxel via `WorldManager::setVoxelAt()`, marking segment dirty.
+            - Verification: `WorldManager` update rebuilds mesh; render shows change.
+        - **Sub-Sub-Tasks for 5.1:**
+            - [x] **5.1.1. `ChunkSegment`: Add `voxelMesh` member (`std::unique_ptr<VoxelEngine::Rendering::VoxelMesh>`) and `isMeshDirty` flag (`bool`).**
+            - [ ] **5.1.2. `ChunkSegment`: Implement `rebuildMesh(TextureAtlas& atlas, MeshBuilder& meshBuilder)` method (stub for now, just clear dirty flag).**
+            - [ ] **5.1.3. `WorldManager`: Enhance to create `ChunkSegment`s and trigger initial mesh generation.**
+                - Action: Ensure `WorldManager` creates `ChunkSegment` instances.
+                - Action: When a new `ChunkSegment` is created and populated with initial voxel data, call its `rebuildMesh()` method.
+            - [ ] **5.1.4. Rendering Loop: Fetch and render meshes from `WorldManager`.**
+                - Action: `WorldManager`: Add method like `std::vector<const VoxelMesh*> getSegmentMeshesToRender() const;`.
+                - Action: `main.cpp`: Remove old dummy mesh rendering.
+                - Action: `main.cpp`: In render loop, call `worldManager.getSegmentMeshesToRender()` and render the returned meshes.
+            - [ ] **5.1.5. `WorldManager`: Implement `setVoxel(world_x, world_y, world_z, voxel_type)` and mark segment dirty.**
+                - Action: Create `void setVoxel(int world_x, int world_y, int world_z, VoxelType voxel_type);` in `WorldManager`.
+                - Action: Implementation: Convert world coordinates to segment/local coordinates, modify the segment's voxel data, and set `isMeshDirty = true;` for that segment.
+            - [ ] **5.1.6. `WorldManager`: Implement update logic to rebuild dirty meshes.**
+                - Action: In `WorldManager`'s main update method (called every frame): Iterate through managed `ChunkSegment`s. If a segment's `isMeshDirty` is `true`, call its `rebuildMesh()` method.
+            - [ ] **5.1.7. Testing: Verify dynamic mesh updates.**
+                - Action: Initial state: `WorldManager` creates and meshes a segment with a test pattern; mesh is rendered.
+                - Action: Trigger: After a delay or key press, call `WorldManager::setVoxel()` to modify a voxel.
+                - Action: Verification: `WorldManager`'s update logic detects the dirty segment, triggers rebuild. The subsequent render displays the updated mesh.
     - [ ] 5.2. Consider asynchronous mesh generation to avoid stalling the main thread.
     - [ ] 5.3. Profile and optimize mesh generation performance.
     - [ ] 5.4. Add Doxygen-style comments to new classes and functions.

@@ -26,9 +26,10 @@ This protocol outlines how the AI agent (GitHub Copilot) operates. Adherence to 
     *   Pause and explicitly await user confirmation of build/test results (success, failure, observations).
     *   **CRUCIAL DECISIONS:** Discuss and confirm ALL crucial decisions (e.g., library choices, major architectural changes), unrecoverable errors, or blocking questions with the user BEFORE proceeding.
     *   If command output is incomplete or unclear, await user clarification before proceeding.
+    *   **TASK COMPLETION CONFIRMATION: The agent MUST NOT mark any task or sub-task as complete in ANY `.md` file (including `development_tasks` files or `CURRENT_TODO.md`) without first proposing the completion to the user and receiving an explicit affirmative response (e.g., "yes", "okay", "confirmed"). The agent should state what it believes is complete and ask "Is it okay to mark this as complete?".**
 5.  **Task & Documentation Update (Post-User Confirmation):**
-    *   Use `insert_edit_into_file` to mark the sub-task as complete in the `development_tasks/*.md` file.
-    *   If all sub-tasks for a high-level task are done, propose updating this `CURRENT_TODO.md` to mark the high-level task complete.
+    *   **Only after explicit user confirmation (see point 4 above),** use `insert_edit_into_file` to mark the sub-task as complete in the `development_tasks/*.md` file.
+    *   If all sub-tasks for a high-level task are done, propose updating this `CURRENT_TODO.md` to mark the high-level task complete (again, requiring explicit user confirmation).
     *   Document findings, solutions, and design decisions in relevant files (task files, `org/` docs).
 6.  **Progression:** Proceed to the next open sub-task. If any part of the process or a specific task is unclear, ask for clarification.
 
