@@ -88,6 +88,7 @@ namespace VoxelCastle
             // For now, let's use Greedy Meshing as it's the more advanced one we have.
             // If issues arise, we can switch to buildNaiveMesh for simpler debugging.
             *mMesh = meshBuilder.buildGreedyMesh(*this, atlas);
+            mMesh->setInitialized(true); // Mark mesh as initialized for rendering
             // Potentially, MeshBuilder methods could take a VoxelMesh& to fill directly
             // instead of returning by value, to avoid a copy if VoxelMesh is large.
             // For now, the assignment from the returned VoxelMesh is fine.

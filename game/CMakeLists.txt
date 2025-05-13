@@ -5,6 +5,7 @@ add_executable(VoxelFortressGame
     # List all game source files here
     src/main.cpp
     src/SpectatorCamera.cpp
+    src/core/game.cpp # Added Game class implementation
     # Example:
     # src/gameplay/player.cpp
     # ...

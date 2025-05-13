@@ -23,13 +23,13 @@ This task involves implementing the fundamental game loop, which will drive game
         *   [x] Variable timestep with delta time for rendering and general updates.
         *   [ ] Consider if a fixed timestep loop for specific logic (e.g., physics, some game rules) is needed now or can be deferred. If needed now, outline its integration (e.g., accumulator pattern).
 
-*   [ ] **3.2. Implement Core Timing Mechanism (Delta Time)** (This will be integrated into `Game::run()`)
+*   [x] **3.2. Implement Core Timing Mechanism (Delta Time)** (This will be integrated into `Game::run()`)
     *   [ ] 3.2.1. Add variables to store `lastFrameTime` and `currentFrameTime` (e.g., using `std::chrono::steady_clock::time_point`).
     *   [ ] 3.2.2. In each iteration of the game loop, calculate `deltaTime = currentFrameTime - lastFrameTime` (e.g., using `std::chrono::duration`).
     *   [ ] 3.2.3. Update `lastFrameTime = currentFrameTime` at the end of the loop or beginning of the next.
     *   [ ] 3.2.4. Ensure time units are consistent (e.g., seconds as a float).
 
-*   [ ] **3.3. Create `Game` Class and Migrate Logic from `main.cpp`**
+*   [x] **3.3. Create `Game` Class and Migrate Logic from `main.cpp`**
     *   [ ] 3.3.1. **Define `Game` Class Skeleton**
         *   [x] 3.3.1.1. Create `game/include/core/game.h` with the `Game` class structure:
             *   Include necessary headers (forward declare where possible).
@@ -83,7 +83,7 @@ This task involves implementing the fundamental game loop, which will drive game
         *   [ ] 3.3.7.2. Call `gameWindow_->cleanUp()`.
         *   [ ] 3.3.7.3. Other cleanup if necessary (most resources managed by `std::unique_ptr` will auto-cleanup).
 
-*   [ ] **3.4. Integrate `Game` Class into `main.cpp`**
+*   [x] **3.4. Integrate `Game` Class into `main.cpp`**
     *   [ ] 3.4.1. Modify `main.cpp` to include `core/game.h`.
     *   [ ] 3.4.2. In `main()`, remove all migrated initialization, game loop, and cleanup logic.
     *   [ ] 3.4.3. In `main()`, create an instance of the `Game` class: `Game game;`.
@@ -100,7 +100,7 @@ This task involves implementing the fundamental game loop, which will drive game
         *   Decrement `accumulator -= FIXED_TIMESTEP`.
     *   [ ] 3.5.4. Create `Game::fixedUpdate(float fixedDeltaTime)` method and identify any current logic that should move to it.
 
-*   [ ] **3.6. Testing and Verification**
+*   [x] **3.6. Testing and Verification**
     *   [ ] 3.6.1. Build the project successfully.
     *   [ ] 3.6.2. Verify that the application still runs, events are processed, camera works, and rendering occurs as before.
     *   [ ] 3.6.3. Test that camera movement speed is now consistent regardless of frame rate fluctuations (due to `deltaTime` usage).
