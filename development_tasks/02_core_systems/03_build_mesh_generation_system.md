@@ -108,7 +108,7 @@
         - Considered: A potential approach involves a thread pool managing a queue of mesh generation tasks. Worker threads would generate mesh data (vertices/indices), which would then be queued for the main thread to upload to the GPU. This is currently optional as performance is acceptable.
     - [x] 5.3. Profile and optimize mesh generation performance.
         - Profiled: Initial profiling with `std::chrono` shows `ChunkSegment::rebuildMesh` (using `buildGreedyMesh`) takes approximately 5.7ms to 7.5ms per segment on the test machine. This indicates it could be a bottleneck if many chunks update simultaneously. Specific optimization work is deferred and can be addressed under the general "Performance Profiling and Optimization" task or the optional asynchronous meshing task.
-    - [ ] 5.4. Add Doxygen-style comments to new classes and functions.
+    - [x] 5.4. Add Doxygen-style comments to new classes and functions.
     - [ ] 5.5. Update relevant design documents.
 
 ---
