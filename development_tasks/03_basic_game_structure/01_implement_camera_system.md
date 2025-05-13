@@ -24,13 +24,15 @@ This task covers the implementation of a camera system and the initial steps to 
     *   [ ] **3.2.1.** Create a simple vertex shader and fragment shader for colored or basic lit rendering.
     *   [ ] **3.2.2.** Load and compile shaders at startup.
 
-### 3.3. Camera Implementation
-    *   [ ] **3.3.1.** Create perspective/orthographic camera class/struct.
-        *   Manage view and projection matrices.
-    *   [ ] **3.3.2.** Set up a basic camera/view matrix (static or simple orbit for now).
-    *   [ ] **3.3.3.** Add camera controls (e.g., mouse look, WASD movement).
-    *   [ ] **3.3.4.** Handle window resizing and update camera aspect ratio.
-    *   [ ] **3.3.5.** (Optional) Implement frustum culling.
+### 3.3. Camera Implementation (Flying Spectator Camera)
+    *   [ ] **3.3.1.** Create a `SpectatorCamera` class/struct:
+        *   Manages position, orientation (yaw, pitch), and view/projection matrices.
+        *   Supports perspective projection.
+    *   [ ] **3.3.2.** Implement mouse look for free rotation (yaw/pitch, clamp pitch).
+    *   [ ] **3.3.3.** Implement WASD (and QE/up-down) movement, speed adjustable, no collision (flying mode).
+    *   [ ] **3.3.4.** Integrate camera with rendering pipeline (pass view/projection to shaders).
+    *   [ ] **3.3.5.** Handle window resizing and update camera aspect ratio.
+    *   [ ] **3.3.6.** (Optional) Implement frustum culling.
 
 ### 3.4. Integrate Mesh Generation and Rendering
     *   [ ] **3.4.1.** In the main loop (or a test setup), generate a test chunk and build its mesh (e.g., using the greedy meshing system).

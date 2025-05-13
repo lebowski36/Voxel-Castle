@@ -48,15 +48,17 @@ This file tracks our immediate high-level tasks and progress. Detailed sub-tasks
 - [x] Set up rendering API
 - [x] Select/Implement C++ Math Library
 
+
 ### 2. Implement Core Systems (C++)
 *Detailed sub-tasks in `/home/system-x1/Projects/Voxel Castle/development_tasks/02_core_systems/`. A main task in this section is marked `[x]` ONLY if ALL its detailed sub-tasks in the corresponding file are complete.*
 - [x] Choose and implement ECS
 - [x] Create voxel data structures
-- [ ] Build mesh generation system
+- [ ] Build mesh generation system  
+    *Paused: Integration with WorldManager deferred while camera system is implemented.*
 
 ### 3. Create Basic Game Structure (C++)
 *Detailed sub-tasks in `/home/system-x1/Projects/Voxel Castle/development_tasks/03_basic_game_structure/`. A main task in this section is marked `[x]` ONLY if ALL its detailed sub-tasks in the corresponding file are complete.*
-- [ ] Implement camera system
+- [ ] Implement camera system *(In Progress: Flying spectator camera implementation)*
 - [ ] Set up basic game loop
 - [ ] Add simple world generation
 - [ ] Implement basic lighting model
@@ -73,23 +75,18 @@ This file tracks our immediate high-level tasks and progress. Detailed sub-tasks
 - [ ] Implement Save/Load System
 - [ ] Performance Profiling and Optimization
 
+
 ## 📝 Near-Term Priority Tasks
 *This section should be updated regularly with the most immediate goals, typically pointing to the current high-level task from the list above.*
 
-### ✅ Greedy Meshing Debug & Verification (May 11, 2025)
+### 🚧 Implement Flying Spectator Camera (May 13, 2025)
 
-- [x] **Analyzed test failures** for `buildGreedyMesh` in `game/src/main.cpp` and implementation in `engine/src/rendering/mesh_builder.cpp`.
-- [x] **Identified** that only one face direction per axis was being generated (classic greedy meshing bug).
-- [x] **Updated implementation** to sweep both positive and negative face directions for each axis.
-- [x] **Adjusted mask and face-detection logic** to ensure all exposed faces are generated.
-- [x] **Cleaned up and clarified** the greedy meshing loop for maintainability.
-- [x] **Built the project** and ran all mesh generation tests.
-- [x] **Confirmed all greedy meshing tests now PASS** (single block, lines, planes, cubes).
-- [x] **Verified mesh vertex and index counts** match expected values for all test cases.
-- [x] **Confirmed no regressions** in naive meshing or voxel system tests.
+- [ ] **Design and implement a `SpectatorCamera` class/struct** for free-flying camera movement and mouse look.
+- [ ] **Integrate camera with rendering pipeline** (view/projection matrices to shaders).
+- [ ] **Test camera controls and verify mesh rendering responds to camera movement.**
 
 **Summary:**
-Greedy meshing is now correct and fully tested. All mesh generation tests pass, and the implementation is robust for all basic voxel shapes. Documentation and task tracking have been updated accordingly.
+Paused mesh generation system integration to focus on implementing a reusable flying spectator camera. This will enable flexible navigation and testing of voxel worlds. Once the camera system is complete and tested, we will resume mesh system integration and chunk update logic.
 
 ## 📊 Progress Tracking (C++ Phase)
 *This section will track progress for the C++ engine development at a high level.*

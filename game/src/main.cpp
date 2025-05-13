@@ -49,8 +49,8 @@ GLuint singleTileDebugVAO = 0;
 GLuint singleTileDebugVBO = 0;
 // Uses the same debugAtlasShaderProgram
 
-const int SCREEN_WIDTH = 800; // Assuming these are defined or accessible
-const int SCREEN_HEIGHT = 600;
+const int SCREEN_WIDTH = 2400; // 3x original width
+const int SCREEN_HEIGHT = 1800; // 3x original height
 
 // Function to load and compile shaders (can be moved to a utility file later)
 GLuint loadShader(const std::string& path, GLenum type) {
