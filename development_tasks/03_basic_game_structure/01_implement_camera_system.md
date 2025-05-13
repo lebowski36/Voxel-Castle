@@ -18,11 +18,11 @@ This task covers the implementation of a camera system and the initial steps to 
 
 ### 3.1. Prepare for Rendering
     *   [x] **3.1.1.** Define a simple `MeshRenderer` class or functions to upload mesh data (vertices, indices) to OpenGL buffers (VBO, VAO, EBO).
-    *   [ ] **3.1.2.** Ensure the mesh vertex structure matches the shader input (position, normal, UV if needed).
+    *   [x] **3.1.2.** Ensure the mesh vertex structure matches the shader input (position, normal, UV if needed).
 
 ### 3.2. Basic Shaders
-    *   [ ] **3.2.1.** Create a simple vertex shader and fragment shader for colored or basic lit rendering.
-    *   [ ] **3.2.2.** Load and compile shaders at startup.
+    *   [x] **3.2.1.** Create a simple vertex shader and fragment shader for colored or basic lit rendering.
+    *   [x] **3.2.2.** Load and compile shaders at startup.
 
 ### 3.3. Camera Implementation (Flying Spectator Camera)
     *   [x] **3.3.1.** Create a `SpectatorCamera` class/struct:
