@@ -17,7 +17,7 @@ This task covers the implementation of a camera system and the initial steps to 
 ## 3. Sub-Tasks
 
 ### 3.1. Prepare for Rendering
-    *   [ ] **3.1.1.** Define a simple `MeshRenderer` class or functions to upload mesh data (vertices, indices) to OpenGL buffers (VBO, VAO, EBO).
+    *   [x] **3.1.1.** Define a simple `MeshRenderer` class or functions to upload mesh data (vertices, indices) to OpenGL buffers (VBO, VAO, EBO).
     *   [ ] **3.1.2.** Ensure the mesh vertex structure matches the shader input (position, normal, UV if needed).
 
 ### 3.2. Basic Shaders
