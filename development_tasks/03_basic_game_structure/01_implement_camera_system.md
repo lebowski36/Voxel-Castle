@@ -25,11 +25,14 @@ This task covers the implementation of a camera system and the initial steps to 
     *   [ ] **3.2.2.** Load and compile shaders at startup.
 
 ### 3.3. Camera Implementation (Flying Spectator Camera)
-    *   [ ] **3.3.1.** Create a `SpectatorCamera` class/struct:
+    *   [x] **3.3.1.** Create a `SpectatorCamera` class/struct:
         *   Manages position, orientation (yaw, pitch), and view/projection matrices.
         *   Supports perspective projection.
-    *   [ ] **3.3.2.** Implement mouse look for free rotation (yaw/pitch, clamp pitch).
-    *   [ ] **3.3.3.** Implement WASD (and QE/up-down) movement, speed adjustable, no collision (flying mode).
+    *   [x] **3.3.2.** Implement mouse look for free rotation (yaw/pitch, clamp pitch).
+        *   Mouse is captured and hidden while focused; Escape releases/captures mouse.
+        *   Standard FPS Y (up = look up).
+    *   [x] **3.3.3.** Implement WASD (and QE/up-down) movement, speed adjustable, no collision (flying mode).
+        *   WASD = horizontal, QE or Space/Ctrl = up/down, Shift = fast.
     *   [ ] **3.3.4.** Integrate camera with rendering pipeline (pass view/projection to shaders).
     *   [ ] **3.3.5.** Handle window resizing and update camera aspect ratio.
     *   [ ] **3.3.6.** (Optional) Implement frustum culling.

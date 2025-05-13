@@ -1,4 +1,6 @@
+#include "../include/SpectatorCamera.h"
 #include "platform/Window.h" // Adjust path as necessary based on include directories
+#include <SDL3/SDL.h>
 #include <iostream>
 #include <vector>
 #include <string>
@@ -331,17 +333,15 @@ int main(int /*argc*/, char* /*argv*/[]) { // Suppress unused parameter warnings
     setupDebugAtlasQuad();
     setupSingleTileDebugQuad(); // Setup the new quad
 
-    // Camera setup
-    glm::vec3 cameraPos   = glm::vec3(16.0f, 24.0f, 48.0f); // Adjusted for better view
-    glm::vec3 cameraTarget = glm::vec3(8.0f, 8.0f, 8.0f);   // Look at the center of the first segment
-    glm::vec3 cameraUp    = glm::vec3(0.0f, 1.0f, 0.0f);
-
-    float fov = 70.0f; // Field of view
-
-    float aspect = static_cast<float>(SCREEN_WIDTH) / static_cast<float>(SCREEN_HEIGHT);
-    glm::mat4 proj = glm::perspective(glm::radians(fov), aspect, 0.1f, 500.0f); // Increased far plane
-    
-    std::cout << "  Field of view: " << fov << " degrees" << std::endl;
+    // Camera setup (SpectatorCamera)
+    SpectatorCamera camera(
+        glm::vec3(16.0f, 24.0f, 48.0f), // position
+        -90.0f, 0.0f,                   // yaw, pitch
+        70.0f,                          // fov
+        static_cast<float>(SCREEN_WIDTH) / static_cast<float>(SCREEN_HEIGHT), // aspect
+        0.1f, 500.0f                    // near, far
+    );
+    std::cout << "  Field of view: " << camera.fov << " degrees" << std::endl;
 
     glClearColor(0.1f, 0.2f, 0.3f, 1.0f); // A slightly more pleasant blue
     std::cout << "Clear color set to (0.1, 0.2, 0.3)" << std::endl;
@@ -356,13 +356,70 @@ int main(int /*argc*/, char* /*argv*/[]) { // Suppress unused parameter warnings
 
     // Main loop
     while (gameWindow.isRunning()) {
-        gameWindow.handleEvents();
+
+        // --- Input Handling ---
+        static bool mouseCaptured = true;
+        // Removed unused variables: lastMouseX, lastMouseY, firstMouse
+        float deltaTime = 1.0f / 60.0f; // TODO: Use real frame timing
+        float speedMultiplier = 1.0f;
+        bool forward = false, backward = false, left = false, right = false, up = false, down = false;
+
+
+        SDL_Event e;
+        while (SDL_PollEvent(&e)) {
+            if (e.type == SDL_EVENT_QUIT) {
+                gameWindow.cleanUp();
+                return 0;
+            }
+            if (e.type == SDL_EVENT_KEY_DOWN) {
+                switch (e.key.scancode) {
+                    case SDL_SCANCODE_ESCAPE:
+                        mouseCaptured = !mouseCaptured;
+                        SDL_SetWindowRelativeMouseMode(gameWindow.getSDLWindow(), mouseCaptured);
+                        break;
+                    case SDL_SCANCODE_W: forward = true; break;
+                    case SDL_SCANCODE_S: backward = true; break;
+                    case SDL_SCANCODE_A: left = true; break;
+                    case SDL_SCANCODE_D: right = true; break;
+                    case SDL_SCANCODE_Q: down = true; break;
+                    case SDL_SCANCODE_E: up = true; break;
+                    case SDL_SCANCODE_LSHIFT: speedMultiplier = 3.0f; break;
+                    case SDL_SCANCODE_SPACE: up = true; break;
+                    case SDL_SCANCODE_LCTRL: down = true; break;
+                    default: break;
+                }
+            }
+            if (e.type == SDL_EVENT_KEY_UP) {
+                switch (e.key.scancode) {
+                    case SDL_SCANCODE_W: forward = false; break;
+                    case SDL_SCANCODE_S: backward = false; break;
+                    case SDL_SCANCODE_A: left = false; break;
+                    case SDL_SCANCODE_D: right = false; break;
+                    case SDL_SCANCODE_Q: down = false; break;
+                    case SDL_SCANCODE_E: up = false; break;
+                    case SDL_SCANCODE_LSHIFT: speedMultiplier = 1.0f; break;
+                    case SDL_SCANCODE_SPACE: up = false; break;
+                    case SDL_SCANCODE_LCTRL: down = false; break;
+                    default: break;
+                }
+            }
+            if (e.type == SDL_EVENT_MOUSE_MOTION && mouseCaptured) {
+                float xoffset = static_cast<float>(e.motion.xrel);
+                float yoffset = static_cast<float>(-e.motion.yrel); // Invert Y for FPS
+                camera.processMouse(xoffset, yoffset);
+            }
+            if (e.type == SDL_EVENT_WINDOW_RESIZED) {
+                camera.updateAspect(static_cast<float>(e.window.data1) / static_cast<float>(e.window.data2));
+                glViewport(0, 0, e.window.data1, e.window.data2);
+            }
+        }
+
+        camera.processKeyboard(deltaTime, forward, backward, left, right, up, down, speedMultiplier);
         ecs.progress();
         gameWindow.update();
 
-        // --- Camera & View Matrix Update ---
-        // Potentially update cameraPos, cameraTarget, cameraUp here if camera moves
-        glm::mat4 view = glm::lookAt(cameraPos, cameraTarget, cameraUp);
+        glm::mat4 view = camera.getViewMatrix();
+        glm::mat4 proj = camera.getProjectionMatrix();
 
         // --- Game Logic & Mesh Updates ---
         auto currentTime = std::chrono::steady_clock::now();

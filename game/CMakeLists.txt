@@ -4,6 +4,7 @@
 add_executable(VoxelFortressGame
     # List all game source files here
     src/main.cpp
+    src/SpectatorCamera.cpp
     # Example:
     # src/gameplay/player.cpp
     # ...
@@ -19,6 +20,7 @@ target_link_libraries(VoxelFortressGame PRIVATE
 target_include_directories(VoxelFortressGame PRIVATE 
     ${CMAKE_BINARY_DIR}/external/SDL3/include-revision
     ${CMAKE_SOURCE_DIR}/external/SDL3/include
+    ${CMAKE_CURRENT_SOURCE_DIR}/include
 )
 
 # Link other dependencies if any (e.g., external libraries used directly by the game)
