@@ -12,10 +12,13 @@ SpectatorCamera::SpectatorCamera(
 
 void SpectatorCamera::processKeyboard(float deltaTime, bool forward, bool backward, bool left, bool right, bool up, bool down, float speedMultiplier) {
     float velocity = movementSpeed * deltaTime * speedMultiplier;
-    if (forward)  position += front * velocity;
-    if (backward) position -= front * velocity;
-    if (left)     position -= right * velocity;
-    if (right)    position += right * velocity;
+    // Always use a horizontal right vector for left/right movement
+    glm::vec3 horizontalFront = glm::normalize(glm::vec3(front.x, 0.0f, front.z));
+    glm::vec3 horizontalRight = glm::normalize(glm::cross(horizontalFront, worldUp));
+    if (forward)  position += horizontalFront * velocity;
+    if (backward) position -= horizontalFront * velocity;
+    if (left)     position -= horizontalRight * velocity;
+    if (right)    position += horizontalRight * velocity;
     if (up)       position += worldUp * velocity;
     if (down)     position -= worldUp * velocity;
 }

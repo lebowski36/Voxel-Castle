@@ -355,17 +355,18 @@ int main(int /*argc*/, char* /*argv*/[]) { // Suppress unused parameter warnings
     bool voxelChanged = false;
 
     // Main loop
+    // --- Input State ---
+    static bool mouseCaptured = true;
+    float speedMultiplier = 1.0f;
+    bool forward = false, backward = false, left = false, right = false, up = false, down = false;
+
     while (gameWindow.isRunning()) {
-
         // --- Input Handling ---
-        static bool mouseCaptured = true;
-        // Removed unused variables: lastMouseX, lastMouseY, firstMouse
         float deltaTime = 1.0f / 60.0f; // TODO: Use real frame timing
-        float speedMultiplier = 1.0f;
-        bool forward = false, backward = false, left = false, right = false, up = false, down = false;
-
 
         SDL_Event e;
+        float mouseDeltaX = 0.0f;
+        float mouseDeltaY = 0.0f;
         while (SDL_PollEvent(&e)) {
             if (e.type == SDL_EVENT_QUIT) {
                 gameWindow.cleanUp();
@@ -404,14 +405,18 @@ int main(int /*argc*/, char* /*argv*/[]) { // Suppress unused parameter warnings
                 }
             }
             if (e.type == SDL_EVENT_MOUSE_MOTION && mouseCaptured) {
-                float xoffset = static_cast<float>(e.motion.xrel);
-                float yoffset = static_cast<float>(-e.motion.yrel); // Invert Y for FPS
-                camera.processMouse(xoffset, yoffset);
+                mouseDeltaX += static_cast<float>(e.motion.xrel);
+                mouseDeltaY += static_cast<float>(-e.motion.yrel); // Invert Y for FPS
             }
             if (e.type == SDL_EVENT_WINDOW_RESIZED) {
                 camera.updateAspect(static_cast<float>(e.window.data1) / static_cast<float>(e.window.data2));
                 glViewport(0, 0, e.window.data1, e.window.data2);
             }
+        }
+
+        // Always process mouse look if mouse is captured, even if no event this frame
+        if (mouseCaptured && (mouseDeltaX != 0.0f || mouseDeltaY != 0.0f)) {
+            camera.processMouse(mouseDeltaX, mouseDeltaY);
         }
 
         camera.processKeyboard(deltaTime, forward, backward, left, right, up, down, speedMultiplier);
