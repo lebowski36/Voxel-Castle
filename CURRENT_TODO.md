@@ -97,51 +97,51 @@ Paused mesh generation system integration to focus on implementing a reusable fl
 - [x] Project successfully builds.
 
 ## Recently Completed:
-*   **Build Project:** Compiled the project.
-*   **Ran Executable & Initial Tests:**
-    *   Voxel System Tests: PASSED
-    *   Naive Meshing Tests: PASSED
-    *   Greedy Meshing Tests: PASSED (All tests produce correct mesh counts, e.g., 24 vertices, 36 indices for a single block, and correct merging for larger shapes)
-*   **Fix Build Errors in `engine/src/rendering/mesh_builder.cpp`:** Corrected type qualifications for `VoxelPosition` and `Normal` in `buildGreedyMesh`.
-*   Implemented `MeshBuilder::buildGreedyMesh` and `MeshBuilder::addQuad`.
-*   Corrected `addQuad` and `addFace` signatures in `mesh_builder.h` and `mesh_builder.cpp`.
-*   Defined `VoxelPosition` and `Normal` type aliases in `voxel.h`.
-*   Fixed `VoxelType` include issue in `voxel.h`.
-*   Implemented and tested `MeshBuilder::buildNaiveMesh`.
-*   Implemented `Voxel`, `VoxelType`, `ChunkSegment`, `ChunkColumn`, `WorldManager` and tested.
-*   Integrated Flecs ECS and implemented basic components/systems.
+*   **Camera System Implementation:** Progressing through sub-tasks for the flying spectator camera, as detailed in `development_tasks/03_basic_game_structure/01_implement_camera_system.md`. Several foundational items related to rendering setup and camera view/projection integration have been reviewed and confirmed as complete.
 
 ## 🧠 Note to Self (Agent)
-**Agent Self-Correction/Reminder:** Per user instruction, I will always execute necessary commands directly using the appropriate tool. I will not ask the user to run commands manually.
-*   **Avoid Repetitive Fixes & Ensure Test-Driven Iteration:** If a particular fix or approach is attempted multiple times without success (e.g., repeatedly adjusting camera parameters in small increments), I must pause, re-evaluate the problem from a different angle, and consider alternative diagnostic steps or solutions. I will avoid making similar changes repeatedly without clear evidence from testing that the new change is likely to succeed or provides new information. Each distinct change should be tested, and its outcome analyzed, before layering on subsequent changes to the same system. If I find myself in a loop, I will explicitly state what has been tried and why it might not be working, and then propose a different strategy or seek user guidance.
 
-**Autonomous Operation Mandate & Testing Protocol:** My primary mode of operation is to work autonomously through the defined sub-tasks. I will continue coding, implementing features, and resolving issues independently. However, I will pause and await user interaction under the following circumstances:
-1.  A critical design decision with multiple viable options requires user input.
-2.  Specific feedback on a completed segment of work is needed before proceeding.
-3.  A question arises that genuinely blocks progress and cannot be resolved through available context or research.
-4.  An unrecoverable error or significant unexpected behavior is encountered during development or testing.
-5.  **After implementing a significant feature, component, or a set of related changes, I will initiate a build and/or relevant tests (which includes running the main executable if applicable to observe behavior). I will then pause and explicitly await user confirmation of the build/test results (success, failure, or observations) before proceeding to the next task. I will not move on if a test fails or if the outcome is unclear without user feedback.**
+**Core Collaborative Workflow (User-Confirmed Steps):**
 
-**Testing Best Practices (To be followed diligently):**
-*   **Test Regularly:** Compile and **run the application** after implementing each significant feature or component to ensure it works as expected. Never let untested code accumulate.
-    *   After a new module or system: Compile and run to test it works.
-    *   After changes to existing functionality: Verify nothing broke by running the application.
-    *   After complex algorithms or critical systems: Add specific tests if feasible, or at least perform thorough manual checks by running and observing the application.
-    *   After integrating multiple components: Test their integration together by running the application.
-*   **Awaiting Test Output:** If I'm unable to see the complete output from a command I've run (especially build outputs or error messages), I **must wait for the user to provide the results** before proceeding.
+My primary directive is to follow a strict, user-confirmed, step-by-step process for every sub-task:
 
-**General Operational Guidelines:**
-*   **ABSOLUTELY CRITICAL: Clear Console with Command!** Before executing any new command in the terminal that produces significant output (especially builds or tests), I **MUST** prepend the `clear` command to the main command, joined by `&&` (e.g., `clear && cmake --build build`). This ensures the console is cleared immediately before the intended command runs, preventing output from previous commands from obscuring the new results. I will explicitly state that the command includes clearing the console and ensure this is followed for every command execution.
-*   **CRITICAL - Update Task Files:** I **MUST ALWAYS** update this file (`CURRENT_TODO.md`) and, most importantly, the relevant detailed task files in `development_tasks/` (by checking off completed sub-tasks and updating their status) after each development step is confirmed complete. **Sub-tasks themselves should be maintained within their specific detailed markdown files, not duplicated or expanded in this `CURRENT_TODO.md` file.** This `CURRENT_TODO.md` file should only list the main high-level tasks. This is paramount for accurate progress tracking and ensuring I don\'t repeat or miss steps.
-*   **Consult Design Documents:** Before implementing new features or making significant design choices, I will consult the relevant documents in the `/home/system-x1/Projects/Voxel Castle/docs/design_specifications/` directory (including `Voxel Fortress Tech Stack (C++ Custom Engine Approach).md`, `Voxel Fortress Game Concept Details.md`, and other related files) to ensure my work aligns with the established project vision, architecture, and technical guidelines.
-*   **Crucial Decisions:** ALWAYS CONFIRM CRUCIAL DECISIONS WITH THE USER. Before making significant choices (e.g., selecting a library, deciding on a core architectural pattern), present the options, your recommendation (if any), and ask for the user's input and confirmation.
-*   **Problem Persistence:** IF A PROBLEM PERSISTS after initial attempts, I will search for solutions online before asking the user for help or trying the same fix repeatedly.
-*   **Documentation:** DOCUMENTATION IS CRUCIAL! With every implementation step, update relevant documentation.
-*   **Small, Focused Files:** MAINTAIN SMALL, FOCUSED FILES for better organization and maintainability.
-*   **Build and Run Instructions:**
-    *   The project root directory is: `/home/system-x1/Projects/Voxel Castle/`. While the commands below use absolute paths, it's generally good practice to operate from the project root.
-    *   To clear console and build the project (CMake must have been configured in the `build` directory previously): `clear && cmake --build "/home/system-x1/Projects/Voxel Castle/build"`
-    *   To clear console and run the executable after building: `clear && "/home/system-x1/Projects/Voxel Castle/build/bin/VoxelFortressGame"`
+1.  **Focus on One Sub-Task:** Address only the current open sub-task from the detailed `development_tasks/*.md` file.
+2.  **Implement/Code:** Perform the necessary coding or action for the sub-task.
+3.  **Test Changes:** After implementation, initiate a build and/or relevant tests (including running the executable if applicable to observe behavior).
+4.  **Await User Confirmation:** Pause and explicitly await the users confirmation of the build/test results (success, failure, or observations). I will not proceed if a test fails or if the outcome is unclear without your feedback.
+5.  **Mark Complete (Post-Confirmation):** Only after you confirm the successful completion and satisfactory outcome of the sub-task, will I mark it as complete in the corresponding detailed task file.
+6.  **Proceed to Next Sub-Task:** Once confirmed and marked, move to the next open sub-task.
+
+If any part of this process or a specific task is unclear, I will ask for clarification before proceeding. This iterative, confirmation-driven approach is key to our collaboration.
 
 ---
-Last updated: May 12, 2025 // Updated build/run commands to use absolute paths and be separate.
+
+**Additional Reminders & Guidelines (Preserving Previous Instructions):**
+
+*   **Agent Self-Correction/Reminder:** Per user instruction, I will always execute necessary commands directly using the appropriate tool. I will not ask you to run commands manually.
+*   **Avoid Repetitive Fixes & Ensure Test-Driven Iteration:** If a particular fix or approach is attempted multiple times without success (e.g., repeatedly adjusting camera parameters in small increments), I must pause, re-evaluate the problem from a different angle, and consider alternative diagnostic steps or solutions. I will avoid making similar changes repeatedly without clear evidence from testing that the new change is likely to succeed or provides new information. Each distinct change should be tested, and its outcome analyzed, before layering on subsequent changes to the same system. If I find myself in a loop, I will explicitly state what has been tried and why it might not be working, and then propose a different strategy or seek your guidance.
+*   **Autonomous Operation Mandate & Testing Protocol (Reinforced by Core Workflow):** My primary mode of operation is to work autonomously through the defined sub-tasks, following the Core Collaborative Workflow above. I will continue coding, implementing features, and resolving issues independently. However, I will pause and await user interaction under the following circumstances (in addition to step 4 of the Core Workflow):
+    1.  A critical design decision with multiple viable options requires user input.
+    2.  A question arises that genuinely blocks progress and cannot be resolved through available context or research.
+    3.  An unrecoverable error or significant unexpected behavior is encountered during development or testing.
+
+*   **Testing Best Practices (To be followed diligently):**
+    *   **Test Regularly:** Compile and **run the application** after implementing each significant feature or component to ensure it works as expected, as per the Core Workflow. Never let untested code accumulate.
+        *   After a new module or system: Compile and run to test it works.
+        *   After changes to existing functionality: Verify nothing broke by running the application.
+        *   After complex algorithms or critical systems: Add specific tests if feasible, or at least perform thorough manual checks by running and observing the application.
+        *   After integrating multiple components: Test their integration together by running the application.
+    *   **Awaiting Test Output:** If I'm unable to see the complete output from a command I've run (especially build outputs or error messages), I **must wait for you to provide the results** before proceeding.
+
+*   **General Operational Guidelines:**
+    *   **ABSOLUTELY CRITICAL: Clear Console with Command!** Before executing any new command in the terminal that produces significant output (especially builds or tests), I **MUST** prepend the `clear` command to the main command, joined by `&&` (e.g., `clear && cmake --build build`). This ensures the console is cleared immediately before the intended command runs, preventing output from previous commands from obscuring the new results. I will explicitly state that the command includes clearing the console and ensure this is followed for every command execution.
+    *   **CRITICAL - Update Task Files:** I **MUST ALWAYS** update this file (`CURRENT_TODO.md`) and, most importantly, the relevant detailed task files in `development_tasks/` (by checking off completed sub-tasks and updating their status) after each development step is confirmed complete by you (as per Core Workflow step 5). **Sub-tasks themselves should be maintained within their specific detailed markdown files, not duplicated or expanded in this `CURRENT_TODO.md` file.** This `CURRENT_TODO.md` file should only list the main high-level tasks. This is paramount for accurate progress tracking and ensuring I don't repeat or miss steps.
+    *   **Consult Design Documents:** Before implementing new features or making significant design choices, I will consult the relevant documents in the `/home/system-x1/Projects/Voxel Castle/docs/design_specifications/` directory (including `Voxel Fortress Tech Stack (C++ Custom Engine Approach).md`, `Voxel Fortress Game Concept Details.md`, and other related files) to ensure my work aligns with the established project vision, architecture, and technical guidelines.
+    *   **Crucial Decisions:** ALWAYS CONFIRM CRUCIAL DECISIONS WITH YOU. Before making significant choices (e.g., selecting a library, deciding on a core architectural pattern), present the options, my recommendation (if any), and ask for your input and confirmation.
+    *   **Problem Persistence:** IF A PROBLEM PERSISTS after initial attempts, I will search for solutions online before asking you for help or trying the same fix repeatedly.
+    *   **Documentation:** DOCUMENTATION IS CRUCIAL! With every implementation step, update relevant documentation.
+    *   **Small, Focused Files:** MAINTAIN SMALL, FOCUSED FILES for better organization and maintainability.
+    *   **Build and Run Instructions:**
+        *   The project root directory is: `/home/system-x1/Projects/Voxel Castle/`.
+        *   To clear console and build: `clear && cmake --build "/home/system-x1/Projects/Voxel Castle/build"`
+        *   To clear console and run: `clear && "/home/system-x1/Projects/Voxel Castle/build/bin/VoxelFortressGame"`
