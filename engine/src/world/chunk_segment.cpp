@@ -97,14 +97,16 @@ namespace VoxelCastle
             mMesh->setInitialized(true); 
 
             // Calculate and set the world position for this mesh
-            float segmentWorldX = static_cast<float>(columnWorldX); // SEGMENT_WIDTH is implicitly handled by columnWorldX being the base
-            float segmentWorldY = static_cast<float>(segmentYIndex * SEGMENT_HEIGHT);
-            float segmentWorldZ = static_cast<float>(columnWorldZ); // SEGMENT_DEPTH is implicitly handled by columnWorldZ being the base
+            float segmentWorldX = static_cast<float>(columnWorldX * VoxelCastle::World::ChunkSegment::CHUNK_WIDTH);
+            float segmentWorldY = static_cast<float>(segmentYIndex * VoxelCastle::World::ChunkSegment::CHUNK_HEIGHT);
+            float segmentWorldZ = static_cast<float>(columnWorldZ * VoxelCastle::World::ChunkSegment::CHUNK_DEPTH);
 
             // DEBUG: Print out the inputs and calculated world position
             std::cout << "[ChunkSegment::rebuildMesh] Debug Info:" << std::endl;
             std::cout << "  Indices: colX=" << columnWorldX << ", segY=" << segmentYIndex << ", colZ=" << columnWorldZ << std::endl;
-            std::cout << "  SegmentDims: W=" << SEGMENT_WIDTH << ", H=" << SEGMENT_HEIGHT << ", D=" << SEGMENT_DEPTH << std::endl;
+            std::cout << "  SegmentDims: W=" << VoxelCastle::World::ChunkSegment::CHUNK_WIDTH 
+                      << ", H=" << VoxelCastle::World::ChunkSegment::CHUNK_HEIGHT 
+                      << ", D=" << VoxelCastle::World::ChunkSegment::CHUNK_DEPTH << std::endl;
             std::cout << "  Calculated World Pos: (" << segmentWorldX << ", " << segmentWorldY << ", " << segmentWorldZ << ")" << std::endl;
 
             mMesh->setWorldPosition(glm::vec3(segmentWorldX, segmentWorldY, segmentWorldZ));
