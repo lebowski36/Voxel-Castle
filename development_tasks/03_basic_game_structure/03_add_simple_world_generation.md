@@ -15,7 +15,7 @@ This task focuses on implementing a basic procedural world generation system to 
 ## 3. Sub-Tasks
 ### 3.1. Choose and Integrate Noise Function
   - [x] 3.1.1. Research and select a simple noise algorithm (e.g., Perlin, Simplex, Value noise) or a lightweight C++ noise library.
-  - [ ] 3.1.2. If using a library, add it to the project and CMake. If implementing, create a utility header/source (e.g., `engine/include/util/noise.h`).
+  - [x] 3.1.2. If using a library, add it to the project and CMake. If implementing, create a utility header/source (e.g., `engine/include/util/noise.h`). (Decision: Implemented custom value noise in `engine/include/util/noise.h` on 2025-05-14)
   - [ ] 3.1.3. Implement or integrate a function: `float getNoise(float x, float y, float z)`.
 
 ### 3.2. Map Noise to Voxel Types
