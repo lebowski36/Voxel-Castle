@@ -4,10 +4,13 @@
 #include <string> // For std::string (project root)
 #include <chrono> // For std::chrono::steady_clock::time_point
 
+#include "../SpectatorCamera.h" // Include the full definition of SpectatorCamera
+
 // Forward declarations to minimize include dependencies in header
 class Window;
 namespace flecs { class world; }
 namespace VoxelCastle { namespace World { class WorldManager; } }
+namespace VoxelCastle { namespace World { class WorldGenerator; } }
 namespace VoxelEngine { 
     namespace Rendering { 
         class TextureAtlas; 
@@ -15,7 +18,6 @@ namespace VoxelEngine {
         class MeshRenderer;
     }
 }
-class SpectatorCamera;
 
 class Game {
 public:
@@ -32,6 +34,9 @@ public:
     void shutdown();
 
 private:
+    // Helper method for world initialization
+    void initializeWorldContent();
+
     // Processes user input.
     void processInput();
 
@@ -45,6 +50,7 @@ private:
     std::unique_ptr<Window> gameWindow_;
     std::unique_ptr<flecs::world> ecs_;
     std::unique_ptr<VoxelCastle::World::WorldManager> worldManager_;
+    std::unique_ptr<VoxelCastle::World::WorldGenerator> worldGenerator_;
     std::unique_ptr<VoxelEngine::Rendering::TextureAtlas> textureAtlas_;
     std::unique_ptr<VoxelEngine::Rendering::MeshBuilder> meshBuilder_;
     std::unique_ptr<VoxelEngine::Rendering::MeshRenderer> meshRenderer_;

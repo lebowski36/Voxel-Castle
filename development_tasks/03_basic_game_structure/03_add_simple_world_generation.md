@@ -18,8 +18,8 @@ This task focuses on implementing and integrating a basic procedural world gener
 
 ### Phase 1: Integrate Existing `WorldGenerator` for Initial Static World Display
 
-- [ ] **3.1. Verify `WorldGenerator::generateChunkSegment` Logic and Coordinates**
-    - **Status:** TODO
+- [x] **3.1. Verify `WorldGenerator::generateChunkSegment` Logic and Coordinates**
+    - **Status:** Complete
     - **Goal:** Confirm the existing `WorldGenerator::generateChunkSegment` correctly uses its input parameters (`worldX`, `worldY`, `worldZ` which represent segment-level world coordinates/indices) to calculate per-voxel global coordinates for noise sampling and voxel type determination.
     - **Current `WorldGenerator` Parameters:** `generateChunkSegment(ChunkSegment& segment, int worldX, int worldY, int worldZ)` where `worldX`, `worldY`, `worldZ` are segment indices in the world.
     - **Noise Calculation:** `float nx = (worldX * width + x) * 0.05f;` (similar for `nz`). This uses `worldX` (segment index) and `x` (local voxel X in segment) to derive a global X for noise. This is correct for continuous noise.
