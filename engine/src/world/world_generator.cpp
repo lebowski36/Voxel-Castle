@@ -17,19 +17,29 @@ void WorldGenerator::generateChunkSegment(ChunkSegment& segment, int worldX, int
     }
 
     constexpr int width = ChunkSegment::CHUNK_WIDTH;
-    constexpr int height = ChunkSegment::CHUNK_HEIGHT;
+    constexpr int height = ChunkSegment::CHUNK_HEIGHT; // e.g., 32
     constexpr int depth = ChunkSegment::CHUNK_DEPTH;
+
+    // --- TUNABLE PARAMETERS ---
+    const float noiseInputScale = 0.08f;         // Increased for potentially steeper features
+    const float terrainAmplitude = height * 1.5f;  // Increased amplitude (e.g., 32 * 1.5 = 48)
+    const float baseTerrainOffset = static_cast<float>(height) / 8.0f; // Adjusted base offset (e.g., 32 / 8 = 4)
+    // --- END TUNABLE PARAMETERS ---
 
     // World Y coordinate of this segment's base
     int baseY = worldY * height;
 
     for (int x = 0; x < width; ++x) {
         for (int z = 0; z < depth; ++z) {
-            // Use noise to get height in [0, height*4)
-            float nx = (worldX * width + x) * 0.04f;
-            float nz = (worldZ * depth + z) * 0.04f;
+            // Use noise to get height
+            float nx = (worldX * width + x) * noiseInputScale;
+            float nz = (worldZ * depth + z) * noiseInputScale;
             float noise_val = VoxelEngine::Util::smoothValueNoise(nx, 0.0f, nz); // Renamed to noise_val to avoid conflict
-            int columnHeight = static_cast<int>(noise_val * (height * 0.75f)) + (height / 4);
+
+            // Assuming noise_val is in [0, 1]. If not, it might need clamping/remapping:
+            // noise_val = std::max(0.0f, std::min(1.0f, noise_val));
+
+            int columnHeight = static_cast<int>(noise_val * terrainAmplitude) + static_cast<int>(baseTerrainOffset);
 
             // Added for logging task 3.1 - log for local (0,0) and (15,15)
             if (worldX == 0 && worldY == 0 && worldZ == 0 && ((x == 0 && z == 0) || (x == 15 && z == 15))) {
