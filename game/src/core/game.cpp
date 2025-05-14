@@ -12,6 +12,7 @@
 #include <set> // Required for std::set
 #include <algorithm> // For std::min/max (potentially useful, good to have)
 
+#include "core/InputManager.h"  // Input handling module
 // SDL for events, window relative mouse mode
 #include <SDL3/SDL.h>
 
@@ -198,65 +199,8 @@ void Game::initializeWorldContent() {
 }
 
 void Game::processInput() {
-    // Reset mouse delta values at the beginning of each frame's input processing
-    mouseDeltaX_ = 0.0f;
-    mouseDeltaY_ = 0.0f;
-
-    SDL_Event e;
-    while (SDL_PollEvent(&e)) {
-        if (e.type == SDL_EVENT_QUIT) {
-            isRunning_ = false; // Signal the game loop to terminate
-            // gameWindow_->cleanUp(); // This will be handled in Game::shutdown()
-            // return 0; // No direct return, isRunning_ will stop the loop in Game::run()
-        }
-        if (e.type == SDL_EVENT_KEY_DOWN) {
-            switch (e.key.scancode) {
-                case SDL_SCANCODE_ESCAPE:
-                    mouseCaptured_ = !mouseCaptured_;
-                    if (gameWindow_ && gameWindow_->getSDLWindow()) { // Ensure window is valid
-                        SDL_SetWindowRelativeMouseMode(gameWindow_->getSDLWindow(), mouseCaptured_);
-                    }
-                    break;
-                case SDL_SCANCODE_W: forward_ = true; break;
-                case SDL_SCANCODE_S: backward_ = true; break;
-                case SDL_SCANCODE_A: left_ = true; break;
-                case SDL_SCANCODE_D: right_ = true; break;
-                case SDL_SCANCODE_Q: down_ = true; break; // Or use for other actions
-                case SDL_SCANCODE_E: up_ = true; break;   // Or use for other actions
-                case SDL_SCANCODE_LSHIFT: speedMultiplier_ = 3.0f; break;
-                case SDL_SCANCODE_SPACE: up_ = true; break;
-                case SDL_SCANCODE_LCTRL: down_ = true; break;
-                case SDL_SCANCODE_M: 
-                    manualVoxelChangeRequested_ = true;
-                    break;
-                default: break;
-            }
-        }
-        if (e.type == SDL_EVENT_KEY_UP) {
-            switch (e.key.scancode) {
-                case SDL_SCANCODE_W: forward_ = false; break;
-                case SDL_SCANCODE_S: backward_ = false; break;
-                case SDL_SCANCODE_A: left_ = false; break;
-                case SDL_SCANCODE_D: right_ = false; break;
-                case SDL_SCANCODE_Q: down_ = false; break;
-                case SDL_SCANCODE_E: up_ = false; break;
-                case SDL_SCANCODE_LSHIFT: speedMultiplier_ = 1.0f; break;
-                case SDL_SCANCODE_SPACE: up_ = false; break;
-                case SDL_SCANCODE_LCTRL: down_ = false; break;
-                default: break;
-            }
-        }
-        if (e.type == SDL_EVENT_MOUSE_MOTION && mouseCaptured_) {
-            mouseDeltaX_ += static_cast<float>(e.motion.xrel);
-            mouseDeltaY_ += static_cast<float>(-e.motion.yrel); // Invert Y for FPS camera style
-        }
-        if (e.type == SDL_EVENT_WINDOW_RESIZED) {
-            if (camera_) { // Ensure camera is valid
-                camera_->updateAspect(static_cast<float>(e.window.data1) / static_cast<float>(e.window.data2));
-            }
-            glViewport(0, 0, e.window.data1, e.window.data2);
-        }
-    }
+    // Delegate to InputManager
+    GameInput::processInput(*this);
 }
 
 void Game::update(float deltaTime) {

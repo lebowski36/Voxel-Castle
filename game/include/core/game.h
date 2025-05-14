@@ -6,6 +6,7 @@
 #include <glm/glm.hpp> // For glm::vec3
 
 #include "../SpectatorCamera.h" // Include the full definition of SpectatorCamera
+#include "core/InputManager.h"        // Input handling module
 
 // Forward declarations to minimize include dependencies in header
 class Window;
@@ -48,8 +49,10 @@ private:
     // Helper method for world initialization
     void initializeWorldContent();
 
-    // Processes user input.
+    // Delegate input processing to InputManager
     void processInput();
+    // Allow InputManager to access private members for input handling
+    friend void GameInput::processInput(Game& game);
 
     // Updates game state.
     void update(float deltaTime);

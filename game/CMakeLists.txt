@@ -7,6 +7,7 @@ add_executable(VoxelFortressGame
     src/SpectatorCamera.cpp
     src/core/game.cpp # Added Game class implementation
     src/core/GameInitializer.cpp # Initialization and shutdown helper module
+    src/core/InputManager.cpp # Added InputManager module
     # Example:
     # src/gameplay/player.cpp
     # ...

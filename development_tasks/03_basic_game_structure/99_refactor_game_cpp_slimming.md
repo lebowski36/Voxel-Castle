@@ -7,7 +7,7 @@
 ## 📝 Open Subtasks
 
 - [x] Extract initialization and shutdown logic into a dedicated `GameInitializer` (or similar) module.
-- [ ] Move input processing (keyboard, mouse, window events) into a new `InputManager` or `GameInput` module.
+- [ ] Move input processing (keyboard, mouse, window events) into a new `InputManager` or `GameInput` module. (Implemented; pending user confirmation and testing)
 - [ ] Extract world/segment/chunk generation logic into a `WorldSetup` or `WorldInitializer` module.
 - [ ] Move mesh rendering and debug rendering logic into a `GameRenderer` or `RenderManager` module.
 - [ ] Refactor the main game loop in `game.cpp` to delegate to the new modules, keeping it concise.
@@ -25,3 +25,5 @@
 ---
 
 *This file is not yet linked in `CURRENT_TODO.md` and is for internal tracking of the refactor process.*
+>
+> **Note:** Testing and executing the refactored code requires explicit user confirmation; tasks remain pending until user verifies build and runtime behavior.
