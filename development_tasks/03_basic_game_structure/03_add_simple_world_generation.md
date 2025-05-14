@@ -65,8 +65,8 @@ This task focuses on implementing and integrating a basic procedural world gener
 
 ### Phase 1.5: Troubleshooting Initial Static World Rendering (Added 2025-05-14)
 
-- [ ] **3.3.1. (Troubleshooting) Temporarily Switch to Wireframe Mode for Diagnosis**
-    - **Status:** TODO
+- [x] **3.3.1. (Troubleshooting) Temporarily Switch to Wireframe Mode for Diagnosis**
+    - **Status:** Complete
     - **Goal:** Modify the rendering setup to draw meshes in wireframe mode to determine if the problematic faces (on non-center chunks, specifically two vertical sides) are being generated and sent to the GPU, even if not textured correctly.
     - **Action:**
         - In `game/src/core/game.cpp`, locate the OpenGL state setup (likely in `Game::initialize` or before the main render loop in `Game::render`).

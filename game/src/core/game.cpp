@@ -98,10 +98,8 @@ bool Game::initialize() {
     glCullFace(GL_BACK); 
     glFrontFace(GL_CCW); // Define front faces by counter-clockwise winding order
     // Set filled polygon mode for normal rendering
-    glPolygonMode(GL_FRONT_AND_BACK, GL_LINE); // Changed to LINE for troubleshooting
-    
+    glPolygonMode(GL_FRONT_AND_BACK, GL_FILL); // Restored to FILL
     // Debug OpenGL state
-    // Properly check if depth test is enabled
     GLboolean depthTestEnabled = glIsEnabled(GL_DEPTH_TEST);
     std::cout << "  OpenGL: Depth testing enabled: " << (depthTestEnabled ? "Yes" : "No") << std::endl;
     GLboolean cullFaceEnabled = glIsEnabled(GL_CULL_FACE);
