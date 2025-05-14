@@ -1,5 +1,6 @@
 #include "../../include/core/game.h"       // Defines Game, forward declares SpectatorCamera
 #include "../../include/SpectatorCamera.h" // Full definition of SpectatorCamera
+#include "../../include/core/GameInitializer.h"    // Initialization and shutdown helper
 
 // Include headers that will be needed for the actual implementations later
 #include <iostream> 
@@ -78,151 +79,26 @@ Game::~Game() {
 }
 
 bool Game::initialize() {
-    std::cout << "Game::initialize() - Initializing Game Window..." << std::endl;
-
-    gameWindow_ = std::make_unique<Window>("Voxel Fortress - Alpha", screenWidth_, screenHeight_);
-    if (!gameWindow_ || !gameWindow_->init()) {
-        std::cerr << "Failed to initialize the game window!" << std::endl;
-        isRunning_ = false; // Ensure isRunning is false if init fails
-        return false;
+    // Delegate to GameInitializer
+    auto result = GameInitializer::initialize(screenWidth_, screenHeight_, projectRoot_.c_str());
+    gameWindow_ = std::move(result.gameWindow);
+    ecs_ = std::move(result.ecs);
+    worldManager_ = std::move(result.worldManager);
+    worldGenerator_ = std::move(result.worldGenerator);
+    textureAtlas_ = std::move(result.textureAtlas);
+    meshBuilder_ = std::move(result.meshBuilder);
+    meshRenderer_ = std::move(result.meshRenderer);
+    camera_ = std::move(result.camera);
+    lastFrameTime_ = result.lastFrameTime;
+    isRunning_ = result.isRunning;
+    // World content and mesh build still handled here for now
+    if (worldManager_ && worldGenerator_) {
+        initializeWorldContent();
     }
-    std::cout << "Game Window initialized successfully." << std::endl;
-
-    // --- OpenGL State Setup ---
-    std::cout << "Game::initialize() - Setting up OpenGL state..." << std::endl;
-    // Enable depth testing for proper 3D rendering
-    glEnable(GL_DEPTH_TEST);
-    glDepthFunc(GL_LESS);
-    // Enable face culling for performance (render only front faces)
-    glEnable(GL_CULL_FACE); // Re-enabled
-    glCullFace(GL_BACK); 
-    glFrontFace(GL_CCW); // Define front faces by counter-clockwise winding order
-    // Set filled polygon mode for normal rendering
-    glPolygonMode(GL_FRONT_AND_BACK, GL_FILL); // Restored to FILL
-    // Debug OpenGL state
-    GLboolean depthTestEnabled = glIsEnabled(GL_DEPTH_TEST);
-    std::cout << "  OpenGL: Depth testing enabled: " << (depthTestEnabled ? "Yes" : "No") << std::endl;
-    GLboolean cullFaceEnabled = glIsEnabled(GL_CULL_FACE);
-    std::cout << "  OpenGL: Face culling enabled: " << (cullFaceEnabled ? "Yes" : "No") << std::endl;
-    std::cout << "OpenGL state setup complete." << std::endl;
-
-    // --- ECS Setup ---
-    std::cout << "Game::initialize() - Setting up ECS..." << std::endl;
-    ecs_ = std::make_unique<flecs::world>();
-    if (!ecs_) {
-        std::cerr << "Failed to initialize Flecs ECS world!" << std::endl;
-        // Consider if this is a fatal error that should return false
-        // For now, proceeding, but logging the error.
-    } else {
-        // Register systems
-        // Note: movementSystem's lifetime is currently tied to the initialize() scope.
-        // If the MovementSystem object itself needs to persist, it should be a member of Game class.
-        // However, Flecs systems, once registered by such an object, usually persist with the world.
-        VoxelEngine::ecs::MovementSystem movementSystem(*ecs_); 
-        std::cout << "  ECS: MovementSystem registered." << std::endl;
-        // Future systems will be registered here
-        std::cout << "ECS setup complete." << std::endl;
-    }
-
-    // --- World and Rendering Systems Setup ---
-    std::cout << "Game::initialize() - Setting up World and Rendering Systems..." << std::endl;
-    worldManager_ = std::make_unique<VoxelCastle::World::WorldManager>();
-    if (!worldManager_) {
-        std::cerr << "Failed to initialize WorldManager!" << std::endl;
-        // Potentially return false or handle error
-    } else {
-        std::cout << "  WorldManager initialized." << std::endl;
-    }
-
-    worldGenerator_ = std::make_unique<VoxelCastle::World::WorldGenerator>(); // Added instantiation
-    if (!worldGenerator_) {
-        std::cerr << "Failed to initialize WorldGenerator!" << std::endl;
-        // Potentially return false or handle error
-    } else {
-        std::cout << "  WorldGenerator initialized." << std::endl;
-    }
-
-    textureAtlas_ = std::make_unique<VoxelEngine::Rendering::TextureAtlas>();
-    if (!textureAtlas_) {
-        std::cerr << "Failed to initialize TextureAtlas!" << std::endl;
-        // Potentially return false or handle error
-    } else {
-        std::cout << "  TextureAtlas initialized." << std::endl;
-    }
-
-    meshBuilder_ = std::make_unique<VoxelEngine::Rendering::MeshBuilder>();
-    if (!meshBuilder_) {
-        std::cerr << "Failed to initialize MeshBuilder!" << std::endl;
-        // Potentially return false or handle error
-    } else {
-        std::cout << "  MeshBuilder initialized." << std::endl;
-    }
-
-    meshRenderer_ = std::make_unique<VoxelEngine::Rendering::MeshRenderer>();
-    if (!meshRenderer_) {
-        std::cerr << "Failed to initialize MeshRenderer!" << std::endl;
-        // Potentially return false or handle error
-    } else {
-        std::cout << "  MeshRenderer initialized." << std::endl;
-    }
-    std::cout << "World and Rendering Systems setup complete." << std::endl;
-
-    // --- Initial World Content ---
-    std::cout << "Game::initialize() - Setting up initial world content..." << std::endl;
-    if (worldManager_ && worldGenerator_) { // Ensure worldGenerator_ is also valid
-        initializeWorldContent(); // Call new method
-        std::cout << "  Initial world content setup via initializeWorldContent() complete." << std::endl;
-    } else {
-        std::cerr << "  Skipping initial world content setup as WorldManager or WorldGenerator is null." << std::endl;
-    }
-
-    // --- Initial Mesh Build ---
-    std::cout << "Game::initialize() - Performing initial mesh build..." << std::endl;
     if (worldManager_ && textureAtlas_ && meshBuilder_) {
         worldManager_->updateDirtyMeshes(*textureAtlas_, *meshBuilder_);
-        std::cout << "  Initial mesh build complete." << std::endl;
-    } else {
-        std::cerr << "  Skipping initial mesh build due to null WorldManager, TextureAtlas, or MeshBuilder." << std::endl;
     }
-
-    // --- Debug Utilities Setup ---
-    std::cout << "Game::initialize() - Setting up debug utilities..." << std::endl;
-    VoxelEngine::Rendering::Debug::setupDebugAtlasQuad(projectRoot_, screenWidth_, screenHeight_);
-    VoxelEngine::Rendering::Debug::setupSingleTileDebugQuad(screenWidth_, screenHeight_);
-    std::cout << "  Debug utilities setup complete." << std::endl;
-
-    // --- Camera Setup ---
-    std::cout << "Game::initialize() - Setting up camera..." << std::endl;
-    camera_ = std::make_unique<SpectatorCamera>(
-        glm::vec3(16.0f, 24.0f, 48.0f), // position
-        -90.0f, 0.0f,                   // yaw, pitch
-        70.0f,                          // fov
-        static_cast<float>(screenWidth_) / static_cast<float>(screenHeight_), // aspect
-        0.1f, 500.0f                    // near, far
-    );
-    if (!camera_) {
-        std::cerr << "Failed to initialize SpectatorCamera!" << std::endl;
-        // Consider this a fatal error for now and return false
-        isRunning_ = false;
-        return false;
-    }
-    std::cout << "  SpectatorCamera initialized. Field of view: " << camera_->fov << " degrees" << std::endl;
-    std::cout << "Camera setup complete." << std::endl;
-
-    // --- Background Color ---
-    std::cout << "Game::initialize() - Setting clear color..." << std::endl;
-    glClearColor(0.1f, 0.2f, 0.3f, 1.0f); // A slightly more pleasant blue
-    std::cout << "  Clear color set to (0.1, 0.2, 0.3, 1.0)." << std::endl;
-    
-    // Initialize timing and running state
-    std::cout << "Game::initialize() - Finalizing initialization..." << std::endl;
-    lastFrameTime_ = std::chrono::steady_clock::now();
-    // mouseCaptured_ is true by default (from constructor/header)
-    // input flags (forward_, etc.) are false by default (from constructor/header)
-    
-    isRunning_ = true; 
-    std::cout << "Game initialization complete. isRunning_ = true." << std::endl;
-    return true;
+    return isRunning_;
 }
 
 void Game::run() {
@@ -266,64 +142,18 @@ void Game::run() {
 }
 
 void Game::shutdown() {
-    std::cout << "Game::shutdown() - Initiating shutdown sequence..." << std::endl;
-
-    // 1. Cleanup Debug Utilities
-    std::cout << "  Shutting down Debug Utilities..." << std::endl;
-    VoxelEngine::Rendering::Debug::cleanupDebugQuads();
-    std::cout << "  Debug Utilities shutdown complete." << std::endl;
-
-    // 2. Cleanup Game Window
-    // This typically involves destroying the SDL window and quitting SDL subsystems
-    // if this was the last window.
-    if (gameWindow_) {
-        std::cout << "  Shutting down Game Window..." << std::endl;
-        gameWindow_->cleanUp(); // This should handle SDL_DestroyWindow and potentially SDL_Quit
-        gameWindow_.reset(); // Release the unique_ptr
-        std::cout << "  Game Window shutdown complete." << std::endl;
-    } else {
-        std::cout << "  Game Window was already null." << std::endl;
-    }
-
-    // 3. Release other resources managed by unique_ptr.
-    // Their destructors will be called automatically when the Game object is destroyed,
-    // but explicit reset() can be used for controlled shutdown order or logging.
-    std::cout << "  Releasing rendering resources..." << std::endl;
-    if (meshRenderer_) {
-        meshRenderer_.reset();
-        std::cout << "    MeshRenderer released." << std::endl;
-    }
-    if (meshBuilder_) {
-        meshBuilder_.reset();
-        std::cout << "    MeshBuilder released." << std::endl;
-    }
-    if (textureAtlas_) {
-        textureAtlas_.reset();
-        std::cout << "    TextureAtlas released." << std::endl;
-    }
-    
-    std::cout << "  Releasing world and ECS..." << std::endl;
-    if (worldManager_) {
-        worldManager_.reset();
-        std::cout << "    WorldManager released." << std::endl;
-    }
-    if (ecs_) {
-        ecs_.reset(); // Flecs world destructor will clean up entities, components, systems.
-        std::cout << "    ECS world released." << std::endl;
-    }
-
-    if (camera_) {
-        camera_.reset();
-        std::cout << "    Camera released." << std::endl;
-    }
-    if (worldGenerator_) { // Added for shutdown
-        worldGenerator_.reset();
-        std::cout << "    WorldGenerator released." << std::endl;
-    }
-
-    // 4. Mark as not running
+    GameInitializer::InitResult resources;
+    resources.gameWindow = std::move(gameWindow_);
+    resources.ecs = std::move(ecs_);
+    resources.worldManager = std::move(worldManager_);
+    resources.worldGenerator = std::move(worldGenerator_);
+    resources.textureAtlas = std::move(textureAtlas_);
+    resources.meshBuilder = std::move(meshBuilder_);
+    resources.meshRenderer = std::move(meshRenderer_);
+    resources.camera = std::move(camera_);
+    resources.isRunning = isRunning_;
+    GameInitializer::shutdown(resources, screenWidth_, screenHeight_, projectRoot_.c_str());
     isRunning_ = false;
-    std::cout << "Game shutdown sequence complete. isRunning_ = false." << std::endl;
 }
 
 void Game::initializeWorldContent() {
