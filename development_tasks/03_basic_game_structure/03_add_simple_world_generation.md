@@ -76,16 +76,21 @@ This task focuses on implementing and integrating a basic procedural world gener
 
 - [ ] **3.3.2. (Troubleshooting) Investigate Missing/Untextured Faces on Non-Center Chunks**
     - **Status:** TODO
-    - **Goal:** Based on wireframe results from 3.3.1, identify and fix the root cause of why two vertical sides of non-center chunks are not rendering correctly (either missing geometry or missing textures).
-    - **Action (depends on 3.3.1 results):**
-        - **If wireframe shows geometry:** The issue is likely with texturing, UV coordinates, or shader logic for these faces.
-            - Review `MeshBuilder` logic, especially how UVs are generated for faces at chunk boundaries.
-            - Review `WorldGenerator` to ensure voxel data is correct at chunk edges.
-            - Check shader code (`voxel.vert`, `voxel.frag`) for any logic that might discard or incorrectly texture these faces.
-        - **If wireframe also shows missing geometry:** The issue is likely with mesh generation or culling for these faces.
-            - Review `MeshBuilder` face culling logic (is it incorrectly culling exterior faces of these specific chunks?).
-            - Review `WorldManager` or `Chunk` logic related to identifying neighboring chunks for face culling.
-            - Verify that `segment->markDirty(true)` is being called correctly for all generated segments and that `worldManager_->updateDirtyMeshes(...)` is processing them.
+    - **Goal:** Based on wireframe results (which confirmed missing geometry), identify and fix the root cause of why certain vertical faces of grass blocks are not being generated.
+    - **Observations (as of 2025-05-14):**
+        - The issue primarily affects the grass layer.
+        - Faces are missing that point in one specific world direction on the vertical sides of blocks.
+        - This occurs for blocks that are within the "3 outermost cubes" (e.g., near the edge of a segment, like local X < 3 or X > CHUNK_WIDTH-4).
+        - It can happen on various chunks, not just those at the absolute boundary of the 3x3 generated area. Blocks do not need to touch the absolute world border.
+    - **Action (since wireframe also shows missing geometry):**
+        - **Review `MeshBuilder` (`buildNaiveMesh` or equivalent):**
+            - Focus on the logic for adding vertical faces (e.g., +/- X and +/- Z faces).
+            - Investigate if there's a conditional error related to the voxel's local coordinates (e.g., `x < 3`), its type (grass), and the specific face direction being processed, causing the face to be skipped.
+        - **Review `ChunkSegment::getVoxel`:**
+            - How does it handle requests for neighbor voxels when the current voxel is near the edge of the segment (e.g., `x=0` and a `-X` face is being checked, requiring `getVoxel(-1, y, z)`)?
+            - Ensure it correctly reports "AIR" or allows face generation if the neighbor is outside the current segment but also outside the entire loaded world area.
+        - **Review `WorldManager` (if applicable for neighbor checks):**
+            - If `ChunkSegment::getVoxel` queries `WorldManager` for inter-segment voxels, how does `WorldManager` respond for coordinates outside the currently loaded 3x3 static area? It should effectively allow external faces to be generated.
     - **Verification:** The problematic faces should render correctly with textures after the fix.
 
 ### Phase 2: Transition to Dynamic Chunk Loading
