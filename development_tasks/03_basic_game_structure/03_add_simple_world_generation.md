@@ -68,8 +68,8 @@ This task focuses on implementing and integrating a basic procedural world gener
 
 ### Phase 2: Transition to Dynamic Chunk Loading
 
-- [ ] **3.4. Implement `WorldManager::updateActiveChunks` for Dynamic Loading**
-    - **Status:** TODO
+- [x] **3.4. Implement `WorldManager::updateActiveChunks` for Dynamic Loading**
+    - **Status:** In Progress
     - **Goal:** Create a mechanism in `WorldManager` to load/generate chunks in a radius around a given center point (e.g., camera position).
     - **Action:**
         - Add a new method to `engine/include/world/world_manager.h` and implement it in `engine/src/world/world_manager.cpp`:
@@ -79,15 +79,16 @@ This task focuses on implementing and integrating a basic procedural world gener
                 - `centerSegX = static_cast<int>(std::floor(centerWorldPosition.x / ChunkSegment::CHUNK_WIDTH));`
                 - `centerSegY = static_cast<int>(std::floor(centerWorldPosition.y / ChunkSegment::CHUNK_HEIGHT));`
                 - `centerSegZ = static_cast<int>(std::floor(centerWorldPosition.z / ChunkSegment::CHUNK_DEPTH));`
-            - Loop for X segment indices (`targetSegX`) from `centerSegX - loadRadiusInSegments` to `centerSegX + loadRadiusInSegments`.
-            - Loop for Z segment indices (`targetSegZ`) from `centerSegZ - loadRadiusInSegments` to `centerSegZ + loadRadiusInSegments`.
-            - Loop for Y segment indices (`targetSegY`) (determine a relevant vertical range, e.g., `centerSegY - loadRadiusInSegments` to `centerSegY + loadRadiusInSegments`, or a fixed range like 0 to `maxWorldHeightInSegments-1`).
-                - Inside the loop, for each `(targetSegX, targetSegY, targetSegZ)`:
-                    - Get the `ChunkColumn`: `ChunkColumn* column = getOrCreateChunkColumn(targetSegX, targetSegZ);` (assuming column indices are same as segment X,Z indices).
-                    - Get/Create the `ChunkSegment`: `ChunkSegment* segment = column->getOrCreateSegment(targetSegY);`
-                    - **If the segment was newly created by `getOrCreateSegment` (e.g., check a flag returned by `getOrCreateSegment` or if `segment->isNew()` or `segment->isEmpty()`):**
-                        - Call `generator.generateChunkSegment(*segment, targetSegX, targetSegY, targetSegZ);`
-                        - Mark it dirty: `segment->markDirty(true);`
+            - Loop over X, Y, Z segment indices within the specified radius.
+            - For each segment:
+                - Ensure the corresponding `ChunkColumn` and `ChunkSegment` exist (create if needed).
+                - If the segment is new or empty, call `generator.generateChunkSegment`.
+                - Mark the segment as dirty so its mesh will be rebuilt.
+            - Add debug logging to confirm which segments are being generated/updated.
+            - **Unloading:**
+                - Identify all chunk columns/segments that are outside the active radius.
+                - Remove these from memory and ensure they are no longer rendered or simulated.
+                - Free associated resources (meshes, voxel data, etc.).
     - **Verification:** This method itself doesn't produce visual output yet but is foundational. Add logging to confirm it calculates the correct segment ranges and attempts to create/generate them.
 
 - [ ] **3.5. Call `updateActiveChunks` from the Game Loop**

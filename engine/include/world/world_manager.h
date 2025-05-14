@@ -8,6 +8,7 @@
 #include <memory>
 #include <cstdint>            // For int_fast64_t
 #include <vector>             // Added for std::vector
+#include "world/world_generator.h" // For WorldGenerator
 
 // Forward declarations for rendering components
 namespace VoxelEngine { namespace Rendering {
@@ -171,6 +172,14 @@ public:
      * @return Vector of pointers to ChunkColumns in the region.
      */
     std::vector<ChunkColumn*> queryChunkColumnsInRegion(int32_t xMin, int32_t zMin, int32_t xMax, int32_t zMax) const;
+
+    /**
+     * @brief Updates active chunks based on the center world position and load radius.
+     * @param centerWorldPosition The center position in the world.
+     * @param loadRadiusInSegments The radius in segments to load around the center.
+     * @param generator The world generator to use for creating new chunks.
+     */
+    void updateActiveChunks(const glm::vec3& centerWorldPosition, int loadRadiusInSegments, WorldGenerator& generator);
 };
 
 } // namespace World

@@ -154,6 +154,12 @@ namespace World {
          */
         static constexpr int_fast32_t getDepth() { return SEGMENT_DEPTH; }
 
+        /**
+         * @brief Checks if the chunk segment is empty.
+         * @return True if all voxels are of type AIR, false otherwise.
+         */
+        bool isEmpty() const;
+
     private:
         /**
          * @brief 3D array storing the voxels in this segment.

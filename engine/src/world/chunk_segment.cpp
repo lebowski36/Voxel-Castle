@@ -1,4 +1,5 @@
 #include "world/chunk_segment.h"
+#include "world/voxel.h" // For VoxelType
 #include <stdexcept> // For std::out_of_range
 #include "rendering/mesh_builder.h" // For VoxelEngine::Rendering::MeshBuilder
 #include "rendering/texture_atlas.h" // For VoxelEngine::Rendering::TextureAtlas
@@ -64,6 +65,15 @@ namespace VoxelCastle
 
         bool ChunkSegment::isDirty() const {
             return mIsDirty;
+        }
+
+        bool ChunkSegment::isEmpty() const {
+            for (const auto& voxel : m_voxels) {
+                if (voxel.id != static_cast<uint8_t>(VoxelEngine::World::VoxelType::AIR)) {
+                    return false;
+                }
+            }
+            return true;
         }
 
         /**

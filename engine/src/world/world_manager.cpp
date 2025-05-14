@@ -6,7 +6,7 @@
 #include "rendering/mesh_builder.h"  // For VoxelEngine::Rendering::MeshBuilder
 #include "rendering/voxel_mesh.h"    // For VoxelEngine::Rendering::VoxelMesh
 #include <cmath> // For std::floor
-
+#include <set> // For std::set
 
 namespace VoxelCastle {
 namespace World {
@@ -142,6 +142,39 @@ int_fast64_t WorldManager::worldToColumnBaseX(int_fast64_t worldX) {
 
 int_fast64_t WorldManager::worldToColumnBaseZ(int_fast64_t worldZ) {
     return static_cast<int_fast64_t>(std::floor(static_cast<double>(worldZ) / VoxelCastle::World::ChunkSegment::CHUNK_DEPTH)) * VoxelCastle::World::ChunkSegment::CHUNK_DEPTH;
+}
+
+void WorldManager::updateActiveChunks(const glm::vec3& centerWorldPosition, int loadRadiusInSegments, WorldGenerator& generator) {
+    int centerSegX = static_cast<int>(std::floor(centerWorldPosition.x / ChunkSegment::CHUNK_WIDTH));
+    int centerSegY = static_cast<int>(std::floor(centerWorldPosition.y / ChunkSegment::CHUNK_HEIGHT));
+    int centerSegZ = static_cast<int>(std::floor(centerWorldPosition.z / ChunkSegment::CHUNK_DEPTH));
+
+    std::set<std::pair<int, int>> activeColumns;
+
+    for (int x = centerSegX - loadRadiusInSegments; x <= centerSegX + loadRadiusInSegments; ++x) {
+        for (int z = centerSegZ - loadRadiusInSegments; z <= centerSegZ + loadRadiusInSegments; ++z) {
+            activeColumns.insert({x, z});
+            for (int y = centerSegY - loadRadiusInSegments; y <= centerSegY + loadRadiusInSegments; ++y) {
+                ChunkColumn* column = getOrCreateChunkColumn(x, z);
+                ChunkSegment* segment = column->getOrCreateSegment(y);
+
+                if (segment->isEmpty()) {
+                    generator.generateChunkSegment(*segment, x, y, z);
+                    segment->markDirty(true);
+                }
+            }
+        }
+    }
+
+    // Unload chunks outside the active radius
+    for (auto it = m_chunkColumns.begin(); it != m_chunkColumns.end();) {
+        const auto& [coord, columnPtr] = *it;
+        if (activeColumns.find({coord.x, coord.z}) == activeColumns.end()) {
+            it = m_chunkColumns.erase(it); // Unload the column
+        } else {
+            ++it;
+        }
+    }
 }
 
 } // namespace World
