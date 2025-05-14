@@ -32,8 +32,8 @@ This task focuses on implementing and integrating a basic procedural world gener
             - Calculated `globalY` and resulting `VoxelType` for a few local `x,y,z` (e.g., 0,0,0 and 15,15,15).
     - **Verification:** Ensure the logged global coordinates and noise inputs make sense for the segment being generated. For example, if generating segment (0,0,0), the noise inputs should be based on global voxel coordinates within that segment's bounds (e.g., x from 0 to 31, z from 0 to 31 for noise, global Y from 0 to 31 for voxel placement).
 
-- [ ] **3.2. Implement Initial Static World Area Generation in `Game::initialize`**
-    - **Status:** TODO
+- [x] **3.2. Implement Initial Static World Area Generation in `Game::initialize`**
+    - **Status:** Complete
     - **Goal:** Modify the game's initialization to generate a fixed-size area of chunks using the `WorldManager` and `WorldGenerator`, replacing any current hardcoded test chunk display.
     - **Action:**
         - In `game/src/core/game.cpp` (within `Game::initialize` or a new dedicated method called from it, after `worldManager_` and `worldGenerator_` are ready):
