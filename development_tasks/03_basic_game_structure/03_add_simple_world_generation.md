@@ -55,8 +55,8 @@ This task focuses on implementing and integrating a basic procedural world gener
         - **Crucially, ensure any previous code that was displaying a single hardcoded test chunk (e.g., in `main.cpp` or `Game::run` or `Game::initialize`) is disabled or removed so we only see the newly generated world.**
     - **Verification:** The game should now display a small, static area of procedurally generated terrain. The camera should be positioned to see this generated area.
 
-- [ ] **3.3. Ensure Generated Chunks are Meshed and Rendered**
-    - **Status:** TODO
+- [x] **3.3. Ensure Generated Chunks are Meshed and Rendered**
+    - **Status:** Complete
     - **Goal:** Verify that the newly generated chunks have their meshes built and are rendered.
     - **Action:**
         - In `Game::update` (or wherever chunk meshing is handled, likely `worldManager_->rebuildDirtySegmentMeshes(...)`), ensure that dirty segments (marked in 3.2) have their meshes rebuilt.
