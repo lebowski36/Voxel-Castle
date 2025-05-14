@@ -63,35 +63,8 @@ This task focuses on implementing and integrating a basic procedural world gener
         - Ensure `worldManager_->renderVisibleMeshes(camera, mainShader);` (or equivalent) is called in `Game::render`.
     - **Verification:** The static world generated in 3.2 should be visible and match the appearance of the screenshot provided (grass, dirt, stone layers based on noise).
 
-### Phase 1.5: Troubleshooting Initial Static World Rendering (Added 2025-05-14)
 
-- [x] **3.3.1. (Troubleshooting) Temporarily Switch to Wireframe Mode for Diagnosis**
-    - **Status:** Complete
-    - **Goal:** Modify the rendering setup to draw meshes in wireframe mode to determine if the problematic faces (on non-center chunks, specifically two vertical sides) are being generated and sent to the GPU, even if not textured correctly.
-    - **Action:**
-        - In `game/src/core/game.cpp`, locate the OpenGL state setup (likely in `Game::initialize` or before the main render loop in `Game::render`).
-        - Change `glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);` to `glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);`.
-        - Rebuild and run the application.
-    - **Verification:** Observe if the previously untextured/missing faces now appear as wireframes. This will help distinguish between a culling/geometry issue and a texturing/shader issue.
 
-- [ ] **3.3.2. (Troubleshooting) Investigate Missing/Untextured Faces on Non-Center Chunks**
-    - **Status:** TODO
-    - **Goal:** Based on wireframe results (which confirmed missing geometry), identify and fix the root cause of why certain vertical faces of grass blocks are not being generated.
-    - **Observations (as of 2025-05-14):**
-        - The issue primarily affects the grass layer.
-        - Faces are missing that point in one specific world direction on the vertical sides of blocks.
-        - This occurs for blocks that are within the "3 outermost cubes" (e.g., near the edge of a segment, like local X < 3 or X > CHUNK_WIDTH-4).
-        - It can happen on various chunks, not just those at the absolute boundary of the 3x3 generated area. Blocks do not need to touch the absolute world border.
-    - **Action (since wireframe also shows missing geometry):**
-        - **Review `MeshBuilder` (`buildNaiveMesh` or equivalent):**
-            - Focus on the logic for adding vertical faces (e.g., +/- X and +/- Z faces).
-            - Investigate if there's a conditional error related to the voxel's local coordinates (e.g., `x < 3`), its type (grass), and the specific face direction being processed, causing the face to be skipped.
-        - **Review `ChunkSegment::getVoxel`:**
-            - How does it handle requests for neighbor voxels when the current voxel is near the edge of the segment (e.g., `x=0` and a `-X` face is being checked, requiring `getVoxel(-1, y, z)`)?
-            - Ensure it correctly reports "AIR" or allows face generation if the neighbor is outside the current segment but also outside the entire loaded world area.
-        - **Review `WorldManager` (if applicable for neighbor checks):**
-            - If `ChunkSegment::getVoxel` queries `WorldManager` for inter-segment voxels, how does `WorldManager` respond for coordinates outside the currently loaded 3x3 static area? It should effectively allow external faces to be generated.
-    - **Verification:** The problematic faces should render correctly with textures after the fix.
 
 ### Phase 2: Transition to Dynamic Chunk Loading
 
