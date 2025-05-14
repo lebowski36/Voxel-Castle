@@ -26,8 +26,8 @@ void WorldGenerator::generateChunkSegment(ChunkSegment& segment, int worldX, int
     for (int x = 0; x < width; ++x) {
         for (int z = 0; z < depth; ++z) {
             // Use noise to get height in [0, height*4)
-            float nx = (worldX * width + x) * 0.05f;
-            float nz = (worldZ * depth + z) * 0.05f;
+            float nx = (worldX * width + x) * 0.04f;
+            float nz = (worldZ * depth + z) * 0.04f;
             float noise_val = VoxelEngine::Util::smoothValueNoise(nx, 0.0f, nz); // Renamed to noise_val to avoid conflict
             int columnHeight = static_cast<int>(noise_val * (height * 0.75f)) + (height / 4);
 
