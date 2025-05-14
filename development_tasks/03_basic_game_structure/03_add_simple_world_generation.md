@@ -24,8 +24,25 @@ This task focuses on implementing a basic procedural world generation system to 
     - [x] 3.2.1.b. Briefly evaluate a 3D Density Field approach (Pros: allows overhangs/caves; Cons: slightly more complex to map noise to voxels). (Evaluated 2025-05-14: Decided against for initial simple world generation due to complexity. Reserved for advanced world generation.)
     - [x] 3.2.1.c. User to decide on the scheme based on this evaluation. (Decision 2025-05-14: Proceed with 2D Heightmap for simple world generation.)
     - [x] 3.2.1.d. Document the chosen scheme and reasoning (Decision: 2D Heightmap on 2025-05-14. Rationale: Simplicity for initial implementation, aligns with existing `WorldGenerator.cpp` structure. Provides a foundation for basic terrain. Advanced features like caves, overhangs, and more complex geological formations will be addressed in a dedicated "Advanced World Generation" phase using more sophisticated techniques, potentially including 3D density fields or advanced 2D-to-3D methods.) (Documented 2025-05-14)
-  - [ ] 3.2.2. Define thresholds for voxel types (e.g., air, dirt, stone, grass) based on noise value and height.
-  - [ ] 3.2.3. Document the mapping logic in this file for future reference.
+  - [x] 3.2.2. Define thresholds for voxel types (e.g., air, dirt, stone, grass) based on noise value and height. (Defined in `engine/src/world/world_generator.cpp` and documented in 3.2.3 as of 2025-05-14)
+  - [x] 3.2.3. Document the mapping logic in this file for future reference. (Documented 2025-05-14)
+    ```markdown
+    The current voxel type mapping logic is implemented in `engine/src/world/world_generator.cpp` within the `generateChunkSegment` method. It functions as follows:
+
+    1.  **Noise-based Height Calculation:**
+        *   A 2D noise value (`smoothValueNoise` using world X and Z coordinates, with Y fixed at 0.0f) is generated for each (x,z) column. The noise input coordinates are scaled by `0.05f`.
+        *   This noise value (range [0,1]) is then scaled and offset to determine the surface height (`columnHeight`) for that column:
+            `columnHeight = static_cast<int>(noise * (ChunkSegment::CHUNK_HEIGHT * 0.75f)) + (ChunkSegment::CHUNK_HEIGHT / 4);`
+            This results in a surface height that varies between 25% and 100% of the chunk height.
+
+    2.  **Voxel Type Layering (based on `globalY` vs `columnHeight`):**
+        *   **Above Surface (`globalY > columnHeight`):** `VoxelType::AIR`
+        *   **At Surface (`globalY == columnHeight`):** `VoxelType::GRASS`
+        *   **Immediately Below Surface (`columnHeight - 3 < globalY < columnHeight`):** `VoxelType::DIRT`. This creates two layers of dirt directly beneath the grass layer (at `columnHeight - 1` and `columnHeight - 2`).
+        *   **Deep Below Surface (`globalY <= columnHeight - 3`):** `VoxelType::STONE`. This forms the base layer of the terrain.
+
+    This layering provides a simple but effective differentiation of basic terrain materials for the initial world generation.
+    ```
 
 ### 3.3. Implement World Generation Logic
   - [ ] 3.3.1. Add a `WorldGenerator` class or static methods to `WorldManager` (document location/decision).
