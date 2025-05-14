@@ -50,6 +50,12 @@ namespace World {
          */
         static int getDimension(int axis);
 
+            // Getter for m_isGenerated
+        bool isGenerated() const { return m_isGenerated; }
+        
+        // Setter for m_isGenerated
+        void setGenerated(bool generated) { m_isGenerated = generated; }
+        
         /**
          * @brief Default constructor.
          *
@@ -169,6 +175,14 @@ namespace World {
          */
         std::array<::VoxelEngine::World::Voxel,
                    SEGMENT_WIDTH * SEGMENT_HEIGHT * SEGMENT_DEPTH> m_voxels;
+
+        /**
+         * @brief Indicates if the segment has been generated.
+         *
+         * This flag is set to true when the mesh is successfully generated.
+         */
+        bool m_isGenerated = false; // Tracks if the segment has been generated
+
 
         /**
          * @brief Calculates the 1D array index for a given 3D local coordinate.

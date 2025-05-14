@@ -158,9 +158,10 @@ void WorldManager::updateActiveChunks(const glm::vec3& centerWorldPosition, int 
                 ChunkColumn* column = getOrCreateChunkColumn(x, z);
                 ChunkSegment* segment = column->getOrCreateSegment(y);
 
-                if (segment->isEmpty()) {
+                if (segment->isEmpty() && !segment->isGenerated()) {
                     generator.generateChunkSegment(*segment, x, y, z);
                     segment->markDirty(true);
+                    segment->setGenerated(true); // Mark the segment as generated
                 }
             }
         }

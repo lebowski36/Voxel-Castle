@@ -171,6 +171,10 @@ void Game::processInput() {
 #include "core/GameLogic.h"
 void Game::update(float deltaTime) {
     GameLogic::update(*this, deltaTime);
+
+    glm::vec3 cameraPos = camera_->getPosition();
+    int loadRadiusInSegments = 3; // Example radius for testing
+    worldManager_->updateActiveChunks(cameraPos, loadRadiusInSegments, *worldGenerator_);
 }
 
 void Game::render() {

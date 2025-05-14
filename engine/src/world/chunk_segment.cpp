@@ -102,51 +102,45 @@ namespace VoxelCastle
                                        int_fast64_t columnWorldX,
                                        int_fast32_t segmentYIndex,
                                        int_fast64_t columnWorldZ) {
+            static int logCounter = 0; // Static counter to track logging frequency
+            const int logInterval = 500; // Log every 500 rebuilds
+
             auto startTime = std::chrono::high_resolution_clock::now();
 
             if (!mMesh) {
                 mMesh = std::make_unique<VoxelEngine::Rendering::VoxelMesh>();
             }
-            
-            *mMesh = meshBuilder.buildGreedyMesh(*this, atlas);
-            mMesh->setInitialized(true); 
 
-            // Calculate and set the world position for this mesh
+            *mMesh = meshBuilder.buildGreedyMesh(*this, atlas);
+            mMesh->setInitialized(true);
+
             float segmentWorldX = static_cast<float>(columnWorldX * VoxelCastle::World::ChunkSegment::CHUNK_WIDTH);
             float segmentWorldY = static_cast<float>(segmentYIndex * VoxelCastle::World::ChunkSegment::CHUNK_HEIGHT);
             float segmentWorldZ = static_cast<float>(columnWorldZ * VoxelCastle::World::ChunkSegment::CHUNK_DEPTH);
 
-            // Increment rebuild counter
-            g_rebuild_count_since_last_log++;
-
             mMesh->setWorldPosition(glm::vec3(segmentWorldX, segmentWorldY, segmentWorldZ));
-
-            markDirty(false); 
+            markDirty(false);
 
             auto endTime = std::chrono::high_resolution_clock::now();
             auto duration = std::chrono::duration_cast<std::chrono::microseconds>(endTime - startTime);
 
-            // Accumulate time
             g_accumulated_rebuild_time_micros += duration.count();
+            g_rebuild_count_since_last_log++;
 
-            if (g_rebuild_count_since_last_log >= G_LOG_INTERVAL_REBUILDS) {
+            if (g_rebuild_count_since_last_log >= logInterval) {
+                logCounter++;
                 std::cout << "[ChunkSegment] Aggregated RebuildMesh Stats (" << g_rebuild_count_since_last_log << " rebuilds):" << std::endl;
-                
-                // Print debug info for the last segment in this batch as a sample
                 std::cout << "  Sample Debug Info (last in batch):" << std::endl;
                 std::cout << "    Indices: colX=" << columnWorldX << ", segY=" << segmentYIndex << ", colZ=" << columnWorldZ << std::endl;
                 std::cout << "    SegmentDims: W=" << VoxelCastle::World::ChunkSegment::CHUNK_WIDTH 
                           << ", H=" << VoxelCastle::World::ChunkSegment::CHUNK_HEIGHT 
                           << ", D=" << VoxelCastle::World::ChunkSegment::CHUNK_DEPTH << std::endl;
                 std::cout << "    Calculated World Pos: (" << segmentWorldX << ", " << segmentWorldY << ", " << segmentWorldZ << ")" << std::endl;
-
                 std::cout << "  Total Time for Batch: " << g_accumulated_rebuild_time_micros << " microseconds." << std::endl;
-                if (g_rebuild_count_since_last_log > 0) { // Avoid division by zero, though interval is > 0
-                    std::cout << "  Average Time per Rebuild: " << (g_accumulated_rebuild_time_micros / g_rebuild_count_since_last_log) << " microseconds." << std::endl;
-                }
-                // Reset counters for the next batch
-                g_rebuild_count_since_last_log = 0;
+                std::cout << "  Average Time per Rebuild: " << (g_accumulated_rebuild_time_micros / g_rebuild_count_since_last_log) << " microseconds." << std::endl;
+
                 g_accumulated_rebuild_time_micros = 0;
+                g_rebuild_count_since_last_log = 0;
             }
         }
 
