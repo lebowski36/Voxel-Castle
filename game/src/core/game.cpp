@@ -1,3 +1,4 @@
+#include <cmath> // For std::floor
 #include "../../include/core/game.h"       // Defines Game, forward declares SpectatorCamera
 #include "../../include/SpectatorCamera.h" // Full definition of SpectatorCamera
 #include "../../include/core/GameInitializer.h"    // Initialization and shutdown helper
@@ -172,9 +173,29 @@ void Game::processInput() {
 void Game::update(float deltaTime) {
     GameLogic::update(*this, deltaTime);
 
-    glm::vec3 cameraPos = camera_->getPosition();
-    int loadRadiusInSegments = 3; // Example radius for testing
-    worldManager_->updateActiveChunks(cameraPos, loadRadiusInSegments, *worldGenerator_);
+    if (camera_ && worldManager_ && worldGenerator_) {
+        static int lastSegmentX = INT_MIN;
+        static int lastSegmentY = INT_MIN;
+        static int lastSegmentZ = INT_MIN;
+
+        glm::vec3 cameraPos = camera_->getPosition();
+
+        // Calculate the current segment indices
+        int currentSegmentX = static_cast<int>(std::floor(cameraPos.x / VoxelCastle::World::ChunkSegment::CHUNK_WIDTH));
+        int currentSegmentY = static_cast<int>(std::floor(cameraPos.y / VoxelCastle::World::ChunkSegment::CHUNK_HEIGHT));
+        int currentSegmentZ = static_cast<int>(std::floor(cameraPos.z / VoxelCastle::World::ChunkSegment::CHUNK_DEPTH));
+
+        // Check if the camera has moved to a new segment
+        if (currentSegmentX != lastSegmentX || currentSegmentY != lastSegmentY || currentSegmentZ != lastSegmentZ) {
+            int loadRadiusInSegments = 3; // Example radius for testing
+            worldManager_->updateActiveChunks(cameraPos, loadRadiusInSegments, *worldGenerator_);
+
+            // Update the last segment indices
+            lastSegmentX = currentSegmentX;
+            lastSegmentY = currentSegmentY;
+            lastSegmentZ = currentSegmentZ;
+        }
+    }
 }
 
 void Game::render() {
