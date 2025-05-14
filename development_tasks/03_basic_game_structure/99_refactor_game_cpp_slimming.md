@@ -6,7 +6,7 @@
 
 ## 📝 Open Subtasks
 
-- [ ] Extract initialization and shutdown logic into a dedicated `GameInitializer` (or similar) module.
+- [x] Extract initialization and shutdown logic into a dedicated `GameInitializer` (or similar) module.
 - [ ] Move input processing (keyboard, mouse, window events) into a new `InputManager` or `GameInput` module.
 - [ ] Extract world/segment/chunk generation logic into a `WorldSetup` or `WorldInitializer` module.
 - [ ] Move mesh rendering and debug rendering logic into a `GameRenderer` or `RenderManager` module.
