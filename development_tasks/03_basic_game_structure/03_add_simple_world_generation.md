@@ -91,7 +91,7 @@ This task focuses on implementing and integrating a basic procedural world gener
                 - Free associated resources (meshes, voxel data, etc.).
     - **Verification:** This method itself doesn't produce visual output yet but is foundational. Add logging to confirm it calculates the correct segment ranges and attempts to create/generate them.
 
-- [ ] **3.5. Call `updateActiveChunks` from the Game Loop**
+- [x] **3.5. Call `updateActiveChunks` from the Game Loop**
     - **Status:** TODO
     - **Goal:** Regularly update active chunks based on camera movement.
     - **Action:**
