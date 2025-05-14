@@ -93,11 +93,11 @@ bool Game::initialize() {
     glEnable(GL_DEPTH_TEST);
     glDepthFunc(GL_LESS);
     // Enable face culling for performance (render only front faces)
-    glEnable(GL_CULL_FACE);
+    glEnable(GL_CULL_FACE); // Re-enabled
     glCullFace(GL_BACK); 
     glFrontFace(GL_CCW); // Define front faces by counter-clockwise winding order
     // Set filled polygon mode for normal rendering
-    glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+    glPolygonMode(GL_FRONT_AND_BACK, GL_FILL); // Restored to FILL
     
     // Debug OpenGL state
     // Properly check if depth test is enabled

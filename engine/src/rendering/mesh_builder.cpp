@@ -40,26 +40,19 @@ namespace VoxelEngine {
             
     uint32_t base_index = static_cast<uint32_t>(mesh.vertices.size());
 
-    // DEBUG: Assign color based on normal
-    glm::vec3 debug_color = glm::abs(normal); // Simple color based on normal vector
-    if (normal.x > 0.9f) debug_color = glm::vec3(1.0f, 0.0f, 0.0f); // Right = Red
-    else if (normal.x < -0.9f) debug_color = glm::vec3(0.0f, 1.0f, 0.0f); // Left = Green
-    else if (normal.y > 0.9f) debug_color = glm::vec3(0.0f, 0.0f, 1.0f); // Top = Blue
-    else if (normal.y < -0.9f) debug_color = glm::vec3(1.0f, 1.0f, 0.0f); // Bottom = Yellow
-    else if (normal.z > 0.9f) debug_color = glm::vec3(1.0f, 0.0f, 1.0f); // Front = Magenta
-    else if (normal.z < -0.9f) debug_color = glm::vec3(0.0f, 1.0f, 1.0f); // Back = Cyan
+    TextureCoordinates texCoords = atlas.getTextureCoordinates(voxelType);
+    glm::vec2 uvs_for_current_face[4];
 
-    // For this debug, we'll pass the color as texture coordinates and modify the fragment shader
-    // Or, more simply, modify the vertex structure to include color and use that.
-    // For now, let's assume we will modify the fragment shader to interpret vTexCoord as color.
-    // The actual UVs are not important for this specific debug.
-    // We will send the debug_color components as if they were UVs. For simplicity, just use x and y.
-    // This requires a temporary change in the fragment shader.
+    // Standard UV mapping for BL, BR, TR, TL vertex order
+    uvs_for_current_face[0] = texCoords.getBottomLeft();
+    uvs_for_current_face[1] = texCoords.getBottomRight();
+    uvs_for_current_face[2] = texCoords.getTopRight();
+    uvs_for_current_face[3] = texCoords.getTopLeft();
 
+    // The debug color logic is removed. We now use actual UVs.
+    // The 'light' component is set to 1.0f for now.
     for (int i = 0; i < 4; ++i) {
-        // Pass debug_color components as UVs for shader debugging
-        // This is a HACK. The fragment shader will need to be adjusted to use these as color.
-        mesh.vertices.emplace_back(voxel_pos + face_vertices[i], normal, glm::vec2(debug_color.r, debug_color.g), debug_color.b); // Store blue in light temporarily
+        mesh.vertices.emplace_back(voxel_pos + face_vertices[i], normal, uvs_for_current_face[i], 1.0f);
     }
 
     mesh.indices.push_back(base_index);
@@ -177,11 +170,13 @@ namespace VoxelEngine {
             };
             const glm::vec3 front_normal(0.0f, 0.0f, 1.0f);
 
-            // -Z face (Back) - View from -Z towards +X
-            // BL: (1,0,0), BR: (0,0,0), TR: (0,1,0), TL: (1,1,0)
+            // -Z face (Back) - View from -Z towards origin (face is at z=0)
+            // Standard CCW order: BL (0,0,0), BR (1,0,0), TR (1,1,0), TL (0,1,0)
             const glm::vec3 back_face_verts[4] = {
-                glm::vec3(1.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 0.0f),
-                glm::vec3(0.0f, 1.0f, 0.0f), glm::vec3(1.0f, 1.0f, 0.0f)
+                glm::vec3(0.0f, 0.0f, 0.0f), // Bottom-Left
+                glm::vec3(1.0f, 0.0f, 0.0f), // Bottom-Right
+                glm::vec3(1.0f, 1.0f, 0.0f), // Top-Right
+                glm::vec3(0.0f, 1.0f, 0.0f)  // Top-Left
             };
             const glm::vec3 back_normal(0.0f, 0.0f, -1.0f);
 
@@ -255,7 +250,7 @@ namespace VoxelEngine {
                     std::vector<bool> mask(chunk_dims[u] * chunk_dims[v], false);
 
                     // For each slice along d
-                    for (x[d] = (dir == 1 ? -1 : 0); x[d] < (dir == 1 ? chunk_dims[d] : chunk_dims[d]); ++x[d]) {
+                    for (x[d] = 0; x[d] < chunk_dims[d]; ++x[d]) {
                         int n = 0;
                         for (x[v] = 0; x[v] < chunk_dims[v]; ++x[v]) {
                             for (x[u] = 0; x[u] < chunk_dims[u]; ++x[u], ++n) {
@@ -266,9 +261,9 @@ namespace VoxelEngine {
                                 bool is_voxel1_solid = (voxel1.id != static_cast<uint8_t>(VoxelType::AIR));
                                 bool is_voxel2_solid = (voxel2.id != static_cast<uint8_t>(VoxelType::AIR));
 
-                                // Only generate a face if one is solid and the other is air, and the face is oriented correctly for this sweep
-                                if ((dir == 1 && is_voxel1_solid && !is_voxel2_solid) || (dir == -1 && !is_voxel1_solid && is_voxel2_solid)) {
-                                    VoxelType current_face_voxel_type = (dir == 1) ? static_cast<VoxelType>(voxel1.id) : static_cast<VoxelType>(voxel2.id);
+                                // Generate a face if voxel1 is solid and voxel2 (neighbor in direction q) is air.
+                                if (is_voxel1_solid && !is_voxel2_solid) {
+                                    VoxelType current_face_voxel_type = static_cast<VoxelType>(voxel1.id);
 
                                     // Find width (h_quad) in u direction
                                     int h_quad;
@@ -280,8 +275,7 @@ namespace VoxelEngine {
                                         Voxel v_strip_2 = segment.getVoxel(cur_coords_u_ext[0] + q[0], cur_coords_u_ext[1] + q[1], cur_coords_u_ext[2] + q[2]);
                                         bool v_strip_1_solid = (v_strip_1.id != static_cast<uint8_t>(VoxelType::AIR));
                                         bool v_strip_2_solid = (v_strip_2.id != static_cast<uint8_t>(VoxelType::AIR));
-                                        if ((dir == 1 && (!v_strip_1_solid || v_strip_2_solid || static_cast<VoxelType>(v_strip_1.id) != current_face_voxel_type)) ||
-                                            (dir == -1 && (v_strip_1_solid || !v_strip_2_solid || static_cast<VoxelType>(v_strip_2.id) != current_face_voxel_type))) {
+                                        if (!v_strip_1_solid || v_strip_2_solid || static_cast<VoxelType>(v_strip_1.id) != current_face_voxel_type) {
                                             break;
                                         }
                                     }
@@ -298,8 +292,7 @@ namespace VoxelEngine {
                                             Voxel v_scan_2 = segment.getVoxel(cur_coords_uv_ext[0] + q[0], cur_coords_uv_ext[1] + q[1], cur_coords_uv_ext[2] + q[2]);
                                             bool v_scan_1_solid = (v_scan_1.id != static_cast<uint8_t>(VoxelType::AIR));
                                             bool v_scan_2_solid = (v_scan_2.id != static_cast<uint8_t>(VoxelType::AIR));
-                                            if ((dir == 1 && (!v_scan_1_solid || v_scan_2_solid || static_cast<VoxelType>(v_scan_1.id) != current_face_voxel_type)) ||
-                                                (dir == -1 && (v_scan_1_solid || !v_scan_2_solid || static_cast<VoxelType>(v_scan_2.id) != current_face_voxel_type))) {
+                                            if (!v_scan_1_solid || v_scan_2_solid || static_cast<VoxelType>(v_scan_1.id) != current_face_voxel_type) {
                                                 done_w = true; break;
                                             }
                                         }
@@ -307,29 +300,35 @@ namespace VoxelEngine {
                                     }
 
                                     // Compute quad corners
-                                    float quad_base_pos_on_plane[3];
-                                    quad_base_pos_on_plane[d] = static_cast<float>(x[d] + (dir == 1 ? 1 : 0));
-                                    quad_base_pos_on_plane[u] = static_cast<float>(x[u]);
-                                    quad_base_pos_on_plane[v] = static_cast<float>(x[v]);
+                                    float quad_plane_coord_d = static_cast<float>(x[d] + (dir > 0 ? 1 : 0));
+
+                                    ::VoxelEngine::World::VoxelPosition vp_base;
+                                    vp_base.x = static_cast<float>(x[0]);
+                                    vp_base.y = static_cast<float>(x[1]);
+                                    vp_base.z = static_cast<float>(x[2]);
+                                    
+                                    if (d == 0) vp_base.x = quad_plane_coord_d;
+                                    else if (d == 1) vp_base.y = quad_plane_coord_d;
+                                    else vp_base.z = quad_plane_coord_d;
 
                                     float du_vec[3] = {0,0,0}; du_vec[u] = static_cast<float>(h_quad);
                                     float dv_vec[3] = {0,0,0}; dv_vec[v] = static_cast<float>(w_quad);
 
-                                    ::VoxelEngine::World::VoxelPosition vp1 = {quad_base_pos_on_plane[0], quad_base_pos_on_plane[1], quad_base_pos_on_plane[2]};
-                                    ::VoxelEngine::World::VoxelPosition vp2 = {quad_base_pos_on_plane[0] + dv_vec[0], quad_base_pos_on_plane[1] + dv_vec[1], quad_base_pos_on_plane[2] + dv_vec[2]};
-                                    ::VoxelEngine::World::VoxelPosition vp3 = {quad_base_pos_on_plane[0] + dv_vec[0] + du_vec[0], quad_base_pos_on_plane[1] + dv_vec[1] + du_vec[1], quad_base_pos_on_plane[2] + dv_vec[2] + du_vec[2]};
-                                    ::VoxelEngine::World::VoxelPosition vp4 = {quad_base_pos_on_plane[0] + du_vec[0], quad_base_pos_on_plane[1] + du_vec[1], quad_base_pos_on_plane[2] + du_vec[2]};
+                                    ::VoxelEngine::World::VoxelPosition ovp1, ovp2, ovp3, ovp4;
+                                    ovp1 = vp_base;
+                                    ovp2.x = vp_base.x + dv_vec[0]; ovp2.y = vp_base.y + dv_vec[1]; ovp2.z = vp_base.z + dv_vec[2];
+                                    ovp3.x = vp_base.x + dv_vec[0] + du_vec[0]; ovp3.y = vp_base.y + dv_vec[1] + du_vec[1]; ovp3.z = vp_base.z + dv_vec[2] + du_vec[2];
+                                    ovp4.x = vp_base.x + du_vec[0]; ovp4.y = vp_base.y + du_vec[1]; ovp4.z = vp_base.z + du_vec[2];
 
                                     ::VoxelEngine::World::Normal normal_val;
                                     normal_val.x = static_cast<float>(q[0]);
                                     normal_val.y = static_cast<float>(q[1]);
                                     normal_val.z = static_cast<float>(q[2]);
-
-                                    if (dir == 1) {
-                                        addQuad(mesh, vp4, vp3, vp2, vp1, normal_val, current_face_voxel_type, atlas);
+                                    
+                                    if (dir > 0) {
+                                        addQuad(mesh, ovp1, ovp4, ovp3, ovp2, normal_val, current_face_voxel_type, atlas);
                                     } else {
-                                        // Reverse winding for back face
-                                        addQuad(mesh, vp2, vp3, vp4, vp1, normal_val, current_face_voxel_type, atlas);
+                                        addQuad(mesh, ovp1, ovp2, ovp3, ovp4, normal_val, current_face_voxel_type, atlas);
                                     }
 
                                     // Mark mask

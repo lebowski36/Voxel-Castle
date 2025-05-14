@@ -111,6 +111,26 @@
     - [x] 5.4. Add Doxygen-style comments to new classes and functions.
     - [ ] 5.5. Update relevant design documents.
 
+### 6. Debugging and Issue Resolution
+- [ ] **Diagnose and Fix Invisible/Transparent Voxel Faces**
+    - Current Symptoms: Bottom, left, and back faces of voxels are not rendering or are see-through. Line artifacts are visible on some rendered faces.
+    - Date Logged: 2025-05-14
+    - Attempts Made:
+        - Verified and corrected winding order for `back_face_verts` in `MeshBuilder::buildNaiveMesh`.
+        - Standardized UV mapping in `MeshBuilder::addFace`.
+        - Ensured `addFace` is called for all 6 directions in `buildNaiveMesh` based on neighbor checks.
+    - Potential Areas to Investigate:
+        - `ChunkSegment::getVoxel()` boundary conditions (e.g., how out-of-bounds access is handled for neighbor checks).
+        - OpenGL face culling settings (`glEnable(GL_CULL_FACE)`, `glCullFace`, `glFrontFace`).
+        - Depth testing issues.
+        - Shader logic (e.g., discarding fragments, alpha blending issues).
+        - Transformations affecting winding order.
+        - Wireframe mode rendering to check for geometry presence.
+        - Normal vector correctness and visualization.
+    - Next Steps:
+        - Temporarily disable face culling.
+        - Enable wireframe mode.
+
 ---
 **Notes & Considerations:**
 *   Start with the simplest approach that works (naive meshing) and iterate.
