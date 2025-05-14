@@ -1,6 +1,7 @@
 #include "../../include/core/game.h"       // Defines Game, forward declares SpectatorCamera
 #include "../../include/SpectatorCamera.h" // Full definition of SpectatorCamera
 #include "../../include/core/GameInitializer.h"    // Initialization and shutdown helper
+#include "core/WorldSetup.h" // Added for world setup
 
 // Include headers that will be needed for the actual implementations later
 #include <iostream> 
@@ -92,11 +93,14 @@ bool Game::initialize() {
     camera_ = std::move(result.camera);
     lastFrameTime_ = result.lastFrameTime;
     isRunning_ = result.isRunning;
-    // World content and mesh build still handled here for now
-    if (worldManager_ && worldGenerator_) {
-        initializeWorldContent();
+    
+    // World content initialization delegated to WorldSetup module
+    if (isRunning_ && worldManager_ && worldGenerator_) { // Ensure basic systems are up
+        GameWorldSetup::initializeStaticWorld(*worldManager_, *worldGenerator_);
     }
-    if (worldManager_ && textureAtlas_ && meshBuilder_) {
+
+    // Initial mesh build after world content is set up
+    if (isRunning_ && worldManager_ && textureAtlas_ && meshBuilder_) {
         worldManager_->updateDirtyMeshes(*textureAtlas_, *meshBuilder_);
     }
     return isRunning_;
@@ -155,47 +159,6 @@ void Game::shutdown() {
     resources.isRunning = isRunning_;
     GameInitializer::shutdown(resources, screenWidth_, screenHeight_, projectRoot_.c_str());
     isRunning_ = false;
-}
-
-void Game::initializeWorldContent() {
-    std::cout << "Game::initializeWorldContent() - Generating initial static world area..." << std::endl;
-    if (!worldManager_ || !worldGenerator_) {
-        std::cerr << "Error: WorldManager or WorldGenerator is null in initializeWorldContent." << std::endl;
-        return;
-    }
-
-    const int initialLoadRadiusInSegments = 1; // Creates a 3x3 area of chunk columns
-    const int centerSegX = 0;
-    const int centerSegZ = 0;
-    const int minYSegments = 0; // Generate segments at Y=0 and Y=1
-    const int maxYSegments = 1;
-
-    for (int sgX = centerSegX - initialLoadRadiusInSegments; sgX <= centerSegX + initialLoadRadiusInSegments; ++sgX) {
-        for (int sgZ = centerSegZ - initialLoadRadiusInSegments; sgZ <= centerSegZ + initialLoadRadiusInSegments; ++sgZ) {
-            // Ensure the ChunkColumn exists. Assuming getOrCreateChunkColumn takes column indices (which are segment XZ indices)
-            VoxelCastle::World::ChunkColumn* column = worldManager_->getOrCreateChunkColumn(sgX, sgZ);
-            if (!column) {
-                std::cerr << "Failed to get or create chunk column at (" << sgX << ", " << sgZ << ")" << std::endl;
-                continue; // Skip to next column if this one fails
-            }
-            std::cout << "  Processing Chunk Column (" << sgX << ", " << sgZ << ")" << std::endl;
-
-            for (int sgY = minYSegments; sgY <= maxYSegments; ++sgY) {
-                VoxelCastle::World::ChunkSegment* segment = column->getOrCreateSegment(sgY);
-                if (segment) {
-                    // For this initial setup, we always regenerate.
-                    // A more sophisticated check could be segment->isEmpty() or similar.
-                    std::cout << "    Generating segment (" << sgX << ", " << sgY << ", " << sgZ << ")" << std::endl;
-                    worldGenerator_->generateChunkSegment(*segment, sgX, sgY, sgZ);
-                    segment->markDirty(true);
-                    std::cout << "      Segment (" << sgX << ", " << sgY << ", " << sgZ << ") generated and marked dirty." << std::endl;
-                } else {
-                    std::cerr << "    Failed to get or create segment at Y index " << sgY << " for column (" << sgX << ", " << sgZ << ")" << std::endl;
-                }
-            }
-        }
-    }
-    std::cout << "Game::initializeWorldContent() - Initial static world area generation attempt complete." << std::endl;
 }
 
 void Game::processInput() {

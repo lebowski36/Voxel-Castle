@@ -7,8 +7,8 @@
 ## 📝 Open Subtasks
 
 - [x] Extract initialization and shutdown logic into a dedicated `GameInitializer` (or similar) module.
-- [ ] Move input processing (keyboard, mouse, window events) into a new `InputManager` or `GameInput` module. (Implemented; pending user confirmation and testing)
-- [ ] Extract world/segment/chunk generation logic into a `WorldSetup` or `WorldInitializer` module.
+- [x] Move input processing (keyboard, mouse, window events) into a new `InputManager` or `GameInput` module. (User confirmed complete)
+- [x] Extract world/segment/chunk generation logic into a `WorldSetup` or `WorldInitializer` module.
 - [ ] Move mesh rendering and debug rendering logic into a `GameRenderer` or `RenderManager` module.
 - [ ] Refactor the main game loop in `game.cpp` to delegate to the new modules, keeping it concise.
 - [ ] Update header files and includes to support the new structure.
