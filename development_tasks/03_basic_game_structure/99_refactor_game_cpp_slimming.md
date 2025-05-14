@@ -12,7 +12,7 @@
 - [x] Move mesh rendering and debug rendering logic into a `GameRenderer` or `RenderManager` module. (User confirmed complete)
 - [x] Refactor the main game loop in `game.cpp` to delegate to the new modules, keeping it concise. (User confirmed complete)
 - [x] Update header files and includes to support the new structure. (User confirmed complete)
-- [ ] Update any other files that depend on the extracted logic to use the new modules.
+- [x] Update any other files that depend on the extracted logic to use the new modules. (User confirmed complete)
 - [ ] Test thoroughly after each extraction to ensure no regressions.
 - [ ] Document the new structure and update any relevant design docs.
 
