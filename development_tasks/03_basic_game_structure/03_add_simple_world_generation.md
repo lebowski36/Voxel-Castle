@@ -19,11 +19,11 @@ This task focuses on implementing a basic procedural world generation system to 
   - [x] 3.1.3. Implement or integrate a function: `float getNoise(float x, float y, float z)`. (Fulfilled by `smoothValueNoise` in `engine/include/util/noise.h` as of 2025-05-14)
 
 ### 3.2. Map Noise to Voxel Types
-  - [ ] 3.2.1. Decide on a world generation scheme:
+  - [x] 3.2.1. Decide on a world generation scheme:
     - [x] 3.2.1.a. Briefly evaluate a 2D Heightmap approach (Pros: simpler for basic landscapes; Cons: no overhangs/caves). (Evaluated 2025-05-14: Current code in `WorldGenerator.cpp` uses this 2D heightmap approach, suitable for initial simple world. 3D features like overhangs/caves will require a 3D density field approach later.)
-    - [ ] 3.2.1.b. Briefly evaluate a 3D Density Field approach (Pros: allows overhangs/caves; Cons: slightly more complex to map noise to voxels).
-    - [ ] 3.2.1.c. User to decide on the scheme based on this evaluation.
-    - [ ] 3.2.1.d. Document the chosen scheme and reasoning (Decision: [SCHEME_NAME] on YYYY-MM-DD).
+    - [x] 3.2.1.b. Briefly evaluate a 3D Density Field approach (Pros: allows overhangs/caves; Cons: slightly more complex to map noise to voxels). (Evaluated 2025-05-14: Decided against for initial simple world generation due to complexity. Reserved for advanced world generation.)
+    - [x] 3.2.1.c. User to decide on the scheme based on this evaluation. (Decision 2025-05-14: Proceed with 2D Heightmap for simple world generation.)
+    - [x] 3.2.1.d. Document the chosen scheme and reasoning (Decision: 2D Heightmap on 2025-05-14. Rationale: Simplicity for initial implementation, aligns with existing `WorldGenerator.cpp` structure. Provides a foundation for basic terrain. Advanced features like caves, overhangs, and more complex geological formations will be addressed in a dedicated "Advanced World Generation" phase using more sophisticated techniques, potentially including 3D density fields or advanced 2D-to-3D methods.) (Documented 2025-05-14)
   - [ ] 3.2.2. Define thresholds for voxel types (e.g., air, dirt, stone, grass) based on noise value and height.
   - [ ] 3.2.3. Document the mapping logic in this file for future reference.
 
