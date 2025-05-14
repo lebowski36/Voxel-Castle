@@ -167,72 +167,10 @@ void Game::processInput() {
     GameInput::processInput(*this);
 }
 
+// Delegates all per-frame game logic to GameLogic module
+#include "core/GameLogic.h"
 void Game::update(float deltaTime) {
-    // Process mouse look if mouse is captured and there was movement
-    if (mouseCaptured_ && camera_ && (mouseDeltaX_ != 0.0f || mouseDeltaY_ != 0.0f)) {
-        camera_->processMouse(mouseDeltaX_, mouseDeltaY_);
-        // mouseDeltaX_ and mouseDeltaY_ are reset in processInput() each frame before polling
-    }
-
-    // Process keyboard movement for the camera
-    if (camera_) {
-        camera_->processKeyboard(deltaTime, forward_, backward_, left_, right_, up_, down_, speedMultiplier_);
-    }
-
-    // Progress ECS systems
-    if (ecs_) {
-        ecs_->progress(deltaTime); // Pass deltaTime if your system uses it
-    }
-
-    // Update game window (if it has its own update logic, e.g., title, etc.)
-    if (gameWindow_) {
-        gameWindow_->update(); 
-    }
-
-    // --- Game Specific Update Logic ---
-    if (manualVoxelChangeRequested_ && worldManager_) {
-        std::cout << "M key pressed. Inverting checkerboard pattern in segment (0,0,0)..." << std::endl;
-        VoxelCastle::World::ChunkColumn* column = worldManager_->getChunkColumn(0, 0);
-        if (column) {
-            VoxelCastle::World::ChunkSegment* segment = column->getSegmentByIndex(0); // Target the first segment
-            if (segment) {
-                for (uint8_t lsy = 0; lsy < VoxelCastle::World::ChunkSegment::CHUNK_HEIGHT; ++lsy) {
-                    for (uint8_t lsz = 0; lsz < VoxelCastle::World::ChunkSegment::CHUNK_DEPTH; ++lsz) {
-                        for (uint8_t lsx = 0; lsx < VoxelCastle::World::ChunkSegment::CHUNK_WIDTH; ++lsx) {
-                            int_fast64_t worldX = static_cast<int_fast64_t>(lsx);
-                            int_fast64_t worldY = static_cast<int_fast64_t>(lsy);
-                            int_fast64_t worldZ = static_cast<int_fast64_t>(lsz);
-
-                            ::VoxelEngine::World::Voxel currentVoxel = worldManager_->getVoxel(worldX, worldY, worldZ);
-                            ::VoxelEngine::World::VoxelType currentType = static_cast<::VoxelEngine::World::VoxelType>(currentVoxel.id);
-                            ::VoxelEngine::World::VoxelType newType = currentType;
-
-                            if (currentType == static_cast<::VoxelEngine::World::VoxelType>(1)) {
-                                newType = static_cast<::VoxelEngine::World::VoxelType>(2);
-                            } else if (currentType == static_cast<::VoxelEngine::World::VoxelType>(2)) {
-                                newType = static_cast<::VoxelEngine::World::VoxelType>(1);
-                            }
-
-                            if (newType != currentType) {
-                                worldManager_->setVoxel(worldX, worldY, worldZ, newType);
-                            }
-                        } // end lsx loop
-                    } // end lsz loop
-                } // end lsy loop
-                std::cout << "Checkerboard inversion applied. Segment (0,0,0) marked dirty." << std::endl;
-            } else { // else for if (segment)
-                std::cerr << "Error: Could not get segment 0 for inversion." << std::endl;
-            } // end if (segment)
-        } else { // else for if (column)
-            std::cerr << "Error: Could not get chunk column (0,0) for inversion." << std::endl;
-        } // end if (column)
-        manualVoxelChangeRequested_ = false; // Reset the flag
-    } // end if (manualVoxelChangeRequested_ && worldManager_)
-
-    // Update meshes if any segments are dirty
-    if (worldManager_ && textureAtlas_ && meshBuilder_) {
-        worldManager_->updateDirtyMeshes(*textureAtlas_, *meshBuilder_);
-    }
+    GameLogic::update(*this, deltaTime);
 }
 
 void Game::render() {

@@ -10,6 +10,7 @@ add_executable(VoxelFortressGame
     src/core/InputManager.cpp # Added InputManager module
     src/core/WorldSetup.cpp # Added WorldSetup module
     src/core/GameRenderer.cpp # Added GameRenderer module
+    src/core/GameLogic.cpp # Added GameLogic module
     # Example:
     # src/gameplay/player.cpp
     # ...
