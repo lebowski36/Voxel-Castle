@@ -45,8 +45,8 @@ This task focuses on implementing a basic procedural world generation system to 
     ```
 
 ### 3.3. Implement World Generation Logic
-  - [ ] 3.3.1. Add a `WorldGenerator` class or static methods to `WorldManager` (document location/decision).
-  - [ ] 3.3.2. Implement a method to fill a `ChunkSegment` with voxels using the noise function and mapping logic.
+  - [x] 3.3.1. Add a `WorldGenerator` class or static methods to `WorldManager` (or similar central place) to encapsulate generation logic. (Completed 2025-05-14: Fulfilled by the existing `WorldGenerator` class located in `engine/include/world/world_generator.h` and `engine/src/world/world_generator.cpp`, which uses a static method `generateChunkSegment`.)
+  - [ ] 3.3.2. Implement a method to fill a `ChunkSegment` with voxel data based on its world coordinates (e.g., `void fillChunkSegment(ChunkSegment& segment, int segmentWorldX, int segmentWorldY, int segmentWorldZ)`).
   - [ ] 3.3.3. Ensure world generation is triggered for new chunks/segments (e.g., in `WorldManager::getOrCreateChunkColumn`).
 
 ### 3.4. Testing and Visualization
