@@ -40,9 +40,10 @@ namespace VoxelEngine {
              *
              * @param segment The VoxelCastle::World::ChunkSegment to generate the mesh from.
              * @param atlas The VoxelEngine::Rendering::TextureAtlas to use for UV mapping.
+             * @param getVoxel A function to retrieve voxel data given its coordinates.
              * @return A VoxelMesh containing the optimized geometry for the segment.
              */
-            static VoxelMesh buildGreedyMesh(const VoxelCastle::World::ChunkSegment& segment, const TextureAtlas& atlas);
+            static VoxelMesh buildGreedyMesh(const VoxelCastle::World::ChunkSegment& segment, const TextureAtlas& atlas, const std::function<VoxelEngine::World::Voxel(int, int, int)>& getVoxel);
 
         private:
             /**

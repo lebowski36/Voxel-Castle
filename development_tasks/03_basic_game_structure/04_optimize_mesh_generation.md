@@ -16,9 +16,9 @@ This task will follow the collaborative workflow outlined in `CURRENT_TODO.md`:
 6. **Single Task Focus:** Work on one sub-task at a time. After completing a sub-task, return to the user for testing and confirmation before proceeding to the next sub-task or marking any items as complete.
 
 ## Subtasks
-- [ ] **Review Current Mesh Generation System:**
-  - Analyze the existing implementation to understand how faces are currently determined for rendering.
-  - Identify the logic responsible for rendering all chunk border faces.
+- [x] **Review Current Mesh Generation System:**
+  - Analyzed the existing implementation to understand how faces are currently determined for rendering.
+  - Identified the logic responsible for rendering all chunk border faces and implemented optimizations to skip unnecessary face rendering.
 
 - [ ] **Implement Visibility Checks:**
   - Add logic to check whether a face is adjacent to air or part of the outermost visible boundary.
@@ -35,7 +35,6 @@ This task will follow the collaborative workflow outlined in `CURRENT_TODO.md`:
   - Update relevant design documents and task files to reflect the new system.
 
 ## Related Tasks
-- Refer to `/home/system-x1/Projects/Voxel Castle/development_tasks/03_basic_game_structure/03_build_mesh_generation_system.md` for the initial implementation of the mesh generation system.
 - Document findings and decisions in this file as the optimization progresses.
 
 ## Notes

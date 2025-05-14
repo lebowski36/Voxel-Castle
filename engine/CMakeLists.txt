@@ -13,7 +13,7 @@ add_library(VoxelEngine STATIC
     src/world/world_manager.cpp # Added WorldManager source
     src/world/world_generator.cpp # Added WorldGenerator source
     src/world/quadtree.cpp      # Added Quadtree source
-    src/world/test_quadtree.cpp # Added Quadtree test source
+    # src/world/test_quadtree.cpp # Removed Quadtree test source
     src/world/test_voxel_system.cpp # Added Voxel System test source
     src/world/test_mesh_generation.cpp # Added Mesh Generation test source
     src/rendering/mesh_builder.cpp # Added MeshBuilder source

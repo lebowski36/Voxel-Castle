@@ -208,27 +208,27 @@ namespace VoxelEngine {
                         glm::vec3 voxel_world_pos(static_cast<float>(x), static_cast<float>(y), static_cast<float>(z));
 
                         // Check +X neighbor (Right)
-                        if (segment.getVoxel(x + 1, y, z).id == static_cast<uint8_t>(VoxelType::AIR)) {
+                        if (x == segmentWidth - 1 || segment.getVoxel(x + 1, y, z).id == static_cast<uint8_t>(VoxelType::AIR)) {
                             addFace(mesh, voxel_world_pos, right_face_verts, right_normal, currentVoxelEnum, atlas);
                         }
                         // Check -X neighbor (Left)
-                        if (segment.getVoxel(x - 1, y, z).id == static_cast<uint8_t>(VoxelType::AIR)) {
+                        if (x == 0 || segment.getVoxel(x - 1, y, z).id == static_cast<uint8_t>(VoxelType::AIR)) {
                             addFace(mesh, voxel_world_pos, left_face_verts, left_normal, currentVoxelEnum, atlas);
                         }
                         // Check +Y neighbor (Top)
-                        if (segment.getVoxel(x, y + 1, z).id == static_cast<uint8_t>(VoxelType::AIR)) {
+                        if (y == segmentHeight - 1 || segment.getVoxel(x, y + 1, z).id == static_cast<uint8_t>(VoxelType::AIR)) {
                             addFace(mesh, voxel_world_pos, top_face_verts, top_normal, currentVoxelEnum, atlas);
                         }
                         // Check -Y neighbor (Bottom)
-                        if (segment.getVoxel(x, y - 1, z).id == static_cast<uint8_t>(VoxelType::AIR)) {
+                        if (y == 0 || segment.getVoxel(x, y - 1, z).id == static_cast<uint8_t>(VoxelType::AIR)) {
                             addFace(mesh, voxel_world_pos, bottom_face_verts, bottom_normal, currentVoxelEnum, atlas);
                         }
                         // Check +Z neighbor (Front)
-                        if (segment.getVoxel(x, y, z + 1).id == static_cast<uint8_t>(VoxelType::AIR)) {
+                        if (z == segmentDepth - 1 || segment.getVoxel(x, y, z + 1).id == static_cast<uint8_t>(VoxelType::AIR)) {
                             addFace(mesh, voxel_world_pos, front_face_verts, front_normal, currentVoxelEnum, atlas);
                         }
                         // Check -Z neighbor (Back)
-                        if (segment.getVoxel(x, y, z - 1).id == static_cast<uint8_t>(VoxelType::AIR)) {
+                        if (z == 0 || segment.getVoxel(x, y, z - 1).id == static_cast<uint8_t>(VoxelType::AIR)) {
                             addFace(mesh, voxel_world_pos, back_face_verts, back_normal, currentVoxelEnum, atlas);
                         }
                     }
@@ -238,7 +238,7 @@ namespace VoxelEngine {
         }
 
         // Greedy Meshing Implementation
-        VoxelMesh MeshBuilder::buildGreedyMesh(const VoxelCastle::World::ChunkSegment& segment, const TextureAtlas& atlas) { // Added atlas
+        VoxelMesh MeshBuilder::buildGreedyMesh(const VoxelCastle::World::ChunkSegment& segment, const TextureAtlas& atlas, const std::function<VoxelEngine::World::Voxel(int, int, int)>& getVoxel) {
             VoxelMesh mesh;
             mesh.clear();
 
@@ -271,8 +271,8 @@ namespace VoxelEngine {
                             for (x[u] = 0; x[u] < chunk_dims[u]; ++x[u], ++n) {
                                 if (mask[n]) continue;
 
-                                Voxel voxel1 = segment.getVoxel(x[0], x[1], x[2]);
-                                Voxel voxel2 = segment.getVoxel(x[0] + q[0], x[1] + q[1], x[2] + q[2]);
+                                Voxel voxel1 = getVoxel(x[0], x[1], x[2]);
+                                Voxel voxel2 = getVoxel(x[0] + q[0], x[1] + q[1], x[2] + q[2]);
                                 bool is_voxel1_solid = (voxel1.id != static_cast<uint8_t>(VoxelType::AIR));
                                 bool is_voxel2_solid = (voxel2.id != static_cast<uint8_t>(VoxelType::AIR));
 
@@ -286,8 +286,8 @@ namespace VoxelEngine {
                                         int mask_check_idx_h = n + h_quad;
                                         if (mask[mask_check_idx_h]) break;
                                         int cur_coords_u_ext[3] = {x[0], x[1], x[2]}; cur_coords_u_ext[u] += h_quad;
-                                        Voxel v_strip_1 = segment.getVoxel(cur_coords_u_ext[0], cur_coords_u_ext[1], cur_coords_u_ext[2]);
-                                        Voxel v_strip_2 = segment.getVoxel(cur_coords_u_ext[0] + q[0], cur_coords_u_ext[1] + q[1], cur_coords_u_ext[2] + q[2]);
+                                        Voxel v_strip_1 = getVoxel(cur_coords_u_ext[0], cur_coords_u_ext[1], cur_coords_u_ext[2]);
+                                        Voxel v_strip_2 = getVoxel(cur_coords_u_ext[0] + q[0], cur_coords_u_ext[1] + q[1], cur_coords_u_ext[2] + q[2]);
                                         bool v_strip_1_solid = (v_strip_1.id != static_cast<uint8_t>(VoxelType::AIR));
                                         bool v_strip_2_solid = (v_strip_2.id != static_cast<uint8_t>(VoxelType::AIR));
                                         if (!v_strip_1_solid || v_strip_2_solid || static_cast<VoxelType>(v_strip_1.id) != current_face_voxel_type) {
@@ -303,8 +303,8 @@ namespace VoxelEngine {
                                             int mask_check_idx_w = (x[v] + w_quad) * chunk_dims[u] + (x[u] + k_u);
                                             if (mask[mask_check_idx_w]) { done_w = true; break; }
                                             int cur_coords_uv_ext[3] = {x[0], x[1], x[2]}; cur_coords_uv_ext[u] += k_u; cur_coords_uv_ext[v] += w_quad;
-                                            Voxel v_scan_1 = segment.getVoxel(cur_coords_uv_ext[0], cur_coords_uv_ext[1], cur_coords_uv_ext[2]);
-                                            Voxel v_scan_2 = segment.getVoxel(cur_coords_uv_ext[0] + q[0], cur_coords_uv_ext[1] + q[1], cur_coords_uv_ext[2] + q[2]);
+                                            Voxel v_scan_1 = getVoxel(cur_coords_uv_ext[0], cur_coords_uv_ext[1], cur_coords_uv_ext[2]);
+                                            Voxel v_scan_2 = getVoxel(cur_coords_uv_ext[0] + q[0], cur_coords_uv_ext[1] + q[1], cur_coords_uv_ext[2] + q[2]);
                                             bool v_scan_1_solid = (v_scan_1.id != static_cast<uint8_t>(VoxelType::AIR));
                                             bool v_scan_2_solid = (v_scan_2.id != static_cast<uint8_t>(VoxelType::AIR));
                                             if (!v_scan_1_solid || v_scan_2_solid || static_cast<VoxelType>(v_scan_1.id) != current_face_voxel_type) {

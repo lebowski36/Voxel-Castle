@@ -111,7 +111,9 @@ namespace VoxelCastle
                 mMesh = std::make_unique<VoxelEngine::Rendering::VoxelMesh>();
             }
 
-            *mMesh = meshBuilder.buildGreedyMesh(*this, atlas);
+            *mMesh = meshBuilder.buildGreedyMesh(*this, atlas, [this](int x, int y, int z) {
+                return this->getVoxel(x, y, z);
+            });
             mMesh->setInitialized(true);
 
             float segmentWorldX = static_cast<float>(columnWorldX * VoxelCastle::World::ChunkSegment::CHUNK_WIDTH);
