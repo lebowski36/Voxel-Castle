@@ -2,6 +2,7 @@
 #include "../../include/SpectatorCamera.h" // Full definition of SpectatorCamera
 #include "../../include/core/GameInitializer.h"    // Initialization and shutdown helper
 #include "core/WorldSetup.h" // Added for world setup
+#include "core/GameRenderer.h" // Added for rendering logic
 
 // Include headers that will be needed for the actual implementations later
 #include <iostream> 
@@ -235,63 +236,19 @@ void Game::update(float deltaTime) {
 }
 
 void Game::render() {
-    static int frameCounter = 0; // Add a static frame counter
-
     if (!camera_ || !worldManager_ || !meshRenderer_ || !gameWindow_ || !textureAtlas_) {
+        std::cerr << "Game::render - Required components not available." << std::endl;
         return; 
     }
 
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    
-    glm::mat4 view = camera_->getViewMatrix();
-    glm::mat4 proj = camera_->getProjectionMatrix();
-
-    auto meshesToRender = worldManager_->getAllSegmentMeshes();
-    
-    // Frame summary logging - now only every 100 frames
-    if (frameCounter % 100 == 0) { // Check if it's the 100th frame
-        if (!meshesToRender.empty()) {
-            std::set<glm::vec3, Vec3Comparator> uniquePositions;
-            
-            unsigned int meshCount = 0;
-            unsigned int totalVertices = 0;
-            unsigned int totalIndices = 0;
-
-            for (const auto* vMesh : meshesToRender) {
-                if (vMesh && vMesh->isInitialized()) {
-                    meshCount++;
-                    totalVertices += vMesh->getVertexCount();
-                    totalIndices += vMesh->getIndexCount();
-                    uniquePositions.insert(vMesh->getWorldPosition());
-                }
-            }
-
-            std::ostringstream positionsStream;
-            for (const auto& pos : uniquePositions) {
-                positionsStream << "(" << pos.x << "," << pos.y << "," << pos.z << ") ";
-            }
-
-            std::cout << "[Game::render Frame Summary] Frame: " << frameCounter 
-                      << ", Meshes: " << meshCount 
-                      << ", Vertices: " << totalVertices 
-                      << ", Indices: " << totalIndices
-                      << ", Unique Positions: " << uniquePositions.size() << " [" << positionsStream.str() << "]" << std::endl;
-        }
-    }
-
-    frameCounter++; // Increment frame counter
-
-    for (const auto* vMesh : meshesToRender) {
-        if (vMesh && vMesh->isInitialized()) { 
-             meshRenderer_->uploadMesh(*vMesh); 
-             glm::mat4 model = glm::translate(glm::mat4(1.0f), vMesh->getWorldPosition());
-             meshRenderer_->draw(model, view, proj);
-        }
-    }
-    
-    // Debug Atlas Rendering (optional)
-    // VoxelEngine::Rendering::Debug::drawDebugAtlasQuad(textureAtlas_->getTextureID(), screenWidth_, screenHeight_); 
-    // VoxelEngine::Rendering::Debug::drawSingleTileDebugQuad(textureAtlas_->getTextureID(), screenWidth_, screenHeight_);
-
-    gameWindow_->render(); 
+    // Delegate rendering to GameRenderer
+    GameRenderer::renderGame(
+        *camera_,
+        *meshRenderer_,
+        *textureAtlas_,
+        *gameWindow_,
+        worldManager_->getAllSegmentMeshes(),
+        screenWidth_,
+        screenHeight_
+    );
 }
