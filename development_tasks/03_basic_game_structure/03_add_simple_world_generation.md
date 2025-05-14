@@ -63,6 +63,31 @@ This task focuses on implementing and integrating a basic procedural world gener
         - Ensure `worldManager_->renderVisibleMeshes(camera, mainShader);` (or equivalent) is called in `Game::render`.
     - **Verification:** The static world generated in 3.2 should be visible and match the appearance of the screenshot provided (grass, dirt, stone layers based on noise).
 
+### Phase 1.5: Troubleshooting Initial Static World Rendering (Added 2025-05-14)
+
+- [ ] **3.3.1. (Troubleshooting) Temporarily Switch to Wireframe Mode for Diagnosis**
+    - **Status:** TODO
+    - **Goal:** Modify the rendering setup to draw meshes in wireframe mode to determine if the problematic faces (on non-center chunks, specifically two vertical sides) are being generated and sent to the GPU, even if not textured correctly.
+    - **Action:**
+        - In `game/src/core/game.cpp`, locate the OpenGL state setup (likely in `Game::initialize` or before the main render loop in `Game::render`).
+        - Change `glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);` to `glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);`.
+        - Rebuild and run the application.
+    - **Verification:** Observe if the previously untextured/missing faces now appear as wireframes. This will help distinguish between a culling/geometry issue and a texturing/shader issue.
+
+- [ ] **3.3.2. (Troubleshooting) Investigate Missing/Untextured Faces on Non-Center Chunks**
+    - **Status:** TODO
+    - **Goal:** Based on wireframe results from 3.3.1, identify and fix the root cause of why two vertical sides of non-center chunks are not rendering correctly (either missing geometry or missing textures).
+    - **Action (depends on 3.3.1 results):**
+        - **If wireframe shows geometry:** The issue is likely with texturing, UV coordinates, or shader logic for these faces.
+            - Review `MeshBuilder` logic, especially how UVs are generated for faces at chunk boundaries.
+            - Review `WorldGenerator` to ensure voxel data is correct at chunk edges.
+            - Check shader code (`voxel.vert`, `voxel.frag`) for any logic that might discard or incorrectly texture these faces.
+        - **If wireframe also shows missing geometry:** The issue is likely with mesh generation or culling for these faces.
+            - Review `MeshBuilder` face culling logic (is it incorrectly culling exterior faces of these specific chunks?).
+            - Review `WorldManager` or `Chunk` logic related to identifying neighboring chunks for face culling.
+            - Verify that `segment->markDirty(true)` is being called correctly for all generated segments and that `worldManager_->updateDirtyMeshes(...)` is processing them.
+    - **Verification:** The problematic faces should render correctly with textures after the fix.
+
 ### Phase 2: Transition to Dynamic Chunk Loading
 
 - [ ] **3.4. Implement `WorldManager::updateActiveChunks` for Dynamic Loading**

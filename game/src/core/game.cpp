@@ -98,7 +98,7 @@ bool Game::initialize() {
     glCullFace(GL_BACK); 
     glFrontFace(GL_CCW); // Define front faces by counter-clockwise winding order
     // Set filled polygon mode for normal rendering
-    glPolygonMode(GL_FRONT_AND_BACK, GL_FILL); // Restored to FILL
+    glPolygonMode(GL_FRONT_AND_BACK, GL_LINE); // Changed to LINE for troubleshooting
     
     // Debug OpenGL state
     // Properly check if depth test is enabled
