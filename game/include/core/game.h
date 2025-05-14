@@ -45,6 +45,40 @@ public:
     // Shuts down all game systems and cleans up resources.
     void shutdown();
 
+    // --- Public Getters for Core Components and State ---
+    Window* getWindow() { return gameWindow_.get(); }
+    const Window* getWindow() const { return gameWindow_.get(); }
+
+    flecs::world* getECS() { return ecs_.get(); }
+    const flecs::world* getECS() const { return ecs_.get(); }
+
+    VoxelCastle::World::WorldManager* getWorldManager() { return worldManager_.get(); }
+    const VoxelCastle::World::WorldManager* getWorldManager() const { return worldManager_.get(); }
+
+    VoxelEngine::Rendering::TextureAtlas* getTextureAtlas() { return textureAtlas_.get(); }
+    const VoxelEngine::Rendering::TextureAtlas* getTextureAtlas() const { return textureAtlas_.get(); }
+
+    VoxelEngine::Rendering::MeshBuilder* getMeshBuilder() { return meshBuilder_.get(); }
+    const VoxelEngine::Rendering::MeshBuilder* getMeshBuilder() const { return meshBuilder_.get(); }
+
+    SpectatorCamera* getCamera() { return camera_.get(); }
+    const SpectatorCamera* getCamera() const { return camera_.get(); }
+
+    bool isMouseCaptured() const { return mouseCaptured_; }
+    float getMouseDeltaX() const { return mouseDeltaX_; }
+    float getMouseDeltaY() const { return mouseDeltaY_; }
+
+    bool isForward() const { return forward_; }
+    bool isBackward() const { return backward_; }
+    bool isLeft() const { return left_; }
+    bool isRight() const { return right_; }
+    bool isUp() const { return up_; }
+    bool isDown() const { return down_; }
+    float getSpeedMultiplier() const { return speedMultiplier_; }
+
+    bool isManualVoxelChangeRequested() const { return manualVoxelChangeRequested_; }
+    void setManualVoxelChangeRequested(bool v) { manualVoxelChangeRequested_ = v; }
+
 private:
     // Helper method for world initialization
     void initializeWorldContent();
