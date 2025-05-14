@@ -20,7 +20,7 @@ This task focuses on implementing a basic procedural world generation system to 
 
 ### 3.2. Map Noise to Voxel Types
   - [ ] 3.2.1. Decide on a world generation scheme:
-    - [ ] 3.2.1.a. Briefly evaluate a 2D Heightmap approach (Pros: simpler for basic landscapes; Cons: no overhangs/caves).
+    - [x] 3.2.1.a. Briefly evaluate a 2D Heightmap approach (Pros: simpler for basic landscapes; Cons: no overhangs/caves). (Evaluated 2025-05-14: Current code in `WorldGenerator.cpp` uses this 2D heightmap approach, suitable for initial simple world. 3D features like overhangs/caves will require a 3D density field approach later.)
     - [ ] 3.2.1.b. Briefly evaluate a 3D Density Field approach (Pros: allows overhangs/caves; Cons: slightly more complex to map noise to voxels).
     - [ ] 3.2.1.c. User to decide on the scheme based on this evaluation.
     - [ ] 3.2.1.d. Document the chosen scheme and reasoning (Decision: [SCHEME_NAME] on YYYY-MM-DD).
