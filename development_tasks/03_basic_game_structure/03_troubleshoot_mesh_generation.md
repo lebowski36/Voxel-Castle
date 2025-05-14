@@ -14,15 +14,29 @@ The goal is to identify the root cause (suspected to be in the greedy meshing lo
 
 ## Problem Summary
 
-- **Symptoms:**
+**Symptoms:**
     - Only some vertical faces (+X, -X, +Z, -Z) are missing in outer chunks.
     - The center chunk renders all faces correctly.
     - The issue is not limited to chunk/world borders; it also occurs for voxels inside the chunk boundaries of outer chunks.
     - Top and bottom faces are always present, so Y face logic is likely correct.
-- **Suspected Areas:**
-    - Greedy meshing logic (mask usage, neighbor checks, off-by-one errors)
-    - Neighbor voxel checks (local vs. world coordinates)
+    - **Key new observation:** Whenever a vertical face is missing, there is always another face parallel to it (on the same axis and height), possibly many blocks away, and never a missing face unless there is a parallel face behind it. This suggests the greedy meshing mask or expansion logic is incorrectly merging or marking faces across air blocks, not just adjacent solids.
+**Suspected Areas:**
+    - Greedy meshing logic (mask usage, especially mask marking and expansion logic)
     - Mask indexing (incorrect marking or usage)
+    - Neighbor voxel checks (local vs. world coordinates)
+
+---
+
+## Findings and Hypotheses
+
+- The pattern of missing faces always having a parallel face behind theMask Indexing: If the mask is marked for a larger area than intended, or if the mask index calculation is off, it could cause faces to be skipped in the interior of a chunk.
+Neighbor Check: If the neighbor check uses local coordinates but should use world coordinates (or vice versa), it may incorrectly think a neighbor is solid/air.
+Off-by-One in Loops: If the greedy expansion or main loop is off by one, it could skip faces at the start or end of a strip.
+m (even many blocks away) strongly suggests a mask marking or greedy expansion bug: the mask is being set for a region that includes both the visible face and the parallel face, even if there is air in between. This causes the second face to be skipped, as the mask is already set from the first, distant face.
+- The mask or expansion logic is likely not properly constrained to contiguous, adjacent, same-type, visible faces, and may be skipping over air blocks when merging faces or marking the mask.
+- This is not a neighbor check or chunk boundary issue, but a classic greedy meshing mask overlap/expansion bug.
+
+---
 
 ---
 
@@ -62,15 +76,16 @@ The goal is to identify the root cause (suspected to be in the greedy meshing lo
 
 ## Next Steps
 
-1. **Begin with Neighbor Check Logic:**
-    - Review and document findings.
-    - If an issue is found, attempt a fix and test.
-2. **Proceed to Off-by-One Errors:**
-    - Review and document findings.
-    - If an issue is found, attempt a fix and test.
-3. **Finally, Check Mask Indexing:**
-    - Review and document findings.
-    - If an issue is found, attempt a fix and test.
+1. **Neighbor Check Logic:**
+    - Confirmed that `ChunkSegment::getVoxel` returns AIR for out-of-bounds, so neighbor checks at chunk boundaries are correct for single-chunk meshing. No issues found here.
+2. **Off-by-One Errors in Loops:**
+    - **Next step:** Review all for-loops and greedy expansion logic for off-by-one errors, especially in the greedy expansion and mask marking. Focus on whether the expansion or mask marking is skipping over air or merging non-contiguous faces.
+3. **Mask Indexing:**
+    - To be reviewed after loop/expansion logic if needed.
+
+---
+
+**Next action:** Begin detailed review of greedy expansion and mask marking logic for off-by-one errors and improper merging across air blocks.
 
 ---
 
