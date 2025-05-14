@@ -110,8 +110,15 @@ namespace World {
          *
          * @param atlas The texture atlas to use for UV mapping of voxel faces.
          * @param meshBuilder The mesh builder instance used to construct the mesh geometry.
+         * @param columnWorldX The world X-coordinate of the chunk column this segment belongs to.
+         * @param segmentYIndex The Y-index of this segment within its column.
+         * @param columnWorldZ The world Z-coordinate of the chunk column this segment belongs to.
          */
-        void rebuildMesh(VoxelEngine::Rendering::TextureAtlas& atlas, VoxelEngine::Rendering::MeshBuilder& meshBuilder);
+        void rebuildMesh(VoxelEngine::Rendering::TextureAtlas& atlas, 
+                         VoxelEngine::Rendering::MeshBuilder& meshBuilder,
+                         int_fast64_t columnWorldX,
+                         int_fast32_t segmentYIndex,
+                         int_fast64_t columnWorldZ);
 
         /**
          * @brief Gets a pointer to the generated mesh.

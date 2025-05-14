@@ -102,7 +102,8 @@ void WorldManager::updateDirtyMeshes(VoxelEngine::Rendering::TextureAtlas& atlas
             for (uint8_t i = 0; i < VoxelCastle::World::ChunkColumn::CHUNKS_PER_COLUMN; ++i) {
                 VoxelCastle::World::ChunkSegment* segment = columnPtr->getSegmentByIndex(i);
                 if (segment && segment->isDirty()) {
-                    segment->rebuildMesh(atlas, meshBuilder);
+                    // Pass the column's world X and Z coordinates, and the segment's Y index
+                    segment->rebuildMesh(atlas, meshBuilder, columnPtr->getBaseX(), i, columnPtr->getBaseZ());
                 }
             }
         }

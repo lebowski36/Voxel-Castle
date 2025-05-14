@@ -3,6 +3,7 @@
 #include <memory> // For std::unique_ptr
 #include <string> // For std::string (project root)
 #include <chrono> // For std::chrono::steady_clock::time_point
+#include <glm/glm.hpp> // For glm::vec3
 
 #include "../SpectatorCamera.h" // Include the full definition of SpectatorCamera
 
@@ -18,6 +19,16 @@ namespace VoxelEngine {
         class MeshRenderer;
     }
 }
+
+// Custom comparator for glm::vec3 to be used in std::set
+// Placed here to be available to the Game class and its methods if needed elsewhere
+struct Vec3Comparator {
+    bool operator()(const glm::vec3& a, const glm::vec3& b) const {
+        if (a.x != b.x) return a.x < b.x;
+        if (a.y != b.y) return a.y < b.y;
+        return a.z < b.z;
+    }
+};
 
 class Game {
 public:

@@ -78,22 +78,38 @@ namespace VoxelCastle
          *
          * @param atlas The `TextureAtlas` containing texture information for different voxel types.
          * @param meshBuilder The `MeshBuilder` responsible for generating the mesh vertices and indices.
+         * @param columnWorldX The world X-coordinate of the chunk column this segment belongs to.
+         * @param segmentYIndex The Y-index of this segment within its column.
+         * @param columnWorldZ The world Z-coordinate of the chunk column this segment belongs to.
          */
-        void ChunkSegment::rebuildMesh(VoxelEngine::Rendering::TextureAtlas& atlas, VoxelEngine::Rendering::MeshBuilder& meshBuilder) {
+        void ChunkSegment::rebuildMesh(VoxelEngine::Rendering::TextureAtlas& atlas, 
+                                       VoxelEngine::Rendering::MeshBuilder& meshBuilder,
+                                       int_fast64_t columnWorldX,
+                                       int_fast32_t segmentYIndex,
+                                       int_fast64_t columnWorldZ) {
             auto startTime = std::chrono::high_resolution_clock::now();
 
             if (!mMesh) {
                 mMesh = std::make_unique<VoxelEngine::Rendering::VoxelMesh>();
             }
-            // For now, let's use Greedy Meshing as it's the more advanced one we have.
-            // If issues arise, we can switch to buildNaiveMesh for simpler debugging.
+            
             *mMesh = meshBuilder.buildGreedyMesh(*this, atlas);
-            mMesh->setInitialized(true); // Mark mesh as initialized for rendering
-            // Potentially, MeshBuilder methods could take a VoxelMesh& to fill directly
-            // instead of returning by value, to avoid a copy if VoxelMesh is large.
-            // For now, the assignment from the returned VoxelMesh is fine.
+            mMesh->setInitialized(true); 
 
-            markDirty(false); // Mesh is now up-to-date
+            // Calculate and set the world position for this mesh
+            float segmentWorldX = static_cast<float>(columnWorldX); // SEGMENT_WIDTH is implicitly handled by columnWorldX being the base
+            float segmentWorldY = static_cast<float>(segmentYIndex * SEGMENT_HEIGHT);
+            float segmentWorldZ = static_cast<float>(columnWorldZ); // SEGMENT_DEPTH is implicitly handled by columnWorldZ being the base
+
+            // DEBUG: Print out the inputs and calculated world position
+            std::cout << "[ChunkSegment::rebuildMesh] Debug Info:" << std::endl;
+            std::cout << "  Indices: colX=" << columnWorldX << ", segY=" << segmentYIndex << ", colZ=" << columnWorldZ << std::endl;
+            std::cout << "  SegmentDims: W=" << SEGMENT_WIDTH << ", H=" << SEGMENT_HEIGHT << ", D=" << SEGMENT_DEPTH << std::endl;
+            std::cout << "  Calculated World Pos: (" << segmentWorldX << ", " << segmentWorldY << ", " << segmentWorldZ << ")" << std::endl;
+
+            mMesh->setWorldPosition(glm::vec3(segmentWorldX, segmentWorldY, segmentWorldZ));
+
+            markDirty(false); 
 
             auto endTime = std::chrono::high_resolution_clock::now();
             auto duration = std::chrono::duration_cast<std::chrono::microseconds>(endTime - startTime);

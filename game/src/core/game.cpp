@@ -8,6 +8,8 @@
 #include <fstream> // For potential use in migrated logic
 #include <sstream> // For potential use in migrated logic
 #include <chrono> // For std::chrono for timing
+#include <set> // Required for std::set
+#include <algorithm> // For std::min/max (potentially useful, good to have)
 
 // SDL for events, window relative mouse mode
 #include <SDL3/SDL.h>
@@ -18,11 +20,10 @@
 // GLM for math types (will be used by camera, etc.)
 #define GLM_FORCE_SILENT_WARNINGS
 #define GLM_ENABLE_EXPERIMENTAL
-#include <glm/glm.hpp>
+// #include <glm/glm.hpp> // Already included via game.h or other headers like SpectatorCamera.h
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 #include <glm/gtx/string_cast.hpp>
-
 
 // Forward declared class implementations (will be needed when unique_ptrs are initialized)
 #include "platform/Window.h" 
@@ -39,11 +40,9 @@
 #include "ecs/components/renderable_component.h"
 #include "ecs/systems/movement_system.h"
 
-
 // Debug utilities (will be needed for setup/cleanup)
 #include "rendering/debug_utils.h"
 #include "rendering/render_utils.h"
-
 
 Game::Game() 
     : gameWindow_(nullptr),
@@ -501,23 +500,56 @@ void Game::update(float deltaTime) {
 }
 
 void Game::render() {
+    static int frameCounter = 0; // Add a static frame counter
+
     if (!camera_ || !worldManager_ || !meshRenderer_ || !gameWindow_ || !textureAtlas_) {
-        // std::cerr << "Game::render() - Skipping render due to null core components." << std::endl;
-        return; // Avoid dereferencing null pointers
+        return; 
     }
 
-    // --- Rendering ---
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     
     glm::mat4 view = camera_->getViewMatrix();
     glm::mat4 proj = camera_->getProjectionMatrix();
-    glm::mat4 model = glm::mat4(1.0f); // Model matrix for meshes (identity, as positions are world coords)
 
-    // Render all segment meshes
     auto meshesToRender = worldManager_->getAllSegmentMeshes();
+    
+    // Frame summary logging - now only every 100 frames
+    if (frameCounter % 100 == 0) { // Check if it's the 100th frame
+        if (!meshesToRender.empty()) {
+            std::set<glm::vec3, Vec3Comparator> uniquePositions;
+            
+            unsigned int meshCount = 0;
+            unsigned int totalVertices = 0;
+            unsigned int totalIndices = 0;
+
+            for (const auto* vMesh : meshesToRender) {
+                if (vMesh && vMesh->isInitialized()) {
+                    meshCount++;
+                    totalVertices += vMesh->getVertexCount();
+                    totalIndices += vMesh->getIndexCount();
+                    uniquePositions.insert(vMesh->getWorldPosition());
+                }
+            }
+
+            std::ostringstream positionsStream;
+            for (const auto& pos : uniquePositions) {
+                positionsStream << "(" << pos.x << "," << pos.y << "," << pos.z << ") ";
+            }
+
+            std::cout << "[Game::render Frame Summary] Frame: " << frameCounter 
+                      << ", Meshes: " << meshCount 
+                      << ", Vertices: " << totalVertices 
+                      << ", Indices: " << totalIndices
+                      << ", Unique Positions: " << uniquePositions.size() << " [" << positionsStream.str() << "]" << std::endl;
+        }
+    }
+
+    frameCounter++; // Increment frame counter
+
     for (const auto* vMesh : meshesToRender) {
-        if (vMesh && vMesh->isInitialized()) { // Ensure mesh is not null and VAO is valid
-             meshRenderer_->uploadMesh(*vMesh); // Re-upload mesh data (can be optimized if VAO/VBOs are persistent and only uniforms change)
+        if (vMesh && vMesh->isInitialized()) { 
+             meshRenderer_->uploadMesh(*vMesh); 
+             glm::mat4 model = glm::translate(glm::mat4(1.0f), vMesh->getWorldPosition());
              meshRenderer_->draw(model, view, proj);
         }
     }
@@ -526,5 +558,5 @@ void Game::render() {
     // VoxelEngine::Rendering::Debug::drawDebugAtlasQuad(textureAtlas_->getTextureID(), screenWidth_, screenHeight_); 
     // VoxelEngine::Rendering::Debug::drawSingleTileDebugQuad(textureAtlas_->getTextureID(), screenWidth_, screenHeight_);
 
-    gameWindow_->render(); // Swaps buffers
+    gameWindow_->render(); 
 }

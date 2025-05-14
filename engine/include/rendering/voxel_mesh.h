@@ -44,6 +44,7 @@ namespace VoxelEngine {
         struct VoxelMesh {
             std::vector<Vertex> vertices;       ///< List of vertices in the mesh.
             std::vector<uint32_t> indices;      ///< List of indices defining triangles (e.g., for GL_TRIANGLES).
+            glm::vec3 worldPosition_ = glm::vec3(0.0f); ///< World position of the mesh's origin.
             bool initialized_ = false;          ///< True if the mesh has been initialized with data.
 
             /**
@@ -53,6 +54,7 @@ namespace VoxelEngine {
             void clear() {
                 vertices.clear();
                 indices.clear();
+                worldPosition_ = glm::vec3(0.0f); // Reset world position on clear
                 initialized_ = false;
             }
 
@@ -80,6 +82,22 @@ namespace VoxelEngine {
              */
             void setInitialized(bool initialized) {
                 initialized_ = initialized;
+            }
+
+            /**
+             * @brief Sets the world position of the mesh's origin.
+             * @param position The world coordinates of the origin.
+             */
+            void setWorldPosition(const glm::vec3& position) {
+                worldPosition_ = position;
+            }
+
+            /**
+             * @brief Gets the world position of the mesh's origin.
+             * @return The world coordinates of the origin.
+             */
+            glm::vec3 getWorldPosition() const {
+                return worldPosition_;
             }
 
             /**
