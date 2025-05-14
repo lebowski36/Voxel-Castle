@@ -41,18 +41,21 @@ namespace VoxelEngine {
     uint32_t base_index = static_cast<uint32_t>(mesh.vertices.size());
 
     TextureCoordinates texCoords = atlas.getTextureCoordinates(voxelType);
-    glm::vec2 uvs_for_current_face[4];
+    glm::vec2 atlas_origin_uv = texCoords.getBottomLeft(); // This is the v_atlas_tile_origin_uv
 
-    // Standard UV mapping for BL, BR, TR, TL vertex order
-    uvs_for_current_face[0] = texCoords.getBottomLeft();
-    uvs_for_current_face[1] = texCoords.getBottomRight();
-    uvs_for_current_face[2] = texCoords.getTopRight();
-    uvs_for_current_face[3] = texCoords.getTopLeft();
+    // quad_uv for a single face (non-greedy) will always be 0-1 range
+    glm::vec2 quad_uvs[4];
+    quad_uvs[0] = glm::vec2(0.0f, 0.0f); // Bottom-Left
+    quad_uvs[1] = glm::vec2(1.0f, 0.0f); // Bottom-Right
+    quad_uvs[2] = glm::vec2(1.0f, 1.0f); // Top-Right
+    quad_uvs[3] = glm::vec2(0.0f, 1.0f); // Top-Left
 
-    // The debug color logic is removed. We now use actual UVs.
     // The 'light' component is set to 1.0f for now.
+    // Note: The order of face_vertices (BL, BR, TR, TL) must match the quad_uvs order.
     for (int i = 0; i < 4; ++i) {
-        mesh.vertices.emplace_back(voxel_pos + face_vertices[i], normal, uvs_for_current_face[i], 1.0f);
+        // The old texCoords (uvs_for_current_face[i]) are no longer directly used here.
+        // Instead, we pass quad_uvs[i] and atlas_origin_uv.
+        mesh.vertices.emplace_back(voxel_pos + face_vertices[i], normal, quad_uvs[i], atlas_origin_uv, 1.0f);
     }
 
     mesh.indices.push_back(base_index);
@@ -83,29 +86,41 @@ namespace VoxelEngine {
          * @param normal The normal vector for this quad.
          * @param voxelType The type of the voxel, used to determine texture coordinates from the atlas.
          * @param atlas The TextureAtlas providing texture coordinates for different voxel types.
+         * @param quad_width_voxels The width of the quad in voxel units.
+         * @param quad_height_voxels The height of the quad in voxel units.
          */
         void MeshBuilder::addQuad(VoxelMesh& mesh,
                                   const ::VoxelEngine::World::VoxelPosition& p1, const ::VoxelEngine::World::VoxelPosition& p2,
                                   const ::VoxelEngine::World::VoxelPosition& p3, const ::VoxelEngine::World::VoxelPosition& p4,
                                   const ::VoxelEngine::World::Normal& normal,
                                   ::VoxelEngine::World::VoxelType voxelType,
-                                  const TextureAtlas& atlas) { // Added TextureAtlas parameter
+                                  const TextureAtlas& atlas,
+                                  int quad_width_voxels, 
+                                  int quad_height_voxels) {
 
     uint32_t base_index = static_cast<uint32_t>(mesh.vertices.size());
 
-    // For now, just use max light for demonstration (later: sample from voxel)
-    float light = 1.0f;
+    float light = 1.0f; // For now, just use max light
     TextureCoordinates texCoords = atlas.getTextureCoordinates(voxelType);
+    glm::vec2 atlas_origin_uv = texCoords.getBottomLeft(); // This is v_atlas_tile_origin_uv
 
-    // UVs for a quad, assuming p1=BL, p2=BR, p3=TR, p4=TL (if looking at front face)
-    // This needs to be consistent with how quads are defined and how UVs are expected.
+    // quad_uvs are now 0-W and 0-H
+    glm::vec2 quad_uvs[4];
+    // Assuming p1=BL, p2=BR, p3=TR, p4=TL for the quad definition
+    // This needs to be consistent with how h_quad and w_quad are passed from buildGreedyMesh
+    // and how they relate to the U and V directions of the texture on the quad.
+    // If p1,p2,p3,p4 correspond to visual BL, BR, TR, TL of the quad on screen:
+    quad_uvs[0] = glm::vec2(0.0f, 0.0f);
+    quad_uvs[1] = glm::vec2(static_cast<float>(quad_width_voxels), 0.0f);
+    quad_uvs[2] = glm::vec2(static_cast<float>(quad_width_voxels), static_cast<float>(quad_height_voxels));
+    quad_uvs[3] = glm::vec2(0.0f, static_cast<float>(quad_height_voxels));
 
-    mesh.vertices.emplace_back(p1, normal, texCoords.getBottomLeft(), light);   // p1 -> Bottom-Left UV
-    mesh.vertices.emplace_back(p2, normal, texCoords.getBottomRight(), light);  // p2 -> Bottom-Right UV
-    mesh.vertices.emplace_back(p3, normal, texCoords.getTopRight(), light);     // p3 -> Top-Right UV
-    mesh.vertices.emplace_back(p4, normal, texCoords.getTopLeft(), light);      // p4 -> Top-Left UV
+    mesh.vertices.emplace_back(p1, normal, quad_uvs[0], atlas_origin_uv, light);
+    mesh.vertices.emplace_back(p2, normal, quad_uvs[1], atlas_origin_uv, light);
+    mesh.vertices.emplace_back(p3, normal, quad_uvs[2], atlas_origin_uv, light);
+    mesh.vertices.emplace_back(p4, normal, quad_uvs[3], atlas_origin_uv, light);
 
-    // Standard quad triangulation (ensure CCW winding order as seen from the direction of the normal)
+    // Standard quad triangulation (ensure CCW winding order as seen from the direction of the normal for front faces)
     mesh.indices.push_back(base_index);     // p1
     mesh.indices.push_back(base_index + 1); // p2
     mesh.indices.push_back(base_index + 2); // p3
@@ -325,10 +340,10 @@ namespace VoxelEngine {
                                     normal_val.y = static_cast<float>(q[1]);
                                     normal_val.z = static_cast<float>(q[2]);
                                     
-                                    if (dir > 0) {
-                                        addQuad(mesh, ovp1, ovp4, ovp3, ovp2, normal_val, current_face_voxel_type, atlas);
-                                    } else {
-                                        addQuad(mesh, ovp1, ovp2, ovp3, ovp4, normal_val, current_face_voxel_type, atlas);
+                                    if (dir > 0) { // Front face, normal along +d. Quad U -> h_quad, Quad V -> w_quad
+                                        addQuad(mesh, ovp1, ovp4, ovp3, ovp2, normal_val, current_face_voxel_type, atlas, h_quad, w_quad);
+                                    } else { // Back face, normal along -d. Quad U -> w_quad, Quad V -> h_quad
+                                        addQuad(mesh, ovp1, ovp2, ovp3, ovp4, normal_val, current_face_voxel_type, atlas, w_quad, h_quad);
                                     }
 
                                     // Mark mask

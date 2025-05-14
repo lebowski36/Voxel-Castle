@@ -1,4 +1,5 @@
 #include "rendering/mesh_renderer.h"
+#include "rendering/texture_atlas.h" // Added to access TILE_UV_WIDTH and TILE_UV_HEIGHT
 #include <fstream>
 #include <sstream>
 #include <iostream>
@@ -138,9 +139,11 @@ void MeshRenderer::uploadMesh(const VoxelMesh& mesh) {
     glEnableVertexAttribArray(1); 
     glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(VoxelEngine::Rendering::Vertex), (void*)offsetof(VoxelEngine::Rendering::Vertex, normal));
     glEnableVertexAttribArray(2); 
-    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(VoxelEngine::Rendering::Vertex), (void*)offsetof(VoxelEngine::Rendering::Vertex, texCoords));
+    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(VoxelEngine::Rendering::Vertex), (void*)offsetof(VoxelEngine::Rendering::Vertex, quad_uv));
     glEnableVertexAttribArray(3); 
-    glVertexAttribPointer(3, 1, GL_FLOAT, GL_FALSE, sizeof(VoxelEngine::Rendering::Vertex), (void*)offsetof(VoxelEngine::Rendering::Vertex, light));
+    glVertexAttribPointer(3, 2, GL_FLOAT, GL_FALSE, sizeof(VoxelEngine::Rendering::Vertex), (void*)offsetof(VoxelEngine::Rendering::Vertex, atlas_tile_origin_uv));
+    glEnableVertexAttribArray(4); 
+    glVertexAttribPointer(4, 1, GL_FLOAT, GL_FALSE, sizeof(VoxelEngine::Rendering::Vertex), (void*)offsetof(VoxelEngine::Rendering::Vertex, light));
     err = glGetError(); 
     if (err != GL_NO_ERROR) {
         std::cerr << "[MeshRenderer::uploadMesh] OpenGL error 0x" << std::hex << err << std::dec << " after glVertexAttribPointer setup." << std::endl;
@@ -225,6 +228,26 @@ void MeshRenderer::draw(const glm::mat4& model, const glm::mat4& view, const glm
     if (err != GL_NO_ERROR) {
         std::cerr << "[MeshRenderer::draw] OpenGL error 0x" << std::hex << err << std::dec << " after glUseProgram." << std::endl;
         return;
+    }
+
+    // Set u_tile_uv_span uniform
+    GLint tileUVSpanLoc = glGetUniformLocation(shaderProgram, "u_tile_uv_span");
+    err = glGetError();
+    if (err != GL_NO_ERROR) {
+        std::cerr << "[MeshRenderer::draw] OpenGL error 0x" << std::hex << err << std::dec << " after glGetUniformLocation for u_tile_uv_span." << std::endl;
+    }
+    if (tileUVSpanLoc != -1) {
+        glUniform2f(tileUVSpanLoc, VoxelEngine::Rendering::TILE_UV_WIDTH, VoxelEngine::Rendering::TILE_UV_HEIGHT);
+        err = glGetError();
+        if (err != GL_NO_ERROR) {
+            std::cerr << "[MeshRenderer::draw] OpenGL error 0x" << std::hex << err << std::dec << " after glUniform2f for u_tile_uv_span." << std::endl;
+        }
+    } else {
+        static bool tileUVSpanWarningLogged = false;
+        if (!tileUVSpanWarningLogged) {
+            std::cerr << "[MeshRenderer::draw] Warning (logged once): u_tile_uv_span uniform not found. Shader Program ID: " << shaderProgram << ". Tiling will not work correctly." << std::endl;
+            tileUVSpanWarningLogged = true;
+        }
     }
 
     // Activate texture unit 0 and bind our texture
@@ -439,8 +462,8 @@ bool MeshRenderer::loadTexture(const std::string& path) {
     glBindTexture(GL_TEXTURE_2D, textureAtlasID);
 
     // Set texture filtering and wrapping parameters for pixel art / texture atlases
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT); // Changed from GL_CLAMP_TO_EDGE
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT); // Changed from GL_CLAMP_TO_EDGE
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 

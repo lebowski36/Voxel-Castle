@@ -10,13 +10,13 @@ namespace VoxelEngine {
 namespace Rendering {
 
 // Assuming a 256x256 texture atlas with 16x16 pixel tiles.
-const float ATLAS_WIDTH_PX = 256.0f; // Corrected: 16 tiles * 16px/tile = 256px
-const float ATLAS_HEIGHT_PX = 256.0f;  // Corrected: 16 rows * 16px/tile = 256px
-const float TILE_WIDTH_PX = 16.0f;
-const float TILE_HEIGHT_PX = 16.0f;
+inline constexpr float ATLAS_WIDTH_PX = 256.0f;
+inline constexpr float ATLAS_HEIGHT_PX = 256.0f;
+inline constexpr float TILE_WIDTH_PX = 16.0f;
+inline constexpr float TILE_HEIGHT_PX = 16.0f;
 
-const float TILE_UV_WIDTH = TILE_WIDTH_PX / ATLAS_WIDTH_PX;
-const float TILE_UV_HEIGHT = TILE_HEIGHT_PX / ATLAS_HEIGHT_PX;
+inline constexpr float TILE_UV_WIDTH = TILE_WIDTH_PX / ATLAS_WIDTH_PX;
+inline constexpr float TILE_UV_HEIGHT = TILE_HEIGHT_PX / ATLAS_HEIGHT_PX;
 
 struct TextureCoordinates {
     glm::vec2 uv_min; // Bottom-left

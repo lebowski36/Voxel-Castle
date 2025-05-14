@@ -78,13 +78,18 @@ namespace VoxelEngine {
              * @param normal The normal vector for this quad.
              * @param voxelType The VoxelEngine::World::VoxelType of the original voxels forming this quad, used for texture lookup.
              * @param atlas The VoxelEngine::Rendering::TextureAtlas used to get UV coordinates.
+             * @param quad_width_voxels Width of the quad in voxel units.
+             * @param quad_height_voxels Height of the quad in voxel units.
              */
             static void addQuad(VoxelMesh& mesh,
                                 const ::VoxelEngine::World::VoxelPosition& p1, const ::VoxelEngine::World::VoxelPosition& p2,
                                 const ::VoxelEngine::World::VoxelPosition& p3, const ::VoxelEngine::World::VoxelPosition& p4,
                                 const ::VoxelEngine::World::Normal& normal,
                                 ::VoxelEngine::World::VoxelType voxelType,
-                                const TextureAtlas& atlas);
+                                const TextureAtlas& atlas,
+                                int quad_width_voxels, // Added: Width of the quad in voxel units
+                                int quad_height_voxels // Added: Height of the quad in voxel units
+                                );
         };
 
     } // namespace Rendering
