@@ -108,16 +108,14 @@ void renderGame(
                     // A more sophisticated approach would align text with face normals and billboard appropriately.
                     
                     // Text color (e.g., white, or a contrasting color)
-                    glm::vec3 textColor(1.0f, 1.0f, 1.0f);
-                    float scale = 0.005f; // Adjust as needed
+                    glm::vec3 textColor(0.0f, 0.0f, 0.0f); // Changed to black
+                    float scale = 0.005f; // Adjusted scale
 
-                    // The textInfo.worldPosition is the center of the face.
-                    // We might need to adjust it slightly to be "on top" of the face.
-                    // This depends on how depth testing is handled for text.
-                    // For now, render directly at textInfo.worldPosition.
+                    glm::vec3 textPosition = textInfo.worldPosition + textInfo.faceNormal * offsetAmount;
+
                     textRenderer.renderText3D(
                         textInfo.text,
-                        textInfo.worldPosition, // World position of the text (Corrected from textInfo.position)
+                        textPosition, // Use offset position
                         scale,
                         textColor,
                         view,

@@ -145,38 +145,71 @@ void TextRenderer::renderText3D(const std::string& text,
     glBindTexture(GL_TEXTURE_2D, fontManager_->getAtlasTextureID());
     textShader_->setInt("textAtlas", 0);
 
-    glBindVertexArray(VAO_);
+    // OpenGL state for text rendering - Save current state
+    GLboolean last_enable_blend = glIsEnabled(GL_BLEND);
+    GLboolean last_enable_cull_face = glIsEnabled(GL_CULL_FACE);
+    GLboolean last_enable_depth_test = glIsEnabled(GL_DEPTH_TEST);
+    GLint last_blend_src_rgb, last_blend_dst_rgb, last_blend_src_alpha, last_blend_dst_alpha;
+    glGetIntegerv(GL_BLEND_SRC_RGB, &last_blend_src_rgb);
+    glGetIntegerv(GL_BLEND_DST_RGB, &last_blend_dst_rgb);
+    glGetIntegerv(GL_BLEND_SRC_ALPHA, &last_blend_src_alpha);
+    glGetIntegerv(GL_BLEND_DST_ALPHA, &last_blend_dst_alpha);
+    GLboolean last_depth_mask;
+    glGetBooleanv(GL_DEPTH_WRITEMASK, &last_depth_mask);
 
-    float currentOffsetX = 0.0f;
-    float fontScale = scale / fontManager_->getFontSize(); // Normalize scale based on font size
+    // Apply text rendering states
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    if (last_enable_cull_face) glDisable(GL_CULL_FACE); 
+    // if (last_enable_depth_test) glDisable(GL_DEPTH_TEST); // Keep depth test enabled for 3D
+    glDepthMask(GL_FALSE); // Don't write to depth buffer, but still test against it
+
+    glBindVertexArray(VAO_);
 
     std::vector<TextVertex> vertices;
     vertices.reserve(text.length() * 6);
+    float currentOffsetX = 0.0f;
 
     for (char c : text) {
         const CharacterInfo& ch = fontManager_->getCharacter(c);
 
-        float x_offset = ch.bearing.x * fontScale;
-        float y_offset = (ch.bearing.y - ch.size.y) * fontScale; // Adjust for baseline, characters drawn above baseline
+        // Local quad coordinates (before billboarding rotation and world translation)
+        float x_local = currentOffsetX + ch.bearing.x * scale;
+        float y_local = (ch.bearing.y - ch.size.y) * scale; // Y position of the bottom-left corner
+        float w_local = ch.size.x * scale;
+        float h_local = ch.size.y * scale;
 
-        float w = ch.size.x * fontScale;
-        float h = ch.size.y * fontScale;
+        // Define 2D local quad vertices
+        glm::vec2 bl_local = glm::vec2(x_local, y_local);
+        glm::vec2 tl_local = glm::vec2(x_local, y_local + h_local);
+        glm::vec2 br_local = glm::vec2(x_local + w_local, y_local);
+        glm::vec2 tr_local = glm::vec2(x_local + w_local, y_local + h_local);
 
-        glm::vec3 v_bl = position + (currentOffsetX + x_offset) * cameraRight + y_offset * cameraUp; // Bottom-left
-        glm::vec3 v_tl = position + (currentOffsetX + x_offset) * cameraRight + (y_offset + h) * cameraUp; // Top-left
-        glm::vec3 v_br = position + (currentOffsetX + x_offset + w) * cameraRight + y_offset * cameraUp; // Bottom-right
-        glm::vec3 v_tr = position + (currentOffsetX + x_offset + w) * cameraRight + (y_offset + h) * cameraUp; // Top-right
+        // Add to vertex buffer - these are local 2D coordinates for the shader
+        vertices.push_back({tl_local, {ch.uv_y0.x, ch.uv_y0.y}}); // Top-left
+        vertices.push_back({bl_local, {ch.uv_x0.x, ch.uv_x0.y}}); // Bottom-left
+        vertices.push_back({br_local, {ch.uv_y1.x, ch.uv_y1.y}}); // Bottom-right
 
-        vertices.push_back({glm::vec2(v_tl.x, v_tl.y), {ch.uv_y0.x, ch.uv_y0.y}});
-        vertices.push_back({glm::vec2(v_bl.x, v_bl.y), {ch.uv_x0.x, ch.uv_x0.y}});
-        vertices.push_back({glm::vec2(v_br.x, v_br.y), {ch.uv_y1.x, ch.uv_y1.y}});
-
-        vertices.push_back({glm::vec2(v_tl.x, v_tl.y), {ch.uv_y0.x, ch.uv_y0.y}});
-        vertices.push_back({glm::vec2(v_br.x, v_br.y), {ch.uv_y1.x, ch.uv_y1.y}});
-        vertices.push_back({glm::vec2(v_tr.x, v_tr.y), {ch.uv_x1.x, ch.uv_x1.y}});
-
-        currentOffsetX += (ch.advance >> 6) * fontScale; // Advance is 1/64th of a pixel
+        vertices.push_back({tl_local, {ch.uv_y0.x, ch.uv_y0.y}}); // Top-left
+        vertices.push_back({br_local, {ch.uv_y1.x, ch.uv_y1.y}}); // Bottom-right
+        vertices.push_back({tr_local, {ch.uv_x1.x, ch.uv_x1.y}}); // Top-right
+        
+        currentOffsetX += (ch.advance >> 6) * scale;
     }
+    
+    // Construct the model matrix for billboarding and positioning
+    glm::mat4 modelMatrix = glm::mat4(1.0f);
+    // Set rotation part for billboarding
+    modelMatrix[0] = glm::vec4(cameraRight, 0.0f);
+    modelMatrix[1] = glm::vec4(cameraUp, 0.0f);
+    modelMatrix[2] = glm::vec4(glm::normalize(glm::cross(cameraUp, cameraRight)), 0.0f); // Ensure Z is normalized and correct direction
+    // Set translation part
+    modelMatrix[3] = glm::vec4(position, 1.0f);
+    
+    // Apply overall scale to the model matrix if text is too small/large globally
+    // modelMatrix = glm::scale(modelMatrix, glm::vec3(overallTextScale, overallTextScale, overallTextScale));
+
+    textShader_->setMat4("model", modelMatrix);
 
     glBindBuffer(GL_ARRAY_BUFFER, VBO_);
     glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(TextVertex), vertices.data(), GL_DYNAMIC_DRAW);
@@ -185,6 +218,14 @@ void TextRenderer::renderText3D(const std::string& text,
 
     glBindVertexArray(0);
     glBindTexture(GL_TEXTURE_2D, 0);
+
+    // Restore OpenGL state
+    if (last_depth_mask) { glDepthMask(GL_TRUE); } else { glDepthMask(GL_FALSE); }
+    if (!last_enable_blend) glDisable(GL_BLEND);
+    else glBlendFuncSeparate(last_blend_src_rgb, last_blend_dst_rgb, last_blend_src_alpha, last_blend_dst_alpha);
+    
+    if (last_enable_cull_face) glEnable(GL_CULL_FACE);
+    // if (last_enable_depth_test) glEnable(GL_DEPTH_TEST); // Depth test was not disabled
 }
 
 } // namespace Rendering
