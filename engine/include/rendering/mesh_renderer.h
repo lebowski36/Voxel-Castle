@@ -16,6 +16,7 @@ public:
     void draw(const glm::mat4& model, const glm::mat4& view, const glm::mat4& proj);
     bool isReady() const { return ready; }
     GLuint getTextureAtlasID() const { return textureAtlasID; } // Added getter
+    GLuint getShaderProgram() const { return shaderProgram; }
 
 private:
     GLuint vao = 0; // Changed order

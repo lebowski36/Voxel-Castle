@@ -5,11 +5,13 @@
 #include <glad/glad.h>
 #include <iostream>
 
+// Define the global debug render mode variable
+DebugRenderMode g_debugRenderMode = DebugRenderMode::NORMAL;
+
 namespace GameInput {
 
 void processInput(Game& game) {
     // Debug render mode toggle (P key)
-    extern DebugRenderMode g_debugRenderMode;
     // Reset mouse delta at frame start
     game.mouseDeltaX_ = 0.0f;
     game.mouseDeltaY_ = 0.0f;

@@ -4,6 +4,7 @@
 #include "rendering/voxel_mesh.h"
 #include "SpectatorCamera.h" // Assuming this includes glm a
 #include "platform/Window.h"   // For gameWindow->render() and potentially dimensions
+#include "rendering/debug_render_mode.h" // Added for ::g_debugRenderMode
 
 #include <glad/glad.h>
 #include <glm/gtc/matrix_transform.hpp>
@@ -40,8 +41,7 @@ void renderGame(
 
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-    extern DebugRenderMode g_debugRenderMode;
-    if (g_debugRenderMode == DebugRenderMode::WIREFRAME) {
+    if (::g_debugRenderMode == DebugRenderMode::WIREFRAME) {
         glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
     } else {
         glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
@@ -82,11 +82,10 @@ void renderGame(
     frameCounter++;
 
     // Set debug render mode uniform for the shader
-    GLint debugModeLoc = glGetUniformLocation(meshRenderer.shaderProgram, "uDebugRenderMode");
+    GLint debugModeLoc = glGetUniformLocation(meshRenderer.getShaderProgram(), "uDebugRenderMode");
     if (debugModeLoc != -1) {
-        extern DebugRenderMode g_debugRenderMode;
-        glUseProgram(meshRenderer.shaderProgram);
-        glUniform1i(debugModeLoc, static_cast<int>(g_debugRenderMode));
+        glUseProgram(meshRenderer.getShaderProgram());
+        glUniform1i(debugModeLoc, static_cast<int>(::g_debugRenderMode));
     }
     for (const auto* vMesh : worldMeshes) {
         if (vMesh && vMesh->isInitialized()) { 

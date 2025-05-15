@@ -1,4 +1,5 @@
 #include "rendering/face_debug_utils.h"
+#include "rendering/debug_render_mode.h"
 #ifdef VOXEL_DEBUG_FACE_ID
     // In debug mode, encode face info as color and add as a per-vertex attribute
     glm::vec4 debugColor = VoxelEngine::Rendering::encodeFaceDebugColor(x[0], x[1], x[2], dir);
@@ -59,10 +60,9 @@ namespace VoxelEngine {
 
     // The 'light' component is set to 1.0f for now.
     // Note: The order of face_vertices (BL, BR, TR, TL) must match the quad_uvs order.
-    extern DebugRenderMode g_debugRenderMode;
     for (int i = 0; i < 4; ++i) {
         glm::vec4 debugColor(0.0f);
-        if (g_debugRenderMode == DebugRenderMode::FACE_DEBUG) {
+        if (::g_debugRenderMode == DebugRenderMode::FACE_DEBUG) {
             // Use voxel position and normal as face id (normal encodes direction)
             debugColor = VoxelEngine::Rendering::encodeFaceDebugColor(
                 static_cast<int>(voxel_pos.x),
@@ -132,9 +132,8 @@ namespace VoxelEngine {
     quad_uvs[2] = glm::vec2(static_cast<float>(quad_width_voxels), static_cast<float>(quad_height_voxels));
     quad_uvs[3] = glm::vec2(0.0f, static_cast<float>(quad_height_voxels));
 
-    extern DebugRenderMode g_debugRenderMode;
     glm::vec4 debugColor(0.0f);
-    if (g_debugRenderMode == DebugRenderMode::FACE_DEBUG) {
+    if (::g_debugRenderMode == DebugRenderMode::FACE_DEBUG) {
         // Use p1 as face id, normal encodes direction
         debugColor = VoxelEngine::Rendering::encodeFaceDebugColor(
             static_cast<int>(p1.x),
