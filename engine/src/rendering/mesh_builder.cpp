@@ -249,9 +249,11 @@ VoxelMesh MeshBuilder::buildNaiveMesh(
 
                     // For each slice along d
                     for (x[d] = 0; x[d] < chunk_dims[d]; ++x[d]) {
-                        int n = 0;
+                        // Process each voxel in the current slice
                         for (x[v] = 0; x[v] < chunk_dims[v]; ++x[v]) {
-                            for (x[u] = 0; x[u] < chunk_dims[u]; ++x[u], ++n) {
+                            for (x[u] = 0; x[u] < chunk_dims[u]; ++x[u]) {
+                                // Calculate the mask index for the current voxel
+                                int n = x[v] * chunk_dims[u] + x[u];
                                 if (mask[n]) continue;
 
                                 Voxel voxel1 = getVoxel(x[0], x[1], x[2]);
@@ -266,9 +268,12 @@ VoxelMesh MeshBuilder::buildNaiveMesh(
                                     // Find width (h_quad) in u direction
                                     int h_quad = 1;
                                     for (; x[u] + h_quad < chunk_dims[u]; ++h_quad) {
-                                        int mask_check_idx_h = n + h_quad;
+                                        // Calculate the correct mask index for next voxel in u direction
+                                        int mask_check_idx_h = (x[v]) * chunk_dims[u] + (x[u] + h_quad);
                                         assert(mask_check_idx_h >= 0 && mask_check_idx_h < static_cast<int>(mask.size()));
                                         if (mask[mask_check_idx_h]) break;
+                                        
+                                        // Check the next voxel in the u direction
                                         int cur_coords_u_ext[3] = {x[0], x[1], x[2]}; cur_coords_u_ext[u] += h_quad;
                                         Voxel v_strip_1 = getVoxel(cur_coords_u_ext[0], cur_coords_u_ext[1], cur_coords_u_ext[2]);
                                         Voxel v_strip_2 = getVoxel(cur_coords_u_ext[0] + q[0], cur_coords_u_ext[1] + q[1], cur_coords_u_ext[2] + q[2]);
@@ -283,19 +288,36 @@ VoxelMesh MeshBuilder::buildNaiveMesh(
                                     int w_quad = 1;
                                     for (; x[v] + w_quad < chunk_dims[v]; ++w_quad) {
                                         bool valid_row = true;
+                                        
+                                        // Check every voxel in the next row
                                         for (int k_u = 0; k_u < h_quad; ++k_u) {
+                                            // Calculate the correct mask index for each voxel in the next row
                                             int mask_check_idx_w = (x[v] + w_quad) * chunk_dims[u] + (x[u] + k_u);
                                             assert(mask_check_idx_w >= 0 && mask_check_idx_w < static_cast<int>(mask.size()));
-                                            if (mask[mask_check_idx_w]) { valid_row = false; break; }
-                                            int cur_coords_uv_ext[3] = {x[0], x[1], x[2]}; cur_coords_uv_ext[u] += k_u; cur_coords_uv_ext[v] += w_quad;
+                                            
+                                            // If any voxel in this row is already masked, skip the entire row
+                                            if (mask[mask_check_idx_w]) { 
+                                                valid_row = false; 
+                                                break; 
+                                            }
+                                            
+                                            // Check that this voxel is solid, same type, and has an exposed face
+                                            int cur_coords_uv_ext[3] = {x[0], x[1], x[2]}; 
+                                            cur_coords_uv_ext[u] += k_u; 
+                                            cur_coords_uv_ext[v] += w_quad;
+                                            
                                             Voxel v_scan_1 = getVoxel(cur_coords_uv_ext[0], cur_coords_uv_ext[1], cur_coords_uv_ext[2]);
                                             Voxel v_scan_2 = getVoxel(cur_coords_uv_ext[0] + q[0], cur_coords_uv_ext[1] + q[1], cur_coords_uv_ext[2] + q[2]);
+                                            
                                             bool v_scan_1_solid = (v_scan_1.id != static_cast<uint8_t>(VoxelType::AIR));
                                             bool v_scan_2_solid = (v_scan_2.id != static_cast<uint8_t>(VoxelType::AIR));
+                                            
                                             if (!v_scan_1_solid || v_scan_2_solid || static_cast<VoxelType>(v_scan_1.id) != current_face_voxel_type) {
-                                                valid_row = false; break;
+                                                valid_row = false; 
+                                                break;
                                             }
                                         }
+                                        
                                         if (!valid_row) break;
                                     }
 
@@ -336,12 +358,22 @@ VoxelMesh MeshBuilder::buildNaiveMesh(
                                         addQuad(mesh, ovp1, ovp2, ovp3, ovp4, normal_val, current_face_voxel_type, atlas, w_quad, h_quad);
                                     }
 
-                                    // Mark mask
+                                    // Mark mask - correctly mark all voxels in the quad
                                     for (int l_v = 0; l_v < w_quad; ++l_v) {
                                         for (int m_u = 0; m_u < h_quad; ++m_u) {
                                             int mask_index = (x[v] + l_v) * chunk_dims[u] + (x[u] + m_u);
                                             assert(mask_index >= 0 && mask_index < static_cast<int>(mask.size()));
-                                            mask[mask_index] = true;
+                                            
+                                            // Double-check the voxel is actually part of our continuous surface
+                                            int check_coords[3] = {x[0], x[1], x[2]};
+                                            check_coords[u] += m_u;
+                                            check_coords[v] += l_v;
+                                            
+                                            // Only mark the mask if the voxel exists and has the same properties
+                                            Voxel check_voxel = getVoxel(check_coords[0], check_coords[1], check_coords[2]);
+                                            if (check_voxel.id == static_cast<uint8_t>(current_face_voxel_type)) {
+                                                mask[mask_index] = true;
+                                            }
                                         }
                                     }
                                 }
