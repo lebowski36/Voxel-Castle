@@ -218,14 +218,16 @@ int_fast64_t WorldManager::worldToColumnBaseZ(int_fast64_t worldZ) {
 void WorldManager::updateActiveChunks(const glm::vec3& centerWorldPosition, int loadRadiusInSegments, WorldGenerator& generator) {
 // Calculate chunk column coordinates (not segment indices)
 
+// Force a 3x3 chunk grid regardless of loadRadiusInSegments
+const int forcedRadius = 1; // 1 in each direction = 3x3
 int centerColX = static_cast<int>(std::floor(centerWorldPosition.x / ChunkSegment::CHUNK_WIDTH));
 int centerColZ = static_cast<int>(std::floor(centerWorldPosition.z / ChunkSegment::CHUNK_DEPTH));
 int centerSegY = static_cast<int>(std::floor(centerWorldPosition.y / ChunkSegment::CHUNK_HEIGHT));
 
 std::set<std::pair<int, int>> activeColumns;
 
-for (int colX = centerColX - loadRadiusInSegments; colX <= centerColX + loadRadiusInSegments; ++colX) {
-    for (int colZ = centerColZ - loadRadiusInSegments; colZ <= centerColZ + loadRadiusInSegments; ++colZ) {
+for (int colX = centerColX - forcedRadius; colX <= centerColX + forcedRadius; ++colX) {
+    for (int colZ = centerColZ - forcedRadius; colZ <= centerColZ + forcedRadius; ++colZ) {
         // Convert chunk indices to base world coordinates
         int baseColX = colX * ChunkSegment::CHUNK_WIDTH;
         int baseColZ = colZ * ChunkSegment::CHUNK_DEPTH;
