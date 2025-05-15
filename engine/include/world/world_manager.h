@@ -1,29 +1,30 @@
 #ifndef VOXELCASTLE_WORLD_MANAGER_H
 #define VOXELCASTLE_WORLD_MANAGER_H
 
+
+// Standard library includes first
+
+#include <map>
+#include <memory>
+#include <cstdint>
+#include <vector>
+#include <queue>
+#include <mutex>
+#include <thread>
+#include <glm/vec3.hpp> // For glm::vec3
+
+
 #include "world/chunk_column.h" // For ::VoxelCastle::World::ChunkColumn and ::VoxelCastle::World::ChunkColumnCoord
 #include "world/voxel.h"      // For ::VoxelEngine::World::Voxel
-#include <map>                // Changed from unordered_map to map
 #include "world/quadtree.h"   // For Quadtree spatial partitioning
-#include <memory>
-#include <cstdint>            // For int_fast64_t
-#include <vector>             // Added for std::vector
 #include "world/world_generator.h" // For WorldGenerator
+#include "rendering/texture_atlas.h" // For VoxelEngine::Rendering::TextureAtlas
+#include "rendering/mesh_builder.h"  // For VoxelEngine::Rendering::MeshBuilder
+#include "rendering/voxel_mesh.h" // For VoxelEngine::Rendering::VoxelMesh
+#include "rendering/mesh_job_system.h" // For VoxelEngine::Rendering::MeshJobSystem
 
-// Forward declarations for rendering components
-namespace VoxelEngine { namespace Rendering {
-    class TextureAtlas;
-    class MeshBuilder;
-    class VoxelMesh;
-}}
 
-/**
- * @brief Namespace for Voxel Castle specific game logic and world representation.
- */
 namespace VoxelCastle {
-/**
- * @brief Namespace for world-related structures and management within the Voxel Castle context.
- */
 namespace World {
 
 /**
@@ -73,7 +74,7 @@ public:
      * @param worldX The global X-coordinate of the voxel.
      * @param worldY The global Y-coordinate of the voxel.
      * @param worldZ The global Z-coordinate of the voxel.
-     * @return The VoxelEngine::World::Voxel at the specified location. If the location is in an
+     * @return The ::VoxelEngine::World::Voxel at the specified location. If the location is in an
      *         unloaded or non-existent chunk, a default voxel (e.g., AIR) is returned.
      */
     ::VoxelEngine::World::Voxel getVoxel(int_fast64_t worldX, int_fast64_t worldY, int_fast64_t worldZ) const;
@@ -87,7 +88,7 @@ public:
      * @param worldX The global X-coordinate of the voxel.
      * @param worldY The global Y-coordinate of the voxel.
      * @param worldZ The global Z-coordinate of the voxel.
-     * @param voxel The VoxelEngine::World::Voxel data to set at the specified location.
+     * @param voxel The ::VoxelEngine::World::Voxel data to set at the specified location.
      */
     void setVoxel(int_fast64_t worldX, int_fast64_t worldY, int_fast64_t worldZ, const ::VoxelEngine::World::Voxel& voxel);
 
@@ -101,7 +102,7 @@ public:
      * @param worldX The global X-coordinate of the voxel.
      * @param worldY The global Y-coordinate of the voxel.
      * @param worldZ The global Z-coordinate of the voxel.
-     * @param type The VoxelEngine::World::VoxelType to set at the specified location.
+     * @param type The ::VoxelEngine::World::VoxelType to set at the specified location.
      */
     void setVoxel(int_fast64_t worldX, int_fast64_t worldY, int_fast64_t worldZ, ::VoxelEngine::World::VoxelType type);
 
@@ -130,13 +131,19 @@ public:
      * @param atlas The texture atlas to use for mesh generation.
      * @param meshBuilder The mesh builder to use for generating mesh data.
      */
-    void updateDirtyMeshes(VoxelEngine::Rendering::TextureAtlas& atlas, VoxelEngine::Rendering::MeshBuilder& meshBuilder);
+    void updateDirtyMeshes(::VoxelEngine::Rendering::TextureAtlas& atlas, ::VoxelEngine::Rendering::MeshBuilder& meshBuilder);
+
+    // New: Asynchronous mesh update (enqueues jobs, returns immediately)
+    void enqueueDirtyMeshJobs(::VoxelEngine::Rendering::TextureAtlas& atlas, ::VoxelEngine::Rendering::MeshBuilder& meshBuilder);
+
+    // New: Called on main thread to upload finished meshes
+    void processFinishedMeshJobs();
 
     /**
      * @brief Retrieves all valid VoxelMesh pointers from all chunk segments.
      * @return A vector of const pointers to VoxelMesh objects.
      */
-    std::vector<const VoxelEngine::Rendering::VoxelMesh*> getAllSegmentMeshes() const;
+    std::vector<const ::VoxelEngine::Rendering::VoxelMesh*> getAllSegmentMeshes() const;
 
     /**
      * @brief Converts global world X coordinate to ChunkColumn base X coordinate.
@@ -155,12 +162,43 @@ public:
     /**
      * @brief Map storing all active ChunkColumns, keyed by their XZ world coordinates.
      */
-    std::map< ::VoxelCastle::World::ChunkColumnCoord, std::unique_ptr< ::VoxelCastle::World::ChunkColumn>> m_chunkColumns;
+    std::map<::VoxelCastle::World::WorldCoordXZ, std::unique_ptr<::VoxelCastle::World::ChunkColumn>> m_chunkColumns;
 
     /**
      * @brief Quadtree for spatial partitioning of ChunkColumns (XZ plane).
      */
-    std::unique_ptr<world::Quadtree> m_chunkQuadtree;
+    std::unique_ptr<::world::Quadtree> m_chunkQuadtree;
+
+    /**
+     * @brief Data structure for mesh job data.
+     * Contains information needed to process mesh generation jobs.
+     */
+    struct MeshJobData {
+        VoxelCastle::World::ChunkSegment* segment;
+        std::unique_ptr<::VoxelEngine::Rendering::VoxelMesh> mesh;
+    };
+
+    /**
+     * @brief Queue of mesh jobs waiting to be processed by worker threads.
+     * Protected by m_meshJobMutex.
+     */
+    std::queue<MeshJobData> m_pendingMeshJobs;
+
+    /**
+     * @brief Queue of completed mesh jobs ready for main thread upload.
+     * Protected by m_meshJobMutex.
+     */
+    std::vector<MeshJobData> m_completedMeshJobs;
+
+    /**
+     * @brief Mutex to protect access to mesh job queues.
+     */
+    std::mutex m_meshJobMutex;
+
+    /**
+     * @brief Thread pool for processing mesh generation jobs.
+     */
+    std::unique_ptr<::VoxelEngine::Rendering::MeshJobSystem> m_meshJobSystem;
 
 public:
     /**
@@ -171,7 +209,7 @@ public:
      * @param zMax Maximum Z of region.
      * @return Vector of pointers to ChunkColumns in the region.
      */
-    std::vector<ChunkColumn*> queryChunkColumnsInRegion(int32_t xMin, int32_t zMin, int32_t xMax, int32_t zMax) const;
+    std::vector<::VoxelCastle::World::ChunkColumn*> queryChunkColumnsInRegion(int32_t xMin, int32_t zMin, int32_t xMax, int32_t zMax) const;
 
     /**
      * @brief Updates active chunks based on the center world position and load radius.

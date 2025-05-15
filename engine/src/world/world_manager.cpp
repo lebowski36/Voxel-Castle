@@ -1,3 +1,11 @@
+
+#include <future>
+#include <queue>
+#include <mutex>
+#include <cmath> // For std::floor
+#include <set> // For std::set
+#include <iostream> // For std::cout
+
 #include "world/world_manager.h"
 #include "world/chunk_segment.h" // For SEGMENT_WIDTH, SEGMENT_DEPTH, SEGMENT_HEIGHT and ChunkSegment class
 #include "world/chunk_column.h"  // For ChunkColumn class and CHUNKS_PER_COLUMN
@@ -5,9 +13,6 @@
 #include "rendering/texture_atlas.h" // For VoxelEngine::Rendering::TextureAtlas
 #include "rendering/mesh_builder.h"  // For VoxelEngine::Rendering::MeshBuilder
 #include "rendering/voxel_mesh.h"    // For VoxelEngine::Rendering::VoxelMesh
-#include <cmath> // For std::floor
-#include <set> // For std::set
-#include <iostream> // For std::cout
 
 namespace VoxelCastle {
 namespace World {
@@ -97,29 +102,89 @@ ChunkColumn* WorldManager::getOrCreateChunkColumn(int_fast64_t worldX, int_fast6
     return column;
 }
 
+
+#include "rendering/mesh_job_system.h"
+
+namespace {
+// Global/static mesh job system and result queue for now (could be made a member)
+std::unique_ptr<VoxelEngine::Rendering::MeshJobSystem> g_meshJobSystem;
+std::mutex g_meshJobResultMutex;
+struct MeshJobResult {
+    VoxelCastle::World::ChunkSegment* segment;
+    std::unique_ptr<VoxelEngine::Rendering::VoxelMesh> mesh;
+};
+std::queue<MeshJobResult> g_meshJobResults;
+}
+
 void WorldManager::updateDirtyMeshes(VoxelEngine::Rendering::TextureAtlas& atlas, VoxelEngine::Rendering::MeshBuilder& meshBuilder) {
-    int meshRebuildCount = 0;
-    const int maxMeshRebuildsPerCall = 100; // Lowered: Prevent blocking main thread and improve responsiveness
-    int dirtySegmentsFound = 0;
-    // Only rebuild meshes for segments marked dirty (after worldgen or voxel change)
+    // For compatibility: call enqueueDirtyMeshJobs and processFinishedMeshJobs
+    enqueueDirtyMeshJobs(atlas, meshBuilder);
+    processFinishedMeshJobs();
+}
+
+void WorldManager::enqueueDirtyMeshJobs(VoxelEngine::Rendering::TextureAtlas& atlas, VoxelEngine::Rendering::MeshBuilder& meshBuilder) {
+    if (!g_meshJobSystem) {
+        g_meshJobSystem = std::make_unique<VoxelEngine::Rendering::MeshJobSystem>(std::thread::hardware_concurrency());
+        std::cout << "[MeshJobSystem] Initialized with " << std::thread::hardware_concurrency() << " threads." << std::endl;
+    }
+    int enqueued = 0;
     for (auto const& [coord, columnPtr] : m_chunkColumns) {
         if (columnPtr) {
             for (uint8_t i = 0; i < VoxelCastle::World::ChunkColumn::CHUNKS_PER_COLUMN; ++i) {
                 VoxelCastle::World::ChunkSegment* segment = columnPtr->getSegmentByIndex(i);
-                if (segment && segment->isDirty()) {
-                    ++dirtySegmentsFound;
-                    segment->rebuildMesh(atlas, meshBuilder, columnPtr->getBaseX(), i, columnPtr->getBaseZ(), this);
-                    ++meshRebuildCount;
-                    if (meshRebuildCount >= maxMeshRebuildsPerCall) {
-                        std::cout << "[INFO] Mesh rebuild cap reached (" << maxMeshRebuildsPerCall << ") in updateDirtyMeshes. Skipping remaining dirty segments this frame.\n";
-                        std::cout << "[DEBUG] Total dirty segments found this call: " << dirtySegmentsFound << ", rebuilt: " << meshRebuildCount << std::endl;
-                        return;
-                    }
+                if (segment && segment->isDirty() && !segment->mIsRebuildingMesh) {
+                    segment->mIsRebuildingMesh = true;
+                    // Copy pointers for lambda capture
+                    auto* segPtr = segment;
+                    auto* colPtr = columnPtr.get();
+                    auto* worldPtr = this;
+                    // Copy atlas and meshBuilder by reference (safe: read-only)
+                    g_meshJobSystem->enqueue([segPtr, colPtr, worldPtr, &atlas, &meshBuilder, i]() {
+                        auto mesh = std::make_unique<VoxelEngine::Rendering::VoxelMesh>();
+                        *mesh = meshBuilder.buildGreedyMesh(*segPtr, atlas, [=](int x, int y, int z) {
+                            int_fast64_t worldX = colPtr->getBaseX() + x;
+                            int_fast64_t worldY = i * VoxelCastle::World::ChunkSegment::CHUNK_HEIGHT + y;
+                            int_fast64_t worldZ = colPtr->getBaseZ() + z;
+                            return worldPtr->getVoxel(worldX, worldY, worldZ);
+                        });
+                        mesh->setInitialized(true);
+                        mesh->setWorldPosition(glm::vec3(
+                            static_cast<float>(colPtr->getBaseX()),
+                            static_cast<float>(i * VoxelCastle::World::ChunkSegment::CHUNK_HEIGHT),
+                            static_cast<float>(colPtr->getBaseZ())));
+                        // Queue result for main thread
+                        std::lock_guard<std::mutex> lock(g_meshJobResultMutex);
+                        g_meshJobResults.push(MeshJobResult{segPtr, std::move(mesh)});
+                    });
+                    ++enqueued;
                 }
             }
         }
     }
-    std::cout << "[DEBUG] updateDirtyMeshes finished. Dirty segments found: " << dirtySegmentsFound << ", rebuilt: " << meshRebuildCount << std::endl;
+    if (enqueued > 0) {
+        std::cout << "[MeshJobSystem] Enqueued " << enqueued << " mesh jobs." << std::endl;
+    }
+}
+
+void WorldManager::processFinishedMeshJobs() {
+    int processed = 0;
+    {
+        std::lock_guard<std::mutex> lock(g_meshJobResultMutex);
+        while (!g_meshJobResults.empty()) {
+            auto& result = g_meshJobResults.front();
+            if (result.segment && result.mesh) {
+                result.segment->mMesh = std::move(result.mesh);
+                result.segment->mMesh->setInitialized(true);
+                result.segment->markDirty(false);
+                result.segment->mIsRebuildingMesh = false;
+                ++processed;
+            }
+            g_meshJobResults.pop();
+        }
+    }
+    if (processed > 0) {
+        std::cout << "[MeshJobSystem] Uploaded " << processed << " finished meshes to main thread." << std::endl;
+    }
 }
 
 std::vector<const VoxelEngine::Rendering::VoxelMesh*> WorldManager::getAllSegmentMeshes() const {

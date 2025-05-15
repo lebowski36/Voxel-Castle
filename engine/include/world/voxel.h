@@ -2,19 +2,14 @@
 #ifndef VOXEL_ENGINE_VOXEL_H
 #define VOXEL_ENGINE_VOXEL_H
 
+// Standard library and external includes first
 #include <cstdint>
+#include <glm/glm.hpp>
+#include <glm/vec3.hpp>
+#include <glm/gtc/type_ptr.hpp>
 #include "world/voxel_types.h" // Added to ensure VoxelEngine::World::VoxelType is declared
-#include <glm/glm.hpp>      // For glm::ivec3 and glm::vec3
-#include <glm/vec3.hpp>     // For glm::vec3 specifically (can be redundant if glm/glm.hpp is used)
-#include <glm/gtc/type_ptr.hpp> // For type_ptr if needed, good to have with GLM
 
-/**
- * @brief Namespace for core voxel engine functionalities, including world representation.
- */
 namespace VoxelEngine {
-/**
- * @brief Namespace for world-related structures and management, such as voxels, chunks, and world data.
- */
 namespace World {
 
 /**

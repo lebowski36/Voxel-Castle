@@ -17,6 +17,7 @@ add_library(VoxelEngine STATIC
     src/world/test_voxel_system.cpp # Added Voxel System test source
     src/world/test_mesh_generation.cpp # Added Mesh Generation test source
     src/rendering/mesh_builder.cpp # Added MeshBuilder source
+    src/rendering/mesh_job_system.cpp # Added MeshJobSystem source
     src/rendering/mesh_renderer.cpp # Added MeshRenderer source
     src/rendering/render_utils.cpp # Added RenderUtils source
     src/rendering/debug_utils.cpp # Added DebugUtils source

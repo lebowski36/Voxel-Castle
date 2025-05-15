@@ -1,15 +1,11 @@
+
 #ifndef VOXELCASTLE_VOXEL_TYPES_H
 #define VOXELCASTLE_VOXEL_TYPES_H
 
+// Standard library includes first
 #include <cstdint>
 
-/**
- * @brief Namespace for core voxel engine functionalities, including world representation.
- */
 namespace VoxelEngine {
-/**
- * @brief Namespace for world-related structures and management, such as voxels, chunks, and world data.
- */
 namespace World {
 
 /**

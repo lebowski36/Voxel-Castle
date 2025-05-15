@@ -72,9 +72,10 @@ void update(Game& game, float deltaTime) {
         game.setManualVoxelChangeRequested(false); // Reset the flag
     }
 
-    // Update meshes if any segments are dirty
+    // Asynchronous mesh generation: enqueue jobs and upload finished meshes
     if (game.getWorldManager() && game.getTextureAtlas() && game.getMeshBuilder()) {
-        game.getWorldManager()->updateDirtyMeshes(*game.getTextureAtlas(), *game.getMeshBuilder());
+        game.getWorldManager()->enqueueDirtyMeshJobs(*game.getTextureAtlas(), *game.getMeshBuilder());
+        game.getWorldManager()->processFinishedMeshJobs();
     }
 }
 

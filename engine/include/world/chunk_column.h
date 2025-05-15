@@ -1,22 +1,17 @@
+
 #ifndef CHUNK_COLUMN_H
 #define CHUNK_COLUMN_H
 
-#include "world/chunk_segment.h" // Provides ::VoxelCastle::World::ChunkSegment and dimension constants
-#include "world/voxel.h"         // Provides ::VoxelEngine::World::Voxel
+// Standard library includes first
 #include <map>
 #include <memory>
 #include <cstdint> // For int_fast32_t, int_fast64_t
 
-/**
- * @brief Namespace for Voxel Castle specific game logic and world representation.
- */
-namespace VoxelCastle
-{
-    /**
-     * @brief Namespace for world-related structures and management within the Voxel Castle context.
-     */
-    namespace World
-    {
+#include "world/chunk_segment.h" // Provides ::VoxelCastle::World::ChunkSegment and dimension constants
+#include "world/voxel.h"         // Provides ::VoxelEngine::World::Voxel
+
+namespace VoxelCastle {
+namespace World {
         /**
          * @struct ChunkColumnCoord
          * @brief Represents a simple XZ coordinate pair for chunk columns.
