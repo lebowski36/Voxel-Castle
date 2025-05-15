@@ -37,7 +37,8 @@ namespace VoxelEngine {
                      const glm::vec3 face_vertices[4], // The 4 vertices of the face, relative to (0,0,0) if voxel_pos is origin
                      const glm::vec3& normal,
                      VoxelEngine::World::VoxelType voxelType,
-                     const TextureAtlas& atlas) {
+                     const TextureAtlas& atlas,
+                     float debugLight) {
             
     uint32_t base_index = static_cast<uint32_t>(mesh.vertices.size());
 
@@ -56,7 +57,7 @@ namespace VoxelEngine {
     for (int i = 0; i < 4; ++i) {
         // The old texCoords (uvs_for_current_face[i]) are no longer directly used here.
         // Instead, we pass quad_uvs[i] and atlas_origin_uv.
-        mesh.vertices.emplace_back(voxel_pos + face_vertices[i], normal, quad_uvs[i], atlas_origin_uv, 1.0f);
+        mesh.vertices.emplace_back(voxel_pos + face_vertices[i], normal, quad_uvs[i], atlas_origin_uv, debugLight);
     }
 
     mesh.indices.push_back(base_index);
@@ -97,11 +98,12 @@ namespace VoxelEngine {
                                   ::VoxelEngine::World::VoxelType voxelType,
                                   const TextureAtlas& atlas,
                                   int quad_width_voxels, 
-                                  int quad_height_voxels) {
+                                  int quad_height_voxels,
+                                  float debugLight) {
 
     uint32_t base_index = static_cast<uint32_t>(mesh.vertices.size());
 
-    float light = 1.0f; // For now, just use max light
+    float light = debugLight; // Use debugLight for visualization
     TextureCoordinates texCoords = atlas.getTextureCoordinates(voxelType);
     glm::vec2 atlas_origin_uv = texCoords.getBottomLeft(); // This is v_atlas_tile_origin_uv
 
@@ -190,27 +192,39 @@ VoxelMesh MeshBuilder::buildNaiveMesh(
                 // For each face, use getVoxel for neighbor checks (cross-chunk aware)
                 // +X
                 if (getVoxel(x + 1, y, z).id == static_cast<uint8_t>(VoxelType::AIR)) {
-                    addFace(mesh, voxel_world_pos, right_face_verts, right_normal, currentVoxelEnum, atlas);
+                    addFace(mesh, voxel_world_pos, right_face_verts, right_normal, currentVoxelEnum, atlas, 1.0f); // No neighbor, render face (bright)
+                } else {
+                    addFace(mesh, voxel_world_pos, right_face_verts, right_normal, currentVoxelEnum, atlas, 0.2f); // Neighbor present (dim)
                 }
                 // -X
                 if (getVoxel(x - 1, y, z).id == static_cast<uint8_t>(VoxelType::AIR)) {
-                    addFace(mesh, voxel_world_pos, left_face_verts, left_normal, currentVoxelEnum, atlas);
+                    addFace(mesh, voxel_world_pos, left_face_verts, left_normal, currentVoxelEnum, atlas, 1.0f);
+                } else {
+                    addFace(mesh, voxel_world_pos, left_face_verts, left_normal, currentVoxelEnum, atlas, 0.2f);
                 }
                 // +Y
                 if (getVoxel(x, y + 1, z).id == static_cast<uint8_t>(VoxelType::AIR)) {
-                    addFace(mesh, voxel_world_pos, top_face_verts, top_normal, currentVoxelEnum, atlas);
+                    addFace(mesh, voxel_world_pos, top_face_verts, top_normal, currentVoxelEnum, atlas, 1.0f);
+                } else {
+                    addFace(mesh, voxel_world_pos, top_face_verts, top_normal, currentVoxelEnum, atlas, 0.2f);
                 }
                 // -Y
                 if (getVoxel(x, y - 1, z).id == static_cast<uint8_t>(VoxelType::AIR)) {
-                    addFace(mesh, voxel_world_pos, bottom_face_verts, bottom_normal, currentVoxelEnum, atlas);
+                    addFace(mesh, voxel_world_pos, bottom_face_verts, bottom_normal, currentVoxelEnum, atlas, 1.0f);
+                } else {
+                    addFace(mesh, voxel_world_pos, bottom_face_verts, bottom_normal, currentVoxelEnum, atlas, 0.2f);
                 }
                 // +Z
                 if (getVoxel(x, y, z + 1).id == static_cast<uint8_t>(VoxelType::AIR)) {
-                    addFace(mesh, voxel_world_pos, front_face_verts, front_normal, currentVoxelEnum, atlas);
+                    addFace(mesh, voxel_world_pos, front_face_verts, front_normal, currentVoxelEnum, atlas, 1.0f);
+                } else {
+                    addFace(mesh, voxel_world_pos, front_face_verts, front_normal, currentVoxelEnum, atlas, 0.2f);
                 }
                 // -Z
                 if (getVoxel(x, y, z - 1).id == static_cast<uint8_t>(VoxelType::AIR)) {
-                    addFace(mesh, voxel_world_pos, back_face_verts, back_normal, currentVoxelEnum, atlas);
+                    addFace(mesh, voxel_world_pos, back_face_verts, back_normal, currentVoxelEnum, atlas, 1.0f);
+                } else {
+                    addFace(mesh, voxel_world_pos, back_face_verts, back_normal, currentVoxelEnum, atlas, 0.2f);
                 }
             }
         }
@@ -352,11 +366,21 @@ VoxelMesh MeshBuilder::buildNaiveMesh(
                                                   << ", base=(" << x[0] << "," << x[1] << "," << x[2] << ")"
                                                   << ", h_quad=" << h_quad << ", w_quad=" << w_quad
                                                   << ", voxelType=" << static_cast<int>(current_face_voxel_type) << std::endl;
+                                    float debugLight = 1.0f; // For faces that are actually rendered
                                     if (dir > 0) { // Front face, normal along +d. Quad U -> h_quad, Quad V -> w_quad
-                                        addQuad(mesh, ovp1, ovp4, ovp3, ovp2, normal_val, current_face_voxel_type, atlas, h_quad, w_quad);
+                                        addQuad(mesh, ovp1, ovp4, ovp3, ovp2, normal_val, current_face_voxel_type, atlas, h_quad, w_quad, debugLight);
                                     } else { // Back face, normal along -d. Quad U -> w_quad, Quad V -> h_quad
-                                        addQuad(mesh, ovp1, ovp2, ovp3, ovp4, normal_val, current_face_voxel_type, atlas, w_quad, h_quad);
+                                        addQuad(mesh, ovp1, ovp2, ovp3, ovp4, normal_val, current_face_voxel_type, atlas, w_quad, h_quad, debugLight);
                                     }
+// Extra debug: log if mesh buffer grows unexpectedly large
+#define MAX_DEBUG_VERTICES 1000000
+#define MAX_DEBUG_INDICES  3000000
+            if (mesh.vertices.size() > MAX_DEBUG_VERTICES) {
+                std::cerr << "[DEBUG] Warning: mesh.vertices.size() exceeded " << MAX_DEBUG_VERTICES << std::endl;
+            }
+            if (mesh.indices.size() > MAX_DEBUG_INDICES) {
+                std::cerr << "[DEBUG] Warning: mesh.indices.size() exceeded " << MAX_DEBUG_INDICES << std::endl;
+            }
 
                                     // Mark mask - correctly mark all voxels in the quad
                                     for (int l_v = 0; l_v < w_quad; ++l_v) {

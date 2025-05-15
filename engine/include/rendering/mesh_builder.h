@@ -68,7 +68,8 @@ namespace VoxelEngine {
                                 const glm::vec3 face_vertices[4], // Matches implementation
                                 const glm::vec3& normal,
                                 VoxelEngine::World::VoxelType voxelType,
-                                const TextureAtlas& atlas);
+                                const TextureAtlas& atlas,
+                                float debugLight);
 
             /**
              * @brief Helper function to add a quadrilateral (composed of two triangles) to a VoxelMesh.
@@ -93,8 +94,8 @@ namespace VoxelEngine {
                                 ::VoxelEngine::World::VoxelType voxelType,
                                 const TextureAtlas& atlas,
                                 int quad_width_voxels, // Added: Width of the quad in voxel units
-                                int quad_height_voxels // Added: Height of the quad in voxel units
-                                );
+                                int quad_height_voxels, // Added: Height of the quad in voxel units
+                                float debugLight);
         };
 
     } // namespace Rendering
