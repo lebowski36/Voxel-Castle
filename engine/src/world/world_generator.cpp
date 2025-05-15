@@ -32,8 +32,11 @@ void WorldGenerator::generateChunkSegment(ChunkSegment& segment, int worldX, int
     for (int x = 0; x < width; ++x) {
         for (int z = 0; z < depth; ++z) {
             // Use noise to get height
-            float nx = (worldX * width + x) * noiseInputScale;
-            float nz = (worldZ * depth + z) * noiseInputScale;
+            // FIX: Use true world coordinates for noise input
+            int globalX = worldX + x;
+            int globalZ = worldZ + z;
+            float nx = globalX * noiseInputScale;
+            float nz = globalZ * noiseInputScale;
             float noise_val = VoxelEngine::Util::smoothValueNoise(nx, 0.0f, nz); // Renamed to noise_val to avoid conflict
 
             // Assuming noise_val is in [0, 1]. If not, it might need clamping/remapping:
