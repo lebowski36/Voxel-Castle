@@ -117,16 +117,18 @@ void WorldManager::enqueueDirtyMeshJobs(VoxelEngine::Rendering::TextureAtlas& at
     int enqueued = 0;
     for (auto const& [coord, columnPtr] : m_chunkColumns) {
         if (columnPtr) {
+            // Hold a shared_ptr to the column for the duration of the mesh job
+            std::shared_ptr<VoxelCastle::World::ChunkColumn> columnSharedPtr = columnPtr;
             for (uint8_t i = 0; i < VoxelCastle::World::ChunkColumn::CHUNKS_PER_COLUMN; ++i) {
-                VoxelCastle::World::ChunkSegment* segment = columnPtr->getSegmentByIndex(i);
+                VoxelCastle::World::ChunkSegment* segment = columnSharedPtr->getSegmentByIndex(i);
                 if (segment && segment->isDirty() && !segment->mIsRebuildingMesh) {
                     segment->mIsRebuildingMesh = true;
                     // Copy pointers for lambda capture
-                    auto* segPtr = segment;
-                    auto* colPtr = columnPtr.get();
-                    auto* worldPtr = this;
+                    auto segPtr = segment;
+                    auto colPtr = columnSharedPtr;
+                    auto worldPtr = this;
                     // Copy atlas and meshBuilder by reference (safe: read-only)
-                    // Capture "this" to access member variables in the lambda
+                    // Capture shared_ptr by value to keep column alive during job
                     m_meshJobSystem->enqueue([this, segPtr, colPtr, worldPtr, &atlas, &meshBuilder, i]() {
                         auto mesh = std::make_unique<VoxelEngine::Rendering::VoxelMesh>();
                         *mesh = meshBuilder.buildGreedyMesh(*segPtr, atlas, [=](int x, int y, int z) {
@@ -140,10 +142,9 @@ void WorldManager::enqueueDirtyMeshJobs(VoxelEngine::Rendering::TextureAtlas& at
                             static_cast<float>(colPtr->getBaseX()),
                             static_cast<float>(i * VoxelCastle::World::ChunkSegment::CHUNK_HEIGHT),
                             static_cast<float>(colPtr->getBaseZ())));
-                        
                         // Queue result for main thread using our member variables
                         std::lock_guard<std::mutex> lock(m_meshJobMutex);
-                        m_completedMeshJobs.push_back(MeshJobData{segPtr, std::move(mesh)});
+                        m_completedMeshJobs.push_back(MeshJobData{colPtr, segPtr, std::move(mesh)});
                     });
                     ++enqueued;
                 }
@@ -166,13 +167,17 @@ void WorldManager::processFinishedMeshJobs() {
                 jobData.segment->mMesh->setInitialized(true);
                 jobData.segment->markDirty(false);
                 jobData.segment->mIsRebuildingMesh = false;
+                // jobData.column (shared_ptr) keeps the column alive until this point
                 ++processed;
             }
         }
         m_completedMeshJobs.clear();
     }
-    if (processed > 0) {
-        std::cout << "[MeshJobSystem] Uploaded " << processed << " finished meshes to main thread." << std::endl;
+    static int uploadLogCounter = 0;
+    const int uploadLogInterval = 60; // Print every 60 calls/frames
+    uploadLogCounter++;
+    if (processed > 0 && (uploadLogCounter % uploadLogInterval == 0)) {
+        std::cout << "[MeshJobSystem] Uploaded " << processed << " finished meshes to main thread (interval summary)." << std::endl;
     }
 }
 

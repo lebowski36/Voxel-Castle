@@ -162,7 +162,7 @@ public:
     /**
      * @brief Map storing all active ChunkColumns, keyed by their XZ world coordinates.
      */
-    std::map<::VoxelCastle::World::WorldCoordXZ, std::unique_ptr<::VoxelCastle::World::ChunkColumn>> m_chunkColumns;
+    std::map<::VoxelCastle::World::WorldCoordXZ, std::shared_ptr<::VoxelCastle::World::ChunkColumn>> m_chunkColumns;
 
     /**
      * @brief Quadtree for spatial partitioning of ChunkColumns (XZ plane).
@@ -174,6 +174,7 @@ public:
      * Contains information needed to process mesh generation jobs.
      */
     struct MeshJobData {
+        std::shared_ptr<VoxelCastle::World::ChunkColumn> column;
         VoxelCastle::World::ChunkSegment* segment;
         std::unique_ptr<::VoxelEngine::Rendering::VoxelMesh> mesh;
     };
