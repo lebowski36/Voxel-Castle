@@ -21,8 +21,12 @@ This task will follow the collaborative workflow outlined in `CURRENT_TODO.md`:
   - Identified the logic responsible for rendering all chunk border faces and implemented optimizations to skip unnecessary face rendering.
 
 - [ ] **Implement Visibility Checks:**
-  - Add logic to check whether a face is adjacent to air or part of the outermost visible boundary.
-  - Skip meshing and rendering for faces that do not meet these criteria.
+  - Reworking `buildNaiveMesh` step by step to ensure all faces exposed to air (including overhangs and chunk borders) are rendered, and hidden faces are skipped. This includes:
+    - Explicitly checking all 6 neighbors for each solid voxel.
+    - If the neighbor is outside the chunk, treat it as air (render the face).
+    - If the neighbor is inside the chunk, only render the face if the neighbor is air.
+    - This fixes both over-rendering and missing faces above air.
+  - Continue to test and refine until all edge cases are handled.
 
 - [ ] **Optimize Data Structures:**
   - Ensure data structures used for storing chunk and block information allow for efficient visibility checks.

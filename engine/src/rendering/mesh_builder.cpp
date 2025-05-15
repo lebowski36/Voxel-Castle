@@ -130,112 +130,88 @@ namespace VoxelEngine {
     mesh.indices.push_back(base_index + 3); // p4
         }
 
-        VoxelMesh MeshBuilder::buildNaiveMesh(const VoxelCastle::World::ChunkSegment& segment, const TextureAtlas& atlas) { // Added atlas
-            VoxelMesh mesh;
-            mesh.clear(); // Ensure it's empty
+VoxelMesh MeshBuilder::buildNaiveMesh(const VoxelCastle::World::ChunkSegment& segment, const TextureAtlas& atlas) {
+    VoxelMesh mesh;
+    mesh.clear();
 
-            const auto segmentWidth = VoxelCastle::World::ChunkSegment::getWidth();
-            const auto segmentHeight = VoxelCastle::World::ChunkSegment::getHeight();
-            const auto segmentDepth = VoxelCastle::World::ChunkSegment::getDepth();
+    const auto segmentWidth = VoxelCastle::World::ChunkSegment::getWidth();
+    const auto segmentHeight = VoxelCastle::World::ChunkSegment::getHeight();
+    const auto segmentDepth = VoxelCastle::World::ChunkSegment::getDepth();
 
-            using VoxelEngine::World::VoxelType;
+    using VoxelEngine::World::VoxelType;
 
-            // Define face vertices relative to a voxel's local origin (0,0,0)
-            // These are unit quads for each face.
-            // Order: Bottom-Left, Bottom-Right, Top-Right, Top-Left (when looking at the face from outside)
-            // This standard order helps with UV mapping later.
+    // Face definitions (same as before)
+    const glm::vec3 right_face_verts[4] = {
+        glm::vec3(1.0f, 0.0f, 1.0f), glm::vec3(1.0f, 0.0f, 0.0f),
+        glm::vec3(1.0f, 1.0f, 0.0f), glm::vec3(1.0f, 1.0f, 1.0f)
+    };
+    const glm::vec3 right_normal(1.0f, 0.0f, 0.0f);
+    const glm::vec3 left_face_verts[4] = {
+        glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f),
+        glm::vec3(0.0f, 1.0f, 1.0f), glm::vec3(0.0f, 1.0f, 0.0f)
+    };
+    const glm::vec3 left_normal(-1.0f, 0.0f, 0.0f);
+    const glm::vec3 top_face_verts[4] = {
+        glm::vec3(0.0f, 1.0f, 1.0f), glm::vec3(1.0f, 1.0f, 1.0f),
+        glm::vec3(1.0f, 1.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f)
+    };
+    const glm::vec3 top_normal(0.0f, 1.0f, 0.0f);
+    const glm::vec3 bottom_face_verts[4] = {
+        glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(1.0f, 0.0f, 0.0f),
+        glm::vec3(1.0f, 0.0f, 1.0f), glm::vec3(0.0f, 0.0f, 1.0f)
+    };
+    const glm::vec3 bottom_normal(0.0f, -1.0f, 0.0f);
+    const glm::vec3 front_face_verts[4] = {
+        glm::vec3(0.0f, 0.0f, 1.0f), glm::vec3(1.0f, 0.0f, 1.0f),
+        glm::vec3(1.0f, 1.0f, 1.0f), glm::vec3(0.0f, 1.0f, 1.0f)
+    };
+    const glm::vec3 front_normal(0.0f, 0.0f, 1.0f);
+    const glm::vec3 back_face_verts[4] = {
+        glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(1.0f, 0.0f, 0.0f),
+        glm::vec3(1.0f, 1.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f)
+    };
+    const glm::vec3 back_normal(0.0f, 0.0f, -1.0f);
 
-            // +X face (Right) - View from +X towards -X
-            // BL: (1,0,1), BR: (1,0,0), TR: (1,1,0), TL: (1,1,1)
-            const glm::vec3 right_face_verts[4] = {
-                glm::vec3(1.0f, 0.0f, 1.0f), glm::vec3(1.0f, 0.0f, 0.0f),
-                glm::vec3(1.0f, 1.0f, 0.0f), glm::vec3(1.0f, 1.0f, 1.0f)
-            };
-            const glm::vec3 right_normal(1.0f, 0.0f, 0.0f);
+    for (int_fast16_t x = 0; x < segmentWidth; ++x) {
+        for (int_fast16_t y = 0; y < segmentHeight; ++y) {
+            for (int_fast16_t z = 0; z < segmentDepth; ++z) {
+                const auto current_voxel_type = segment.getVoxel(x, y, z).id;
+                if (current_voxel_type == static_cast<uint8_t>(VoxelType::AIR)) {
+                    continue; // Skip air voxels
+                }
+                VoxelEngine::World::VoxelType currentVoxelEnum = static_cast<VoxelEngine::World::VoxelType>(current_voxel_type);
+                glm::vec3 voxel_world_pos(static_cast<float>(x), static_cast<float>(y), static_cast<float>(z));
 
-            // -X face (Left) - View from -X towards +X
-            // BL: (0,0,0), BR: (0,0,1), TR: (0,1,1), TL: (0,1,0)
-            const glm::vec3 left_face_verts[4] = {
-                glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f),
-                glm::vec3(0.0f, 1.0f, 1.0f), glm::vec3(0.0f, 1.0f, 0.0f)
-            };
-            const glm::vec3 left_normal(-1.0f, 0.0f, 0.0f);
-
-            // +Y face (Top) - View from +Y towards -Y
-            // BL: (0,1,1), BR: (1,1,1), TR: (1,1,0), TL: (0,1,0)
-            const glm::vec3 top_face_verts[4] = {
-                glm::vec3(0.0f, 1.0f, 1.0f), glm::vec3(1.0f, 1.0f, 1.0f),
-                glm::vec3(1.0f, 1.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f)
-            };
-            const glm::vec3 top_normal(0.0f, 1.0f, 0.0f);
-
-            // -Y face (Bottom) - View from -Y towards +Y
-            // BL: (0,0,0), BR: (1,0,0), TR: (1,0,1), TL: (0,0,1)
-            const glm::vec3 bottom_face_verts[4] = {
-                glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(1.0f, 0.0f, 0.0f),
-                glm::vec3(1.0f, 0.0f, 1.0f), glm::vec3(0.0f, 0.0f, 1.0f)
-            };
-            const glm::vec3 bottom_normal(0.0f, -1.0f, 0.0f);
-
-            // +Z face (Front) - View from +Z towards -Z
-            // BL: (0,0,1), BR: (1,0,1), TR: (1,1,1), TL: (0,1,1)
-            const glm::vec3 front_face_verts[4] = {
-                glm::vec3(0.0f, 0.0f, 1.0f), glm::vec3(1.0f, 0.0f, 1.0f),
-                glm::vec3(1.0f, 1.0f, 1.0f), glm::vec3(0.0f, 1.0f, 1.0f)
-            };
-            const glm::vec3 front_normal(0.0f, 0.0f, 1.0f);
-
-            // -Z face (Back) - View from -Z towards origin (face is at z=0)
-            // Standard CCW order: BL (0,0,0), BR (1,0,0), TR (1,1,0), TL (0,1,0)
-            const glm::vec3 back_face_verts[4] = {
-                glm::vec3(0.0f, 0.0f, 0.0f), // Bottom-Left
-                glm::vec3(1.0f, 0.0f, 0.0f), // Bottom-Right
-                glm::vec3(1.0f, 1.0f, 0.0f), // Top-Right
-                glm::vec3(0.0f, 1.0f, 0.0f)  // Top-Left
-            };
-            const glm::vec3 back_normal(0.0f, 0.0f, -1.0f);
-
-            for (int_fast16_t x = 0; x < segmentWidth; ++x) {
-                for (int_fast16_t y = 0; y < segmentHeight; ++y) {
-                    for (int_fast16_t z = 0; z < segmentDepth; ++z) {
-                        const auto current_voxel_type = segment.getVoxel(x, y, z).id;
-
-                        if (current_voxel_type == static_cast<uint8_t>(VoxelType::AIR)) {
-                            continue; // Skip air voxels
-                        }
-                        VoxelEngine::World::VoxelType currentVoxelEnum = static_cast<VoxelEngine::World::VoxelType>(current_voxel_type);
-
-                        glm::vec3 voxel_world_pos(static_cast<float>(x), static_cast<float>(y), static_cast<float>(z));
-
-                        // Check +X neighbor (Right)
-                        if (x == segmentWidth - 1 || segment.getVoxel(x + 1, y, z).id == static_cast<uint8_t>(VoxelType::AIR)) {
-                            addFace(mesh, voxel_world_pos, right_face_verts, right_normal, currentVoxelEnum, atlas);
-                        }
-                        // Check -X neighbor (Left)
-                        if (x == 0 || segment.getVoxel(x - 1, y, z).id == static_cast<uint8_t>(VoxelType::AIR)) {
-                            addFace(mesh, voxel_world_pos, left_face_verts, left_normal, currentVoxelEnum, atlas);
-                        }
-                        // Check +Y neighbor (Top)
-                        if (y == segmentHeight - 1 || segment.getVoxel(x, y + 1, z).id == static_cast<uint8_t>(VoxelType::AIR)) {
-                            addFace(mesh, voxel_world_pos, top_face_verts, top_normal, currentVoxelEnum, atlas);
-                        }
-                        // Check -Y neighbor (Bottom)
-                        if (y == 0 || segment.getVoxel(x, y - 1, z).id == static_cast<uint8_t>(VoxelType::AIR)) {
-                            addFace(mesh, voxel_world_pos, bottom_face_verts, bottom_normal, currentVoxelEnum, atlas);
-                        }
-                        // Check +Z neighbor (Front)
-                        if (z == segmentDepth - 1 || segment.getVoxel(x, y, z + 1).id == static_cast<uint8_t>(VoxelType::AIR)) {
-                            addFace(mesh, voxel_world_pos, front_face_verts, front_normal, currentVoxelEnum, atlas);
-                        }
-                        // Check -Z neighbor (Back)
-                        if (z == 0 || segment.getVoxel(x, y, z - 1).id == static_cast<uint8_t>(VoxelType::AIR)) {
-                            addFace(mesh, voxel_world_pos, back_face_verts, back_normal, currentVoxelEnum, atlas);
-                        }
-                    }
+                // For each face, check if the neighbor is outside the chunk (treat as air) or is air inside the chunk
+                // +X
+                if (x + 1 >= segmentWidth || segment.getVoxel(x + 1, y, z).id == static_cast<uint8_t>(VoxelType::AIR)) {
+                    addFace(mesh, voxel_world_pos, right_face_verts, right_normal, currentVoxelEnum, atlas);
+                }
+                // -X
+                if (x - 1 < 0 || segment.getVoxel(x - 1, y, z).id == static_cast<uint8_t>(VoxelType::AIR)) {
+                    addFace(mesh, voxel_world_pos, left_face_verts, left_normal, currentVoxelEnum, atlas);
+                }
+                // +Y
+                if (y + 1 >= segmentHeight || segment.getVoxel(x, y + 1, z).id == static_cast<uint8_t>(VoxelType::AIR)) {
+                    addFace(mesh, voxel_world_pos, top_face_verts, top_normal, currentVoxelEnum, atlas);
+                }
+                // -Y
+                if (y - 1 < 0 || segment.getVoxel(x, y - 1, z).id == static_cast<uint8_t>(VoxelType::AIR)) {
+                    addFace(mesh, voxel_world_pos, bottom_face_verts, bottom_normal, currentVoxelEnum, atlas);
+                }
+                // +Z
+                if (z + 1 >= segmentDepth || segment.getVoxel(x, y, z + 1).id == static_cast<uint8_t>(VoxelType::AIR)) {
+                    addFace(mesh, voxel_world_pos, front_face_verts, front_normal, currentVoxelEnum, atlas);
+                }
+                // -Z
+                if (z - 1 < 0 || segment.getVoxel(x, y, z - 1).id == static_cast<uint8_t>(VoxelType::AIR)) {
+                    addFace(mesh, voxel_world_pos, back_face_verts, back_normal, currentVoxelEnum, atlas);
                 }
             }
-            return mesh;
         }
+    }
+    return mesh;
+}
 
         // Greedy Meshing Implementation
         VoxelMesh MeshBuilder::buildGreedyMesh(const VoxelCastle::World::ChunkSegment& segment, const TextureAtlas& atlas, const std::function<VoxelEngine::World::Voxel(int, int, int)>& getVoxel) {
