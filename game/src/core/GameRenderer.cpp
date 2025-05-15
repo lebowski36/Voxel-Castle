@@ -40,8 +40,8 @@ void renderGame(
 
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-    // Enable fill mode for textured rendering
-    glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+    // Enable wireframe mode for debugging geometry
+    glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
     glm::mat4 view = camera.getViewMatrix();
     glm::mat4 proj = camera.getProjectionMatrix();
