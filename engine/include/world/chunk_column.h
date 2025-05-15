@@ -1,4 +1,3 @@
-
 #ifndef CHUNK_COLUMN_H
 #define CHUNK_COLUMN_H
 
@@ -154,6 +153,11 @@ namespace World {
             static void worldToLocalSegmentCoords(int_fast64_t worldX, int_fast64_t worldY, int_fast64_t worldZ,
                                                 int_fast32_t& segmentX, int_fast32_t& segmentY, int_fast32_t& segmentZ,
                                                 int_fast64_t columnWorldX, int_fast64_t columnWorldZ);
+
+            /**
+             * @brief Marks all segments in this column as dirty.
+             */
+            void markAllSegmentsDirty();
 
         private:
             ChunkColumnCoord m_coordinates; ///< World XZ coordinates of this column (at its origin 0,0).

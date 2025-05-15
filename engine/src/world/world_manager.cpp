@@ -1,4 +1,3 @@
-
 #include <future>
 #include <queue>
 #include <mutex>
@@ -259,6 +258,15 @@ if (!m_meshJobSystem || m_meshJobSystem->runningJobs() == 0) {
         m_chunkColumns.erase(coord);
     }
 }
+}
+
+void WorldManager::markAllSegmentsDirty() {
+    for (auto& pair : m_chunkColumns) {
+        if (pair.second) {
+            pair.second->markAllSegmentsDirty();
+        }
+    }
+    std::cout << "[WorldManager] Marked all segments dirty for mesh regeneration." << std::endl;
 }
 
 } // namespace World

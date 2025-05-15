@@ -219,6 +219,15 @@ public:
      * @param generator The world generator to use for creating new chunks.
      */
     void updateActiveChunks(const glm::vec3& centerWorldPosition, int loadRadiusInSegments, WorldGenerator& generator);
+
+    /**
+     * @brief Marks all segments in all chunk columns as dirty.
+     * This is useful when a global change (like debug mode switch) requires all meshes to be rebuilt.
+     */
+    void markAllSegmentsDirty();
+
+private:
+    // Helper to convert world coordinates to ChunkColumn base coordinates
 };
 
 } // namespace World

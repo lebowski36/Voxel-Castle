@@ -146,5 +146,13 @@ namespace VoxelCastle
             if (segmentZ < 0) segmentZ += ::VoxelCastle::World::SEGMENT_DEPTH;
         }
 
+        void ChunkColumn::markAllSegmentsDirty() {
+            for (auto& pair : m_segments) {
+                if (pair.second) {
+                    pair.second->markDirty(true);
+                }
+            }
+        }
+
     } // namespace World
 } // namespace VoxelCastle

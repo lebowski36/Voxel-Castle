@@ -1,6 +1,7 @@
 #include "core/InputManager.h"
 #include "core/game.h"
 #include "platform/Window.h" // Corrected path to Window.h
+#include "world/world_manager.h" // Required for markAllSegmentsDirty
 #include <SDL3/SDL.h>
 #include <glad/glad.h>
 #include <iostream>
@@ -23,7 +24,10 @@ void processInput(Game& game) {
         }
         else if (e.type == SDL_EVENT_KEY_DOWN) {
             if (e.key.scancode == SDL_SCANCODE_P) {
+                DebugRenderMode oldMode = g_debugRenderMode;
                 g_debugRenderMode = static_cast<DebugRenderMode>((static_cast<int>(g_debugRenderMode) + 1) % 3);
+                bool modeChanged = oldMode != g_debugRenderMode;
+
                 switch (g_debugRenderMode) {
                     case DebugRenderMode::NORMAL:
                         std::cout << "[Debug] Render mode: NORMAL" << std::endl;
@@ -34,6 +38,15 @@ void processInput(Game& game) {
                     case DebugRenderMode::FACE_DEBUG:
                         std::cout << "[Debug] Render mode: FACE_DEBUG" << std::endl;
                         break;
+                }
+
+                if (modeChanged && game.getWorldManager()) {
+                    // If mode changed to or from FACE_DEBUG, or to or from WIREFRAME, mark all segments dirty
+                    if (oldMode == DebugRenderMode::FACE_DEBUG || g_debugRenderMode == DebugRenderMode::FACE_DEBUG ||
+                        oldMode == DebugRenderMode::WIREFRAME || g_debugRenderMode == DebugRenderMode::WIREFRAME) {
+                        game.getWorldManager()->markAllSegmentsDirty();
+                        std::cout << "[InputManager] Debug mode changed, marked all segments dirty." << std::endl;
+                    }
                 }
             }
             switch (e.key.scancode) {

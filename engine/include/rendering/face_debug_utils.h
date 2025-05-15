@@ -5,15 +5,18 @@
 namespace VoxelEngine {
 namespace Rendering {
 
-// Encodes (x, y, z, dir) into a vec4 color for debug visualization
-inline glm::vec4 encodeFaceDebugColor(int x, int y, int z, int dir) {
-    // Map x, y, z, dir to [0,1] range (assuming chunk size < 256)
-    return glm::vec4(
-        float(x & 0xFF) / 255.0f,
-        float(y & 0xFF) / 255.0f,
-        float(z & 0xFF) / 255.0f,
-        float((dir + 1) & 0x3) / 3.0f // dir: -1 or +1 mapped to 0 or 1
-    );
+// Encodes a direction ID into a vec4 color for debug visualization
+inline glm::vec4 encodeFaceDebugColor(int directionId) {
+    // Ensure alpha is always 1.0 for debug mode, colors are distinct
+    switch (directionId) {
+        case 1:  return glm::vec4(1.0f, 0.0f, 0.0f, 1.0f); // +X (Right) = Red
+        case 2:  return glm::vec4(0.0f, 1.0f, 1.0f, 1.0f); // -X (Left)  = Cyan
+        case 3:  return glm::vec4(0.0f, 1.0f, 0.0f, 1.0f); // +Y (Top)   = Green
+        case 4:  return glm::vec4(1.0f, 0.0f, 1.0f, 1.0f); // -Y (Bottom)= Magenta
+        case 5:  return glm::vec4(0.0f, 0.0f, 1.0f, 1.0f); // +Z (Front) = Blue
+        case 6:  return glm::vec4(1.0f, 1.0f, 0.0f, 1.0f); // -Z (Back)  = Yellow
+        default: return glm::vec4(0.5f, 0.5f, 0.5f, 1.0f); // Unknown = Grey
+    }
 }
 
 } // namespace Rendering

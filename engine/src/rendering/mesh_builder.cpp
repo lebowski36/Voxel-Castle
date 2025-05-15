@@ -63,13 +63,20 @@ namespace VoxelEngine {
     for (int i = 0; i < 4; ++i) {
         glm::vec4 debugColor(0.0f);
         if (::g_debugRenderMode == DebugRenderMode::FACE_DEBUG) {
-            // Use voxel position and normal as face id (normal encodes direction)
-            debugColor = VoxelEngine::Rendering::encodeFaceDebugColor(
-                static_cast<int>(voxel_pos.x),
-                static_cast<int>(voxel_pos.y),
-                static_cast<int>(voxel_pos.z),
-                static_cast<int>(normal.x + normal.y * 2 + normal.z * 3) // crude encoding for direction
-            );
+            // Determine direction ID based on normal
+            int directionId = 0;
+            if (normal.x > 0.5f) directionId = 1;      // +X (Right)
+            else if (normal.x < -0.5f) directionId = 2; // -X (Left)
+            else if (normal.y > 0.5f) directionId = 3;  // +Y (Top)
+            else if (normal.y < -0.5f) directionId = 4; // -Y (Bottom)
+            else if (normal.z > 0.5f) directionId = 5;  // +Z (Front)
+            else if (normal.z < -0.5f) directionId = 6; // -Z (Back)
+            debugColor = VoxelEngine::Rendering::encodeFaceDebugColor(directionId);
+            // DEBUG LOGGING
+            std::cout << "[MeshBuilder DEBUG addFace] VoxelPos: (" << voxel_pos.x << "," << voxel_pos.y << "," << voxel_pos.z 
+                      << ") Normal: (" << normal.x << "," << normal.y << "," << normal.z
+                      << ") DirID: " << directionId 
+                      << " Color: (" << debugColor.r << "," << debugColor.g << "," << debugColor.b << "," << debugColor.a << ")" << std::endl;
         }
         mesh.vertices.emplace_back(voxel_pos + face_vertices[i], normal, quad_uvs[i], atlas_origin_uv, debugLight, debugColor);
     }
@@ -134,13 +141,20 @@ namespace VoxelEngine {
 
     glm::vec4 debugColor(0.0f);
     if (::g_debugRenderMode == DebugRenderMode::FACE_DEBUG) {
-        // Use p1 as face id, normal encodes direction
-        debugColor = VoxelEngine::Rendering::encodeFaceDebugColor(
-            static_cast<int>(p1.x),
-            static_cast<int>(p1.y),
-            static_cast<int>(p1.z),
-            static_cast<int>(normal.x + normal.y * 2 + normal.z * 3)
-        );
+        // Determine direction ID based on normal
+        int directionId = 0;
+        if (normal.x > 0.5f) directionId = 1;      // +X (Right)
+        else if (normal.x < -0.5f) directionId = 2; // -X (Left)
+        else if (normal.y > 0.5f) directionId = 3;  // +Y (Top)
+        else if (normal.y < -0.5f) directionId = 4; // -Y (Bottom)
+        else if (normal.z > 0.5f) directionId = 5;  // +Z (Front)
+        else if (normal.z < -0.5f) directionId = 6; // -Z (Back)
+        debugColor = VoxelEngine::Rendering::encodeFaceDebugColor(directionId);
+        // DEBUG LOGGING
+        std::cout << "[MeshBuilder DEBUG addQuad] P1: (" << p1.x << "," << p1.y << "," << p1.z
+                  << ") Normal: (" << normal.x << "," << normal.y << "," << normal.z
+                  << ") DirID: " << directionId
+                  << " Color: (" << debugColor.r << "," << debugColor.g << "," << debugColor.b << "," << debugColor.a << ")" << std::endl;
     }
     mesh.vertices.emplace_back(p1, normal, quad_uvs[0], atlas_origin_uv, light, debugColor);
     mesh.vertices.emplace_back(p2, normal, quad_uvs[1], atlas_origin_uv, light, debugColor);
