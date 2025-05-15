@@ -1,3 +1,4 @@
+#include "rendering/debug_render_mode.h"
 #ifndef WINDOW_H
 #define WINDOW_H
 

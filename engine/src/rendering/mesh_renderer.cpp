@@ -144,6 +144,8 @@ void MeshRenderer::uploadMesh(const VoxelMesh& mesh) {
     glVertexAttribPointer(3, 2, GL_FLOAT, GL_FALSE, sizeof(VoxelEngine::Rendering::Vertex), (void*)offsetof(VoxelEngine::Rendering::Vertex, atlas_tile_origin_uv));
     glEnableVertexAttribArray(4); 
     glVertexAttribPointer(4, 1, GL_FLOAT, GL_FALSE, sizeof(VoxelEngine::Rendering::Vertex), (void*)offsetof(VoxelEngine::Rendering::Vertex, light));
+    glEnableVertexAttribArray(5);
+    glVertexAttribPointer(5, 4, GL_FLOAT, GL_FALSE, sizeof(VoxelEngine::Rendering::Vertex), (void*)offsetof(VoxelEngine::Rendering::Vertex, debugColor));
     err = glGetError(); 
     if (err != GL_NO_ERROR) {
         std::cerr << "[MeshRenderer::uploadMesh] OpenGL error 0x" << std::hex << err << std::dec << " after glVertexAttribPointer setup." << std::endl;

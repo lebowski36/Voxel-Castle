@@ -1,3 +1,8 @@
+#include "platform/Window.h"
+#include "rendering/debug_render_mode.h"
+
+// Global debug render mode variable (define here, declared extern in header)
+DebugRenderMode g_debugRenderMode = DebugRenderMode::NORMAL;
 #include "platform/Window.h" 
 #include <iostream> 
 #include <glad/glad.h> // Should be included before SDL_opengl.h
@@ -86,7 +91,7 @@ void Window::handleEvents() {
         }
 
         if (e.type == SDL_EVENT_KEY_DOWN) {
-            if (e.key.key == SDLK_ESCAPE) {
+            if (e.key.scancode == SDL_SCANCODE_ESCAPE) {
                 running = false;
             }
         }

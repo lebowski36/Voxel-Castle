@@ -3,10 +3,13 @@
 #include "platform/Window.h" // Corrected path to Window.h
 #include <SDL3/SDL.h>
 #include <glad/glad.h>
+#include <iostream>
 
 namespace GameInput {
 
 void processInput(Game& game) {
+    // Debug render mode toggle (P key)
+    extern DebugRenderMode g_debugRenderMode;
     // Reset mouse delta at frame start
     game.mouseDeltaX_ = 0.0f;
     game.mouseDeltaY_ = 0.0f;
@@ -17,6 +20,20 @@ void processInput(Game& game) {
             game.isRunning_ = false;
         }
         else if (e.type == SDL_EVENT_KEY_DOWN) {
+            if (e.key.scancode == SDL_SCANCODE_P) {
+                g_debugRenderMode = static_cast<DebugRenderMode>((static_cast<int>(g_debugRenderMode) + 1) % 3);
+                switch (g_debugRenderMode) {
+                    case DebugRenderMode::NORMAL:
+                        std::cout << "[Debug] Render mode: NORMAL" << std::endl;
+                        break;
+                    case DebugRenderMode::WIREFRAME:
+                        std::cout << "[Debug] Render mode: WIREFRAME" << std::endl;
+                        break;
+                    case DebugRenderMode::FACE_DEBUG:
+                        std::cout << "[Debug] Render mode: FACE_DEBUG" << std::endl;
+                        break;
+                }
+            }
             switch (e.key.scancode) {
                 case SDL_SCANCODE_ESCAPE:
                     game.mouseCaptured_ = !game.mouseCaptured_;

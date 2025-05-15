@@ -1,3 +1,8 @@
+#include "rendering/face_debug_utils.h"
+#ifdef VOXEL_DEBUG_FACE_ID
+    // In debug mode, encode face info as color and add as a per-vertex attribute
+    glm::vec4 debugColor = VoxelEngine::Rendering::encodeFaceDebugColor(x[0], x[1], x[2], dir);
+#endif
 #include "rendering/mesh_builder.h"
 #include "world/voxel_types.h" // For VoxelType::AIR
 #include "world/chunk_segment.h" // For CHUNK_SIZE constants
@@ -54,10 +59,19 @@ namespace VoxelEngine {
 
     // The 'light' component is set to 1.0f for now.
     // Note: The order of face_vertices (BL, BR, TR, TL) must match the quad_uvs order.
+    extern DebugRenderMode g_debugRenderMode;
     for (int i = 0; i < 4; ++i) {
-        // The old texCoords (uvs_for_current_face[i]) are no longer directly used here.
-        // Instead, we pass quad_uvs[i] and atlas_origin_uv.
-        mesh.vertices.emplace_back(voxel_pos + face_vertices[i], normal, quad_uvs[i], atlas_origin_uv, debugLight);
+        glm::vec4 debugColor(0.0f);
+        if (g_debugRenderMode == DebugRenderMode::FACE_DEBUG) {
+            // Use voxel position and normal as face id (normal encodes direction)
+            debugColor = VoxelEngine::Rendering::encodeFaceDebugColor(
+                static_cast<int>(voxel_pos.x),
+                static_cast<int>(voxel_pos.y),
+                static_cast<int>(voxel_pos.z),
+                static_cast<int>(normal.x + normal.y * 2 + normal.z * 3) // crude encoding for direction
+            );
+        }
+        mesh.vertices.emplace_back(voxel_pos + face_vertices[i], normal, quad_uvs[i], atlas_origin_uv, debugLight, debugColor);
     }
 
     mesh.indices.push_back(base_index);
@@ -118,10 +132,21 @@ namespace VoxelEngine {
     quad_uvs[2] = glm::vec2(static_cast<float>(quad_width_voxels), static_cast<float>(quad_height_voxels));
     quad_uvs[3] = glm::vec2(0.0f, static_cast<float>(quad_height_voxels));
 
-    mesh.vertices.emplace_back(p1, normal, quad_uvs[0], atlas_origin_uv, light);
-    mesh.vertices.emplace_back(p2, normal, quad_uvs[1], atlas_origin_uv, light);
-    mesh.vertices.emplace_back(p3, normal, quad_uvs[2], atlas_origin_uv, light);
-    mesh.vertices.emplace_back(p4, normal, quad_uvs[3], atlas_origin_uv, light);
+    extern DebugRenderMode g_debugRenderMode;
+    glm::vec4 debugColor(0.0f);
+    if (g_debugRenderMode == DebugRenderMode::FACE_DEBUG) {
+        // Use p1 as face id, normal encodes direction
+        debugColor = VoxelEngine::Rendering::encodeFaceDebugColor(
+            static_cast<int>(p1.x),
+            static_cast<int>(p1.y),
+            static_cast<int>(p1.z),
+            static_cast<int>(normal.x + normal.y * 2 + normal.z * 3)
+        );
+    }
+    mesh.vertices.emplace_back(p1, normal, quad_uvs[0], atlas_origin_uv, light, debugColor);
+    mesh.vertices.emplace_back(p2, normal, quad_uvs[1], atlas_origin_uv, light, debugColor);
+    mesh.vertices.emplace_back(p3, normal, quad_uvs[2], atlas_origin_uv, light, debugColor);
+    mesh.vertices.emplace_back(p4, normal, quad_uvs[3], atlas_origin_uv, light, debugColor);
 
     // Standard quad triangulation (ensure CCW winding order as seen from the direction of the normal for front faces)
     mesh.indices.push_back(base_index);     // p1
@@ -263,17 +288,34 @@ namespace VoxelEngine {
                                     normal_val.y = static_cast<float>(q[1]);
                                     normal_val.z = static_cast<float>(q[2]);
 
-                                    static std::ofstream mesh_debug_log("mesh_debug.log", std::ios::app);
-                                    mesh_debug_log << "[DEBUG] Adding quad: axis=" << d << ", dir=" << dir
-                                                  << ", base=(" << x[0] << "," << x[1] << "," << x[2] << ")"
-                                                  << ", h_quad=" << h_quad << ", w_quad=" << w_quad
-                                                  << ", voxelType=" << static_cast<int>(current_face_voxel_type) << std::endl;
+static std::ofstream mesh_debug_log;
+if (!mesh_debug_log.is_open()) {
+    mesh_debug_log.open("./mesh_debug.log", std::ios::app);
+    if (!mesh_debug_log.is_open()) {
+        std::cerr << "[ERROR] Could not open mesh_debug.log for writing!" << std::endl;
+    }
+}
+mesh_debug_log << "[DEBUG] Quad: axis=" << d << ", dir=" << dir
+              << ", base=(" << x[0] << "," << x[1] << "," << x[2] << ")"
+              << ", h_quad=" << h_quad << ", w_quad=" << w_quad
+              << ", voxelType=" << static_cast<int>(current_face_voxel_type)
+              << ", ovp1=(" << ovp1.x << "," << ovp1.y << "," << ovp1.z << ")"
+              << ", ovp2=(" << ovp2.x << "," << ovp2.y << "," << ovp2.z << ")"
+              << ", ovp3=(" << ovp3.x << "," << ovp3.y << "," << ovp3.z << ")"
+              << ", ovp4=(" << ovp4.x << "," << ovp4.y << "," << ovp4.z << ")"
+              << std::endl;
                                     float debugLight = 1.0f; // For faces that are actually rendered
+#ifdef VOXEL_DEBUG_FACE_ID
+                                    // Pass debugColor as an extra attribute (requires mesh, vertex, and shader support)
+                                    // Example: addQuadDebug(..., debugColor)
+                                    // (You will need to implement addQuadDebug and update your mesh/vertex/shader accordingly)
+#else
                                     if (dir > 0) { // Front face, normal along +d. Quad U -> h_quad, Quad V -> w_quad
                                         addQuad(mesh, ovp1, ovp4, ovp3, ovp2, normal_val, current_face_voxel_type, atlas, h_quad, w_quad, debugLight);
                                     } else { // Back face, normal along -d. Quad U -> w_quad, Quad V -> h_quad
                                         addQuad(mesh, ovp1, ovp2, ovp3, ovp4, normal_val, current_face_voxel_type, atlas, w_quad, h_quad, debugLight);
                                     }
+#endif
 // Extra debug: log if mesh buffer grows unexpectedly large
 #define MAX_DEBUG_VERTICES 1000000
 #define MAX_DEBUG_INDICES  3000000
