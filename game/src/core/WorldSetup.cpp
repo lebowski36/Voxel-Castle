@@ -1,5 +1,6 @@
-#include "core/WorldSetup.h"
 
+#include "core/WorldSetup.h"
+#include "core/WorldSetupGlobals.h"
 #include "world/world_manager.h"
 #include "world/world_generator.h"
 #include "world/chunk_column.h"
@@ -17,9 +18,12 @@ void initializeStaticWorld(VoxelCastle::World::WorldManager& worldManager,
     // For now, it's a placeholder.
     // Example structure (to be replaced with actual logic from game.cpp):
 
-    const int initialLoadRadiusInSegments = 1; // Creates a 3x3 area of chunk columns
-    const int centerSegX = 0;
-    const int centerSegZ = 0;
+    const int initialLoadRadiusInSegments = 1; // Creates a 3x3 area of chunk columns (adjust as needed)
+    // Get camera position from a global variable set at startup
+    glm::vec3 cameraPos = g_initialCameraPosition;
+
+    int centerSegX = static_cast<int>(std::floor(cameraPos.x / VoxelCastle::World::ChunkSegment::CHUNK_WIDTH));
+    int centerSegZ = static_cast<int>(std::floor(cameraPos.z / VoxelCastle::World::ChunkSegment::CHUNK_DEPTH));
     const int minYSegments = 0; // Generate segments at Y=0 and Y=1
     const int maxYSegments = 1;
 

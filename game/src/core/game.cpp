@@ -3,6 +3,7 @@
 #include "../../include/SpectatorCamera.h" // Full definition of SpectatorCamera
 #include "../../include/core/GameInitializer.h"    // Initialization and shutdown helper
 #include "core/WorldSetup.h" // Added for world setup
+#include "core/WorldSetupGlobals.h"
 #include "core/GameRenderer.h" // Added for rendering logic
 
 // Include headers that will be needed for the actual implementations later
@@ -96,6 +97,14 @@ bool Game::initialize() {
     lastFrameTime_ = result.lastFrameTime;
     isRunning_ = result.isRunning;
     
+
+    // Set the global initial camera position for world setup
+    if (camera_) {
+        g_initialCameraPosition = camera_->getPosition();
+    } else {
+        g_initialCameraPosition = glm::vec3(0.0f);
+    }
+
     // World content initialization delegated to WorldSetup module
     if (isRunning_ && worldManager_ && worldGenerator_) { // Ensure basic systems are up
         GameWorldSetup::initializeStaticWorld(*worldManager_, *worldGenerator_);
