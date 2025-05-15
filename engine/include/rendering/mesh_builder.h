@@ -29,7 +29,11 @@ namespace VoxelEngine {
              * @param atlas The VoxelEngine::Rendering::TextureAtlas to use for UV mapping.
              * @return A VoxelMesh containing the geometry for the segment.
              */
-            static VoxelMesh buildNaiveMesh(const VoxelCastle::World::ChunkSegment& segment, const TextureAtlas& atlas);
+            static VoxelMesh buildNaiveMesh(
+                const VoxelCastle::World::ChunkSegment& segment,
+                const TextureAtlas& atlas,
+                const std::function<VoxelEngine::World::Voxel(int, int, int)>& getVoxel
+            );
 
             /**
              * @brief Constructs a VoxelMesh from a given ChunkSegment using a greedy meshing approach.

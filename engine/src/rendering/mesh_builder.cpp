@@ -130,7 +130,11 @@ namespace VoxelEngine {
     mesh.indices.push_back(base_index + 3); // p4
         }
 
-VoxelMesh MeshBuilder::buildNaiveMesh(const VoxelCastle::World::ChunkSegment& segment, const TextureAtlas& atlas) {
+VoxelMesh MeshBuilder::buildNaiveMesh(
+    const VoxelCastle::World::ChunkSegment& segment,
+    const TextureAtlas& atlas,
+    const std::function<VoxelEngine::World::Voxel(int, int, int)>& getVoxel
+) {
     VoxelMesh mesh;
     mesh.clear();
 
@@ -175,36 +179,36 @@ VoxelMesh MeshBuilder::buildNaiveMesh(const VoxelCastle::World::ChunkSegment& se
     for (int_fast16_t x = 0; x < segmentWidth; ++x) {
         for (int_fast16_t y = 0; y < segmentHeight; ++y) {
             for (int_fast16_t z = 0; z < segmentDepth; ++z) {
-                const auto current_voxel_type = segment.getVoxel(x, y, z).id;
+                const auto current_voxel_type = getVoxel(x, y, z).id;
                 if (current_voxel_type == static_cast<uint8_t>(VoxelType::AIR)) {
                     continue; // Skip air voxels
                 }
                 VoxelEngine::World::VoxelType currentVoxelEnum = static_cast<VoxelEngine::World::VoxelType>(current_voxel_type);
                 glm::vec3 voxel_world_pos(static_cast<float>(x), static_cast<float>(y), static_cast<float>(z));
 
-                // For each face, check if the neighbor is outside the chunk (treat as air) or is air inside the chunk
+                // For each face, use getVoxel for neighbor checks (cross-chunk aware)
                 // +X
-                if (x + 1 >= segmentWidth || segment.getVoxel(x + 1, y, z).id == static_cast<uint8_t>(VoxelType::AIR)) {
+                if (getVoxel(x + 1, y, z).id == static_cast<uint8_t>(VoxelType::AIR)) {
                     addFace(mesh, voxel_world_pos, right_face_verts, right_normal, currentVoxelEnum, atlas);
                 }
                 // -X
-                if (x - 1 < 0 || segment.getVoxel(x - 1, y, z).id == static_cast<uint8_t>(VoxelType::AIR)) {
+                if (getVoxel(x - 1, y, z).id == static_cast<uint8_t>(VoxelType::AIR)) {
                     addFace(mesh, voxel_world_pos, left_face_verts, left_normal, currentVoxelEnum, atlas);
                 }
                 // +Y
-                if (y + 1 >= segmentHeight || segment.getVoxel(x, y + 1, z).id == static_cast<uint8_t>(VoxelType::AIR)) {
+                if (getVoxel(x, y + 1, z).id == static_cast<uint8_t>(VoxelType::AIR)) {
                     addFace(mesh, voxel_world_pos, top_face_verts, top_normal, currentVoxelEnum, atlas);
                 }
                 // -Y
-                if (y - 1 < 0 || segment.getVoxel(x, y - 1, z).id == static_cast<uint8_t>(VoxelType::AIR)) {
+                if (getVoxel(x, y - 1, z).id == static_cast<uint8_t>(VoxelType::AIR)) {
                     addFace(mesh, voxel_world_pos, bottom_face_verts, bottom_normal, currentVoxelEnum, atlas);
                 }
                 // +Z
-                if (z + 1 >= segmentDepth || segment.getVoxel(x, y, z + 1).id == static_cast<uint8_t>(VoxelType::AIR)) {
+                if (getVoxel(x, y, z + 1).id == static_cast<uint8_t>(VoxelType::AIR)) {
                     addFace(mesh, voxel_world_pos, front_face_verts, front_normal, currentVoxelEnum, atlas);
                 }
                 // -Z
-                if (z - 1 < 0 || segment.getVoxel(x, y, z - 1).id == static_cast<uint8_t>(VoxelType::AIR)) {
+                if (getVoxel(x, y, z - 1).id == static_cast<uint8_t>(VoxelType::AIR)) {
                     addFace(mesh, voxel_world_pos, back_face_verts, back_normal, currentVoxelEnum, atlas);
                 }
             }
