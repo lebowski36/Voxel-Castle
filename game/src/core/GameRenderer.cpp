@@ -102,6 +102,7 @@ void renderGame(
             // Render debug face text if in FACE_DEBUG mode
             if (::g_debugRenderMode == DebugRenderMode::FACE_DEBUG && fontManager.isFontLoaded() && textRenderer.isShaderReady()) {
                 const auto& debugTexts = vMesh->getDebugFaceTexts();
+                float offsetAmount = 0.01f; // Small offset to prevent z-fighting
                 for (const auto& textInfo : debugTexts) {
                     // Calculate text orientation (simplified: billboard towards camera, on face plane)
                     // For now, let's assume text is mostly screen-aligned but positioned in 3D
