@@ -126,7 +126,8 @@ void WorldManager::enqueueDirtyMeshJobs(VoxelEngine::Rendering::TextureAtlas& at
                     auto* colPtr = columnPtr.get();
                     auto* worldPtr = this;
                     // Copy atlas and meshBuilder by reference (safe: read-only)
-                    m_meshJobSystem->enqueue([segPtr, colPtr, worldPtr, &atlas, &meshBuilder, i]() {
+                    // Capture "this" to access member variables in the lambda
+                    m_meshJobSystem->enqueue([this, segPtr, colPtr, worldPtr, &atlas, &meshBuilder, i]() {
                         auto mesh = std::make_unique<VoxelEngine::Rendering::VoxelMesh>();
                         *mesh = meshBuilder.buildGreedyMesh(*segPtr, atlas, [=](int x, int y, int z) {
                             int_fast64_t worldX = colPtr->getBaseX() + x;
