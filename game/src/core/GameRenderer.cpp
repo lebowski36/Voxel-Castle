@@ -40,8 +40,8 @@ void renderGame(
 
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-    // Enable wireframe mode for mesh view
-    glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+    // Enable fill mode for textured rendering
+    glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
     glm::mat4 view = camera.getViewMatrix();
     glm::mat4 proj = camera.getProjectionMatrix();
@@ -85,8 +85,7 @@ void renderGame(
         }
     }
 
-    // Restore fill mode after drawing
-    glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+    // No need to restore fill mode; already set to GL_FILL for textured rendering
 
     // Optional: Debug Atlas Rendering (can be called from here or separately)
     // renderDebugInfo(textureAtlas, screenWidth, screenHeight);

@@ -217,6 +217,7 @@ int_fast64_t WorldManager::worldToColumnBaseZ(int_fast64_t worldZ) {
 
 void WorldManager::updateActiveChunks(const glm::vec3& centerWorldPosition, int loadRadiusInSegments, WorldGenerator& generator) {
 // Calculate chunk column coordinates (not segment indices)
+
 int centerColX = static_cast<int>(std::floor(centerWorldPosition.x / ChunkSegment::CHUNK_WIDTH));
 int centerColZ = static_cast<int>(std::floor(centerWorldPosition.z / ChunkSegment::CHUNK_DEPTH));
 int centerSegY = static_cast<int>(std::floor(centerWorldPosition.y / ChunkSegment::CHUNK_HEIGHT));
@@ -225,12 +226,15 @@ std::set<std::pair<int, int>> activeColumns;
 
 for (int colX = centerColX - loadRadiusInSegments; colX <= centerColX + loadRadiusInSegments; ++colX) {
     for (int colZ = centerColZ - loadRadiusInSegments; colZ <= centerColZ + loadRadiusInSegments; ++colZ) {
-        activeColumns.insert({colX, colZ});
-        ChunkColumn* column = getOrCreateChunkColumn(colX, colZ);
+        // Convert chunk indices to base world coordinates
+        int baseColX = colX * ChunkSegment::CHUNK_WIDTH;
+        int baseColZ = colZ * ChunkSegment::CHUNK_DEPTH;
+        activeColumns.insert({baseColX, baseColZ});
+        ChunkColumn* column = getOrCreateChunkColumn(baseColX, baseColZ);
         for (int segY = centerSegY - loadRadiusInSegments; segY <= centerSegY + loadRadiusInSegments; ++segY) {
             ChunkSegment* segment = column->getOrCreateSegment(segY);
             if (segment->isEmpty() && !segment->isGenerated()) {
-                generator.generateChunkSegment(*segment, colX, segY, colZ);
+                generator.generateChunkSegment(*segment, baseColX, segY, baseColZ);
                 segment->markDirty(true);
                 segment->setGenerated(true); // Mark the segment as generated
             }
