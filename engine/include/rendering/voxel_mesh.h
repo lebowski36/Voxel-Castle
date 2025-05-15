@@ -9,6 +9,8 @@
 #include <glm/vec2.hpp> // For glm::vec2
 #include <glm/vec3.hpp> // For glm::vec3
 
+#include "rendering/DebugText.h" // Added for DebugTextInfo
+
 namespace VoxelEngine {
     namespace Rendering {
 
@@ -48,6 +50,9 @@ namespace VoxelEngine {
             std::vector<uint32_t> indices;      ///< List of indices defining triangles (e.g., for GL_TRIANGLES).
             glm::vec3 worldPosition_ = glm::vec3(0.0f); ///< World position of the mesh's origin.
             bool initialized_ = false;          ///< True if the mesh has been initialized with data.
+            std::vector<DebugTextInfo> debugFaceTexts; ///< Information for rendering text on faces in debug mode.
+
+            const std::vector<DebugTextInfo>& getDebugFaceTexts() const { return debugFaceTexts; } // Added getter
 
             /**
              * @brief Clears all vertex and index data from the mesh.
@@ -56,6 +61,7 @@ namespace VoxelEngine {
             void clear() {
                 vertices.clear();
                 indices.clear();
+                debugFaceTexts.clear(); // Clear debug texts as well
                 worldPosition_ = glm::vec3(0.0f); // Reset world position on clear
                 initialized_ = false;
             }

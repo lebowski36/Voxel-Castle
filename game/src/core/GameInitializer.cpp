@@ -8,6 +8,8 @@
 #include "rendering/mesh_renderer.h"
 #include "SpectatorCamera.h"
 #include "rendering/debug_utils.h"
+#include "rendering/FontManager.h"
+#include "rendering/TextRenderer.h"
 #include <iostream>
 #include <glad/glad.h>
 #include <glm/gtc/matrix_transform.hpp>
@@ -41,6 +43,22 @@ GameInitializer::InitResult GameInitializer::initialize(int screenWidth, int scr
     // Pass projectRoot as std::string to match Debug API
     VoxelEngine::Rendering::Debug::setupDebugAtlasQuad(std::string(projectRoot), screenWidth, screenHeight);
     VoxelEngine::Rendering::Debug::setupSingleTileDebugQuad(screenWidth, screenHeight);
+
+    // Initialize FontManager
+    result.fontManager = std::make_unique<VoxelEngine::Rendering::FontManager>();
+    std::string fontPath = std::string(projectRoot) + "assets/fonts/debug_font.ttf";
+    if (!result.fontManager->loadFont(fontPath, 48)) { // Or some other suitable size
+        std::cerr << "Failed to load font: " << fontPath << std::endl;
+        // Decide if this is a fatal error - for now, we continue
+    }
+
+    // Initialize TextRenderer
+    result.textRenderer = std::make_unique<VoxelEngine::Rendering::TextRenderer>(result.fontManager.get(), std::string(projectRoot));
+    if (!result.textRenderer->init()) {
+        std::cerr << "Failed to initialize TextRenderer." << std::endl;
+        // Decide if this is a fatal error - for now, we continue
+    }
+
     result.camera = std::make_unique<SpectatorCamera>(
         glm::vec3(16.0f, 24.0f, 48.0f), -90.0f, 0.0f, 70.0f,
         static_cast<float>(screenWidth) / static_cast<float>(screenHeight), 0.1f, 500.0f);
@@ -64,6 +82,11 @@ void GameInitializer::shutdown(InitResult& resources, int screenWidth, int scree
     if (resources.ecs) resources.ecs.reset();
     if (resources.camera) resources.camera.reset();
     if (resources.worldGenerator) resources.worldGenerator.reset();
+
+    // Shutdown TextRenderer and FontManager
+    if (resources.textRenderer) resources.textRenderer.reset(); // TextRenderer might hold refs to FontManager, so shut it down first
+    if (resources.fontManager) resources.fontManager.reset();
+
     resources.isRunning = false;
     std::cout << "GameInitializer::shutdown() - Complete." << std::endl;
 }

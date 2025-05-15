@@ -8,6 +8,7 @@
 #include "world/voxel_types.h" // For VoxelType::AIR
 #include "world/chunk_segment.h" // For CHUNK_SIZE constants
 #include "rendering/texture_atlas.h" // Added for TextureAtlas
+#include "rendering/DebugText.h" // Added for DebugTextInfo
 
 // GLM is already included via voxel_mesh.h, but good to be explicit if direct glm types are used
 #include <glm/glm.hpp>
@@ -169,7 +170,23 @@ namespace VoxelEngine {
     mesh.indices.push_back(base_index);     // p1
     mesh.indices.push_back(base_index + 2); // p3
     mesh.indices.push_back(base_index + 3); // p4
-        }
+
+    if (::g_debugRenderMode == DebugRenderMode::FACE_DEBUG) {
+        // Calculate the center of the quad for text placement
+        glm::vec3 faceCenterLocal = (static_cast<glm::vec3>(p1) + static_cast<glm::vec3>(p2) + static_cast<glm::vec3>(p3) + static_cast<glm::vec3>(p4)) / 4.0f;
+        
+        // p1, p2, p3, p4 are relative to the chunk segment origin.
+        // The VoxelMesh itself has a worldPosition_ which is the chunk segment's origin.
+        // So, faceCenterLocal is already in the correct coordinate system relative to the mesh's worldPosition_.
+
+        char coordText[128];
+        // Format text with local-to-chunk coordinates. GameRenderer will add chunk origin before rendering.
+        snprintf(coordText, sizeof(coordText), "(%.0f,%.0f,%.0f)", faceCenterLocal.x, faceCenterLocal.y, faceCenterLocal.z);
+        
+        // Store the local position and normal. The GameRenderer will transform this to world space.
+        mesh.debugFaceTexts.push_back({std::string(coordText), faceCenterLocal, normal});
+    }
+}
 
 
         // Greedy Meshing Implementation
@@ -323,10 +340,34 @@ mesh_debug_log << "[DEBUG] Quad: axis=" << d << ", dir=" << dir
                                     // Example: addQuadDebug(..., debugColor)
                                     // (You will need to implement addQuadDebug and update your mesh/vertex/shader accordingly)
 #else
-                                    if (dir > 0) { // Front face, normal along +d. Quad U -> h_quad, Quad V -> w_quad
+                                    // The order of vertices for addQuad should be BL, BR, TR, TL relative to the quad's orientation.
+                                    // The h_quad and w_quad are dimensions. Normal determines front/back.
+                                    // For +d faces (dir > 0): normal is (0,0,1) for d=Z, (0,1,0) for d=Y, (1,0,0) for d=X.
+                                    //   U vector aligns with h_quad, V vector aligns with w_quad.
+                                    //   p1, p4, p3, p2: (base), (base + U), (base + U + V), (base + V)
+                                    // For -d faces (dir < 0): normal is (0,0,-1) for d=Z, etc.
+                                    //   U vector aligns with h_quad, V vector aligns with w_quad, but visually flipped.
+                                    //   p1, p2, p3, p4: (base), (base + V), (base + V + U), (base + U)
+                                    // The addQuad expects p1,p2,p3,p4 to be BL, BR, TR, TL. We need to map ovp1-4 correctly.
+
+                                    if (dir > 0) { // Front face (normal points in +d direction)
+                                        // ovp1 = base
+                                        // ovp2 = base + dv_vec (V direction)
+                                        // ovp3 = base + dv_vec + du_vec (V+U direction)
+                                        // ovp4 = base + du_vec (U direction)
+                                        // For addQuad: BL, BR, TR, TL
+                                        // If U is width and V is height: BL=ovp1, BR=ovp4, TR=ovp3, TL=ovp2
                                         addQuad(mesh, ovp1, ovp4, ovp3, ovp2, normal_val, current_face_voxel_type, atlas, h_quad, w_quad, debugLight);
-                                    } else { // Back face, normal along -d. Quad U -> w_quad, Quad V -> h_quad
-                                        addQuad(mesh, ovp1, ovp2, ovp3, ovp4, normal_val, current_face_voxel_type, atlas, w_quad, h_quad, debugLight);
+                                    } else { // Back face (normal points in -d direction)
+                                        // ovp1 = base
+                                        // ovp2 = base + dv_vec
+                                        // ovp3 = base + dv_vec + du_vec
+                                        // ovp4 = base + du_vec
+                                        // For addQuad: BL, BR, TR, TL. Since it's a back face, winding is effectively reversed from standard view.
+                                        // To maintain CCW from normal: BL=ovp1, BR=ovp2, TR=ovp3, TL=ovp4 (relative to its own orientation)
+                                        // The h_quad and w_quad might need swapping depending on how UVs are interpreted for back faces.
+                                        // Let's assume addQuad handles UVs based on its input width/height parameters correctly for the given vertices.
+                                        addQuad(mesh, ovp1, ovp2, ovp3, ovp4, normal_val, current_face_voxel_type, atlas, h_quad, w_quad, debugLight);
                                     }
 #endif
 // Extra debug: log if mesh buffer grows unexpectedly large

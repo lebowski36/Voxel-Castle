@@ -18,6 +18,8 @@ namespace VoxelEngine {
         class TextureAtlas; 
         class MeshBuilder; 
         class MeshRenderer;
+        class FontManager; // Added
+        class TextRenderer; // Added
     }
 }
 
@@ -64,6 +66,11 @@ public:
     SpectatorCamera* getCamera() { return camera_.get(); }
     const SpectatorCamera* getCamera() const { return camera_.get(); }
 
+    VoxelEngine::Rendering::FontManager* getFontManager() { return fontManager_.get(); } // Added
+    const VoxelEngine::Rendering::FontManager* getFontManager() const { return fontManager_.get(); } // Added
+    VoxelEngine::Rendering::TextRenderer* getTextRenderer() { return textRenderer_.get(); } // Added
+    const VoxelEngine::Rendering::TextRenderer* getTextRenderer() const { return textRenderer_.get(); } // Added
+
     bool isMouseCaptured() const { return mouseCaptured_; }
     float getMouseDeltaX() const { return mouseDeltaX_; }
     float getMouseDeltaY() const { return mouseDeltaY_; }
@@ -103,6 +110,8 @@ private:
     std::unique_ptr<VoxelEngine::Rendering::MeshBuilder> meshBuilder_;
     std::unique_ptr<VoxelEngine::Rendering::MeshRenderer> meshRenderer_;
     std::unique_ptr<SpectatorCamera> camera_;
+    std::unique_ptr<VoxelEngine::Rendering::FontManager> fontManager_; // Added
+    std::unique_ptr<VoxelEngine::Rendering::TextRenderer> textRenderer_; // Added
     
     // Game loop state
     bool isRunning_ = false;
@@ -115,7 +124,6 @@ private:
     bool manualVoxelChangeRequested_ = false; // For the 'M' key test functionality
     float mouseDeltaX_ = 0.0f;
     float mouseDeltaY_ = 0.0f;
-
 
     // Configuration
     const int screenWidth_ = 2400; 

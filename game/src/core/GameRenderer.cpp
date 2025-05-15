@@ -5,6 +5,10 @@
 #include "SpectatorCamera.h" // Assuming this includes glm a
 #include "platform/Window.h"   // For gameWindow->render() and potentially dimensions
 #include "rendering/debug_render_mode.h" // Added for ::g_debugRenderMode
+#include "rendering/debug_utils.h" 
+#include "rendering/FontManager.h" // Added
+#include "rendering/TextRenderer.h" // Added
+#include "rendering/DebugText.h" // Added for DebugTextInfo
 
 #include <glad/glad.h>
 #include <glm/gtc/matrix_transform.hpp>
@@ -12,10 +16,6 @@
 #include <iostream> // For std::cout, std::ostringstream
 #include <set>      // For std::set in frame summary logging
 #include <sstream>  // For std::ostringstream
-
-// If Debug Utils are specific to GameRenderer, include them here.
-// Otherwise, they might be part of a general rendering utility.
-#include "rendering/debug_utils.h" 
 
 // Helper for logging, if needed
 struct Vec3Comparator {
@@ -35,11 +35,17 @@ void renderGame(
     Window& gameWindow,
     const std::vector<const VoxelEngine::Rendering::VoxelMesh*>& worldMeshes,
     int screenWidth,
-    int screenHeight
+    int screenHeight,
+    VoxelEngine::Rendering::FontManager& fontManager, // Added
+    VoxelEngine::Rendering::TextRenderer& textRenderer
 ) {
     static int frameCounter = 0; // Static frame counter for logging
 
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+    // Store original polygon mode
+    GLint polygonMode[2];
+    glGetIntegerv(GL_POLYGON_MODE, polygonMode);
 
     if (::g_debugRenderMode == DebugRenderMode::WIREFRAME) {
         glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
@@ -92,10 +98,41 @@ void renderGame(
              meshRenderer.uploadMesh(*vMesh); 
              glm::mat4 model = glm::translate(glm::mat4(1.0f), vMesh->getWorldPosition());
              meshRenderer.draw(model, view, proj);
+
+            // Render debug face text if in FACE_DEBUG mode
+            if (::g_debugRenderMode == DebugRenderMode::FACE_DEBUG && fontManager.isFontLoaded() && textRenderer.isShaderReady()) {
+                const auto& debugTexts = vMesh->getDebugFaceTexts();
+                for (const auto& textInfo : debugTexts) {
+                    // Calculate text orientation (simplified: billboard towards camera, on face plane)
+                    // For now, let's assume text is mostly screen-aligned but positioned in 3D
+                    // A more sophisticated approach would align text with face normals and billboard appropriately.
+                    
+                    // Text color (e.g., white, or a contrasting color)
+                    glm::vec3 textColor(1.0f, 1.0f, 1.0f);
+                    float scale = 0.005f; // Adjust as needed
+
+                    // The textInfo.worldPosition is the center of the face.
+                    // We might need to adjust it slightly to be "on top" of the face.
+                    // This depends on how depth testing is handled for text.
+                    // For now, render directly at textInfo.worldPosition.
+                    textRenderer.renderText3D(
+                        textInfo.text,
+                        textInfo.worldPosition, // World position of the text (Corrected from textInfo.position)
+                        scale,
+                        textColor,
+                        view,
+                        proj,
+                        camera.getRight(), // For billboarding/orientation
+                        camera.getUp()    // For billboarding/orientation
+                    );
+                }
+            }
         }
     }
 
-    // No need to restore fill mode; already set to GL_FILL for textured rendering
+    // Restore original polygon mode
+    glPolygonMode(GL_FRONT, polygonMode[0]);
+    glPolygonMode(GL_BACK, polygonMode[1]);
 
     // Optional: Debug Atlas Rendering (can be called from here or separately)
     // renderDebugInfo(textureAtlas, screenWidth, screenHeight);

@@ -22,6 +22,9 @@ add_library(VoxelEngine STATIC
     src/rendering/render_utils.cpp # Added RenderUtils source
     src/rendering/debug_utils.cpp # Added DebugUtils source
     src/external/stb_image_impl.cpp # Added stb_image implementation
+    src/rendering/FontManager.cpp # Added FontManager source
+    src/rendering/TextRenderer.cpp # Added TextRenderer source
+    src/rendering/Shader.cpp # Added Shader source
     # Add GLAD source file if compiling it directly
     # Or link against a pre-built GLAD library later
     # For example, if GLAD source is in external/glad/src/glad.c relative to root:

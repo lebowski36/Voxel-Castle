@@ -20,6 +20,9 @@ public:
     glm::mat4 getViewMatrix() const;
     glm::mat4 getProjectionMatrix() const;
     glm::vec3 getPosition() const { return position; }
+    glm::vec3 getFront() const { return front; }
+    glm::vec3 getUp() const { return up; }
+    glm::vec3 getRight() const { return right; }
     float getYaw() const { return yaw; }
     float getPitch() const { return pitch; }
 
