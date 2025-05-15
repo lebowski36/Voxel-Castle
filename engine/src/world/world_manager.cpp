@@ -216,37 +216,43 @@ int_fast64_t WorldManager::worldToColumnBaseZ(int_fast64_t worldZ) {
 }
 
 void WorldManager::updateActiveChunks(const glm::vec3& centerWorldPosition, int loadRadiusInSegments, WorldGenerator& generator) {
-    int centerSegX = static_cast<int>(std::floor(centerWorldPosition.x / ChunkSegment::CHUNK_WIDTH));
-    int centerSegY = static_cast<int>(std::floor(centerWorldPosition.y / ChunkSegment::CHUNK_HEIGHT));
-    int centerSegZ = static_cast<int>(std::floor(centerWorldPosition.z / ChunkSegment::CHUNK_DEPTH));
+// Calculate chunk column coordinates (not segment indices)
+int centerColX = static_cast<int>(std::floor(centerWorldPosition.x / ChunkSegment::CHUNK_WIDTH));
+int centerColZ = static_cast<int>(std::floor(centerWorldPosition.z / ChunkSegment::CHUNK_DEPTH));
+int centerSegY = static_cast<int>(std::floor(centerWorldPosition.y / ChunkSegment::CHUNK_HEIGHT));
 
-    std::set<std::pair<int, int>> activeColumns;
+std::set<std::pair<int, int>> activeColumns;
 
-    for (int x = centerSegX - loadRadiusInSegments; x <= centerSegX + loadRadiusInSegments; ++x) {
-        for (int z = centerSegZ - loadRadiusInSegments; z <= centerSegZ + loadRadiusInSegments; ++z) {
-            activeColumns.insert({x, z});
-            for (int y = centerSegY - loadRadiusInSegments; y <= centerSegY + loadRadiusInSegments; ++y) {
-                ChunkColumn* column = getOrCreateChunkColumn(x, z);
-                ChunkSegment* segment = column->getOrCreateSegment(y);
-
-                if (segment->isEmpty() && !segment->isGenerated()) {
-                    generator.generateChunkSegment(*segment, x, y, z);
-                    segment->markDirty(true);
-                    segment->setGenerated(true); // Mark the segment as generated
-                }
+for (int colX = centerColX - loadRadiusInSegments; colX <= centerColX + loadRadiusInSegments; ++colX) {
+    for (int colZ = centerColZ - loadRadiusInSegments; colZ <= centerColZ + loadRadiusInSegments; ++colZ) {
+        activeColumns.insert({colX, colZ});
+        ChunkColumn* column = getOrCreateChunkColumn(colX, colZ);
+        for (int segY = centerSegY - loadRadiusInSegments; segY <= centerSegY + loadRadiusInSegments; ++segY) {
+            ChunkSegment* segment = column->getOrCreateSegment(segY);
+            if (segment->isEmpty() && !segment->isGenerated()) {
+                generator.generateChunkSegment(*segment, colX, segY, colZ);
+                segment->markDirty(true);
+                segment->setGenerated(true); // Mark the segment as generated
             }
         }
     }
+}
 
-    // Unload chunks outside the active radius
-    for (auto it = m_chunkColumns.begin(); it != m_chunkColumns.end();) {
-        const auto& [coord, columnPtr] = *it;
-        if (activeColumns.find({coord.x, coord.z}) == activeColumns.end()) {
-            it = m_chunkColumns.erase(it); // Unload the column
-        } else {
-            ++it;
-        }
+// Defer unloading: mark columns for removal, but only erase after mesh jobs are done
+std::vector<WorldCoordXZ> columnsToUnload;
+for (auto it = m_chunkColumns.begin(); it != m_chunkColumns.end(); ++it) {
+    const auto& [coord, columnPtr] = *it;
+    if (activeColumns.find({coord.x, coord.z}) == activeColumns.end()) {
+        columnsToUnload.push_back(coord);
     }
+}
+// Only erase columns if there are no running mesh jobs (simple version: after processFinishedMeshJobs)
+// In a real system, you may want to check for jobs referencing these columns
+if (!m_meshJobSystem || m_meshJobSystem->runningJobs() == 0) {
+    for (const auto& coord : columnsToUnload) {
+        m_chunkColumns.erase(coord);
+    }
+}
 }
 
 } // namespace World

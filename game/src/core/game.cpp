@@ -106,9 +106,8 @@ bool Game::initialize() {
     }
 
     // World content initialization delegated to WorldSetup module
-    if (isRunning_ && worldManager_ && worldGenerator_) { // Ensure basic systems are up
-        GameWorldSetup::initializeStaticWorld(*worldManager_, *worldGenerator_);
-    }
+
+    // [Dynamic Chunk Loading] Static world initialization removed. Chunks will be loaded dynamically as the camera moves.
 
     // Initial mesh build after world content is set up
     if (isRunning_ && worldManager_ && textureAtlas_ && meshBuilder_) {
@@ -183,27 +182,10 @@ void Game::update(float deltaTime) {
     GameLogic::update(*this, deltaTime);
 
     if (camera_ && worldManager_ && worldGenerator_) {
-        static int lastSegmentX = INT_MIN;
-        static int lastSegmentY = INT_MIN;
-        static int lastSegmentZ = INT_MIN;
-
         glm::vec3 cameraPos = camera_->getPosition();
-
-        // Calculate the current segment indices
-        int currentSegmentX = static_cast<int>(std::floor(cameraPos.x / VoxelCastle::World::ChunkSegment::CHUNK_WIDTH));
-        int currentSegmentY = static_cast<int>(std::floor(cameraPos.y / VoxelCastle::World::ChunkSegment::CHUNK_HEIGHT));
-        int currentSegmentZ = static_cast<int>(std::floor(cameraPos.z / VoxelCastle::World::ChunkSegment::CHUNK_DEPTH));
-
-        // Check if the camera has moved to a new segment
-        if (currentSegmentX != lastSegmentX || currentSegmentY != lastSegmentY || currentSegmentZ != lastSegmentZ) {
-            int loadRadiusInSegments = 3; // Example radius for testing
-            worldManager_->updateActiveChunks(cameraPos, loadRadiusInSegments, *worldGenerator_);
-
-            // Update the last segment indices
-            lastSegmentX = currentSegmentX;
-            lastSegmentY = currentSegmentY;
-            lastSegmentZ = currentSegmentZ;
-        }
+        int loadRadiusInSegments = 3; // Example radius for testing
+        // Always call updateActiveChunks every frame to ensure chunks are loaded even for small camera movements
+        worldManager_->updateActiveChunks(cameraPos, loadRadiusInSegments, *worldGenerator_);
     }
 }
 
