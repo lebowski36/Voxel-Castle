@@ -58,7 +58,7 @@ void WorldManager::setVoxel(int_fast64_t worldX, int_fast64_t worldY, int_fast64
 }
 
 ChunkColumn* WorldManager::getChunkColumn(int_fast64_t worldX, int_fast64_t worldZ) {
-    ChunkColumnCoord coord{worldX, worldZ};
+    WorldCoordXZ coord{worldX, worldZ};
     auto it = m_chunkColumns.find(coord);
     if (it != m_chunkColumns.end()) {
         return it->second.get();
@@ -67,7 +67,7 @@ ChunkColumn* WorldManager::getChunkColumn(int_fast64_t worldX, int_fast64_t worl
 }
 
 const ChunkColumn* WorldManager::getChunkColumn(int_fast64_t worldX, int_fast64_t worldZ) const {
-    ChunkColumnCoord coord{worldX, worldZ};
+    WorldCoordXZ coord{worldX, worldZ};
     auto it = m_chunkColumns.find(coord);
     if (it != m_chunkColumns.end()) {
         return it->second.get();
@@ -76,7 +76,7 @@ const ChunkColumn* WorldManager::getChunkColumn(int_fast64_t worldX, int_fast64_
 }
 
 ChunkColumn* WorldManager::getOrCreateChunkColumn(int_fast64_t worldX, int_fast64_t worldZ) {
-    ChunkColumnCoord coord{worldX, worldZ}; // These are already base coordinates
+    WorldCoordXZ coord{worldX, worldZ}; // These are already base coordinates
     ChunkColumn* column = getChunkColumn(coord.x, coord.z);
     if (!column) {
         // Column doesn't exist, create it
@@ -103,19 +103,6 @@ ChunkColumn* WorldManager::getOrCreateChunkColumn(int_fast64_t worldX, int_fast6
 }
 
 
-#include "rendering/mesh_job_system.h"
-
-namespace {
-// Global/static mesh job system and result queue for now (could be made a member)
-std::unique_ptr<VoxelEngine::Rendering::MeshJobSystem> g_meshJobSystem;
-std::mutex g_meshJobResultMutex;
-struct MeshJobResult {
-    VoxelCastle::World::ChunkSegment* segment;
-    std::unique_ptr<VoxelEngine::Rendering::VoxelMesh> mesh;
-};
-std::queue<MeshJobResult> g_meshJobResults;
-}
-
 void WorldManager::updateDirtyMeshes(VoxelEngine::Rendering::TextureAtlas& atlas, VoxelEngine::Rendering::MeshBuilder& meshBuilder) {
     // For compatibility: call enqueueDirtyMeshJobs and processFinishedMeshJobs
     enqueueDirtyMeshJobs(atlas, meshBuilder);
@@ -123,8 +110,8 @@ void WorldManager::updateDirtyMeshes(VoxelEngine::Rendering::TextureAtlas& atlas
 }
 
 void WorldManager::enqueueDirtyMeshJobs(VoxelEngine::Rendering::TextureAtlas& atlas, VoxelEngine::Rendering::MeshBuilder& meshBuilder) {
-    if (!g_meshJobSystem) {
-        g_meshJobSystem = std::make_unique<VoxelEngine::Rendering::MeshJobSystem>(std::thread::hardware_concurrency());
+    if (!m_meshJobSystem) {
+        m_meshJobSystem = std::make_unique<VoxelEngine::Rendering::MeshJobSystem>(std::thread::hardware_concurrency());
         std::cout << "[MeshJobSystem] Initialized with " << std::thread::hardware_concurrency() << " threads." << std::endl;
     }
     int enqueued = 0;
@@ -139,7 +126,7 @@ void WorldManager::enqueueDirtyMeshJobs(VoxelEngine::Rendering::TextureAtlas& at
                     auto* colPtr = columnPtr.get();
                     auto* worldPtr = this;
                     // Copy atlas and meshBuilder by reference (safe: read-only)
-                    g_meshJobSystem->enqueue([segPtr, colPtr, worldPtr, &atlas, &meshBuilder, i]() {
+                    m_meshJobSystem->enqueue([segPtr, colPtr, worldPtr, &atlas, &meshBuilder, i]() {
                         auto mesh = std::make_unique<VoxelEngine::Rendering::VoxelMesh>();
                         *mesh = meshBuilder.buildGreedyMesh(*segPtr, atlas, [=](int x, int y, int z) {
                             int_fast64_t worldX = colPtr->getBaseX() + x;
@@ -152,9 +139,10 @@ void WorldManager::enqueueDirtyMeshJobs(VoxelEngine::Rendering::TextureAtlas& at
                             static_cast<float>(colPtr->getBaseX()),
                             static_cast<float>(i * VoxelCastle::World::ChunkSegment::CHUNK_HEIGHT),
                             static_cast<float>(colPtr->getBaseZ())));
-                        // Queue result for main thread
-                        std::lock_guard<std::mutex> lock(g_meshJobResultMutex);
-                        g_meshJobResults.push(MeshJobResult{segPtr, std::move(mesh)});
+                        
+                        // Queue result for main thread using our member variables
+                        std::lock_guard<std::mutex> lock(m_meshJobMutex);
+                        m_completedMeshJobs.push_back(MeshJobData{segPtr, std::move(mesh)});
                     });
                     ++enqueued;
                 }
@@ -169,18 +157,18 @@ void WorldManager::enqueueDirtyMeshJobs(VoxelEngine::Rendering::TextureAtlas& at
 void WorldManager::processFinishedMeshJobs() {
     int processed = 0;
     {
-        std::lock_guard<std::mutex> lock(g_meshJobResultMutex);
-        while (!g_meshJobResults.empty()) {
-            auto& result = g_meshJobResults.front();
-            if (result.segment && result.mesh) {
-                result.segment->mMesh = std::move(result.mesh);
-                result.segment->mMesh->setInitialized(true);
-                result.segment->markDirty(false);
-                result.segment->mIsRebuildingMesh = false;
+        std::lock_guard<std::mutex> lock(m_meshJobMutex);
+        for (auto& jobData : m_completedMeshJobs) {
+            if (jobData.segment && jobData.mesh) {
+                // ChunkSegment::mMesh is now public for async access
+                jobData.segment->mMesh = std::move(jobData.mesh);
+                jobData.segment->mMesh->setInitialized(true);
+                jobData.segment->markDirty(false);
+                jobData.segment->mIsRebuildingMesh = false;
                 ++processed;
             }
-            g_meshJobResults.pop();
         }
+        m_completedMeshJobs.clear();
     }
     if (processed > 0) {
         std::cout << "[MeshJobSystem] Uploaded " << processed << " finished meshes to main thread." << std::endl;
