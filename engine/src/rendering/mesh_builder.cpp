@@ -8,6 +8,7 @@
 #include <glm/gtc/type_ptr.hpp> // For glm::value_ptr if needed later
 
 #include <iostream> // DEBUGGING
+#include <fstream> // For file logging
 #include <vector> // DEBUGGING (already implicitly included, but good for clarity)
 
 namespace VoxelEngine {
@@ -219,6 +220,8 @@ VoxelMesh MeshBuilder::buildNaiveMesh(
 
         // Greedy Meshing Implementation
         VoxelMesh MeshBuilder::buildGreedyMesh(const VoxelCastle::World::ChunkSegment& segment, const TextureAtlas& atlas, const std::function<VoxelEngine::World::Voxel(int, int, int)>& getVoxel) {
+    // This function assumes the accessor lambda is cross-chunk/world aware and always returns AIR for out-of-bounds.
+    // Defensive assertions are used to ensure mask indices are always valid.
             VoxelMesh mesh;
             mesh.clear();
 
@@ -261,38 +264,40 @@ VoxelMesh MeshBuilder::buildNaiveMesh(
                                     VoxelType current_face_voxel_type = static_cast<VoxelType>(voxel1.id);
 
                                     // Find width (h_quad) in u direction
-                                    int h_quad;
-                                    for (h_quad = 1; x[u] + h_quad < chunk_dims[u]; ++h_quad) {
-                                        int mask_check_idx_h = n + h_quad;
-                                        if (mask[mask_check_idx_h]) break;
-                                        int cur_coords_u_ext[3] = {x[0], x[1], x[2]}; cur_coords_u_ext[u] += h_quad;
-                                        Voxel v_strip_1 = getVoxel(cur_coords_u_ext[0], cur_coords_u_ext[1], cur_coords_u_ext[2]);
-                                        Voxel v_strip_2 = getVoxel(cur_coords_u_ext[0] + q[0], cur_coords_u_ext[1] + q[1], cur_coords_u_ext[2] + q[2]);
-                                        bool v_strip_1_solid = (v_strip_1.id != static_cast<uint8_t>(VoxelType::AIR));
-                                        bool v_strip_2_solid = (v_strip_2.id != static_cast<uint8_t>(VoxelType::AIR));
-                                        if (!v_strip_1_solid || v_strip_2_solid || static_cast<VoxelType>(v_strip_1.id) != current_face_voxel_type) {
-                                            break;
-                                        }
-                                    }
+                            int h_quad = 1;
+                            for (; x[u] + h_quad < chunk_dims[u]; ++h_quad) {
+                                int mask_check_idx_h = n + h_quad;
+                                assert(mask_check_idx_h >= 0 && mask_check_idx_h < static_cast<int>(mask.size()));
+                                if (mask[mask_check_idx_h]) break;
+                                int cur_coords_u_ext[3] = {x[0], x[1], x[2]}; cur_coords_u_ext[u] += h_quad;
+                                Voxel v_strip_1 = getVoxel(cur_coords_u_ext[0], cur_coords_u_ext[1], cur_coords_u_ext[2]);
+                                Voxel v_strip_2 = getVoxel(cur_coords_u_ext[0] + q[0], cur_coords_u_ext[1] + q[1], cur_coords_u_ext[2] + q[2]);
+                                bool v_strip_1_solid = (v_strip_1.id != static_cast<uint8_t>(VoxelType::AIR));
+                                bool v_strip_2_solid = (v_strip_2.id != static_cast<uint8_t>(VoxelType::AIR));
+                                if (!v_strip_1_solid || v_strip_2_solid || static_cast<VoxelType>(v_strip_1.id) != current_face_voxel_type) {
+                                    break;
+                                }
+                            }
 
                                     // Find height (w_quad) in v direction
-                                    int w_quad;
-                                    bool done_w = false;
-                                    for (w_quad = 1; x[v] + w_quad < chunk_dims[v]; ++w_quad) {
-                                        for (int k_u = 0; k_u < h_quad; ++k_u) {
-                                            int mask_check_idx_w = (x[v] + w_quad) * chunk_dims[u] + (x[u] + k_u);
-                                            if (mask[mask_check_idx_w]) { done_w = true; break; }
-                                            int cur_coords_uv_ext[3] = {x[0], x[1], x[2]}; cur_coords_uv_ext[u] += k_u; cur_coords_uv_ext[v] += w_quad;
-                                            Voxel v_scan_1 = getVoxel(cur_coords_uv_ext[0], cur_coords_uv_ext[1], cur_coords_uv_ext[2]);
-                                            Voxel v_scan_2 = getVoxel(cur_coords_uv_ext[0] + q[0], cur_coords_uv_ext[1] + q[1], cur_coords_uv_ext[2] + q[2]);
-                                            bool v_scan_1_solid = (v_scan_1.id != static_cast<uint8_t>(VoxelType::AIR));
-                                            bool v_scan_2_solid = (v_scan_2.id != static_cast<uint8_t>(VoxelType::AIR));
-                                            if (!v_scan_1_solid || v_scan_2_solid || static_cast<VoxelType>(v_scan_1.id) != current_face_voxel_type) {
-                                                done_w = true; break;
-                                            }
-                                        }
-                                        if (done_w) break;
+                            int w_quad = 1;
+                            bool done_w = false;
+                            for (; x[v] + w_quad < chunk_dims[v]; ++w_quad) {
+                                for (int k_u = 0; k_u < h_quad; ++k_u) {
+                                    int mask_check_idx_w = (x[v] + w_quad) * chunk_dims[u] + (x[u] + k_u);
+                                    assert(mask_check_idx_w >= 0 && mask_check_idx_w < static_cast<int>(mask.size()));
+                                    if (mask[mask_check_idx_w]) { done_w = true; break; }
+                                    int cur_coords_uv_ext[3] = {x[0], x[1], x[2]}; cur_coords_uv_ext[u] += k_u; cur_coords_uv_ext[v] += w_quad;
+                                    Voxel v_scan_1 = getVoxel(cur_coords_uv_ext[0], cur_coords_uv_ext[1], cur_coords_uv_ext[2]);
+                                    Voxel v_scan_2 = getVoxel(cur_coords_uv_ext[0] + q[0], cur_coords_uv_ext[1] + q[1], cur_coords_uv_ext[2] + q[2]);
+                                    bool v_scan_1_solid = (v_scan_1.id != static_cast<uint8_t>(VoxelType::AIR));
+                                    bool v_scan_2_solid = (v_scan_2.id != static_cast<uint8_t>(VoxelType::AIR));
+                                    if (!v_scan_1_solid || v_scan_2_solid || static_cast<VoxelType>(v_scan_1.id) != current_face_voxel_type) {
+                                        done_w = true; break;
                                     }
+                                }
+                                if (done_w) break;
+                            }
 
                                     // Compute quad corners
                                     float quad_plane_coord_d = static_cast<float>(x[d] + (dir > 0 ? 1 : 0));
@@ -320,6 +325,11 @@ VoxelMesh MeshBuilder::buildNaiveMesh(
                                     normal_val.y = static_cast<float>(q[1]);
                                     normal_val.z = static_cast<float>(q[2]);
                                     
+                                    static std::ofstream mesh_debug_log("mesh_debug.log", std::ios::app);
+                                    mesh_debug_log << "[DEBUG] Adding quad: axis=" << d << ", dir=" << dir
+                                                  << ", base=(" << x[0] << "," << x[1] << "," << x[2] << ")"
+                                                  << ", h_quad=" << h_quad << ", w_quad=" << w_quad
+                                                  << ", voxelType=" << static_cast<int>(current_face_voxel_type) << std::endl;
                                     if (dir > 0) { // Front face, normal along +d. Quad U -> h_quad, Quad V -> w_quad
                                         addQuad(mesh, ovp1, ovp4, ovp3, ovp2, normal_val, current_face_voxel_type, atlas, h_quad, w_quad);
                                     } else { // Back face, normal along -d. Quad U -> w_quad, Quad V -> h_quad
@@ -329,8 +339,9 @@ VoxelMesh MeshBuilder::buildNaiveMesh(
                                     // Mark mask
                                     for (int l_v = 0; l_v < w_quad; ++l_v) {
                                         for (int m_u = 0; m_u < h_quad; ++m_u) {
-                                            int mask_index = (x[v] + l_v) * chunk_dims[u] + (x[u] + m_u);
-                                            mask[mask_index] = true;
+                                    int mask_index = (x[v] + l_v) * chunk_dims[u] + (x[u] + m_u);
+                                    assert(mask_index >= 0 && mask_index < static_cast<int>(mask.size()));
+                                    mask[mask_index] = true;
                                         }
                                     }
                                 }

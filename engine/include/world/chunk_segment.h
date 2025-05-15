@@ -100,6 +100,9 @@ namespace World {
          */
         void markDirty(bool dirty = true);
 
+        // Debug: Track if currently rebuilding mesh
+        bool mIsRebuildingMesh = false;
+
         /**
          * @brief Checks if the chunk segment is dirty.
          * @return True if the segment is dirty, false otherwise.
@@ -124,7 +127,8 @@ namespace World {
                          VoxelEngine::Rendering::MeshBuilder& meshBuilder,
                          int_fast64_t columnWorldX,
                          int_fast32_t segmentYIndex,
-                         int_fast64_t columnWorldZ);
+                         int_fast64_t columnWorldZ,
+                         const class WorldManager* worldManager);
 
         /**
          * @brief Gets a pointer to the generated mesh.

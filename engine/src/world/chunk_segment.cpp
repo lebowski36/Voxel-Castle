@@ -3,6 +3,7 @@
 #include <stdexcept> // For std::out_of_range
 #include "rendering/mesh_builder.h" // For VoxelEngine::Rendering::MeshBuilder
 #include "rendering/texture_atlas.h" // For VoxelEngine::Rendering::TextureAtlas
+#include "world/world_manager.h" // For VoxelCastle::World::WorldManager
 #include <chrono> // For timing
 #include <iostream> // For logging time
 
@@ -59,7 +60,17 @@ namespace VoxelCastle
             }
         }
 
+
         void ChunkSegment::markDirty(bool dirty) {
+            if (dirty) {
+                if (mIsDirty) {
+                    // Already dirty, no-op (prevents feedback loop and log spam)
+                    return;
+                }
+                if (mIsRebuildingMesh) {
+                    std::cout << "[ERROR] markDirty(true) called during mesh rebuild! This may cause a feedback loop." << std::endl;
+                }
+            }
             mIsDirty = dirty;
         }
 
@@ -101,7 +112,10 @@ namespace VoxelCastle
                                        VoxelEngine::Rendering::MeshBuilder& meshBuilder,
                                        int_fast64_t columnWorldX,
                                        int_fast32_t segmentYIndex,
-                                       int_fast64_t columnWorldZ) {
+                                       int_fast64_t columnWorldZ,
+                                       const WorldManager* worldManager) {
+            // [DEBUG] Only print summary every N rebuilds (see below)
+            mIsRebuildingMesh = true;
             static int logCounter = 0; // Static counter to track logging frequency
             const int logInterval = 500; // Log every 500 rebuilds
 
@@ -111,10 +125,50 @@ namespace VoxelCastle
                 mMesh = std::make_unique<VoxelEngine::Rendering::VoxelMesh>();
             }
 
-            *mMesh = meshBuilder.buildGreedyMesh(*this, atlas, [this](int x, int y, int z) {
-                return this->getVoxel(x, y, z);
+            // Lambda: convert local segment (x, y, z) to world coordinates, then use worldManager->getVoxel
+            // Lambda: convert local segment (x, y, z) to world coordinates, then use worldManager->getVoxel
+            // This lambda ensures cross-chunk and world-edge visibility checks. Out-of-bounds is always treated as air.
+            *mMesh = meshBuilder.buildGreedyMesh(*this, atlas, [=](int x, int y, int z) {
+                int_fast64_t worldX = columnWorldX * CHUNK_WIDTH + x;
+                int_fast64_t worldY = segmentYIndex * CHUNK_HEIGHT + y;
+                int_fast64_t worldZ = columnWorldZ * CHUNK_DEPTH + z;
+                auto mod = [](int_fast64_t a, int_fast64_t b) -> int_fast32_t {
+                    int_fast32_t r = static_cast<int_fast32_t>(a % b);
+                    return r < 0 ? r + b : r;
+                };
+                if (worldManager) {
+                    auto* column = worldManager->getChunkColumn(
+                        VoxelCastle::World::WorldManager::worldToColumnBaseX(worldX),
+                        VoxelCastle::World::WorldManager::worldToColumnBaseZ(worldZ)
+                    );
+                    if (!column) {
+                        return ::VoxelEngine::World::Voxel{static_cast<uint8_t>(::VoxelEngine::World::VoxelType::AIR)};
+                    }
+                    int_fast32_t segY = static_cast<int_fast32_t>(worldY / VoxelCastle::World::ChunkSegment::CHUNK_HEIGHT);
+                    auto* segment = column->getSegment(segY);
+                    if (!segment) {
+                        return ::VoxelEngine::World::Voxel{static_cast<uint8_t>(::VoxelEngine::World::VoxelType::AIR)};
+                    }
+                    int_fast32_t localX = mod(worldX - column->getBaseX(), VoxelCastle::World::ChunkSegment::CHUNK_WIDTH);
+                    int_fast32_t localY = mod(worldY, VoxelCastle::World::ChunkSegment::CHUNK_HEIGHT);
+                    int_fast32_t localZ = mod(worldZ - column->getBaseZ(), VoxelCastle::World::ChunkSegment::CHUNK_DEPTH);
+                    // Defensive: ensure local indices are in bounds
+                    if (localX < 0 || localX >= VoxelCastle::World::ChunkSegment::CHUNK_WIDTH ||
+                        localY < 0 || localY >= VoxelCastle::World::ChunkSegment::CHUNK_HEIGHT ||
+                        localZ < 0 || localZ >= VoxelCastle::World::ChunkSegment::CHUNK_DEPTH) {
+                        return ::VoxelEngine::World::Voxel{static_cast<uint8_t>(::VoxelEngine::World::VoxelType::AIR)};
+                    }
+                    return segment->getVoxel(localX, localY, localZ);
+                } else {
+                    return this->getVoxel(x, y, z);
+                }
             });
             mMesh->setInitialized(true);
+            std::cout << "[DEBUG] Rebuilt mesh for segment at (colX=" << columnWorldX << ", segY=" << segmentYIndex << ", colZ=" << columnWorldZ << ")\n";
+            std::cout << "        Vertices: " << mMesh->vertices.size() << ", Indices: " << mMesh->indices.size() << std::endl;
+            if (mMesh->vertices.size() == 0) {
+                std::cout << "        [WARNING] Mesh has 0 vertices! Segment may be empty or meshing failed." << std::endl;
+            }
 
             float segmentWorldX = static_cast<float>(columnWorldX * VoxelCastle::World::ChunkSegment::CHUNK_WIDTH);
             float segmentWorldY = static_cast<float>(segmentYIndex * VoxelCastle::World::ChunkSegment::CHUNK_HEIGHT);
@@ -122,6 +176,8 @@ namespace VoxelCastle
 
             mMesh->setWorldPosition(glm::vec3(segmentWorldX, segmentWorldY, segmentWorldZ));
             markDirty(false);
+            std::cout << "        [DEBUG] Segment marked clean after mesh rebuild." << std::endl;
+            mIsRebuildingMesh = false;
 
             auto endTime = std::chrono::high_resolution_clock::now();
             auto duration = std::chrono::duration_cast<std::chrono::microseconds>(endTime - startTime);

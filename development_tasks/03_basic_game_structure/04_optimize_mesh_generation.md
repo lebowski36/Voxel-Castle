@@ -26,13 +26,13 @@ This task will follow the collaborative workflow outlined in `CURRENT_TODO.md`:
   - Identified that the mesh builder’s voxel accessor must be cross-chunk aware, using world coordinates and `WorldManager::getVoxel` for correct face visibility.
   - Next step: Update `rebuildMesh` to use a cross-chunk-aware accessor via `WorldManager`.
 
-- [ ] **Implement Cross-Chunk Visibility Checks:**
+- [x] **Implement Cross-Chunk Visibility Checks:**
   - Update mesh generation to query neighboring chunks for voxel data when at chunk borders.
   - Only render a face if the neighbor (even in another chunk) is air or out-of-bounds.
   - Add logic to detect if a chunk is at the edge of the rendered world and treat out-of-bounds as air.
   - Continue to test and refine until all edge cases are handled.
 
-- [ ] **Handle World/Chunk Edge Cases:**
+- [x] **Handle World/Chunk Edge Cases:**
   - Ensure faces at the edge of the rendered world are only rendered if truly exposed.
 
 - [ ] **Test and Validate (Expanded):**

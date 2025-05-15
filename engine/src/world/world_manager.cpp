@@ -7,6 +7,7 @@
 #include "rendering/voxel_mesh.h"    // For VoxelEngine::Rendering::VoxelMesh
 #include <cmath> // For std::floor
 #include <set> // For std::set
+#include <iostream> // For std::cout
 
 namespace VoxelCastle {
 namespace World {
@@ -97,17 +98,28 @@ ChunkColumn* WorldManager::getOrCreateChunkColumn(int_fast64_t worldX, int_fast6
 }
 
 void WorldManager::updateDirtyMeshes(VoxelEngine::Rendering::TextureAtlas& atlas, VoxelEngine::Rendering::MeshBuilder& meshBuilder) {
+    int meshRebuildCount = 0;
+    const int maxMeshRebuildsPerCall = 100; // Lowered: Prevent blocking main thread and improve responsiveness
+    int dirtySegmentsFound = 0;
+    // Only rebuild meshes for segments marked dirty (after worldgen or voxel change)
     for (auto const& [coord, columnPtr] : m_chunkColumns) {
         if (columnPtr) {
             for (uint8_t i = 0; i < VoxelCastle::World::ChunkColumn::CHUNKS_PER_COLUMN; ++i) {
                 VoxelCastle::World::ChunkSegment* segment = columnPtr->getSegmentByIndex(i);
                 if (segment && segment->isDirty()) {
-                    // Pass the column's world X and Z coordinates, and the segment's Y index
-                    segment->rebuildMesh(atlas, meshBuilder, columnPtr->getBaseX(), i, columnPtr->getBaseZ());
+                    ++dirtySegmentsFound;
+                    segment->rebuildMesh(atlas, meshBuilder, columnPtr->getBaseX(), i, columnPtr->getBaseZ(), this);
+                    ++meshRebuildCount;
+                    if (meshRebuildCount >= maxMeshRebuildsPerCall) {
+                        std::cout << "[INFO] Mesh rebuild cap reached (" << maxMeshRebuildsPerCall << ") in updateDirtyMeshes. Skipping remaining dirty segments this frame.\n";
+                        std::cout << "[DEBUG] Total dirty segments found this call: " << dirtySegmentsFound << ", rebuilt: " << meshRebuildCount << std::endl;
+                        return;
+                    }
                 }
             }
         }
     }
+    std::cout << "[DEBUG] updateDirtyMeshes finished. Dirty segments found: " << dirtySegmentsFound << ", rebuilt: " << meshRebuildCount << std::endl;
 }
 
 std::vector<const VoxelEngine::Rendering::VoxelMesh*> WorldManager::getAllSegmentMeshes() const {
