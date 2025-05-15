@@ -39,7 +39,10 @@ void renderGame(
     static int frameCounter = 0; // Static frame counter for logging
 
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    
+
+    // Enable wireframe mode for mesh view
+    glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+
     glm::mat4 view = camera.getViewMatrix();
     glm::mat4 proj = camera.getProjectionMatrix();
     
@@ -81,7 +84,10 @@ void renderGame(
              meshRenderer.draw(model, view, proj);
         }
     }
-    
+
+    // Restore fill mode after drawing
+    glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+
     // Optional: Debug Atlas Rendering (can be called from here or separately)
     // renderDebugInfo(textureAtlas, screenWidth, screenHeight);
 
