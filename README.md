@@ -48,6 +48,26 @@ Voxel Fortress aims to create a perfect blend between:
 
 We believe in creating games where players create their own stories through interactions with complex, interwoven systems rather than following prescribed narratives.
 
+## 🛠️ Building and Running Voxel Fortress
+
+
+To build and run the project, follow these steps from the project root directory (replace <path-to-your-clone> with the location where you cloned the repository):
+
+```bash
+# 1. Configure the build (if not already done)
+cmake -S <path-to-your-clone>/Voxel\ Castle -B <path-to-your-clone>/Voxel\ Castle/build
+
+# 2. Build the project (clears console for clarity)
+clear && cmake --build <path-to-your-clone>/Voxel\ Castle/build
+
+# 3. Run the game (clears console for clarity)
+clear && <path-to-your-clone>/Voxel\ Castle/build/bin/VoxelFortressGame
+```
+
+**Note:**
+- You need a C++ compiler, CMake, and SDL3 development libraries installed.
+- If you encounter issues, see `build_log.txt` or consult the `DEVELOPMENT.md` for troubleshooting tips.
+
 ## 🔧 Technology
 
 Building a game of this ambition requires the right tools:
