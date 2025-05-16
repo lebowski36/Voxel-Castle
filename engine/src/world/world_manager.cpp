@@ -130,12 +130,21 @@ void WorldManager::enqueueDirtyMeshJobs(VoxelEngine::Rendering::TextureAtlas& at
                     // Capture shared_ptr by value to keep column alive during job
                     m_meshJobSystem->enqueue([this, segPtr, colPtr, worldPtr, &atlas, &meshBuilder, i]() {
                         auto mesh = std::make_unique<VoxelEngine::Rendering::VoxelMesh>();
+
+                        // Determine the chunk coordinates for this specific segment
+                        glm::ivec3 currentChunkCoords(
+                            static_cast<int>(colPtr->getBaseX()),      // X coordinate of the column
+                            static_cast<int>(i),                        // Y index of the segment in the column
+                            static_cast<int>(colPtr->getBaseZ())       // Z coordinate of the column
+                        );
+
                         *mesh = meshBuilder.buildGreedyMesh(*segPtr, atlas, [=](int x, int y, int z) {
                             int_fast64_t worldX = colPtr->getBaseX() + x;
                             int_fast64_t worldY = i * VoxelCastle::World::ChunkSegment::CHUNK_HEIGHT + y;
                             int_fast64_t worldZ = colPtr->getBaseZ() + z;
                             return worldPtr->getVoxel(worldX, worldY, worldZ);
-                        });
+                        }, currentChunkCoords); // Pass the calculated chunkCoords
+
                         mesh->setInitialized(true);
                         mesh->setWorldPosition(glm::vec3(
                             static_cast<float>(colPtr->getBaseX()),

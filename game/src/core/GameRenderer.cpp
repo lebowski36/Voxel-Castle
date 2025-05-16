@@ -105,6 +105,10 @@ void renderGame(
                 if (!debugTexts.empty()) {
                     glm::mat4 chunkModelMatrix = glm::translate(glm::mat4(1.0f), vMesh->getWorldPosition());
 
+                    // Temporary counter for debug printing
+                    static int debug_print_count = 0;
+                    const int max_debug_prints = 50; // Print info for this many texts
+
                     for (const auto& textInfo : debugTexts) {
                         glm::vec3 localFaceCenter = textInfo.worldPosition; // Position is local to the chunk
                         glm::vec3 worldFaceCenter = glm::vec3(chunkModelMatrix * glm::vec4(localFaceCenter, 1.0f));
@@ -113,10 +117,19 @@ void renderGame(
                         glm::vec3 worldFaceNormal = glm::normalize(glm::mat3(chunkModelMatrix) * localFaceNormal);
                         
                         glm::vec3 textColor(0.0f, 0.0f, 0.0f); // Black text
-                        float scale = 0.002f; // Further reduced scale
+                        float scale = 0.0035f; // Adjusted scale
                         float offsetAmount = 0.01f; // Small offset to prevent z-fighting
 
                         glm::vec3 textPosition = worldFaceCenter + worldFaceNormal * offsetAmount;
+
+                        // Temporary debug output to console
+                        if (debug_print_count < max_debug_prints) {
+                            std::cout << "Rendering Debug Text: Content=\"" << textInfo.text << "\"; "
+                                      << "LocalPos=(" << localFaceCenter.x << "," << localFaceCenter.y << "," << localFaceCenter.z << "); "
+                                      << "WorldPos=(" << worldFaceCenter.x << "," << worldFaceCenter.y << "," << worldFaceCenter.z << ")"
+                                      << std::endl;
+                            debug_print_count++;
+                        }
 
                         textRenderer.renderText3D(
                             textInfo.text,
@@ -140,6 +153,27 @@ void renderGame(
 
     // Optional: Debug Atlas Rendering (can be called from here or separately)
     // renderDebugInfo(textureAtlas, screenWidth, screenHeight);
+
+    // --- BEGIN EXAMPLE TEXT RENDERING ---
+    if (fontManager.isFontLoaded() && textRenderer.isShaderReady()) {
+        std::string myText = "Hello World!";
+        // Position it somewhat in front of where the camera might start or a known world point
+        glm::vec3 textWorldPosition(5.0f, 2.0f, 5.0f); 
+        float textScale = 0.01f; // Adjust as needed
+        glm::vec3 textColor(1.0f, 0.8f, 0.2f); // Bright orange text
+
+        textRenderer.renderText3D(
+            myText,
+            textWorldPosition,
+            textScale,
+            textColor,
+            view,         // view matrix from earlier in the function
+            proj,         // proj matrix from earlier in the function
+            camera.getRight(),
+            camera.getUp()
+        );
+    }
+    // --- END EXAMPLE TEXT RENDERING ---
 
     gameWindow.render(); // Swaps buffers
 }

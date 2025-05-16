@@ -216,8 +216,10 @@ void TextRenderer::renderText3D(const std::string& text,
 
     glDrawArrays(GL_TRIANGLES, 0, static_cast<GLsizei>(vertices.size()));
 
+    glBindBuffer(GL_ARRAY_BUFFER, 0); // Add this: Unbind VBO from GL_ARRAY_BUFFER target
     glBindVertexArray(0);
     glBindTexture(GL_TEXTURE_2D, 0);
+    glUseProgram(0); // Add this: Unbind shader program
 
     // Restore OpenGL state
     if (last_depth_mask) { glDepthMask(GL_TRUE); } else { glDepthMask(GL_FALSE); }

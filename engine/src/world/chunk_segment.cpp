@@ -126,8 +126,13 @@ namespace VoxelCastle
             }
 
             // Lambda: convert local segment (x, y, z) to world coordinates, then use worldManager->getVoxel
-            // Lambda: convert local segment (x, y, z) to world coordinates, then use worldManager->getVoxel
             // This lambda ensures cross-chunk and world-edge visibility checks. Out-of-bounds is always treated as air.
+
+            // Construct chunk coordinates for the MeshBuilder
+            glm::ivec3 currentChunkCoords(static_cast<int>(columnWorldX), 
+                                        static_cast<int>(segmentYIndex), 
+                                        static_cast<int>(columnWorldZ));
+
             *mMesh = meshBuilder.buildGreedyMesh(*this, atlas, [=](int x, int y, int z) {
                 int_fast64_t worldX = columnWorldX * CHUNK_WIDTH + x;
                 int_fast64_t worldY = segmentYIndex * CHUNK_HEIGHT + y;
@@ -162,7 +167,7 @@ namespace VoxelCastle
                 } else {
                     return this->getVoxel(x, y, z);
                 }
-            });
+            }, currentChunkCoords); // Pass currentChunkCoords as the last argument
             mMesh->setInitialized(true);
             std::cout << "[DEBUG] Rebuilt mesh for segment at (colX=" << columnWorldX << ", segY=" << segmentYIndex << ", colZ=" << columnWorldZ << ")\n";
             std::cout << "        Vertices: " << mMesh->vertices.size() << ", Indices: " << mMesh->indices.size() << std::endl;

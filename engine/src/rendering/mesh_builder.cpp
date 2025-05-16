@@ -112,6 +112,8 @@ namespace VoxelEngine {
          * @param atlas The TextureAtlas providing texture coordinates for different voxel types.
          * @param quad_width_voxels The width of the quad in voxel units.
          * @param quad_height_voxels The height of the quad in voxel units.
+         * @param chunkCoords The chunk coordinates of the quad.
+         * @param debugLight The light intensity for debugging.
          */
         void MeshBuilder::addQuad(VoxelMesh& mesh,
                                   const ::VoxelEngine::World::VoxelPosition& p1, const ::VoxelEngine::World::VoxelPosition& p2,
@@ -121,6 +123,7 @@ namespace VoxelEngine {
                                   const TextureAtlas& atlas,
                                   int quad_width_voxels, 
                                   int quad_height_voxels,
+                                  const glm::ivec3& chunkCoords,
                                   float debugLight) {
 
     uint32_t base_index = static_cast<uint32_t>(mesh.vertices.size());
@@ -172,25 +175,22 @@ namespace VoxelEngine {
     mesh.indices.push_back(base_index + 3); // p4
 
     if (::g_debugRenderMode == DebugRenderMode::FACE_DEBUG) {
-        // Calculate the center of the quad for text placement
+        // Calculate the center of the quad for text placement (this is fine for where the text is drawn)
         glm::vec3 faceCenterLocal = (static_cast<glm::vec3>(p1) + static_cast<glm::vec3>(p2) + static_cast<glm::vec3>(p3) + static_cast<glm::vec3>(p4)) / 4.0f;
         
-        // p1, p2, p3, p4 are relative to the chunk segment origin.
-        // The VoxelMesh itself has a worldPosition_ which is the chunk segment's origin.
-        // So, faceCenterLocal is already in the correct coordinate system relative to the mesh's worldPosition_.
-
-        char coordText[128];
-        // Format text with local-to-chunk coordinates. GameRenderer will add chunk origin before rendering.
-        snprintf(coordText, sizeof(coordText), "(%.0f,%.0f,%.0f)", faceCenterLocal.x, faceCenterLocal.y, faceCenterLocal.z);
+        char coordText[256];
+        // Display Chunk Coords (C: X,Y,Z) and Local Voxel Coords of p1 (V: X,Y,Z)
+        snprintf(coordText, sizeof(coordText), "C(%.0f,%.0f,%.0f)V(%.0f,%.0f,%.0f)", 
+                 static_cast<float>(chunkCoords.x), static_cast<float>(chunkCoords.y), static_cast<float>(chunkCoords.z),
+                 p1.x, p1.y, p1.z);
         
-        // Store the local position and normal. The GameRenderer will transform this to world space.
         mesh.debugFaceTexts.push_back({std::string(coordText), faceCenterLocal, normal});
     }
 }
 
 
         // Greedy Meshing Implementation
-        VoxelMesh MeshBuilder::buildGreedyMesh(const VoxelCastle::World::ChunkSegment& segment, const TextureAtlas& atlas, const std::function<VoxelEngine::World::Voxel(int, int, int)>& getVoxel) {
+        VoxelMesh MeshBuilder::buildGreedyMesh(const VoxelCastle::World::ChunkSegment& segment, const TextureAtlas& atlas, const std::function<VoxelEngine::World::Voxel(int, int, int)>& getVoxel, const glm::ivec3& chunkCoords) {
     // This function assumes the accessor lambda is cross-chunk/world aware and always returns AIR for out-of-bounds.
     // Defensive assertions are used to ensure mask indices are always valid.
             VoxelMesh mesh;
@@ -357,7 +357,7 @@ mesh_debug_log << "[DEBUG] Quad: axis=" << d << ", dir=" << dir
                                         // ovp4 = base + du_vec (U direction)
                                         // For addQuad: BL, BR, TR, TL
                                         // If U is width and V is height: BL=ovp1, BR=ovp4, TR=ovp3, TL=ovp2
-                                        addQuad(mesh, ovp1, ovp4, ovp3, ovp2, normal_val, current_face_voxel_type, atlas, h_quad, w_quad, debugLight);
+                                        addQuad(mesh, ovp1, ovp4, ovp3, ovp2, normal_val, current_face_voxel_type, atlas, h_quad, w_quad, chunkCoords, debugLight);
                                     } else { // Back face (normal points in -d direction)
                                         // ovp1 = base
                                         // ovp2 = base + dv_vec
@@ -367,7 +367,7 @@ mesh_debug_log << "[DEBUG] Quad: axis=" << d << ", dir=" << dir
                                         // To maintain CCW from normal: BL=ovp1, BR=ovp2, TR=ovp3, TL=ovp4 (relative to its own orientation)
                                         // The h_quad and w_quad might need swapping depending on how UVs are interpreted for back faces.
                                         // Let's assume addQuad handles UVs based on its input width/height parameters correctly for the given vertices.
-                                        addQuad(mesh, ovp1, ovp2, ovp3, ovp4, normal_val, current_face_voxel_type, atlas, h_quad, w_quad, debugLight);
+                                        addQuad(mesh, ovp1, ovp2, ovp3, ovp4, normal_val, current_face_voxel_type, atlas, h_quad, w_quad, chunkCoords, debugLight);
                                     }
 #endif
 // Extra debug: log if mesh buffer grows unexpectedly large

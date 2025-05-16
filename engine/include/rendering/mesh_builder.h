@@ -43,11 +43,15 @@ namespace VoxelEngine {
              * leading to better rendering performance.
              *
              * @param segment The VoxelCastle::World::ChunkSegment to generate the mesh from.
-             * @param atlas The VoxelEngine::Rendering::TextureAtlas to use for UV mapping.
-             * @param getVoxel A function to retrieve voxel data given its coordinates.
+             * @param atlas The TextureAtlas providing texture coordinates for different voxel types.
+             * @param getVoxel A function to get voxel data, potentially looking into adjacent chunks.
+             * @param chunkCoords The coordinates of the chunk being meshed.
              * @return A VoxelMesh containing the optimized geometry for the segment.
              */
-            static VoxelMesh buildGreedyMesh(const VoxelCastle::World::ChunkSegment& segment, const TextureAtlas& atlas, const std::function<VoxelEngine::World::Voxel(int, int, int)>& getVoxel);
+            static VoxelMesh buildGreedyMesh(const VoxelCastle::World::ChunkSegment& segment, 
+                                             const TextureAtlas& atlas, 
+                                             const std::function<VoxelEngine::World::Voxel(int, int, int)>& getVoxel,
+                                             const glm::ivec3& chunkCoords); // Added chunkCoords parameter
 
         private:
             /**
@@ -86,6 +90,7 @@ namespace VoxelEngine {
              * @param atlas The VoxelEngine::Rendering::TextureAtlas used to get UV coordinates.
              * @param quad_width_voxels Width of the quad in voxel units.
              * @param quad_height_voxels Height of the quad in voxel units.
+             * @param chunkCoords Chunk coordinates.
              */
             static void addQuad(VoxelMesh& mesh,
                                 const ::VoxelEngine::World::VoxelPosition& p1, const ::VoxelEngine::World::VoxelPosition& p2,
@@ -93,8 +98,9 @@ namespace VoxelEngine {
                                 const ::VoxelEngine::World::Normal& normal,
                                 ::VoxelEngine::World::VoxelType voxelType,
                                 const TextureAtlas& atlas,
-                                int quad_width_voxels, // Added: Width of the quad in voxel units
-                                int quad_height_voxels, // Added: Height of the quad in voxel units
+                                int quad_width_voxels, 
+                                int quad_height_voxels,
+                                const glm::ivec3& chunkCoords, // Ensure this is present
                                 float debugLight);
         };
 
