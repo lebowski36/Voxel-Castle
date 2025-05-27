@@ -7,6 +7,10 @@
 
 #include "../SpectatorCamera.h" // Include the full definition of SpectatorCamera
 #include "core/InputManager.h"        // Input handling module
+#include "rendering/TextRenderer.h" // Forward declaration or include as needed
+
+// Include DebugOverlay for full definition
+#include "rendering/DebugOverlay.h" 
 
 // Forward declarations to minimize include dependencies in header
 class Window;
@@ -20,6 +24,7 @@ namespace VoxelEngine {
         class MeshRenderer;
         class FontManager; // Added
         class TextRenderer; // Added
+        class DebugOverlay; // Forward declare DebugOverlay
     }
 }
 
@@ -86,6 +91,13 @@ public:
     bool isManualVoxelChangeRequested() const { return manualVoxelChangeRequested_; }
     void setManualVoxelChangeRequested(bool v) { manualVoxelChangeRequested_ = v; }
 
+    // Method to toggle debug overlay, called by InputManager
+    void toggleDebugOverlay() {
+        if (debugOverlay_) {
+            debugOverlay_->toggleVisibility();
+        }
+    }
+
 private:
     // Helper method for world initialization
     void initializeWorldContent();
@@ -112,6 +124,7 @@ private:
     std::unique_ptr<SpectatorCamera> camera_;
     std::unique_ptr<VoxelEngine::Rendering::FontManager> fontManager_; // Added
     std::unique_ptr<VoxelEngine::Rendering::TextRenderer> textRenderer_; // Added
+    std::unique_ptr<VoxelEngine::Rendering::DebugOverlay> debugOverlay_; // Added DebugOverlay member
     
     // Game loop state
     bool isRunning_ = false;

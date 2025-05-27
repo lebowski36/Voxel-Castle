@@ -10,6 +10,7 @@
 #include "rendering/debug_utils.h"
 #include "rendering/FontManager.h"
 #include "rendering/TextRenderer.h"
+#include "rendering/DebugOverlay.h" // Added for full definition
 #include <iostream>
 #include <glad/glad.h>
 #include <glm/gtc/matrix_transform.hpp>
@@ -77,8 +78,9 @@ void GameInitializer::shutdown(InitResult& resources, int screenWidth, int scree
     }
     if (resources.meshRenderer) resources.meshRenderer.reset();
     if (resources.meshBuilder) resources.meshBuilder.reset();
-    if (resources.textureAtlas) resources.textureAtlas.reset();
+    // Shutdown worldManager BEFORE textureAtlas since worker threads use the atlas
     if (resources.worldManager) resources.worldManager.reset();
+    if (resources.textureAtlas) resources.textureAtlas.reset();
     if (resources.ecs) resources.ecs.reset();
     if (resources.camera) resources.camera.reset();
     if (resources.worldGenerator) resources.worldGenerator.reset();

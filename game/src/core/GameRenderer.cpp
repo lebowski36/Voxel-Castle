@@ -9,6 +9,7 @@
 #include "rendering/FontManager.h" // Added
 #include "rendering/TextRenderer.h" // Added
 #include "rendering/DebugText.h" // Added for DebugTextInfo
+#include "rendering/DebugOverlay.h" // Added for DebugOverlay
 
 #include <glad/glad.h>
 #include <glm/gtc/matrix_transform.hpp>
@@ -37,7 +38,8 @@ void renderGame(
     int screenWidth,
     int screenHeight,
     VoxelEngine::Rendering::FontManager& fontManager, // Added
-    VoxelEngine::Rendering::TextRenderer& textRenderer
+    VoxelEngine::Rendering::TextRenderer& textRenderer,
+    VoxelEngine::Rendering::DebugOverlay& debugOverlay // Added DebugOverlay argument
 ) {
     static int frameCounter = 0; // Static frame counter for logging
 
@@ -174,6 +176,10 @@ void renderGame(
         );
     }
     // --- END EXAMPLE TEXT RENDERING ---
+
+    // Render Debug Overlay if active
+    // The debugOverlay.render() function itself checks if it's visible.
+    debugOverlay.render(camera, screenWidth, screenHeight);
 
     gameWindow.render(); // Swaps buffers
 }

@@ -120,18 +120,40 @@ void MeshRenderer::uploadMesh(const VoxelMesh& mesh) {
     glBindVertexArray(vao);
     GLenum err; 
 
+    // Add debugging for the mesh data - only for large meshes or errors
+    size_t expectedVertexSize = sizeof(VoxelEngine::Rendering::Vertex);
+    size_t totalDataSize = mesh.vertices.size() * expectedVertexSize;
+    
+    static size_t upload_count = 0;
+    upload_count++;
+    bool should_log = (upload_count % 50 == 0) || (mesh.vertices.size() > 8000);
+
     glBindBuffer(GL_ARRAY_BUFFER, vbo);
-    glBufferData(GL_ARRAY_BUFFER, mesh.vertices.size() * sizeof(Vertex), mesh.vertices.data(), GL_STATIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, totalDataSize, mesh.vertices.data(), GL_STATIC_DRAW);
     err = glGetError();
+    static size_t error_count = 0;
     if (err != GL_NO_ERROR) {
-        std::cerr << "[MeshRenderer::uploadMesh] OpenGL error 0x" << std::hex << err << std::dec << " after VBO glBufferData." << std::endl;
+        error_count++;
+        if (error_count <= 5 || error_count % 100 == 0) {
+            std::cerr << "[ERROR] VBO upload failed (0x" << std::hex << err << std::dec << ") - Count: " << error_count << std::endl;
+            if (error_count == 5) {
+                std::cerr << "  [Further VBO errors will be shown every 100 occurrences]" << std::endl;
+            }
+        }
+    } else if (should_log) {
+        std::cout << "[MeshRenderer] Upload #" << upload_count << ": " << mesh.vertices.size() 
+                  << " vertices (" << totalDataSize << " bytes)" << std::endl;
     }
 
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, mesh.indices.size() * sizeof(uint32_t), mesh.indices.data(), GL_STATIC_DRAW);
     err = glGetError();
+    static size_t ebo_error_count = 0;
     if (err != GL_NO_ERROR) {
-        std::cerr << "[MeshRenderer::uploadMesh] OpenGL error 0x" << std::hex << err << std::dec << " after EBO glBufferData." << std::endl;
+        ebo_error_count++;
+        if (ebo_error_count <= 3 || ebo_error_count % 50 == 0) {
+            std::cerr << "[ERROR] EBO upload failed (0x" << std::hex << err << std::dec << ") - Count: " << ebo_error_count << std::endl;
+        }
     }
 
     glEnableVertexAttribArray(0); 
@@ -148,7 +170,7 @@ void MeshRenderer::uploadMesh(const VoxelMesh& mesh) {
     glVertexAttribPointer(5, 4, GL_FLOAT, GL_FALSE, sizeof(VoxelEngine::Rendering::Vertex), (void*)offsetof(VoxelEngine::Rendering::Vertex, debugColor));
     err = glGetError(); 
     if (err != GL_NO_ERROR) {
-        std::cerr << "[MeshRenderer::uploadMesh] OpenGL error 0x" << std::hex << err << std::dec << " after glVertexAttribPointer setup." << std::endl;
+        std::cerr << "[ERROR] MeshRenderer::uploadMesh - Vertex attribute setup failed: 0x" << std::hex << err << std::dec << std::endl;
     }
 
     indexCount = mesh.indices.size();

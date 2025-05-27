@@ -12,6 +12,7 @@ namespace VoxelEngine {
         class TextureAtlas;
         class FontManager;
         class TextRenderer;
+        class DebugOverlay;
     }
 }
 class SpectatorCamera;
@@ -34,7 +35,8 @@ void renderGame(
     int screenWidth, // For debug drawing, consider getting from Window if possible
     int screenHeight, // For debug drawing, consider getting from Window if possible
     VoxelEngine::Rendering::FontManager& fontManager,    // Added
-    VoxelEngine::Rendering::TextRenderer& textRenderer   // Added
+    VoxelEngine::Rendering::TextRenderer& textRenderer,   // Added
+    VoxelEngine::Rendering::DebugOverlay& debugOverlay    // Added
 );
 
 /**
