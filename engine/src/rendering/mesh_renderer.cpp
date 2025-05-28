@@ -118,6 +118,10 @@ void MeshRenderer::uploadMesh(const VoxelMesh& mesh) {
     // }
 
     glBindVertexArray(vao);
+    
+    // Clear any pre-existing OpenGL errors
+    while (glGetError() != GL_NO_ERROR) {}
+    
     GLenum err; 
 
     // Add debugging for the mesh data - only for large meshes or errors
@@ -129,6 +133,11 @@ void MeshRenderer::uploadMesh(const VoxelMesh& mesh) {
     bool should_log = (upload_count % 1000 == 0) || (mesh.vertices.size() > 8000);
 
     glBindBuffer(GL_ARRAY_BUFFER, vbo);
+    err = glGetError();
+    if (err != GL_NO_ERROR) {
+        std::cerr << "[ERROR] glBindBuffer(GL_ARRAY_BUFFER) failed (0x" << std::hex << err << std::dec << ")" << std::endl;
+    }
+    
     glBufferData(GL_ARRAY_BUFFER, totalDataSize, mesh.vertices.data(), GL_STATIC_DRAW);
     err = glGetError();
     static size_t error_count = 0;
@@ -136,6 +145,7 @@ void MeshRenderer::uploadMesh(const VoxelMesh& mesh) {
         error_count++;
         if (error_count <= 5 || error_count % 100 == 0) {
             std::cerr << "[ERROR] VBO upload failed (0x" << std::hex << err << std::dec << ") - Count: " << error_count << std::endl;
+            std::cerr << "  Data size: " << totalDataSize << " bytes, Vertex count: " << mesh.vertices.size() << std::endl;
             if (error_count == 5) {
                 std::cerr << "  [Further VBO errors will be shown every 100 occurrences]" << std::endl;
             }

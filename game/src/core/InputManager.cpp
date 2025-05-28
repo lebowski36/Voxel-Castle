@@ -19,16 +19,20 @@ void processInput(Game& game) {
     game.mouseDeltaX_ = 0.0f;
     game.mouseDeltaY_ = 0.0f;
 
-    std::cout << "[InputManager] Starting event polling, mouseCaptured=" << game.mouseCaptured_ << std::endl;
-
     SDL_Event e;
     while (SDL_PollEvent(&e)) {
-        std::cout << "[InputManager] Processing event type: " << e.type << std::endl;
+        // Only log significant events to reduce spam
+        if (e.type == SDL_EVENT_QUIT || e.type == SDL_EVENT_KEY_DOWN || 
+            e.type == SDL_EVENT_MOUSE_BUTTON_DOWN || e.type == SDL_EVENT_MOUSE_BUTTON_UP ||
+            e.type == SDL_EVENT_MOUSE_WHEEL) {
+            std::cout << "[InputManager] Event type: " << e.type << std::endl;
+        }
         
-        // Debug: Log all mouse-related events
-        if (e.type == SDL_EVENT_MOUSE_BUTTON_DOWN || e.type == SDL_EVENT_MOUSE_BUTTON_UP) {
-            std::cout << "[InputManager] Mouse event: " << (e.type == SDL_EVENT_MOUSE_BUTTON_DOWN ? "DOWN" : "UP") 
-                      << ", button=" << (int)e.button.button 
+        // Debug: Log mouse button events for left/right clicks only
+        if ((e.type == SDL_EVENT_MOUSE_BUTTON_DOWN || e.type == SDL_EVENT_MOUSE_BUTTON_UP) &&
+            (e.button.button == SDL_BUTTON_LEFT || e.button.button == SDL_BUTTON_RIGHT)) {
+            std::cout << "[InputManager] Mouse " << (e.type == SDL_EVENT_MOUSE_BUTTON_DOWN ? "DOWN" : "UP") 
+                      << ", button=" << (e.button.button == SDL_BUTTON_LEFT ? "LEFT" : "RIGHT")
                       << ", mouseCaptured=" << game.mouseCaptured_ << std::endl;
         }
         
@@ -137,13 +141,20 @@ void processInput(Game& game) {
             game.mouseDeltaY_ += static_cast<float>(-e.motion.yrel);
         }
         else if (e.type == SDL_EVENT_MOUSE_BUTTON_DOWN && game.mouseCaptured_) {
+            std::cout << "[InputManager] Mouse button DOWN detected" << std::endl;
             if (e.button.button == SDL_BUTTON_LEFT) {
+                std::cout << "[InputManager] LEFT mouse button - Setting pendingBlockAction=true, isBlockPlacement=true" << std::endl;
                 game.leftMousePressed_ = true;
-                BlockPlacement::handleMouseClick(game, true); // Left click = place block
+                game.pendingBlockAction_ = true;  // Request block placement on next frame
+                game.isBlockPlacement_ = true;    // It's a placement (not removal)
             } else if (e.button.button == SDL_BUTTON_RIGHT) {
+                std::cout << "[InputManager] RIGHT mouse button - Setting pendingBlockAction=true, isBlockPlacement=false" << std::endl;
                 game.rightMousePressed_ = true;
-                BlockPlacement::handleMouseClick(game, false); // Right click = remove block
+                game.pendingBlockAction_ = true;  // Request block removal on next frame
+                game.isBlockPlacement_ = false;   // It's a removal (not placement)
             }
+            std::cout << "[InputManager] After setting flags: pendingAction=" 
+                      << game.hasPendingBlockAction() << ", isPlacement=" << game.isBlockPlacement() << std::endl;
         }
         else if (e.type == SDL_EVENT_MOUSE_BUTTON_UP && game.mouseCaptured_) {
             if (e.button.button == SDL_BUTTON_LEFT) {

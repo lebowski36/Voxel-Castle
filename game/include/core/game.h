@@ -104,6 +104,11 @@ public:
     bool& isPlayerOnGround() { return isOnGround_; }
     float& getPlayerFallVelocity() { return fallVelocity_; }
 
+    // Block action accessors
+    bool hasPendingBlockAction() const { return pendingBlockAction_; }
+    bool isBlockPlacement() const { return isBlockPlacement_; }
+    void clearPendingBlockAction() { pendingBlockAction_ = false; }
+
 private:
     // Helper method for world initialization
     void initializeWorldContent();
@@ -157,6 +162,8 @@ private:
     VoxelEngine::World::VoxelType currentBlockType_ = VoxelEngine::World::VoxelType::STONE; // Currently selected block type
     bool leftMousePressed_ = false;   // Left mouse button state
     bool rightMousePressed_ = false;  // Right mouse button state
+    bool pendingBlockAction_ = false; // Flag to handle block placement/removal on next frame
+    bool isBlockPlacement_ = true;    // Whether action is placement (true) or removal (false)
 
     // Configuration
     const int screenWidth_ = 2400; 

@@ -5,6 +5,7 @@
 #include "world/world_manager.h"
 #include "rendering/texture_atlas.h"
 #include "rendering/mesh_builder.h"
+#include "interaction/BlockPlacement.h"
 #include <iostream>
 #include <flecs.h> // For flecs::world definition
 #include "platform/Window.h" // For Window definition
@@ -30,6 +31,23 @@ void update(Game& game, float deltaTime) {
             // Use the dedicated PlayerPhysics system for first-person movement
             PlayerPhysics::update(game, deltaTime);
         }
+    }
+
+    // Handle pending block placement/removal actions (from mouse clicks)
+    if (game.hasPendingBlockAction()) {
+        std::cout << "[GameLogic] Processing pending block action: " 
+                  << (game.isBlockPlacement() ? "PLACEMENT" : "REMOVAL") << std::endl;
+        try {
+            BlockPlacement::handleMouseClick(game, game.isBlockPlacement());
+            std::cout << "[GameLogic] Block action completed successfully" << std::endl;
+        }
+        catch (const std::exception& e) {
+            std::cerr << "[GameLogic] EXCEPTION during block action: " << e.what() << std::endl;
+        }
+        catch (...) {
+            std::cerr << "[GameLogic] UNKNOWN EXCEPTION during block action!" << std::endl;
+        }
+        game.clearPendingBlockAction(); // Reset flag after handling
     }
 
     // Progress ECS systems

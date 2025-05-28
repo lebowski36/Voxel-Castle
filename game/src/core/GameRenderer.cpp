@@ -51,8 +51,8 @@ void renderGame(
     glm::mat4 view = camera.getViewMatrix();
     glm::mat4 proj = camera.getProjectionMatrix();
     
-    // Frame summary logging - every 100 frames
-    if (frameCounter % 100 == 0) {
+    // Frame summary logging - every 1000 frames
+    if (frameCounter % 1000 == 0) {
         if (!worldMeshes.empty()) {
             std::set<glm::vec3, Vec3Comparator> uniquePositions;
             unsigned int meshCount = 0;
@@ -68,16 +68,11 @@ void renderGame(
                 }
             }
 
-            std::ostringstream positionsStream;
-            for (const auto& pos : uniquePositions) {
-                positionsStream << "(" << pos.x << "," << pos.y << "," << pos.z << ") ";
-            }
-
-            std::cout << "[GameRenderer::renderGame Frame Summary] Frame: " << frameCounter 
+            // Only log brief summary without position details
+            std::cout << "[GameRenderer] Frame: " << frameCounter 
                       << ", Meshes: " << meshCount 
                       << ", Vertices: " << totalVertices 
-                      << ", Indices: " << totalIndices
-                      << ", Unique Positions: " << uniquePositions.size() << " [" << positionsStream.str() << "]" << std::endl;
+                      << ", Unique Positions: " << uniquePositions.size() << std::endl;
         }
     }
     frameCounter++;
