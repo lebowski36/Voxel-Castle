@@ -88,18 +88,20 @@ void renderGame(
     // For now, render only the first valid mesh to prevent crashes.
     // TODO: Implement proper multi-mesh rendering architecture.
     
-    const VoxelEngine::Rendering::VoxelMesh* firstValidMesh = nullptr;
+    // Track which mesh we're currently uploaded to avoid re-uploading
+    static const VoxelEngine::Rendering::VoxelMesh* currentlyUploadedMesh = nullptr;
+    
     for (const auto* vMesh : worldMeshes) {
         if (vMesh && vMesh->isInitialized()) {
-            firstValidMesh = vMesh;
-            break;
+            // Only upload if this is a different mesh than the currently uploaded one
+            if (vMesh != currentlyUploadedMesh) {
+                meshRenderer.uploadMesh(*vMesh);
+                currentlyUploadedMesh = vMesh;
+            }
+            
+            glm::mat4 model = glm::translate(glm::mat4(1.0f), vMesh->getWorldPosition());
+            meshRenderer.draw(model, view, proj);
         }
-    }
-    
-    if (firstValidMesh) {
-        meshRenderer.uploadMesh(*firstValidMesh);
-        glm::mat4 model = glm::translate(glm::mat4(1.0f), firstValidMesh->getWorldPosition());
-        meshRenderer.draw(model, view, proj);
     }
 
     // Restore original polygon mode
