@@ -3,85 +3,43 @@
 
 #include "rendering/voxel_mesh.h"
 #include "rendering/texture_atlas.h"
-#include "rendering/meshing/meshing_algorithm.h"
-#include "rendering/meshing/meshing_factory.h"
 #include "world/chunk_segment.h"
 #include <vector>
 #include <cstdint>
-#include <memory>
+#include <functional>
 
 namespace VoxelEngine {
     namespace Rendering {
-
-        // Import the meshing types for convenience
-        using Meshing::MeshingAlgorithmType;
-        using Meshing::MeshingAlgorithm;
 
         /**
          * @class MeshBuilder
          * @brief Responsible for generating a VoxelMesh from voxel data structures like ChunkSegment.
          * 
-         * This class now uses the modular meshing system, allowing runtime selection of different
-         * meshing algorithms through the MeshingFactory.
+         * This class uses the two-phase greedy meshing algorithm which provides optimal
+         * performance and mesh quality by ensuring no faces are missed while still 
+         * providing the benefits of face merging.
          */
         class MeshBuilder {
         public:
             /**
-             * @brief Constructs a VoxelMesh from a given ChunkSegment using the specified algorithm.
+             * @brief Constructs a VoxelMesh from a given ChunkSegment using two-phase greedy meshing.
              *
              * @param segment The VoxelCastle::World::ChunkSegment to generate the mesh from.
              * @param atlas The VoxelEngine::Rendering::TextureAtlas to use for UV mapping.
              * @param getVoxel A function to get voxel data, potentially looking into adjacent chunks.
              * @param chunkCoords The coordinates of the chunk being meshed.
-             * @param algorithmType The meshing algorithm to use.
              * @return A VoxelMesh containing the geometry for the segment.
              */
             static VoxelMesh buildMesh(
                 const VoxelCastle::World::ChunkSegment& segment,
                 const TextureAtlas& atlas,
                 const std::function<VoxelEngine::World::Voxel(int, int, int)>& getVoxel,
-                const glm::ivec3& chunkCoords,
-                MeshingAlgorithmType algorithmType = MeshingAlgorithmType::TWO_PHASE_GREEDY
-            );
-
-            /**
-             * @brief Sets the default meshing algorithm for future mesh building operations.
-             * @param algorithmType The algorithm type to use as default.
-             */
-            static void setDefaultAlgorithm(MeshingAlgorithmType algorithmType);
-
-            /**
-             * @brief Gets the currently configured default meshing algorithm.
-             * @return The default algorithm type.
-             */
-            static MeshingAlgorithmType getDefaultAlgorithm();
-
-            // Legacy methods for backward compatibility
-            /**
-             * @brief Legacy method for naive meshing - now uses the modular naive algorithm.
-             * @deprecated Use buildMesh with MeshingAlgorithmType::Naive instead.
-             */
-            static VoxelMesh buildNaiveMesh(
-                const VoxelCastle::World::ChunkSegment& segment,
-                const TextureAtlas& atlas,
-                const std::function<VoxelEngine::World::Voxel(int, int, int)>& getVoxel,
                 const glm::ivec3& chunkCoords
             );
 
             /**
-             * @brief Legacy method for greedy meshing - now uses the modular greedy algorithm.
-             * @deprecated Use buildMesh with MeshingAlgorithmType::Greedy instead.
-             */
-            static VoxelMesh buildGreedyMesh(
-                const VoxelCastle::World::ChunkSegment& segment, 
-                const TextureAtlas& atlas, 
-                const std::function<VoxelEngine::World::Voxel(int, int, int)>& getVoxel,
-                const glm::ivec3& chunkCoords
-            );
-
-            /**
-             * @brief Method for two-phase greedy meshing - uses the improved two-phase greedy algorithm.
-             * This is the recommended meshing method for optimal performance and quality.
+             * @brief Method for two-phase greedy meshing - the recommended meshing method.
+             * This is the primary method that provides optimal performance and quality.
              */
             static VoxelMesh buildTwoPhaseGreedyMesh(
                 const VoxelCastle::World::ChunkSegment& segment, 
@@ -91,7 +49,6 @@ namespace VoxelEngine {
             );
 
         private:
-            static MeshingAlgorithmType defaultAlgorithmType;
 
             /**
              * @brief Helper function to add a single face (composed of two triangles) to a VoxelMesh.

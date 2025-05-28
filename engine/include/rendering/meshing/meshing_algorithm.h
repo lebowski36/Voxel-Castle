@@ -17,10 +17,7 @@ namespace VoxelEngine {
              * @brief Enum representing different meshing algorithms
              */
             enum class MeshingAlgorithmType {
-                NAIVE,              // Simple 1:1 voxel to cubes
-                GREEDY,             // Current greedy meshing implementation  
-                CULLED_FACE,        // Naive with face culling optimization
-                TWO_PHASE_GREEDY,   // Improved greedy meshing with two-phase approach
+                TWO_PHASE_GREEDY,   // Two-phase greedy meshing (the only supported algorithm)
                 // Future algorithms can be added here
                 LOD_AWARE           // Future LOD-aware meshing
             };

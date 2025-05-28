@@ -1,5 +1,5 @@
 #include "rendering/mesh_builder.h"
-#include "rendering/meshing/meshing_factory.h"
+#include "rendering/meshing/two_phase_greedy_meshing_algorithm.h"
 #include "rendering/debug_render_mode.h"
 #include "world/voxel_types.h"
 #include "world/chunk_segment.h"
@@ -14,63 +14,15 @@
 namespace VoxelEngine {
     namespace Rendering {
 
-        // Import the meshing types for convenience
-        using Meshing::MeshingAlgorithmType;
-        using Meshing::MeshingAlgorithm;
-        using Meshing::MeshingFactory;
-
-        // Static member initialization
-        MeshingAlgorithmType MeshBuilder::defaultAlgorithmType = MeshingAlgorithmType::TWO_PHASE_GREEDY;
-
         VoxelMesh MeshBuilder::buildMesh(
             const VoxelCastle::World::ChunkSegment& segment,
             const TextureAtlas& atlas,
             const std::function<VoxelEngine::World::Voxel(int, int, int)>& getVoxel,
-            const glm::ivec3& chunkCoords,
-            MeshingAlgorithmType algorithmType
-        ) {
-            // Get the appropriate meshing algorithm
-            auto algorithm = MeshingFactory::getInstance().createAlgorithm(algorithmType);
-            if (!algorithm) {
-                std::cerr << "Failed to create meshing algorithm of type: " 
-                         << MeshingFactory::algorithmTypeToString(algorithmType) << std::endl;
-                // Fallback to TwoPhaseGreedy
-                algorithm = MeshingFactory::getInstance().createAlgorithm(MeshingAlgorithmType::TWO_PHASE_GREEDY);
-                if (!algorithm) {
-                    std::cerr << "Fatal error: Failed to create fallback TWO_PHASE_GREEDY algorithm" << std::endl;
-                    return VoxelMesh(); // Return empty mesh
-                }
-            }
-
-            // Generate the mesh using the selected algorithm
-            return algorithm->generateMesh(segment, atlas, getVoxel, chunkCoords);
-        }
-
-        void MeshBuilder::setDefaultAlgorithm(MeshingAlgorithmType algorithmType) {
-            defaultAlgorithmType = algorithmType;
-        }
-
-        MeshingAlgorithmType MeshBuilder::getDefaultAlgorithm() {
-            return defaultAlgorithmType;
-        }
-
-        // Legacy methods for backward compatibility
-        VoxelMesh MeshBuilder::buildNaiveMesh(
-            const VoxelCastle::World::ChunkSegment& segment,
-            const TextureAtlas& atlas,
-            const std::function<VoxelEngine::World::Voxel(int, int, int)>& getVoxel,
             const glm::ivec3& chunkCoords
         ) {
-            return buildMesh(segment, atlas, getVoxel, chunkCoords, MeshingAlgorithmType::NAIVE);
-        }
-
-        VoxelMesh MeshBuilder::buildGreedyMesh(
-            const VoxelCastle::World::ChunkSegment& segment, 
-            const TextureAtlas& atlas, 
-            const std::function<VoxelEngine::World::Voxel(int, int, int)>& getVoxel,
-            const glm::ivec3& chunkCoords
-        ) {
-            return buildMesh(segment, atlas, getVoxel, chunkCoords, MeshingAlgorithmType::GREEDY);
+            // Use two-phase greedy meshing directly
+            Meshing::TwoPhaseGreedyMeshingAlgorithm algorithm;
+            return algorithm.generateMesh(segment, atlas, getVoxel, chunkCoords);
         }
 
         VoxelMesh MeshBuilder::buildTwoPhaseGreedyMesh(
@@ -79,7 +31,9 @@ namespace VoxelEngine {
             const std::function<VoxelEngine::World::Voxel(int, int, int)>& getVoxel,
             const glm::ivec3& chunkCoords
         ) {
-            return buildMesh(segment, atlas, getVoxel, chunkCoords, MeshingAlgorithmType::TWO_PHASE_GREEDY);
+            // Use two-phase greedy meshing directly
+            Meshing::TwoPhaseGreedyMeshingAlgorithm algorithm;
+            return algorithm.generateMesh(segment, atlas, getVoxel, chunkCoords);
         }
 
         /**

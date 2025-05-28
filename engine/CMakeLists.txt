@@ -17,11 +17,7 @@ add_library(VoxelEngine STATIC
     src/world/test_voxel_system.cpp # Added Voxel System test source
     src/world/test_mesh_generation.cpp # Added Mesh Generation test source
     src/rendering/mesh_builder.cpp # Added MeshBuilder source
-    src/rendering/meshing/meshing_factory.cpp # Added MeshingFactory source
-    src/rendering/meshing/naive_meshing_algorithm.cpp # Added Naive meshing algorithm
-    src/rendering/meshing/culled_face_meshing_algorithm.cpp # Added Culled face meshing algorithm
-    src/rendering/meshing/greedy_meshing_algorithm.cpp # Added Greedy meshing algorithm
-    src/rendering/meshing/two_phase_greedy_meshing_algorithm.cpp # Added Two-phase greedy meshing algorithm
+    src/rendering/meshing/two_phase_greedy_meshing_algorithm.cpp # Two-phase greedy meshing algorithm
     src/rendering/mesh_job_system.cpp # Added MeshJobSystem source
     src/rendering/mesh_renderer.cpp # Added MeshRenderer source
     src/rendering/render_utils.cpp # Added RenderUtils source
