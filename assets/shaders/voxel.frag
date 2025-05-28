@@ -1,13 +1,21 @@
 #version 330 core
 out vec4 FragColor;
 
+in vec3 Normal;
+in vec3 FragPos;
+in float vLight;
 in vec2 v_quad_uv; // Changed from vTexCoord
 in vec2 v_atlas_tile_origin_uv; // New input
-// in float vLight; // Assuming vLight might be used later for lighting calculations
 
 uniform sampler2D uTextureSampler; // Existing texture atlas sampler
 uniform vec2 u_tile_uv_span;      // New uniform: vec2(TILE_UV_WIDTH, TILE_UV_HEIGHT)
 uniform int uDebugRenderMode;     // 0=normal, 1=wireframe
+
+// Lighting uniforms
+uniform vec3 uLightDirection;     // Normalized directional light direction
+uniform vec3 uLightColor;         // Directional light color
+uniform vec3 uAmbientColor;       // Ambient light color
+uniform float uAmbientStrength;   // Ambient light intensity
 
 void main()
 {
@@ -22,6 +30,15 @@ void main()
     if(FragColor.a < 0.1) {
         discard;
     }
-    // Placeholder for lighting - can be re-added if vLight is passed and used
-    // FragColor.rgb *= vLight;
+    
+    // Basic Lambert diffuse lighting calculation
+    vec3 norm = normalize(Normal);
+    float diffuse = max(dot(norm, -uLightDirection), 0.0);
+    
+    // Combine ambient and diffuse lighting
+    vec3 ambient = uAmbientColor * uAmbientStrength;
+    vec3 lighting = ambient + uLightColor * diffuse;
+    
+    // Apply lighting to texture color
+    FragColor.rgb *= lighting;
 }

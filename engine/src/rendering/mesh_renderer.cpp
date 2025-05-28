@@ -305,9 +305,33 @@ void MeshRenderer::draw(const glm::mat4& model, const glm::mat4& view, const glm
     GLint viewLoc = glGetUniformLocation(shaderProgram, "uView");
     GLint projLoc = glGetUniformLocation(shaderProgram, "uProjection");
 
+    // Lighting uniforms
+    GLint lightDirLoc = glGetUniformLocation(shaderProgram, "uLightDirection");
+    GLint lightColorLoc = glGetUniformLocation(shaderProgram, "uLightColor");
+    GLint ambientColorLoc = glGetUniformLocation(shaderProgram, "uAmbientColor");
+    GLint ambientStrengthLoc = glGetUniformLocation(shaderProgram, "uAmbientStrength");
+
     if (modelLoc == -1 || viewLoc == -1 || projLoc == -1) {
         std::cerr << "[MeshRenderer::draw] Error: Could not get one or more uniform locations." << std::endl;
         std::cerr << "  uModel: " << modelLoc << ", uView: " << viewLoc << ", uProjection: " << projLoc << std::endl;
+    }
+
+    // Set lighting uniforms (basic sun-like lighting)
+    if (lightDirLoc != -1) {
+        glm::vec3 lightDirection = glm::normalize(glm::vec3(-0.3f, -1.0f, -0.2f)); // Sun from above with slight angle
+        glUniform3fv(lightDirLoc, 1, glm::value_ptr(lightDirection));
+    }
+    if (lightColorLoc != -1) {
+        glm::vec3 lightColor = glm::vec3(1.0f, 0.95f, 0.8f); // Warm white sun
+        glUniform3fv(lightColorLoc, 1, glm::value_ptr(lightColor));
+    }
+    if (ambientColorLoc != -1) {
+        glm::vec3 ambientColor = glm::vec3(0.4f, 0.5f, 0.7f); // Slightly brighter cool blue ambient
+        glUniform3fv(ambientColorLoc, 1, glm::value_ptr(ambientColor));
+    }
+    if (ambientStrengthLoc != -1) {
+        float ambientStrength = 0.5f; // 50% ambient lighting for better visibility
+        glUniform1f(ambientStrengthLoc, ambientStrength);
     }
 
     glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
