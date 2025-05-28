@@ -8,6 +8,7 @@
 #include "../SpectatorCamera.h" // Include the full definition of SpectatorCamera
 #include "core/InputManager.h"        // Input handling module
 #include "core/CameraMode.h"          // Camera mode enumeration
+#include "world/voxel_types.h"        // For VoxelEngine::World::VoxelType
 
 // Forward declarations to minimize include dependencies in header
 class Window;
@@ -91,6 +92,12 @@ public:
     bool isCrouching() const { return crouching_; }
     bool isJumping() const { return jumping_; }
     
+    // Block placement state accessors
+    VoxelEngine::World::VoxelType getCurrentBlockType() const { return currentBlockType_; }
+    void setCurrentBlockType(VoxelEngine::World::VoxelType blockType) { currentBlockType_ = blockType; }
+    bool isLeftMousePressed() const { return leftMousePressed_; }
+    bool isRightMousePressed() const { return rightMousePressed_; }
+
     // Player physics state accessors
     glm::vec3& getPlayerPosition() { return playerPosition_; }
     glm::vec3& getPlayerVelocity() { return playerVelocity_; }
@@ -145,6 +152,11 @@ private:
     glm::vec3 playerVelocity_ = glm::vec3(0.0f); // Player velocity
     bool isOnGround_ = false;  // Ground detection for jumping
     float fallVelocity_ = 0.0f; // For fall damage calculation
+
+    // Block placement state
+    VoxelEngine::World::VoxelType currentBlockType_ = VoxelEngine::World::VoxelType::STONE; // Currently selected block type
+    bool leftMousePressed_ = false;   // Left mouse button state
+    bool rightMousePressed_ = false;  // Right mouse button state
 
     // Configuration
     const int screenWidth_ = 2400; 

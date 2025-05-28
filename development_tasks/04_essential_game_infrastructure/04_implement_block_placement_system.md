@@ -49,18 +49,29 @@ Implement interactive block placement and removal system with real-time mesh upd
   - Add visual confirmation when blocks are placed/removed
   - Consider adding sound effects for placement/removal actions
 
-### Phase 3: Dynamic Mesh Updates ⏳ PENDING
+### Phase 3: Dynamic Mesh Updates ⏳ IN PROGRESS
 **Goal:** Update mesh generation system to handle real-time world changes.
 
+**CRITICAL ISSUE DISCOVERED: Window crash on mouse click when captured**
+- ❌ **BLOCKING BUG**: When mouse is captured (Escape pressed), any mouse click causes immediate window close/crash
+- ❌ **Missing mesh regeneration**: Block removal doesn't trigger mesh updates (missing markChunkDirtyForPosition call)
+- ❌ **Potential threading issues**: Mesh updates may not be thread-safe with game loop
+- ❌ **Namespace inconsistencies**: Mixed VoxelCastle/VoxelEngine namespaces could cause runtime issues
+
+**IMMEDIATE FIXES NEEDED:**
+1. Fix block removal to include mesh regeneration call
+2. Investigate crash cause in handleMouseClick method (likely exception/memory issue)
+3. Verify thread safety of world modification during rendering
+4. Test basic block placement/removal functionality once crash is resolved
+
 - [ ] **3.1: Chunk Modification Tracking**
-  - Implement system to track which chunks have been modified
-  - Store original chunk data and modifications in memory
-  - Mark affected chunks for mesh regeneration when blocks change
+  - ⚠️ Partially implemented: markChunkDirtyForPosition exists but missing for removal
+  - ⚠️ Need to verify that mesh regeneration actually happens after marking dirty
   - Handle cross-chunk boundary updates (blocks affecting adjacent chunks)
 
 - [ ] **3.2: Real-time Mesh Regeneration**
-  - Trigger mesh regeneration for affected chunks after block changes
-  - Optimize to only regenerate necessary chunks (not entire world)
+  - ⚠️ Integration with MeshJobSystem needs verification
+  - ⚠️ Ensure mesh updates don't conflict with rendering thread
   - Handle mesh updates without blocking game loop
   - Ensure visual updates happen immediately after block changes
 

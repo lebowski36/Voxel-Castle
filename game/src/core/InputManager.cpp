@@ -3,6 +3,7 @@
 #include "core/CameraMode.h"
 #include "platform/Window.h" // Corrected path to Window.h
 #include "world/world_manager.h" // Required for markAllSegmentsDirty
+#include "interaction/BlockPlacement.h" // For block placement handling
 #include <SDL3/SDL.h>
 #include <glad/glad.h>
 #include <iostream>
@@ -18,9 +19,21 @@ void processInput(Game& game) {
     game.mouseDeltaX_ = 0.0f;
     game.mouseDeltaY_ = 0.0f;
 
+    std::cout << "[InputManager] Starting event polling, mouseCaptured=" << game.mouseCaptured_ << std::endl;
+
     SDL_Event e;
     while (SDL_PollEvent(&e)) {
+        std::cout << "[InputManager] Processing event type: " << e.type << std::endl;
+        
+        // Debug: Log all mouse-related events
+        if (e.type == SDL_EVENT_MOUSE_BUTTON_DOWN || e.type == SDL_EVENT_MOUSE_BUTTON_UP) {
+            std::cout << "[InputManager] Mouse event: " << (e.type == SDL_EVENT_MOUSE_BUTTON_DOWN ? "DOWN" : "UP") 
+                      << ", button=" << (int)e.button.button 
+                      << ", mouseCaptured=" << game.mouseCaptured_ << std::endl;
+        }
+        
         if (e.type == SDL_EVENT_QUIT) {
+            std::cout << "[InputManager] SDL_EVENT_QUIT received!" << std::endl;
             game.isRunning_ = false;
         }
         else if (e.type == SDL_EVENT_KEY_DOWN) {
@@ -122,6 +135,27 @@ void processInput(Game& game) {
         else if (e.type == SDL_EVENT_MOUSE_MOTION && game.mouseCaptured_) {
             game.mouseDeltaX_ += static_cast<float>(e.motion.xrel);
             game.mouseDeltaY_ += static_cast<float>(-e.motion.yrel);
+        }
+        else if (e.type == SDL_EVENT_MOUSE_BUTTON_DOWN && game.mouseCaptured_) {
+            if (e.button.button == SDL_BUTTON_LEFT) {
+                game.leftMousePressed_ = true;
+                BlockPlacement::handleMouseClick(game, true); // Left click = place block
+            } else if (e.button.button == SDL_BUTTON_RIGHT) {
+                game.rightMousePressed_ = true;
+                BlockPlacement::handleMouseClick(game, false); // Right click = remove block
+            }
+        }
+        else if (e.type == SDL_EVENT_MOUSE_BUTTON_UP && game.mouseCaptured_) {
+            if (e.button.button == SDL_BUTTON_LEFT) {
+                game.leftMousePressed_ = false;
+            } else if (e.button.button == SDL_BUTTON_RIGHT) {
+                game.rightMousePressed_ = false;
+            }
+        }
+        else if (e.type == SDL_EVENT_MOUSE_WHEEL && game.mouseCaptured_) {
+            // Mouse wheel cycles through block types
+            bool forward = e.wheel.y > 0;
+            BlockPlacement::cycleBlockType(game, forward);
         }
         else if (e.type == SDL_EVENT_WINDOW_RESIZED) {
             if (game.camera_) {
