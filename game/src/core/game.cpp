@@ -39,9 +39,6 @@
 #include "rendering/texture_atlas.h"
 #include "rendering/mesh_builder.h"
 #include "rendering/mesh_renderer.h"
-#include "rendering/FontManager.h" // Added for full definition
-#include "rendering/TextRenderer.h" // Added for full definition
-#include "rendering/DebugOverlay.h" // Added for full definition
 
 // ECS Components & Systems (if directly used or for registration)
 #include "ecs/components/position_component.h"
@@ -62,9 +59,6 @@ Game::Game()
       meshBuilder_(nullptr),
       meshRenderer_(nullptr),
       camera_(nullptr),
-      fontManager_(nullptr), // Added initialization
-      textRenderer_(nullptr), // Added initialization
-      debugOverlay_(nullptr), // Initialize DebugOverlay
       isRunning_(false),
       // lastFrameTime_ will be initialized in initialize()
       mouseCaptured_(true),
@@ -100,15 +94,8 @@ bool Game::initialize() {
     meshBuilder_ = std::move(result.meshBuilder);
     meshRenderer_ = std::move(result.meshRenderer);
     camera_ = std::move(result.camera);
-    fontManager_ = std::move(result.fontManager); // Added
-    textRenderer_ = std::move(result.textRenderer); // Added
     lastFrameTime_ = result.lastFrameTime;
     isRunning_ = result.isRunning;
-    
-    // Initialize DebugOverlay after TextRenderer and FontManager are available
-    if (textRenderer_ && fontManager_) {
-        debugOverlay_ = std::make_unique<VoxelEngine::Rendering::DebugOverlay>(textRenderer_.get(), fontManager_.get());
-    }
 
     // Set the global initial camera position for world setup
     if (camera_) {
@@ -178,9 +165,6 @@ void Game::shutdown() {
     resources.meshBuilder = std::move(meshBuilder_);
     resources.meshRenderer = std::move(meshRenderer_);
     resources.camera = std::move(camera_);
-    resources.fontManager = std::move(fontManager_); // Added
-    resources.textRenderer = std::move(textRenderer_); // Added
-    resources.debugOverlay = std::move(debugOverlay_); // Added for shutdown
     resources.isRunning = isRunning_;
     GameInitializer::shutdown(resources, screenWidth_, screenHeight_, projectRoot_.c_str());
     isRunning_ = false;
@@ -205,7 +189,7 @@ void Game::update(float deltaTime) {
 }
 
 void Game::render() {
-    if (!camera_ || !worldManager_ || !meshRenderer_ || !gameWindow_ || !textureAtlas_ || !fontManager_ || !textRenderer_) { // Added fontManager_ and textRenderer_ checks
+    if (!camera_ || !worldManager_ || !meshRenderer_ || !gameWindow_ || !textureAtlas_) {
         std::cerr << "Game::render - Required components not available." << std::endl;
         return; 
     }
@@ -218,9 +202,6 @@ void Game::render() {
         *gameWindow_,
         worldManager_->getAllSegmentMeshes(),
         screenWidth_,
-        screenHeight_,
-        *fontManager_,      // Added
-        *textRenderer_,     // Added
-        *debugOverlay_      // Added DebugOverlay instance
+        screenHeight_
     );
 }

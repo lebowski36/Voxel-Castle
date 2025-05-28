@@ -5,11 +5,7 @@
 #include "SpectatorCamera.h" // Assuming this includes glm a
 #include "platform/Window.h"   // For gameWindow->render() and potentially dimensions
 #include "rendering/debug_render_mode.h" // Added for ::g_debugRenderMode
-#include "rendering/debug_utils.h" 
-#include "rendering/FontManager.h" // Added
-#include "rendering/TextRenderer.h" // Added
-#include "rendering/DebugText.h" // Added for DebugTextInfo
-#include "rendering/DebugOverlay.h" // Added for DebugOverlay
+#include "rendering/debug_utils.h"
 
 #include <glad/glad.h>
 #include <glm/gtc/matrix_transform.hpp>
@@ -36,10 +32,7 @@ void renderGame(
     Window& gameWindow,
     const std::vector<const VoxelEngine::Rendering::VoxelMesh*>& worldMeshes,
     int screenWidth,
-    int screenHeight,
-    VoxelEngine::Rendering::FontManager& fontManager, // Added
-    VoxelEngine::Rendering::TextRenderer& textRenderer,
-    VoxelEngine::Rendering::DebugOverlay& debugOverlay // Added DebugOverlay argument
+    int screenHeight
 ) {
     static int frameCounter = 0; // Static frame counter for logging
 
@@ -109,31 +102,6 @@ void renderGame(
 
     // Optional: Debug Atlas Rendering (can be called from here or separately)
     // renderDebugInfo(textureAtlas, screenWidth, screenHeight);
-
-    // --- BEGIN EXAMPLE TEXT RENDERING ---
-    if (fontManager.isFontLoaded() && textRenderer.isShaderReady()) {
-        std::string myText = "Hello World!";
-        // Position it somewhat in front of where the camera might start or a known world point
-        glm::vec3 textWorldPosition(5.0f, 2.0f, 5.0f); 
-        float textScale = 0.01f; // Adjust as needed
-        glm::vec3 textColor(1.0f, 0.8f, 0.2f); // Bright orange text
-
-        textRenderer.renderText3D(
-            myText,
-            textWorldPosition,
-            textScale,
-            textColor,
-            view,         // view matrix from earlier in the function
-            proj,         // proj matrix from earlier in the function
-            camera.getRight(),
-            camera.getUp()
-        );
-    }
-    // --- END EXAMPLE TEXT RENDERING ---
-
-    // Render Debug Overlay if active
-    // The debugOverlay.render() function itself checks if it's visible.
-    debugOverlay.render(camera, screenWidth, screenHeight);
 
     gameWindow.render(); // Swaps buffers
 }

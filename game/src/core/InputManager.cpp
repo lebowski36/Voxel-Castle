@@ -62,9 +62,6 @@ void processInput(Game& game) {
                 case SDL_SCANCODE_SPACE: game.up_ = true; break;
                 case SDL_SCANCODE_LCTRL: game.down_ = true; break;
                 case SDL_SCANCODE_M: game.manualVoxelChangeRequested_ = true; break;
-                case SDL_SCANCODE_F2: // Added F2 key detection
-                    game.toggleDebugOverlay(); 
-                    break;
                 default: break;
             }
         }

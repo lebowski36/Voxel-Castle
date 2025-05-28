@@ -10,6 +10,19 @@ namespace VoxelEngine {
         class VoxelMesh;
         class MeshRenderer;
         class TextureAtlas;
+    }
+}
+class SpectatorCamera;
+class Window; // Assuming gameWindow_ is of type Window or similar
+#include <string>
+#include "rendering/debug_utils.h"
+
+// Forward declarations
+namespace VoxelEngine {
+    namespace Rendering {
+        class VoxelMesh;
+        class MeshRenderer;
+        class TextureAtlas;
         class FontManager;
         class TextRenderer;
         class DebugOverlay;
@@ -33,10 +46,7 @@ void renderGame(
     Window& gameWindow, // For swapping buffers and getting screen dimensions
     const std::vector<const VoxelEngine::Rendering::VoxelMesh*>& worldMeshes,
     int screenWidth, // For debug drawing, consider getting from Window if possible
-    int screenHeight, // For debug drawing, consider getting from Window if possible
-    VoxelEngine::Rendering::FontManager& fontManager,    // Added
-    VoxelEngine::Rendering::TextRenderer& textRenderer,   // Added
-    VoxelEngine::Rendering::DebugOverlay& debugOverlay    // Added
+    int screenHeight  // For debug drawing, consider getting from Window if possible
 );
 
 /**
