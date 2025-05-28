@@ -1,5 +1,6 @@
 #include "core/InputManager.h"
 #include "core/game.h"
+#include "core/CameraMode.h"
 #include "platform/Window.h" // Corrected path to Window.h
 #include "world/world_manager.h" // Required for markAllSegmentsDirty
 #include <SDL3/SDL.h>
@@ -52,15 +53,36 @@ void processInput(Game& game) {
                         SDL_SetWindowRelativeMouseMode(game.gameWindow_->getSDLWindow(), game.mouseCaptured_);
                     }
                     break;
+                case SDL_SCANCODE_O:
+                    game.toggleCameraMode();
+                    break;
                 case SDL_SCANCODE_W: game.forward_ = true; break;
                 case SDL_SCANCODE_S: game.backward_ = true; break;
                 case SDL_SCANCODE_A: game.left_ = true; break;
                 case SDL_SCANCODE_D: game.right_ = true; break;
                 case SDL_SCANCODE_Q: game.down_ = true; break;
                 case SDL_SCANCODE_E: game.up_ = true; break;
-                case SDL_SCANCODE_LSHIFT: game.speedMultiplier_ = 3.0f; break;
-                case SDL_SCANCODE_SPACE: game.up_ = true; break;
-                case SDL_SCANCODE_LCTRL: game.down_ = true; break;
+                case SDL_SCANCODE_LSHIFT: 
+                    if (game.getCameraMode() == CameraMode::FREE_FLYING) {
+                        game.speedMultiplier_ = 3.0f; 
+                    } else {
+                        game.sprinting_ = true;
+                    }
+                    break;
+                case SDL_SCANCODE_SPACE: 
+                    if (game.getCameraMode() == CameraMode::FREE_FLYING) {
+                        game.up_ = true; 
+                    } else {
+                        game.jumping_ = true;
+                    }
+                    break;
+                case SDL_SCANCODE_LCTRL: 
+                    if (game.getCameraMode() == CameraMode::FREE_FLYING) {
+                        game.down_ = true; 
+                    } else {
+                        game.crouching_ = true;
+                    }
+                    break;
                 case SDL_SCANCODE_M: game.manualVoxelChangeRequested_ = true; break;
                 default: break;
             }
@@ -73,9 +95,27 @@ void processInput(Game& game) {
                 case SDL_SCANCODE_D: game.right_ = false; break;
                 case SDL_SCANCODE_Q: game.down_ = false; break;
                 case SDL_SCANCODE_E: game.up_ = false; break;
-                case SDL_SCANCODE_LSHIFT: game.speedMultiplier_ = 1.0f; break;
-                case SDL_SCANCODE_SPACE: game.up_ = false; break;
-                case SDL_SCANCODE_LCTRL: game.down_ = false; break;
+                case SDL_SCANCODE_LSHIFT: 
+                    if (game.getCameraMode() == CameraMode::FREE_FLYING) {
+                        game.speedMultiplier_ = 1.0f; 
+                    } else {
+                        game.sprinting_ = false;
+                    }
+                    break;
+                case SDL_SCANCODE_SPACE: 
+                    if (game.getCameraMode() == CameraMode::FREE_FLYING) {
+                        game.up_ = false; 
+                    } else {
+                        game.jumping_ = false;
+                    }
+                    break;
+                case SDL_SCANCODE_LCTRL: 
+                    if (game.getCameraMode() == CameraMode::FREE_FLYING) {
+                        game.down_ = false; 
+                    } else {
+                        game.crouching_ = false;
+                    }
+                    break;
                 default: break;
             }
         }

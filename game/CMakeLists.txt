@@ -12,6 +12,7 @@ add_executable(VoxelFortressGame
     src/core/WorldSetupGlobals.cpp # Ensure global variable is linked
     src/core/GameRenderer.cpp # Added GameRenderer module
     src/core/GameLogic.cpp # Added GameLogic module
+    src/physics/PlayerPhysics.cpp # Added player physics system
     # Example:
     # src/gameplay/player.cpp
     # ...

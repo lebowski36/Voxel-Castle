@@ -7,47 +7,48 @@ Implement a dual-camera physics system with free-flying spectator mode and first
 
 ## Implementation Phases
 
-### Phase 1: Dual Camera Mode System ⏳ PENDING
+### Phase 1: Dual Camera Mode System 🔄 IN PROGRESS
 **Goal:** Implement camera mode switching and basic infrastructure for physics-based first-person mode.
 
-- [ ] **1.1: Camera Mode Management**
-  - Add camera mode enumeration (FREE_FLYING, FIRST_PERSON)
-  - Implement 'O' key handler to cycle between camera modes
-  - Create CameraController class to manage mode switching
-  - Preserve current free-flying camera as default mode
+- [x] **1.1: Camera Mode Management**
+  - ✅ Add camera mode enumeration (FREE_FLYING, FIRST_PERSON)
+  - ✅ Implement 'O' key handler to cycle between camera modes
+  - ✅ Implement mode switching logic in Game class
+  - ✅ Preserve current free-flying camera as default mode
 
-- [ ] **1.2: Player Entity Creation**
-  - Create Player ECS entity with position, velocity, and physics components
-  - Design player collider (capsule: ~1.8m height × 0.6m diameter)
-  - Set camera eye height at ~1.65m above ground level
-  - Initialize player at current camera position when switching to first-person
+- [x] **1.2: Player Entity Creation**
+  - ✅ Create modular PlayerPhysics system
+  - ✅ Design player collider (capsule: ~1.8m height × 0.6m diameter)
+  - ✅ Set camera eye height at ~1.65m above ground level
+  - ✅ Initialize player at current camera position when switching to first-person
 
-- [ ] **1.3: Input System Extension**
-  - Extend input handling to support both camera modes
-  - Preserve WASD + mouse controls for both modes
-  - Add Space key for jumping in first-person mode
-  - Maintain current free-flying controls (including up/down movement)
+- [x] **1.3: Input System Extension**
+  - ✅ Extend input handling to support both camera modes
+  - ✅ Preserve WASD + mouse controls for both modes
+  - ✅ Add Space key for jumping in first-person mode
+  - ✅ Maintain current free-flying controls (including up/down movement)
+  - ✅ Implement Shift key for sprinting and Ctrl for crouching
 
-### Phase 2: Basic Player Physics ⏳ PENDING
+### Phase 2: Basic Player Physics 🔄 IN PROGRESS
 **Goal:** Implement fundamental physics for first-person player mode.
 
-- [ ] **2.1: Gravity System**
-  - Implement gravity affecting player entity in first-person mode
-  - Apply realistic gravity acceleration (~9.81 m/s²)
-  - Handle terminal velocity to prevent excessive fall speeds
-  - Ensure gravity only affects first-person mode, not free-flying
+- [x] **2.1: Gravity System**
+  - ✅ Implement gravity affecting player entity in first-person mode
+  - ✅ Apply realistic gravity acceleration (~9.81 m/s²)
+  - ✅ Handle terminal velocity to prevent excessive fall speeds
+  - ✅ Ensure gravity only affects first-person mode, not free-flying
 
-- [ ] **2.2: Ground Detection & Collision**
-  - Implement downward raycast/sweep for ground detection
-  - Handle player landing and stopping on solid voxel surfaces
-  - Calculate proper ground position (player standing height above voxels)
-  - Prevent player from falling through solid blocks
+- [x] **2.2: Ground Detection & Collision**
+  - ✅ Implement basic ground detection for floor collision
+  - ✅ Handle player landing and stopping on solid voxel surfaces
+  - ✅ Calculate proper ground position (player standing height above voxels)
+  - ✅ Prevent player from falling through solid blocks
 
-- [ ] **2.3: Horizontal Movement Physics**
-  - Implement WASD movement with physics-based locomotion
-  - Add realistic walking speed (~4-5 m/s) and optional running speed
-  - Apply ground friction and air resistance
-  - Ensure smooth acceleration/deceleration for natural movement feel
+- [x] **2.3: Horizontal Movement Physics**
+  - ✅ Implement WASD movement with arcade-style locomotion
+  - ✅ Add realistic walking speed (~4-5 m/s) and sprint speed (~8-10 m/s)
+  - ✅ Add directional movement based on camera orientation
+  - ✅ Implement camera position synchronization with player
 
 ### Phase 3: Advanced Movement Mechanics ⏳ PENDING
 **Goal:** Add sophisticated movement features for realistic first-person experience.

@@ -1,6 +1,7 @@
-
 #include "core/GameLogic.h"
 #include "core/game.h"
+#include "core/CameraMode.h"
+#include "physics/PlayerPhysics.h"
 #include "world/world_manager.h"
 #include "rendering/texture_atlas.h"
 #include "rendering/mesh_builder.h"
@@ -17,9 +18,17 @@ void update(Game& game, float deltaTime) {
         // mouseDeltaX_ and mouseDeltaY_ are reset in processInput() each frame before polling
     }
 
-    // Process keyboard movement for the camera
+    // Handle camera movement based on current camera mode
     if (game.getCamera()) {
-        game.getCamera()->processKeyboard(deltaTime, game.isForward(), game.isBackward(), game.isLeft(), game.isRight(), game.isUp(), game.isDown(), game.getSpeedMultiplier());
+        if (game.getCameraMode() == CameraMode::FREE_FLYING) {
+            // Use original free-flying camera movement
+            game.getCamera()->processKeyboard(deltaTime, game.isForward(), game.isBackward(), 
+                                            game.isLeft(), game.isRight(), game.isUp(), game.isDown(), 
+                                            game.getSpeedMultiplier());
+        } else if (game.getCameraMode() == CameraMode::FIRST_PERSON) {
+            // Use the dedicated PlayerPhysics system for first-person movement
+            PlayerPhysics::update(game, deltaTime);
+        }
     }
 
     // Progress ECS systems

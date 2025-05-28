@@ -175,6 +175,29 @@ void Game::processInput() {
     GameInput::processInput(*this);
 }
 
+void Game::toggleCameraMode() {
+    if (cameraMode_ == CameraMode::FREE_FLYING) {
+        // Switch to first-person mode
+        cameraMode_ = CameraMode::FIRST_PERSON;
+        // Initialize player position from current camera position
+        if (camera_) {
+            playerPosition_ = camera_->getPosition();
+            playerVelocity_ = glm::vec3(0.0f);
+            isOnGround_ = false;
+            fallVelocity_ = 0.0f;
+        }
+        std::cout << "[Game] Switched to FIRST_PERSON camera mode" << std::endl;
+    } else {
+        // Switch to free-flying mode
+        cameraMode_ = CameraMode::FREE_FLYING;
+        // Sync camera position with player position
+        if (camera_) {
+            camera_->setPosition(playerPosition_);
+        }
+        std::cout << "[Game] Switched to FREE_FLYING camera mode" << std::endl;
+    }
+}
+
 // Delegates all per-frame game logic to GameLogic module
 #include "core/GameLogic.h"
 void Game::update(float deltaTime) {

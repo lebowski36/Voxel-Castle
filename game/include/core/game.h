@@ -7,6 +7,7 @@
 
 #include "../SpectatorCamera.h" // Include the full definition of SpectatorCamera
 #include "core/InputManager.h"        // Input handling module
+#include "core/CameraMode.h"          // Camera mode enumeration
 
 // Forward declarations to minimize include dependencies in header
 class Window;
@@ -80,6 +81,22 @@ public:
     bool isManualVoxelChangeRequested() const { return manualVoxelChangeRequested_; }
     void setManualVoxelChangeRequested(bool v) { manualVoxelChangeRequested_ = v; }
 
+    // Camera mode management
+    CameraMode getCameraMode() const { return cameraMode_; }
+    void setCameraMode(CameraMode mode) { cameraMode_ = mode; }
+    void toggleCameraMode();
+
+    // First-person mode input state
+    bool isSprinting() const { return sprinting_; }
+    bool isCrouching() const { return crouching_; }
+    bool isJumping() const { return jumping_; }
+    
+    // Player physics state accessors
+    glm::vec3& getPlayerPosition() { return playerPosition_; }
+    glm::vec3& getPlayerVelocity() { return playerVelocity_; }
+    bool& isPlayerOnGround() { return isOnGround_; }
+    float& getPlayerFallVelocity() { return fallVelocity_; }
+
 private:
     // Helper method for world initialization
     void initializeWorldContent();
@@ -116,6 +133,18 @@ private:
     bool manualVoxelChangeRequested_ = false; // For the 'M' key test functionality
     float mouseDeltaX_ = 0.0f;
     float mouseDeltaY_ = 0.0f;
+
+    // Camera mode and physics input state
+    CameraMode cameraMode_ = CameraMode::FREE_FLYING; // Default to free-flying mode
+    bool sprinting_ = false;   // Shift key for faster movement in first-person
+    bool crouching_ = false;   // Ctrl key for crouching in first-person
+    bool jumping_ = false;     // Space key for jumping in first-person
+
+    // Player physics state (for first-person mode)
+    glm::vec3 playerPosition_ = glm::vec3(16.0f, 24.0f, 48.0f); // Player world position
+    glm::vec3 playerVelocity_ = glm::vec3(0.0f); // Player velocity
+    bool isOnGround_ = false;  // Ground detection for jumping
+    float fallVelocity_ = 0.0f; // For fall damage calculation
 
     // Configuration
     const int screenWidth_ = 2400; 
