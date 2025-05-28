@@ -105,10 +105,12 @@ void PlayerPhysics::handleCollision(Game& game, VoxelCastle::World::WorldManager
     glm::vec3& playerVel = game.getPlayerVelocity();
     bool& isOnGround = game.isPlayerOnGround();
     
-    // Collision - prevent falling through the ground
-    // Find the voxel below the player
+    // Store old position for collision resolution
+    glm::vec3 oldPosition = playerPos;
+    
+    // 1. Ground collision - prevent falling through the ground
     int floorX = static_cast<int>(std::floor(playerPos.x));
-    int floorY = static_cast<int>(std::floor(playerPos.y - PhysicsConstants::GROUND_OFFSET));
+    int floorY = static_cast<int>(std::floor(playerPos.y - PhysicsConstants::EYE_HEIGHT));
     int floorZ = static_cast<int>(std::floor(playerPos.z));
     
     // Check if the block below is solid
@@ -116,8 +118,8 @@ void PlayerPhysics::handleCollision(Game& game, VoxelCastle::World::WorldManager
     bool isSolidBelow = blockBelow.id != static_cast<uint8_t>(VoxelEngine::World::VoxelType::AIR);
     
     if (isSolidBelow) {
-        // Calculate exact ground position
-        float groundY = static_cast<float>(floorY + 1) + PhysicsConstants::GROUND_OFFSET;
+        // Calculate exact ground position (feet at floor level, eyes at eye height above floor)
+        float groundY = static_cast<float>(floorY + 1) + PhysicsConstants::EYE_HEIGHT;
         
         // If we're falling and hit the ground
         if (playerVel.y < 0 && playerPos.y < groundY) {
@@ -130,13 +132,56 @@ void PlayerPhysics::handleCollision(Game& game, VoxelCastle::World::WorldManager
         isOnGround = false;
     }
     
-    // TODO: Add more sophisticated collision detection for horizontal movement
-    // TODO: Implement step-up logic for small height differences
+    // 2. Horizontal collision detection with step-up logic
+    if (glm::length(glm::vec2(playerVel.x, playerVel.z)) > 0.0f) {
+        // Calculate direction of movement
+        glm::vec3 moveDir = glm::normalize(glm::vec3(playerVel.x, 0.0f, playerVel.z));
+        float checkDistance = PhysicsConstants::PLAYER_RADIUS;
+        
+        // Point at feet level - for checking if we can step up
+        int frontX = static_cast<int>(std::floor(playerPos.x + moveDir.x * checkDistance));
+        int frontY = static_cast<int>(std::floor(playerPos.y - PhysicsConstants::EYE_HEIGHT)); // Feet level
+        int frontZ = static_cast<int>(std::floor(playerPos.z + moveDir.z * checkDistance));
+        
+        // Check if there's a block in front of us at feet level
+        VoxelEngine::World::Voxel frontBlockFeet = worldManager->getVoxel(frontX, frontY, frontZ);
+        bool isSolidFrontFeet = frontBlockFeet.id != static_cast<uint8_t>(VoxelEngine::World::VoxelType::AIR);
+        
+        // Check if there's a block in front of us at knee level (for stepping up)
+        VoxelEngine::World::Voxel frontBlockKnee = worldManager->getVoxel(frontX, frontY + 1, frontZ);
+        bool isSolidFrontKnee = frontBlockKnee.id != static_cast<uint8_t>(VoxelEngine::World::VoxelType::AIR);
+        
+        // Check if we have head clearance (two blocks up from feet)
+        VoxelEngine::World::Voxel frontBlockHead = worldManager->getVoxel(
+            frontX, frontY + static_cast<int>(PhysicsConstants::PLAYER_HEIGHT - 1), frontZ);
+        bool hasHeadClearance = frontBlockHead.id == static_cast<uint8_t>(VoxelEngine::World::VoxelType::AIR);
+        
+        // Check if there's space after stepping up (at new feet position)
+        VoxelEngine::World::Voxel blockAboveStep = worldManager->getVoxel(frontX, frontY + 1, frontZ);
+        
+        // If we have a block at feet level but not at knee level, we can step up
+        if (isSolidFrontFeet && !isSolidFrontKnee && hasHeadClearance && isOnGround) {
+            // Apply step-up - move player up by 1.0 voxel height
+            playerPos.y += 1.0f;
+            std::cout << "Step up!" << std::endl;
+        } 
+        // If there's a solid block in front that we can't step onto
+        else if ((isSolidFrontFeet || isSolidFrontKnee) && isOnGround) {
+            // Can't step up, block horizontal movement
+            playerPos.x = oldPosition.x;
+            playerPos.z = oldPosition.z;
+            playerVel.x = 0.0f;
+            playerVel.z = 0.0f;
+        }
+    }
+    
     // TODO: Add fall damage calculation
-
+    
     // Debug output
     std::cout << "\rPos: (" << playerPos.x << ", " << playerPos.y << ", " << playerPos.z 
               << ") Vel: (" << playerVel.x << ", " << playerVel.y << ", " << playerVel.z 
-              << ") OnGround: " << isOnGround << "   ";
+              << ") OnGround: " << isOnGround 
+              << " EyeHeight: " << PhysicsConstants::EYE_HEIGHT << " voxels"
+              << "   ";
     std::cout.flush();
 }
