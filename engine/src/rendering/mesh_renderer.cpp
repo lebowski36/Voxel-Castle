@@ -151,8 +151,8 @@ void MeshRenderer::uploadMesh(const VoxelMesh& mesh) {
             }
         }
     } else if (should_log) {
-        std::cout << "[MeshRenderer] Upload #" << upload_count << ": " << mesh.vertices.size() 
-                  << " vertices (" << totalDataSize << " bytes)" << std::endl;
+        // std::cout << "[MeshRenderer] Upload #" << upload_count << ": " << mesh.vertices.size() 
+        //           << " vertices (" << totalDataSize << " bytes)" << std::endl;
     }
 
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);

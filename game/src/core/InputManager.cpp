@@ -21,13 +21,19 @@ void processInput(Game& game) {
 
     SDL_Event e;
     while (SDL_PollEvent(&e)) {
-        std::cout << "[InputManager] Polled event type: " << e.type << std::endl << std::flush; // New log + flush
+        // Comment out or modify the general polling log
+        // std::cout << "[InputManager] Polled event type: " << e.type << std::endl << std::flush; 
 
         // Only log significant events to reduce spam
-        if (e.type == SDL_EVENT_QUIT || e.type == SDL_EVENT_KEY_DOWN || 
-            e.type == SDL_EVENT_MOUSE_BUTTON_DOWN || e.type == SDL_EVENT_MOUSE_BUTTON_UP ||
-            e.type == SDL_EVENT_MOUSE_WHEEL) {
-            std::cout << "[InputManager] Significant event type: " << e.type << std::endl << std::flush; // Added flush
+        if (e.type != SDL_EVENT_MOUSE_MOTION) { // Add condition to exclude mouse motion
+            if (e.type == SDL_EVENT_QUIT || e.type == SDL_EVENT_KEY_DOWN || 
+                e.type == SDL_EVENT_MOUSE_BUTTON_DOWN || e.type == SDL_EVENT_MOUSE_BUTTON_UP ||
+                e.type == SDL_EVENT_MOUSE_WHEEL) {
+                std::cout << "[InputManager] Significant event type: " << e.type << std::endl << std::flush;
+            } else {
+                 // Optionally, log other non-mouse-motion events if desired, or keep this silent
+                 // std::cout << "[InputManager] Other event type: " << e.type << std::endl << std::flush;
+            }
         }
         
         // Debug: Log mouse button events for left/right clicks only

@@ -91,31 +91,38 @@ RaycastResult BlockPlacement::raycast(const SpectatorCamera* camera,
 void BlockPlacement::handleMouseClick(Game& game, bool isLeftClick) {
     std::cout << "\n[BlockPlacement] ========= MOUSE CLICK START =========" << std::endl;
     std::cout << "[BlockPlacement] Click type: " << (isLeftClick ? "LEFT (place)" : "RIGHT (remove)") << std::endl;
-    std::cout << "[BlockPlacement] Window status: " << (game.getWindow() ? "Valid" : "NULL") << std::endl;
+    
+    // Early exit if critical components are not ready
+    if (!game.getWindow()) {
+        std::cerr << "[BlockPlacement] ERROR: Window is null! Aborting click." << std::endl;
+        return;
+    }
+    std::cout << "[BlockPlacement] Window status: Valid" << std::endl;
+
+    auto camera = game.getCamera();
+    if (!camera) {
+        std::cerr << "[BlockPlacement] ERROR: Camera is null! Aborting click." << std::endl;
+        return;
+    }
+    std::cout << "[BlockPlacement] Camera obtained: " << camera << std::endl;
+    glm::vec3 pos = camera->getPosition();
+    std::cout << "[BlockPlacement] Camera position: (" << pos.x << ", " << pos.y << ", " << pos.z << ")" << std::endl;
+
+    auto worldManager = game.getWorldManager();
+    if (!worldManager) {
+        std::cerr << "[BlockPlacement] ERROR: WorldManager is null! Aborting click." << std::endl;
+        return;
+    }
+    std::cout << "[BlockPlacement] WorldManager obtained: " << worldManager << std::endl;
+
+    // Add a check for world readiness if such a method exists, e.g., game.isWorldReady()
+    // For now, we assume if worldManager is not null, it's somewhat ready.
+    // if (!game.isWorldReady()) { // Hypothetical check
+    //     std::cout << "[BlockPlacement] World not ready for interaction. Aborting click." << std::endl;
+    //     return;
+    // }
     
     try {
-        std::cout << "[BlockPlacement] About to get camera..." << std::endl;
-        auto camera = game.getCamera();
-        std::cout << "[BlockPlacement] Camera obtained: " << camera << std::endl;
-        if (camera) {
-            glm::vec3 pos = camera->getPosition();
-            std::cout << "[BlockPlacement] Camera position: (" << pos.x << ", " << pos.y << ", " << pos.z << ")" << std::endl;
-        }
-        
-        std::cout << "[BlockPlacement] About to get world manager..." << std::endl;
-        auto worldManager = game.getWorldManager();
-        std::cout << "[BlockPlacement] WorldManager obtained: " << worldManager << std::endl;
-        
-        if (!camera) {
-            std::cout << "[BlockPlacement] ERROR: Camera is null!" << std::endl;
-            return;
-        }
-        
-        if (!worldManager) {
-            std::cout << "[BlockPlacement] ERROR: WorldManager is null!" << std::endl;
-            return;
-        }
-        
         std::cout << "[BlockPlacement] Both pointers valid, starting raycast..." << std::endl;
         
         // Clear any existing OpenGL errors
@@ -191,9 +198,15 @@ void BlockPlacement::handleMouseClick(Game& game, bool isLeftClick) {
             } else {
                 std::cout << "[BlockPlacement] Cannot place block at that location" << std::endl;
             }
-        } else {
+        } else { // Right click (remove block)
             std::cout << "[BlockPlacement] Removing block..." << std::endl;
-            // Remove block (right click)
+            
+            // Ensure the block being removed is not AIR
+            VoxelEngine::World::Voxel voxelToRemove = worldManager->getVoxel(rayResult.blockPosition.x, rayResult.blockPosition.y, rayResult.blockPosition.z);
+            if (voxelToRemove.id == static_cast<uint8_t>(VoxelEngine::World::VoxelType::AIR)) {
+                std::cout << "[BlockPlacement] Cannot remove AIR block." << std::endl;
+                return; // Exit if trying to remove an AIR block
+            }
 
             // Clear any OpenGL errors before setVoxel
             while (glGetError() != GL_NO_ERROR) {}
@@ -201,33 +214,30 @@ void BlockPlacement::handleMouseClick(Game& game, bool isLeftClick) {
             worldManager->setVoxel(static_cast<int_fast64_t>(rayResult.blockPosition.x), 
                                  static_cast<int_fast64_t>(rayResult.blockPosition.y), 
                                  static_cast<int_fast64_t>(rayResult.blockPosition.z), 
-                                 VoxelEngine::World::VoxelType::AIR);
+                                 VoxelEngine::World::VoxelType::AIR); // Set to AIR
 
-            // Check for OpenGL errors immediately after setVoxel
-            GLenum errAfterSetVoxelRemoval = glGetError();
-            if (errAfterSetVoxelRemoval != GL_NO_ERROR) {
+            GLenum errAfterSetVoxel = glGetError();
+            if (errAfterSetVoxel != GL_NO_ERROR) {
                 std::cerr << "[BlockPlacement] OpenGL error IMMEDIATELY AFTER setVoxel (removal): 0x" 
-                          << std::hex << errAfterSetVoxelRemoval << std::dec << std::endl;
+                          << std::hex << errAfterSetVoxel << std::dec << std::endl;
             }
             
             std::cout << "[BlockPlacement] Removed block at (" 
                       << rayResult.blockPosition.x << ", " << rayResult.blockPosition.y << ", " << rayResult.blockPosition.z << ")" << std::endl;
-                      
+
             std::cout << "[BlockPlacement] Marking chunk dirty for removal..." << std::endl;
             // Clear OpenGL errors before marking dirty
             while (glGetError() != GL_NO_ERROR) {}
-            markChunkDirtyForPosition(worldManager, rayResult.blockPosition);
+            markChunkDirtyForPosition(worldManager, rayResult.blockPosition); // Mark the chunk of the removed block
             // Check for OpenGL errors immediately after marking dirty
-            GLenum errAfterMarkDirtyRemoval = glGetError();
-            if (errAfterMarkDirtyRemoval != GL_NO_ERROR) {
+            GLenum errAfterMarkDirty = glGetError();
+            if (errAfterMarkDirty != GL_NO_ERROR) {
                 std::cerr << "[BlockPlacement] OpenGL error IMMEDIATELY AFTER markChunkDirtyForPosition (removal): 0x" 
-                          << std::hex << errAfterMarkDirtyRemoval << std::dec << std::endl;
+                          << std::hex << errAfterMarkDirty << std::dec << std::endl;
             }
-            std::cout << "[BlockPlacement] Chunk marked dirty successfully" << std::endl;
+            std::cout << "[BlockPlacement] Chunk marked dirty successfully for removal" << std::endl;
         }
         
-        std::cout << "[BlockPlacement] === MOUSE CLICK END ===" << std::endl;
-    
     } catch (const std::exception& e) {
         std::cout << "[BlockPlacement] EXCEPTION caught: " << e.what() << std::endl;
     } catch (...) {
