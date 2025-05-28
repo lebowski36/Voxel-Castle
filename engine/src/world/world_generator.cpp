@@ -21,7 +21,7 @@ void WorldGenerator::generateChunkSegment(ChunkSegment& segment, int worldX, int
     constexpr int depth = ChunkSegment::CHUNK_DEPTH;
 
     // --- TUNABLE PARAMETERS ---
-    const float noiseInputScale = 0.08f;         // Increased for potentially steeper features
+    const float noiseInputScale = 0.02f;         // Reduced for wider, more stretched terrain features
     const float terrainAmplitude = height * 1.5f;  // Increased amplitude (e.g., 32 * 1.5 = 48)
     const float baseTerrainOffset = static_cast<float>(height) / 8.0f; // Adjusted base offset (e.g., 32 / 8 = 4)
     // --- END TUNABLE PARAMETERS ---

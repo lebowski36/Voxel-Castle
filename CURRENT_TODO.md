@@ -71,7 +71,7 @@ This protocol outlines how the AI agent (GitHub Copilot) operates. Adherence to 
 - [x] Implement camera system
 - [x] Set up basic game loop
 - [x] Add simple world generation
-- [ ] Implement basic lighting model
+- [x] Implement basic lighting model
 
 ### 4. Essential Game Infrastructure (C++)
 *Detailed sub-tasks in `/home/system-x1/Projects/Voxel Castle/development_tasks/04_essential_game_infrastructure/`. A main task in this section is marked `[x]` ONLY if ALL its detailed sub-tasks in the corresponding file are complete.*
@@ -90,7 +90,7 @@ This protocol outlines how the AI agent (GitHub Copilot) operates. Adherence to 
 ## 📝 Near-Term Priority Tasks
 *This section should be updated regularly with the most immediate goals, typically pointing to the current high-level task from the list above.*
 
-**Current Focus:** To be determined based on next priority task
+**Current Focus:** Implement Physics System - Setting up basic physics system for entity movement and collision detection
 
 ## 📊 Progress Tracking (C++ Phase)
 - [x] Project structure and build system defined.
