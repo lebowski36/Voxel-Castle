@@ -3,118 +3,137 @@
 ## Status: 🔄 IN PROGRESS
 
 ## Overview
-Implement a basic physics system to handle entity movement, collision detection, and basic world physics interactions. This will provide the foundation for player movement, falling objects, and entity-world interactions.
+Implement a dual-camera physics system with free-flying spectator mode and first-person physics-based player mode. Players can switch between modes, with the physics mode featuring gravity, collision detection, realistic movement, and jumping mechanics.
 
 ## Implementation Phases
 
-### Phase 1: Core Physics Infrastructure ⏳ PENDING
-**Goal:** Set up the basic physics system architecture and integration with ECS.
+### Phase 1: Dual Camera Mode System ⏳ PENDING
+**Goal:** Implement camera mode switching and basic infrastructure for physics-based first-person mode.
 
-- [ ] **1.1: Choose Physics Engine**
-  - Research and select appropriate physics library (Bullet Physics, Jolt Physics, or custom lightweight solution)
-  - Consider voxel-specific needs: discrete collision detection, high entity count, minimal dependencies
-  - Document choice with rationale for voxel castle's specific requirements
+- [ ] **1.1: Camera Mode Management**
+  - Add camera mode enumeration (FREE_FLYING, FIRST_PERSON)
+  - Implement 'O' key handler to cycle between camera modes
+  - Create CameraController class to manage mode switching
+  - Preserve current free-flying camera as default mode
 
-- [ ] **1.2: Physics Component Integration**
-  - Create physics-related ECS components (RigidBodyComponent, ColliderComponent, etc.)
-  - Design component structure to work with chosen physics engine
-  - Ensure components integrate cleanly with existing PositionComponent and VelocityComponent
+- [ ] **1.2: Player Entity Creation**
+  - Create Player ECS entity with position, velocity, and physics components
+  - Design player collider (capsule: ~1.8m height × 0.6m diameter)
+  - Set camera eye height at ~1.65m above ground level
+  - Initialize player at current camera position when switching to first-person
 
-- [ ] **1.3: Physics System Setup**
-  - Create PhysicsSystem class that integrates with Flecs ECS
-  - Set up physics world/space initialization
-  - Implement basic simulation step integration with game loop
-  - Add physics system to main game initialization
+- [ ] **1.3: Input System Extension**
+  - Extend input handling to support both camera modes
+  - Preserve WASD + mouse controls for both modes
+  - Add Space key for jumping in first-person mode
+  - Maintain current free-flying controls (including up/down movement)
 
-### Phase 2: Basic Collision Detection 🔄 PENDING
-**Goal:** Implement collision detection between entities and the voxel world.
+### Phase 2: Basic Player Physics ⏳ PENDING
+**Goal:** Implement fundamental physics for first-person player mode.
 
-- [ ] **2.1: Voxel World Collision**
-  - Implement collision detection between entities and voxel blocks
-  - Create efficient voxel-based collision mesh or use discrete collision checks
-  - Handle solid vs. non-solid voxel types (AIR vs. STONE, DIRT, etc.)
-  - Test basic collision with simple entity (player camera bounds)
+- [ ] **2.1: Gravity System**
+  - Implement gravity affecting player entity in first-person mode
+  - Apply realistic gravity acceleration (~9.81 m/s²)
+  - Handle terminal velocity to prevent excessive fall speeds
+  - Ensure gravity only affects first-person mode, not free-flying
 
-- [ ] **2.2: Entity-Entity Collision**
-  - Implement basic collision detection between entities
-  - Handle simple shapes (sphere, box colliders)
-  - Add collision response (bounce, stop, overlap detection)
-  - Test with multiple entities in the world
+- [ ] **2.2: Ground Detection & Collision**
+  - Implement downward raycast/sweep for ground detection
+  - Handle player landing and stopping on solid voxel surfaces
+  - Calculate proper ground position (player standing height above voxels)
+  - Prevent player from falling through solid blocks
 
-- [ ] **2.3: Collision Response System**
-  - Implement proper collision response for entity-world interactions
-  - Handle velocity changes, position corrections
-  - Add basic friction and restitution properties
-  - Ensure entities don't clip through voxel geometry
+- [ ] **2.3: Horizontal Movement Physics**
+  - Implement WASD movement with physics-based locomotion
+  - Add realistic walking speed (~4-5 m/s) and optional running speed
+  - Apply ground friction and air resistance
+  - Ensure smooth acceleration/deceleration for natural movement feel
 
-### Phase 3: Basic Entity Physics 🔄 PENDING
-**Goal:** Add fundamental physics behaviors for entities.
+### Phase 3: Advanced Movement Mechanics ⏳ PENDING
+**Goal:** Add sophisticated movement features for realistic first-person experience.
 
-- [ ] **3.1: Gravity System**
-  - Implement global gravity affecting entities
-  - Add gravity component to control which entities are affected
-  - Test falling entities and ground collision
-  - Ensure proper terminal velocity and realistic fall behavior
+- [ ] **3.1: Step-Up Mechanism**
+  - Implement automatic step-up for heights ≤ 0.75m (3/4 of a voxel)
+  - Use forward collision detection to identify step-up opportunities
+  - Smoothly elevate player position when stepping up
+  - Ensure step-up doesn't interfere with jumping mechanics
 
-- [ ] **3.2: Movement Physics**
-  - Add forces and impulses for entity movement
-  - Implement proper acceleration/deceleration for smooth movement
-  - Add air resistance and ground friction
-  - Replace direct velocity manipulation with force-based movement
+- [ ] **3.2: Jumping System**
+  - Implement Space key jumping with realistic physics
+  - Set jump velocity for ~1.2m jump height (enough for 1-block obstacles)
+  - Add ground detection to prevent infinite jumping
+  - Handle jump timing and landing mechanics smoothly
 
-- [ ] **3.3: Basic Player Physics**
-  - Integrate player movement with physics system
-  - Add proper ground detection for jumping
-  - Implement walking, running, and jumping physics
-  - Test camera collision and movement smoothness
+- [ ] **3.3: Enhanced Movement Features**
+  - Add sprint mode (Shift key for faster movement ~8-10 m/s)
+  - Implement crouching (Ctrl key to reduce height to ~0.9m, slower movement ~2-3 m/s)
+  - Add movement state tracking (standing, walking, running, jumping, falling, crouching)
+  - Implement fall damage system based on fall velocity/height
 
-### Phase 4: World Physics Integration 🔄 PENDING
-**Goal:** Connect physics system with voxel world interactions.
+- [ ] **3.4: Fall Damage System**
+  - Calculate fall damage based on landing velocity
+  - Set damage thresholds (e.g., no damage under 2m fall, scaling damage above)
+  - Add player health component if not already present
+  - Display damage feedback (visual effects, health reduction)
 
-- [ ] **4.1: Voxel Modification Physics**
-  - Handle physics when voxels are added/removed
-  - Update collision mesh when world changes
-  - Ensure entities respond to world modifications
-  - Test dynamic world changes with physics entities
+### Phase 4: Voxel World Integration ⏳ PENDING
+**Goal:** Integrate player physics with dynamic voxel world.
 
-- [ ] **4.2: Basic Block Physics**
-  - Implement simple falling block physics for affected voxel types (sand, gravel)
-  - Add support detection for blocks
-  - Create cascade effects for unsupported blocks
-  - Test with sand/gravel falling when support is removed
+- [ ] **4.1: Voxel Collision System**
+  - Implement efficient player-voxel collision detection
+  - Handle different voxel types (solid vs. non-solid blocks)
+  - Update collision when world changes (voxel placement/removal)
+  - Optimize collision detection for performance
 
-- [ ] **4.3: Physics Optimization**
-  - Implement spatial partitioning for efficient collision detection
-  - Add physics object culling based on distance
-  - Optimize voxel collision mesh generation
-  - Profile and optimize physics performance
+- [ ] **4.2: Camera Synchronization**
+  - Synchronize first-person camera position with player physics position
+  - Handle smooth camera movement during physics interactions
+  - Maintain camera orientation during mode switches
+  - Ensure camera doesn't clip through geometry in first-person mode
 
-## Technical Requirements
+- [ ] **4.3: Physics Optimization & Polish**
+  - Implement spatial optimization for collision detection
+  - Add physics interpolation for smooth visual movement
+  - Handle edge cases (getting stuck, unusual terrain)
+  - Performance profiling and optimization for physics system
 
-### Physics Engine Integration
-- **Lightweight Solution**: Prefer minimal overhead for voxel world
-- **Discrete Collision**: Handle blocky, non-smooth voxel geometry well
-- **High Entity Count**: Support many small entities efficiently
-- **Thread Safety**: Compatible with potential multi-threading
+## Design Decisions & Implementation Details
 
-### ECS Integration
-- **Component Design**: Physics components work seamlessly with existing ECS
-- **System Integration**: Physics system coordinates with rendering and game logic
-- **Data Consistency**: Ensure physics state stays synchronized with ECS state
+### Confirmed Design Choices
+**Movement Features:**
+- ✅ **Sprint Mode**: Shift key enables faster movement (~8-10 m/s vs normal 4-5 m/s)
+- ✅ **Crouch Mode**: Ctrl key allows crouching (reduces height to ~0.9m, slower movement)
+- ✅ **Fall Damage**: Implement damage when landing from high falls
+- 🚫 **Sound Effects**: Deferred to separate audio system (not part of physics)
 
-### Performance Considerations
-- **Voxel Collision**: Efficient collision detection with large voxel worlds
-- **Spatial Optimization**: Use spatial data structures for collision culling
-- **Memory Management**: Minimize physics memory overhead
-- **Update Frequency**: Balance physics accuracy with performance
+**Movement Feel:**
+- ✅ **Arcade-style**: Instant response to input for responsive controls
+- No momentum/acceleration - immediate velocity changes like current camera
+
+**Collision Detection:**
+- ✅ **Simple Box Collision**: Each solid voxel = box collider (fastest to implement)
+- Ray-based detection for ground detection and step-up checks
+- Focus on performance and simplicity for initial implementation
+
+### Player Specifications
+- **Player Collider**: Capsule shape, 1.8m height × 0.6m diameter
+- **Eye Height**: 1.65m above ground (camera position)
+- **Crouch Height**: 0.9m total height when crouching
+- **Step Height**: 0.75m maximum automatic step-up
+- **Jump Height**: 1.2m maximum jump
+- **Walking Speed**: 4-5 m/s normal, 8-10 m/s sprinting, 2-3 m/s crouching
 
 ## Success Criteria
-- [ ] Entities properly collide with voxel world geometry
-- [ ] Basic gravity and movement physics work smoothly
-- [ ] Player movement feels responsive and realistic
-- [ ] Physics system integrates cleanly with existing ECS architecture
-- [ ] Performance remains stable with multiple physics entities
-- [ ] Basic world-physics interactions (falling blocks) function correctly
+- [ ] Successfully switch between free-flying and first-person camera modes with 'O' key
+- [ ] Free-flying mode preserves all current functionality (WASD + mouse + up/down movement)
+- [ ] First-person mode features realistic gravity and ground collision
+- [ ] Player can walk smoothly on terrain using WASD controls
+- [ ] Automatic step-up works for heights ≤ 0.75m without jumping
+- [ ] Space key jumping provides ~1.2m jump height for obstacle clearing
+- [ ] Camera positioning feels natural at human eye level (~1.65m above ground)
+- [ ] Physics system performs well without impacting frame rate
+- [ ] Smooth transitions between camera modes
+- [ ] Player cannot clip through voxel geometry in first-person mode
 
 ## Implementation Notes
 
