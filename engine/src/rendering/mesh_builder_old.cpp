@@ -1,11 +1,9 @@
 #include "rendering/mesh_builder.h"
 #include "rendering/meshing/meshing_factory.h"
-#include "rendering/face_debug_utils.h"
 #include "rendering/debug_render_mode.h"
 #include "world/voxel_types.h"
 #include "world/chunk_segment.h"
 #include "rendering/texture_atlas.h"
-#include "rendering/DebugText.h"
 
 #include <glm/glm.hpp>
 #include <glm/gtc/type_ptr.hpp>

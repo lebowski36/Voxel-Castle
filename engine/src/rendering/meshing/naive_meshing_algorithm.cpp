@@ -127,8 +127,6 @@ namespace VoxelEngine {
                 };
 
                 // Debug color for face identification
-                glm::vec4 debugColor(1.0f, 1.0f, 1.0f, 1.0f);
-
                 // Add vertices
                 for (int i = 0; i < 4; ++i) {
                     glm::vec3 world_pos = voxel_pos + face_vertices[i];
@@ -137,8 +135,7 @@ namespace VoxelEngine {
                         VoxelEngine::World::Normal{normal.x, normal.y, normal.z},
                         quad_uvs[i],
                         atlas_origin_uv,
-                        debugLight,
-                        debugColor
+                        debugLight
                     );
                 }
 

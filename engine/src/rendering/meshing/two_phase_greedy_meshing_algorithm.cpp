@@ -3,8 +3,6 @@
 #include "world/voxel_types.h"
 #include "world/chunk_segment.h"
 #include "rendering/debug_render_mode.h"
-#include "rendering/face_debug_utils.h"
-#include "rendering/DebugText.h"
 #include <glm/glm.hpp>
 #include <iostream>
 #include <cassert>
@@ -293,23 +291,10 @@ void VoxelEngine::Rendering::Meshing::TwoPhaseGreedyMeshingAlgorithm::addQuad(Vo
         quad_uvs[3] = glm::vec2(len_p1_p4, 0.0f);                   // p4
     }
 
-    glm::vec4 debugColor(0.0f);
-    if (::g_debugRenderMode == DebugRenderMode::FACE_DEBUG) {
-        // Determine direction ID based on normal
-        int directionId = 0;
-        if (normal.x > 0.5f) directionId = 1;      // +X (Right)
-        else if (normal.x < -0.5f) directionId = 2; // -X (Left)
-        else if (normal.y > 0.5f) directionId = 3;  // +Y (Top)
-        else if (normal.y < -0.5f) directionId = 4; // -Y (Bottom)
-        else if (normal.z > 0.5f) directionId = 5;  // +Z (Front)
-        else if (normal.z < -0.5f) directionId = 6; // -Z (Back)
-        debugColor = VoxelEngine::Rendering::encodeFaceDebugColor(directionId);
-    }
-    
-    mesh.vertices.emplace_back(p1, normal, quad_uvs[0], atlas_origin_uv, light, debugColor);
-    mesh.vertices.emplace_back(p2, normal, quad_uvs[1], atlas_origin_uv, light, debugColor);
-    mesh.vertices.emplace_back(p3, normal, quad_uvs[2], atlas_origin_uv, light, debugColor);
-    mesh.vertices.emplace_back(p4, normal, quad_uvs[3], atlas_origin_uv, light, debugColor);
+    mesh.vertices.emplace_back(p1, normal, quad_uvs[0], atlas_origin_uv, light);
+    mesh.vertices.emplace_back(p2, normal, quad_uvs[1], atlas_origin_uv, light);
+    mesh.vertices.emplace_back(p3, normal, quad_uvs[2], atlas_origin_uv, light);
+    mesh.vertices.emplace_back(p4, normal, quad_uvs[3], atlas_origin_uv, light);
 
     // Standard quad triangulation
     mesh.indices.push_back(base_index);
@@ -319,15 +304,4 @@ void VoxelEngine::Rendering::Meshing::TwoPhaseGreedyMeshingAlgorithm::addQuad(Vo
     mesh.indices.push_back(base_index);
     mesh.indices.push_back(base_index + 2);
     mesh.indices.push_back(base_index + 3);
-
-    if (::g_debugRenderMode == DebugRenderMode::FACE_DEBUG) {
-        glm::vec3 faceCenterLocal = (static_cast<glm::vec3>(p1) + static_cast<glm::vec3>(p2) + static_cast<glm::vec3>(p3) + static_cast<glm::vec3>(p4)) / 4.0f;
-        
-        char coordText[256];
-        snprintf(coordText, sizeof(coordText), "C(%.0f,%.0f,%.0f)V(%.0f,%.0f,%.0f)", 
-                 static_cast<float>(chunkCoords.x), static_cast<float>(chunkCoords.y), static_cast<float>(chunkCoords.z),
-                 p1.x, p1.y, p1.z);
-        
-        mesh.debugFaceTexts.push_back({std::string(coordText), faceCenterLocal, normal});
-    }
 }

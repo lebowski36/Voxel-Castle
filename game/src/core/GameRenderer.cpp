@@ -100,52 +100,6 @@ void renderGame(
              meshRenderer.uploadMesh(*vMesh); 
              glm::mat4 model = glm::translate(glm::mat4(1.0f), vMesh->getWorldPosition());
              meshRenderer.draw(model, view, proj);
-
-            // Render debug face text if in FACE_DEBUG mode
-            if (::g_debugRenderMode == DebugRenderMode::FACE_DEBUG && fontManager.isFontLoaded() && textRenderer.isShaderReady()) {
-                const auto& debugTexts = vMesh->getDebugFaceTexts();
-                if (!debugTexts.empty()) {
-                    glm::mat4 chunkModelMatrix = glm::translate(glm::mat4(1.0f), vMesh->getWorldPosition());
-
-                    // Temporary counter for debug printing
-                    static int debug_print_count = 0;
-                    const int max_debug_prints = 50; // Print info for this many texts
-
-                    for (const auto& textInfo : debugTexts) {
-                        glm::vec3 localFaceCenter = textInfo.worldPosition; // Position is local to the chunk
-                        glm::vec3 worldFaceCenter = glm::vec3(chunkModelMatrix * glm::vec4(localFaceCenter, 1.0f));
-
-                        glm::vec3 localFaceNormal = textInfo.faceNormal; // Normal is local to the chunk
-                        glm::vec3 worldFaceNormal = glm::normalize(glm::mat3(chunkModelMatrix) * localFaceNormal);
-                        
-                        glm::vec3 textColor(0.0f, 0.0f, 0.0f); // Black text
-                        float scale = 0.0035f; // Adjusted scale
-                        float offsetAmount = 0.01f; // Small offset to prevent z-fighting
-
-                        glm::vec3 textPosition = worldFaceCenter + worldFaceNormal * offsetAmount;
-
-                        // Temporary debug output to console
-                        if (debug_print_count < max_debug_prints) {
-                            std::cout << "Rendering Debug Text: Content=\"" << textInfo.text << "\"; "
-                                      << "LocalPos=(" << localFaceCenter.x << "," << localFaceCenter.y << "," << localFaceCenter.z << "); "
-                                      << "WorldPos=(" << worldFaceCenter.x << "," << worldFaceCenter.y << "," << worldFaceCenter.z << ")"
-                                      << std::endl;
-                            debug_print_count++;
-                        }
-
-                        textRenderer.renderText3D(
-                            textInfo.text,
-                            textPosition, 
-                            scale,
-                            textColor,
-                            view,
-                            proj,
-                            camera.getRight(),
-                            camera.getUp()
-                        );
-                    }
-                }
-            }
         }
     }
 

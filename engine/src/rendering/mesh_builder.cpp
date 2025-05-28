@@ -1,11 +1,9 @@
 #include "rendering/mesh_builder.h"
 #include "rendering/meshing/meshing_factory.h"
-#include "rendering/face_debug_utils.h"
 #include "rendering/debug_render_mode.h"
 #include "world/voxel_types.h"
 #include "world/chunk_segment.h"
 #include "rendering/texture_atlas.h"
-#include "rendering/DebugText.h"
 
 #include <glm/glm.hpp>
 #include <glm/gtc/type_ptr.hpp>
@@ -125,24 +123,7 @@ namespace VoxelEngine {
             // The 'light' component is set to 1.0f for now.
             // Note: The order of face_vertices (BL, BR, TR, TL) must match the quad_uvs order.
             for (int i = 0; i < 4; ++i) {
-                glm::vec4 debugColor(0.0f);
-                if (::g_debugRenderMode == DebugRenderMode::FACE_DEBUG) {
-                    // Determine direction ID based on normal
-                    int directionId = 0;
-                    if (normal.x > 0.5f) directionId = 1;      // +X (Right)
-                    else if (normal.x < -0.5f) directionId = 2; // -X (Left)
-                    else if (normal.y > 0.5f) directionId = 3;  // +Y (Top)
-                    else if (normal.y < -0.5f) directionId = 4; // -Y (Bottom)
-                    else if (normal.z > 0.5f) directionId = 5;  // +Z (Front)
-                    else if (normal.z < -0.5f) directionId = 6; // -Z (Back)
-                    debugColor = VoxelEngine::Rendering::encodeFaceDebugColor(directionId);
-                    // DEBUG LOGGING
-                    std::cout << "[MeshBuilder DEBUG addFace] VoxelPos: (" << voxel_pos.x << "," << voxel_pos.y << "," << voxel_pos.z 
-                              << ") Normal: (" << normal.x << "," << normal.y << "," << normal.z
-                              << ") DirID: " << directionId 
-                              << " Color: (" << debugColor.r << "," << debugColor.g << "," << debugColor.b << "," << debugColor.a << ")" << std::endl;
-                }
-                mesh.vertices.emplace_back(voxel_pos + face_vertices[i], normal, quad_uvs[i], atlas_origin_uv, debugLight, debugColor);
+                mesh.vertices.emplace_back(voxel_pos + face_vertices[i], normal, quad_uvs[i], atlas_origin_uv, debugLight);
             }
 
             mesh.indices.push_back(base_index);
@@ -206,27 +187,10 @@ namespace VoxelEngine {
             quad_uvs[2] = glm::vec2(static_cast<float>(quad_width_voxels), static_cast<float>(quad_height_voxels));
             quad_uvs[3] = glm::vec2(0.0f, static_cast<float>(quad_height_voxels));
 
-            glm::vec4 debugColor(0.0f);
-            if (::g_debugRenderMode == DebugRenderMode::FACE_DEBUG) {
-                // Determine direction ID based on normal
-                int directionId = 0;
-                if (normal.x > 0.5f) directionId = 1;      // +X (Right)
-                else if (normal.x < -0.5f) directionId = 2; // -X (Left)
-                else if (normal.y > 0.5f) directionId = 3;  // +Y (Top)
-                else if (normal.y < -0.5f) directionId = 4; // -Y (Bottom)
-                else if (normal.z > 0.5f) directionId = 5;  // +Z (Front)
-                else if (normal.z < -0.5f) directionId = 6; // -Z (Back)
-                debugColor = VoxelEngine::Rendering::encodeFaceDebugColor(directionId);
-                // DEBUG LOGGING
-                std::cout << "[MeshBuilder DEBUG addQuad] P1: (" << p1.x << "," << p1.y << "," << p1.z
-                          << ") Normal: (" << normal.x << "," << normal.y << "," << normal.z
-                          << ") DirID: " << directionId
-                          << " Color: (" << debugColor.r << "," << debugColor.g << "," << debugColor.b << "," << debugColor.a << ")" << std::endl;
-            }
-            mesh.vertices.emplace_back(p1, normal, quad_uvs[0], atlas_origin_uv, light, debugColor);
-            mesh.vertices.emplace_back(p2, normal, quad_uvs[1], atlas_origin_uv, light, debugColor);
-            mesh.vertices.emplace_back(p3, normal, quad_uvs[2], atlas_origin_uv, light, debugColor);
-            mesh.vertices.emplace_back(p4, normal, quad_uvs[3], atlas_origin_uv, light, debugColor);
+            mesh.vertices.emplace_back(p1, normal, quad_uvs[0], atlas_origin_uv, light);
+            mesh.vertices.emplace_back(p2, normal, quad_uvs[1], atlas_origin_uv, light);
+            mesh.vertices.emplace_back(p3, normal, quad_uvs[2], atlas_origin_uv, light);
+            mesh.vertices.emplace_back(p4, normal, quad_uvs[3], atlas_origin_uv, light);
 
             // Standard quad triangulation (ensure CCW winding order as seen from the direction of the normal for front faces)
             mesh.indices.push_back(base_index);     // p1
@@ -236,19 +200,6 @@ namespace VoxelEngine {
             mesh.indices.push_back(base_index);     // p1
             mesh.indices.push_back(base_index + 2); // p3
             mesh.indices.push_back(base_index + 3); // p4
-
-            if (::g_debugRenderMode == DebugRenderMode::FACE_DEBUG) {
-                // Calculate the center of the quad for text placement (this is fine for where the text is drawn)
-                glm::vec3 faceCenterLocal = (static_cast<glm::vec3>(p1) + static_cast<glm::vec3>(p2) + static_cast<glm::vec3>(p3) + static_cast<glm::vec3>(p4)) / 4.0f;
-                
-                char coordText[256];
-                // Display Chunk Coords (C: X,Y,Z) and Local Voxel Coords of p1 (V: X,Y,Z)
-                snprintf(coordText, sizeof(coordText), "C(%.0f,%.0f,%.0f)V(%.0f,%.0f,%.0f)", 
-                         static_cast<float>(chunkCoords.x), static_cast<float>(chunkCoords.y), static_cast<float>(chunkCoords.z),
-                         p1.x, p1.y, p1.z);
-                
-                mesh.debugFaceTexts.push_back({std::string(coordText), faceCenterLocal, normal});
-            }
         }
 
     } // namespace Rendering

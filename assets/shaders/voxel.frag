@@ -3,12 +3,11 @@ out vec4 FragColor;
 
 in vec2 v_quad_uv; // Changed from vTexCoord
 in vec2 v_atlas_tile_origin_uv; // New input
-in vec4 vDebugColor;
 // in float vLight; // Assuming vLight might be used later for lighting calculations
 
 uniform sampler2D uTextureSampler; // Existing texture atlas sampler
 uniform vec2 u_tile_uv_span;      // New uniform: vec2(TILE_UV_WIDTH, TILE_UV_HEIGHT)
-uniform int uDebugRenderMode;     // 0=normal, 1=wireframe, 2=face debug
+uniform int uDebugRenderMode;     // 0=normal, 1=wireframe
 
 void main()
 {
@@ -18,20 +17,11 @@ void main()
     // Map the tiled UV to the correct tile in the atlas
     vec2 final_atlas_uv = v_atlas_tile_origin_uv + tiled_uv * u_tile_uv_span;
 
-    if (uDebugRenderMode == 2) {
-        FragColor = vDebugColor;
-        FragColor.a = 1.0;
-    } else if (uDebugRenderMode == 3) {
-        // Debug mode 3: Show UV tiling pattern
-        // Color based on tiled_uv to visualize tiling
-        FragColor = vec4(tiled_uv.x, tiled_uv.y, 0.0, 1.0);
-    } else {
-        FragColor = texture(uTextureSampler, final_atlas_uv);
-        // Discard fragment if alpha is below a threshold (e.g., for transparent parts of textures)
-        if(FragColor.a < 0.1) {
-            discard;
-        }
-        // Placeholder for lighting - can be re-added if vLight is passed and used
-        // FragColor.rgb *= vLight; 
+    FragColor = texture(uTextureSampler, final_atlas_uv);
+    // Discard fragment if alpha is below a threshold (e.g., for transparent parts of textures)
+    if(FragColor.a < 0.1) {
+        discard;
     }
+    // Placeholder for lighting - can be re-added if vLight is passed and used
+    // FragColor.rgb *= vLight;
 }

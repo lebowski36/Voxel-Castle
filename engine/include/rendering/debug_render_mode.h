@@ -4,8 +4,7 @@
 
 enum class DebugRenderMode {
     NORMAL = 0,
-    WIREFRAME = 1,
-    FACE_DEBUG = 2
+    WIREFRAME = 1
 };
 
 // Extern declaration for global mode variable

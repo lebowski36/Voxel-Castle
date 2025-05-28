@@ -9,8 +9,6 @@
 #include <glm/vec2.hpp> // For glm::vec2
 #include <glm/vec3.hpp> // For glm::vec3
 
-#include "rendering/DebugText.h" // Added for DebugTextInfo
-
 namespace VoxelEngine {
     namespace Rendering {
 
@@ -26,16 +24,14 @@ namespace VoxelEngine {
             glm::vec2 quad_uv;     ///< UV coordinates for tiling across the quad (0 to W, 0 to H).
             glm::vec2 atlas_tile_origin_uv; ///< UV coordinates of the tile's origin in the atlas.
             float light = 1.0f;    ///< Per-vertex light (0.0 = dark, 1.0 = max brightness)
-            glm::vec4 debugColor = glm::vec4(0.0f); ///< Debug color for face ID visualization (used only in FACE_DEBUG mode)
 
             Vertex() = default;
             Vertex(const glm::vec3& pos,
                    const glm::vec3& norm,
                    const glm::vec2& q_uv = glm::vec2(0.0f),
                    const glm::vec2& atlas_origin = glm::vec2(0.0f),
-                   float l = 1.0f,
-                   const glm::vec4& dbg = glm::vec4(0.0f))
-                : position(pos), normal(norm), quad_uv(q_uv), atlas_tile_origin_uv(atlas_origin), light(l), debugColor(dbg) {}
+                   float l = 1.0f)
+                : position(pos), normal(norm), quad_uv(q_uv), atlas_tile_origin_uv(atlas_origin), light(l) {}
         };
 
         /**
@@ -50,9 +46,6 @@ namespace VoxelEngine {
             std::vector<uint32_t> indices;      ///< List of indices defining triangles (e.g., for GL_TRIANGLES).
             glm::vec3 worldPosition_ = glm::vec3(0.0f); ///< World position of the mesh's origin.
             bool initialized_ = false;          ///< True if the mesh has been initialized with data.
-            std::vector<DebugTextInfo> debugFaceTexts; ///< Information for rendering text on faces in debug mode.
-
-            const std::vector<DebugTextInfo>& getDebugFaceTexts() const { return debugFaceTexts; } // Added getter
 
             /**
              * @brief Clears all vertex and index data from the mesh.
@@ -61,7 +54,6 @@ namespace VoxelEngine {
             void clear() {
                 vertices.clear();
                 indices.clear();
-                debugFaceTexts.clear(); // Clear debug texts as well
                 worldPosition_ = glm::vec3(0.0f); // Reset world position on clear
                 initialized_ = false;
             }
