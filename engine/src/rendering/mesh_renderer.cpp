@@ -12,6 +12,14 @@
 
 #include "../../external/stb_image.h" // Include stb_image for texture loading without implementation
 
+// Helper function to check and log OpenGL errors
+void checkGlError(const char* operation) {
+    GLenum err;
+    while ((err = glGetError()) != GL_NO_ERROR) {
+        std::cerr << "[OpenGL Error] After " << operation << ": 0x" << std::hex << err << std::dec << std::endl;
+    }
+}
+
 namespace VoxelEngine {
 namespace Rendering {
 
@@ -22,12 +30,14 @@ const std::string BASE_DIRECTORY = "/home/system-x1/Projects/Voxel Castle/";
 
 MeshRenderer::MeshRenderer() : vao(0), vbo(0), ebo(0), shaderProgram(0), textureAtlasID(0), ready(false) {
     std::cout << "[MeshRenderer] Constructor started." << std::endl;
+    checkGlError("Constructor Start");
 
     try {
         std::cout << "[MeshRenderer] Current Working Directory: " << std::filesystem::current_path().string() << std::endl;
     } catch (const std::filesystem::filesystem_error& e) {
         std::cerr << "[MeshRenderer] Error retrieving current working directory: " << e.what() << std::endl;
     }
+    checkGlError("After getting CWD");
 
     // Correct paths for shaders and texture
     const std::string projectRoot = BASE_DIRECTORY;
@@ -40,6 +50,7 @@ MeshRenderer::MeshRenderer() : vao(0), vbo(0), ebo(0), shaderProgram(0), texture
     std::cout << "  Fragment shader: " << fragmentShaderPath << std::endl;
 
     shaderProgram = createShaderProgram(vertexShaderPath, fragmentShaderPath);
+    checkGlError("createShaderProgram");
 
     if (shaderProgram == 0) {
         std::cerr << "FATAL: [MeshRenderer] shaderProgram is 0. Shaders failed to load." << std::endl;
@@ -52,14 +63,57 @@ MeshRenderer::MeshRenderer() : vao(0), vbo(0), ebo(0), shaderProgram(0), texture
     } else {
         std::cout << "[MeshRenderer] Texture atlas loaded successfully. ID: " << textureAtlasID << std::endl;
     }
+    checkGlError("loadTexture");
 
     glGenVertexArrays(1, &vao);
+    checkGlError("glGenVertexArrays");
     glGenBuffers(1, &vbo);
+    checkGlError("glGenBuffers (VBO)");
     glGenBuffers(1, &ebo);
+    checkGlError("glGenBuffers (EBO)");
 
     if (vao == 0 || vbo == 0 || ebo == 0) {
         std::cerr << "FATAL: [MeshRenderer] Failed to generate VAO/VBO/EBO." << std::endl;
     }
+
+    // Set up VAO with vertex attributes
+    glBindVertexArray(vao);
+    checkGlError("glBindVertexArray (initial setup)");
+    
+    glBindBuffer(GL_ARRAY_BUFFER, vbo);
+    checkGlError("glBindBuffer GL_ARRAY_BUFFER (initial setup)");
+    
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
+    checkGlError("glBindBuffer GL_ELEMENT_ARRAY_BUFFER (initial setup)");
+
+    // Setup vertex attributes
+    glEnableVertexAttribArray(0);
+    checkGlError("glEnableVertexAttribArray(0)");
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(VoxelEngine::Rendering::Vertex), (void*)offsetof(VoxelEngine::Rendering::Vertex, position));
+    checkGlError("glVertexAttribPointer(0)");
+
+    glEnableVertexAttribArray(1);
+    checkGlError("glEnableVertexAttribArray(1)");
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(VoxelEngine::Rendering::Vertex), (void*)offsetof(VoxelEngine::Rendering::Vertex, normal));
+    checkGlError("glVertexAttribPointer(1)");
+
+    glEnableVertexAttribArray(2);
+    checkGlError("glEnableVertexAttribArray(2)");
+    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(VoxelEngine::Rendering::Vertex), (void*)offsetof(VoxelEngine::Rendering::Vertex, quad_uv));
+    checkGlError("glVertexAttribPointer(2)");
+
+    glEnableVertexAttribArray(3);
+    checkGlError("glEnableVertexAttribArray(3)");
+    glVertexAttribPointer(3, 2, GL_FLOAT, GL_FALSE, sizeof(VoxelEngine::Rendering::Vertex), (void*)offsetof(VoxelEngine::Rendering::Vertex, atlas_tile_origin_uv));
+    checkGlError("glVertexAttribPointer(3)");
+    
+    glEnableVertexAttribArray(4);
+    checkGlError("glEnableVertexAttribArray(4)");
+    glVertexAttribPointer(4, 1, GL_FLOAT, GL_FALSE, sizeof(VoxelEngine::Rendering::Vertex), (void*)offsetof(VoxelEngine::Rendering::Vertex, light));
+    checkGlError("glVertexAttribPointer(4)");
+
+    glBindVertexArray(0); // Unbind VAO
+    checkGlError("glBindVertexArray(0) (unbind after initial setup)");
 
     ready = (shaderProgram != 0 && vao != 0 && vbo != 0 && ebo != 0 && textureAtlasID != 0);
     if (!ready) {
@@ -72,10 +126,19 @@ MeshRenderer::MeshRenderer() : vao(0), vbo(0), ebo(0), shaderProgram(0), texture
 MeshRenderer::~MeshRenderer() {
     std::cout << "[MeshRenderer] Destructor called." << std::endl;
     glDeleteVertexArrays(1, &vao);
+    checkGlError("glDeleteVertexArrays (destructor)");
     glDeleteBuffers(1, &vbo);
+    checkGlError("glDeleteBuffers VBO (destructor)");
     glDeleteBuffers(1, &ebo);
-    if (shaderProgram) glDeleteProgram(shaderProgram);
-    if (textureAtlasID) glDeleteTextures(1, &textureAtlasID); 
+    checkGlError("glDeleteBuffers EBO (destructor)");
+    if (shaderProgram) {
+        glDeleteProgram(shaderProgram);
+        checkGlError("glDeleteProgram (destructor)");
+    }
+    if (textureAtlasID) {
+        glDeleteTextures(1, &textureAtlasID);
+        checkGlError("glDeleteTextures (destructor)");
+    }
 }
 
 void MeshRenderer::uploadMesh(const VoxelMesh& mesh) {
@@ -118,11 +181,10 @@ void MeshRenderer::uploadMesh(const VoxelMesh& mesh) {
     // }
 
     glBindVertexArray(vao);
+    checkGlError("glBindVertexArray (uploadMesh initial)");
     
     // Clear any pre-existing OpenGL errors
-    while (glGetError() != GL_NO_ERROR) {}
-    
-    GLenum err; 
+    while (glGetError() != GL_NO_ERROR) {} 
 
     // Add debugging for the mesh data - only for large meshes or errors
     size_t expectedVertexSize = sizeof(VoxelEngine::Rendering::Vertex);
@@ -133,38 +195,16 @@ void MeshRenderer::uploadMesh(const VoxelMesh& mesh) {
     bool should_log = (upload_count % 1000 == 0) || (mesh.vertices.size() > 8000);
 
     glBindBuffer(GL_ARRAY_BUFFER, vbo);
-    err = glGetError();
-    if (err != GL_NO_ERROR) {
-        std::cerr << "[ERROR] glBindBuffer(GL_ARRAY_BUFFER) failed (0x" << std::hex << err << std::dec << ")" << std::endl;
-    }
+    checkGlError("glBindBuffer GL_ARRAY_BUFFER (uploadMesh)");
     
     glBufferData(GL_ARRAY_BUFFER, totalDataSize, mesh.vertices.data(), GL_STATIC_DRAW);
-    err = glGetError();
-    static size_t error_count = 0;
-    if (err != GL_NO_ERROR) {
-        error_count++;
-        if (error_count <= 5 || error_count % 100 == 0) {
-            std::cerr << "[ERROR] VBO upload failed (0x" << std::hex << err << std::dec << ") - Count: " << error_count << std::endl;
-            std::cerr << "  Data size: " << totalDataSize << " bytes, Vertex count: " << mesh.vertices.size() << std::endl;
-            if (error_count == 5) {
-                std::cerr << "  [Further VBO errors will be shown every 100 occurrences]" << std::endl;
-            }
-        }
-    } else if (should_log) {
-        // std::cout << "[MeshRenderer] Upload #" << upload_count << ": " << mesh.vertices.size() 
-        //           << " vertices (" << totalDataSize << " bytes)" << std::endl;
-    }
-
+    checkGlError("glBufferData GL_ARRAY_BUFFER (uploadMesh)");
+    
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
+    checkGlError("glBindBuffer GL_ELEMENT_ARRAY_BUFFER (uploadMesh)");
+    
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, mesh.indices.size() * sizeof(uint32_t), mesh.indices.data(), GL_STATIC_DRAW);
-    err = glGetError();
-    static size_t ebo_error_count = 0;
-    if (err != GL_NO_ERROR) {
-        ebo_error_count++;
-        if (ebo_error_count <= 3 || ebo_error_count % 50 == 0) {
-            std::cerr << "[ERROR] EBO upload failed (0x" << std::hex << err << std::dec << ") - Count: " << ebo_error_count << std::endl;
-        }
-    }
+    checkGlError("glBufferData GL_ELEMENT_ARRAY_BUFFER (uploadMesh)");
 
     glEnableVertexAttribArray(0); 
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(VoxelEngine::Rendering::Vertex), (void*)offsetof(VoxelEngine::Rendering::Vertex, position));
@@ -176,10 +216,7 @@ void MeshRenderer::uploadMesh(const VoxelMesh& mesh) {
     glVertexAttribPointer(3, 2, GL_FLOAT, GL_FALSE, sizeof(VoxelEngine::Rendering::Vertex), (void*)offsetof(VoxelEngine::Rendering::Vertex, atlas_tile_origin_uv));
     glEnableVertexAttribArray(4); 
     glVertexAttribPointer(4, 1, GL_FLOAT, GL_FALSE, sizeof(VoxelEngine::Rendering::Vertex), (void*)offsetof(VoxelEngine::Rendering::Vertex, light));
-    err = glGetError(); 
-    if (err != GL_NO_ERROR) {
-        std::cerr << "[ERROR] MeshRenderer::uploadMesh - Vertex attribute setup failed: 0x" << std::hex << err << std::dec << std::endl;
-    }
+    checkGlError("Vertex attribute setup (uploadMesh)");
 
     indexCount = mesh.indices.size();
     ready = (shaderProgram != 0 && vao != 0 && vbo != 0 && ebo != 0 && textureAtlasID != 0); 
@@ -198,6 +235,7 @@ void MeshRenderer::uploadMesh(const VoxelMesh& mesh) {
     }
 
     glBindVertexArray(0);
+    checkGlError("glBindVertexArray unbind (uploadMesh)");
 }
 
 // Draw function with improved debugging and logging
@@ -254,26 +292,15 @@ void MeshRenderer::draw(const glm::mat4& model, const glm::mat4& view, const glm
     frameCounter++;
 
     // Use the shader program
-    GLenum err;
     glUseProgram(shaderProgram); // This is the one we keep
-    err = glGetError();
-    if (err != GL_NO_ERROR) {
-        std::cerr << "[MeshRenderer::draw] OpenGL error 0x" << std::hex << err << std::dec << " after glUseProgram." << std::endl;
-        return;
-    }
+    checkGlError("glUseProgram (draw)");
 
     // Set u_tile_uv_span uniform
     GLint tileUVSpanLoc = glGetUniformLocation(shaderProgram, "u_tile_uv_span");
-    err = glGetError();
-    if (err != GL_NO_ERROR) {
-        std::cerr << "[MeshRenderer::draw] OpenGL error 0x" << std::hex << err << std::dec << " after glGetUniformLocation for u_tile_uv_span." << std::endl;
-    }
+    checkGlError("glGetUniformLocation u_tile_uv_span (draw)");
     if (tileUVSpanLoc != -1) {
         glUniform2f(tileUVSpanLoc, VoxelEngine::Rendering::TILE_UV_WIDTH, VoxelEngine::Rendering::TILE_UV_HEIGHT);
-        err = glGetError();
-        if (err != GL_NO_ERROR) {
-            std::cerr << "[MeshRenderer::draw] OpenGL error 0x" << std::hex << err << std::dec << " after glUniform2f for u_tile_uv_span." << std::endl;
-        }
+        checkGlError("glUniform2f u_tile_uv_span (draw)");
     } else {
         static bool tileUVSpanWarningLogged = false;
         if (!tileUVSpanWarningLogged) {
@@ -285,24 +312,15 @@ void MeshRenderer::draw(const glm::mat4& model, const glm::mat4& view, const glm
     // Activate texture unit 0 and bind our texture
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, textureAtlasID);
-    err = glGetError();
-    if (err != GL_NO_ERROR) {
-        std::cerr << "[MeshRenderer::draw] OpenGL error 0x" << std::hex << err << std::dec << " after glBindTexture. Texture ID: " << textureAtlasID << std::endl;
-    }
+    checkGlError("glBindTexture (draw)");
 
     // Set the sampler uniform
     GLint texSamplerLoc = glGetUniformLocation(shaderProgram, "uTextureSampler");
-    err = glGetError();
-    if (err != GL_NO_ERROR) {
-        std::cerr << "[MeshRenderer::draw] OpenGL error 0x" << std::hex << err << std::dec << " after glGetUniformLocation for uTextureSampler." << std::endl;
-    }
+    checkGlError("glGetUniformLocation uTextureSampler (draw)");
 
     if (texSamplerLoc != -1) {
         glUniform1i(texSamplerLoc, 0);
-        err = glGetError();
-        if (err != GL_NO_ERROR) {
-            std::cerr << "[MeshRenderer::draw] OpenGL error 0x" << std::hex << err << std::dec << " after glUniform1i for uTextureSampler." << std::endl;
-        }
+        checkGlError("glUniform1i uTextureSampler (draw)");
     } else {
         // If uTextureSampler is not found here, texturing will fail.
         if (!textureSamplerWarningLogged) { // Use the existing static flag to log only once.
@@ -345,40 +363,22 @@ void MeshRenderer::draw(const glm::mat4& model, const glm::mat4& view, const glm
     }
 
     glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
-    err = glGetError();
-    if (err != GL_NO_ERROR) {
-        std::cerr << "[MeshRenderer::draw] OpenGL error 0x" << std::hex << err << std::dec << " after uModel uniform." << std::endl;
-    }
+    checkGlError("glUniformMatrix4fv uModel (draw)");
 
     glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(view));
-    err = glGetError();
-    if (err != GL_NO_ERROR) {
-        std::cerr << "[MeshRenderer::draw] OpenGL error 0x" << std::hex << err << std::dec << " after uView uniform." << std::endl;
-    }
+    checkGlError("glUniformMatrix4fv uView (draw)");
 
     glUniformMatrix4fv(projLoc, 1, GL_FALSE, glm::value_ptr(proj));
-    err = glGetError();
-    if (err != GL_NO_ERROR) {
-        std::cerr << "[MeshRenderer::draw] OpenGL error 0x" << std::hex << err << std::dec << " after uProjection uniform." << std::endl;
-    }
+    checkGlError("glUniformMatrix4fv uProjection (draw)");
 
     glBindVertexArray(vao);
-    err = glGetError();
-    if (err != GL_NO_ERROR) {
-        std::cerr << "[MeshRenderer::draw] OpenGL error 0x" << std::hex << err << std::dec << " after glBindVertexArray." << std::endl;
-    }
+    checkGlError("glBindVertexArray (draw)");
 
     glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(indexCount), GL_UNSIGNED_INT, 0);
-    err = glGetError(); 
-    if (err != GL_NO_ERROR) {
-        std::cerr << "[MeshRenderer::draw] OpenGL error 0x" << std::hex << err << std::dec << " after glDrawElements." << std::endl;
-    }
+    checkGlError("glDrawElements (draw)");
 
     glBindVertexArray(0);
-    err = glGetError(); 
-    if (err != GL_NO_ERROR) {
-        std::cerr << "[MeshRenderer::draw] OpenGL error 0x" << std::hex << err << std::dec << " after unbinding VAO (final operation)." << std::endl;
-    }
+    checkGlError("glBindVertexArray unbind (draw)");
     glBindTexture(GL_TEXTURE_2D, 0); 
 
     // Disable blending after drawing if it was enabled here
@@ -416,11 +416,23 @@ GLuint MeshRenderer::loadShader(const std::string& path, GLenum type) {
     }
     std::string src = ss.str();
     GLuint shader = glCreateShader(type);
+    checkGlError("glCreateShader");
+    
+    if (shader == 0) {
+        std::cerr << "[MeshRenderer::loadShader] Error: glCreateShader returned 0." << std::endl;
+        return 0;
+    }
+    
     const char* srcPtr = src.c_str();
     glShaderSource(shader, 1, &srcPtr, nullptr);
+    checkGlError("glShaderSource");
+    
     glCompileShader(shader);
+    checkGlError("glCompileShader");
+    
     GLint success;
     glGetShaderiv(shader, GL_COMPILE_STATUS, &success);
+    checkGlError("glGetShaderiv");
     if (!success) {
         char infoLog[512];
         glGetShaderInfoLog(shader, 512, nullptr, infoLog);
@@ -441,6 +453,8 @@ GLuint MeshRenderer::createShaderProgram(const std::string& vertPath, const std:
     }
 
     GLuint prog = glCreateProgram();
+    checkGlError("glCreateProgram");
+    
     if (prog == 0) {
         std::cerr << "[MeshRenderer::createShaderProgram] Error: glCreateProgram failed." << std::endl;
         glDeleteShader(vert);
@@ -449,8 +463,13 @@ GLuint MeshRenderer::createShaderProgram(const std::string& vertPath, const std:
     }
 
     glAttachShader(prog, vert);
+    checkGlError("glAttachShader vertex");
+    
     glAttachShader(prog, frag);
+    checkGlError("glAttachShader fragment");
+    
     glLinkProgram(prog);
+    checkGlError("glLinkProgram");
 
     GLint success;
     glGetProgramiv(prog, GL_LINK_STATUS, &success);
@@ -469,10 +488,7 @@ GLuint MeshRenderer::createShaderProgram(const std::string& vertPath, const std:
     glDeleteShader(vert);
     glDeleteShader(frag);
     
-    GLenum err = glGetError();
-    if (err != GL_NO_ERROR) {
-        std::cerr << "[MeshRenderer::createShaderProgram] OpenGL error 0x" << std::hex << err << std::dec << " after successful link and shader cleanup." << std::endl;
-    }
+    checkGlError("Shader program creation cleanup");
 
     return prog;
 }
@@ -515,15 +531,26 @@ bool MeshRenderer::loadTexture(const std::string& path) {
     }
 
     glGenTextures(1, &textureAtlasID);
+    checkGlError("glGenTextures");
+    
+    if (textureAtlasID == 0) {
+        std::cerr << "[MeshRenderer::loadTexture] Error: glGenTextures failed to generate texture ID." << std::endl;
+        stbi_image_free(data);
+        return false;
+    }
+    
     glBindTexture(GL_TEXTURE_2D, textureAtlasID);
+    checkGlError("glBindTexture (loadTexture)");
 
     // Set texture filtering and wrapping parameters for pixel art / texture atlases
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT); // Changed from GL_CLAMP_TO_EDGE
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT); // Changed from GL_CLAMP_TO_EDGE
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    checkGlError("glTexParameteri calls (loadTexture)");
 
     glTexImage2D(GL_TEXTURE_2D, 0, format, width, height, 0, format, GL_UNSIGNED_BYTE, data);
+    checkGlError("glTexImage2D (loadTexture)");
     // glGenerateMipmap(GL_TEXTURE_2D); // Temporarily disabled to simplify debugging
 
     stbi_image_free(data);

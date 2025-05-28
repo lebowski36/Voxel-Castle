@@ -49,36 +49,39 @@ Implement interactive block placement and removal system with real-time mesh upd
   - Add visual confirmation when blocks are placed/removed
   - Consider adding sound effects for placement/removal actions
 
-### Phase 3: Dynamic Mesh Updates ⏳ IN PROGRESS
-**Goal:** Update mesh generation system to handle real-time world changes.
+### Phase 3: Dynamic Mesh Updates 🐞 BUG HUNTING
+**Goal:** Resolve critical bug causing window disappearance upon block modification. Update mesh generation system to handle real-time world changes.
 
-**CRITICAL ISSUE DISCOVERED: Window crash on mouse click when captured**
-- ❌ **BLOCKING BUG**: When mouse is captured (Escape pressed), any mouse click causes immediate window close/crash
-- ❌ **Missing mesh regeneration**: Block removal doesn't trigger mesh updates (missing markChunkDirtyForPosition call)
-- ❌ **Potential threading issues**: Mesh updates may not be thread-safe with game loop
-- ❌ **Namespace inconsistencies**: Mixed VoxelCastle/VoxelEngine namespaces could cause runtime issues
+**CURRENT BLOCKING ISSUE:**
+- 🐞 **BUG**: When a visible voxel in a fully loaded chunk is modified (via left or right mouse click for placement/removal), the game window disappears. The application continues running in the console, requiring a manual `Ctrl+C` to terminate. This suggests a critical failure in rendering or window handling post-block modification.
 
-**IMMEDIATE FIXES NEEDED:**
-1. Fix block removal to include mesh regeneration call
-2. Investigate crash cause in handleMouseClick method (likely exception/memory issue)
-3. Verify thread safety of world modification during rendering
-4. Test basic block placement/removal functionality once crash is resolved
+**Previously Noted Issues (Potentially Related or Masked by Current Blocker):**
+- ❌ **BLOCKING BUG (Original Note)**: When mouse is captured (Escape pressed), any mouse click causes immediate window close/crash (This might be the same issue, or a related one, now more specifically identified with block modification).
+- ❌ **Missing mesh regeneration**: Block removal doesn't trigger mesh updates (missing `markChunkDirtyForPosition` call) - *This needs re-verification once the window disappearance is fixed.*
+- ❌ **Potential threading issues**: Mesh updates may not be thread-safe with game loop - *To be investigated.*
+- ❌ **Namespace inconsistencies**: Mixed VoxelCastle/VoxelEngine namespaces could cause runtime issues - *Review during investigation.*
+
+**IMMEDIATE FIXES NEEDED (Revised Focus):**
+1.  **Investigate and Fix Window Disappearance:** Determine the root cause of the game window vanishing upon block placement/removal in loaded chunks. This is the top priority.
+2.  Verify `markChunkDirtyForPosition` is correctly called for both placement and removal.
+3.  Verify thread safety of world modification and mesh regeneration.
+4.  Test basic block placement/removal functionality thoroughly once the window issue is resolved.
 
 - [ ] **3.1: Chunk Modification Tracking**
-  - ⚠️ Partially implemented: markChunkDirtyForPosition exists but missing for removal
-  - ⚠️ Need to verify that mesh regeneration actually happens after marking dirty
-  - Handle cross-chunk boundary updates (blocks affecting adjacent chunks)
+  - ⚠️ `markChunkDirtyForPosition` exists. Verify it's called correctly for *both* placement and removal.
+  - ⚠️ Verify that mesh regeneration actually happens after marking dirty (once window issue is fixed).
+  - Handle cross-chunk boundary updates (blocks affecting adjacent chunks).
 
 - [ ] **3.2: Real-time Mesh Regeneration**
-  - ⚠️ Integration with MeshJobSystem needs verification
-  - ⚠️ Ensure mesh updates don't conflict with rendering thread
-  - Handle mesh updates without blocking game loop
-  - Ensure visual updates happen immediately after block changes
+  - ⚠️ Integration with `MeshJobSystem` needs verification.
+  - ⚠️ Ensure mesh updates don't conflict with rendering thread.
+  - Handle mesh updates without blocking game loop.
+  - Ensure visual updates happen immediately after block changes.
 
 - [ ] **3.3: Memory Management**
-  - Implement efficient storage for chunk modifications
-  - Track dirty/clean state of chunks
-  - Consider memory limits and cleanup strategies
+  - Implement efficient storage for chunk modifications.
+  - Track dirty/clean state of chunks.
+  - Consider memory limits and cleanup strategies.
   - Optimize data structures for fast lookup and modification
 
 ### Phase 4: Advanced Features & Polish ⏳ PENDING
