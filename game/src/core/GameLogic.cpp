@@ -12,13 +12,14 @@
 namespace GameLogic {
 
 void update(Game& game, float deltaTime) {
-    // Process mouse look if mouse is captured and there was movement
+    // Always process mouse look if mouse is captured and there was movement
+    // This ensures camera panning works in all modes
     if (game.isMouseCaptured() && game.getCamera() && (game.getMouseDeltaX() != 0.0f || game.getMouseDeltaY() != 0.0f)) {
         game.getCamera()->processMouse(game.getMouseDeltaX(), game.getMouseDeltaY());
         // mouseDeltaX_ and mouseDeltaY_ are reset in processInput() each frame before polling
     }
 
-    // Handle camera movement based on current camera mode
+    // Handle camera/player movement based on current camera mode
     if (game.getCamera()) {
         if (game.getCameraMode() == CameraMode::FREE_FLYING) {
             // Use original free-flying camera movement

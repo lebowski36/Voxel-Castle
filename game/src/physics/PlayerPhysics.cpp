@@ -29,7 +29,13 @@ void PlayerPhysics::update(Game& game, float deltaTime) {
     handleCollision(game, worldManager);
     
     // Synchronize camera position with player position
+    // In first-person mode, we only update the camera position but keep the camera orientation
+    // This allows simultaneous movement and looking around
     camera->setPosition(game.getPlayerPosition());
+    
+    // Debug output to verify camera integration
+    std::cout << "\rCamera Front: (" << camera->getFront().x << ", " << camera->getFront().y << ", " << camera->getFront().z << ")   ";
+    std::cout.flush();
 }
 
 void PlayerPhysics::applyGravity(Game& game, float deltaTime) {
@@ -60,16 +66,18 @@ void PlayerPhysics::applyMovement(Game& game, float deltaTime, const SpectatorCa
     // Calculate movement direction based on input
     glm::vec3 moveDir(0.0f);
     
-    if (game.isForward()) moveDir.z -= 1.0f;
-    if (game.isBackward()) moveDir.z += 1.0f;
-    if (game.isLeft()) moveDir.x -= 1.0f;
-    if (game.isRight()) moveDir.x += 1.0f;
+    // Fix inverted controls: W = forward (negative Z), S = backward (positive Z)
+    if (game.isForward()) moveDir.z -= 1.0f;  // W key: forward is negative Z
+    if (game.isBackward()) moveDir.z += 1.0f; // S key: backward is positive Z
+    if (game.isLeft()) moveDir.x -= 1.0f;     // A key: left is negative X
+    if (game.isRight()) moveDir.x += 1.0f;    // D key: right is positive X
     
     if (glm::length(moveDir) > 0.0f) {
         // Normalize direction vector
         moveDir = glm::normalize(moveDir);
         
         // Convert to world space using camera orientation
+        // Use a horizontal front vector for consistent control direction with free camera
         glm::vec3 front = camera->getFront();
         glm::vec3 right = camera->getRight();
         
@@ -80,7 +88,9 @@ void PlayerPhysics::applyMovement(Game& game, float deltaTime, const SpectatorCa
         if (glm::length(front) > 0.0f) front = glm::normalize(front);
         if (glm::length(right) > 0.0f) right = glm::normalize(right);
         
-        moveDir = right * moveDir.x + front * moveDir.z;
+        // Match the SpectatorCamera control scheme:
+        // forward = +front, backward = -front, left = -right, right = +right
+        moveDir = right * moveDir.x + front * -moveDir.z; // Note the negative on moveDir.z to fix inverted W/S
         
         // Determine movement speed based on state
         float moveSpeed = PhysicsConstants::WALK_SPEED;
@@ -157,7 +167,7 @@ void PlayerPhysics::handleCollision(Game& game, VoxelCastle::World::WorldManager
         bool hasHeadClearance = frontBlockHead.id == static_cast<uint8_t>(VoxelEngine::World::VoxelType::AIR);
         
         // Check if there's space after stepping up (at new feet position)
-        VoxelEngine::World::Voxel blockAboveStep = worldManager->getVoxel(frontX, frontY + 1, frontZ);
+        // Removed unused variable blockAboveStep
         
         // If we have a block at feet level but not at knee level, we can step up
         if (isSolidFrontFeet && !isSolidFrontKnee && hasHeadClearance && isOnGround) {
