@@ -182,7 +182,7 @@ void Game::update(float deltaTime) {
 
     if (camera_ && worldManager_ && worldGenerator_) {
         glm::vec3 cameraPos = camera_->getPosition();
-        int loadRadiusInSegments = 3; // Example radius for testing
+        int loadRadiusInSegments = 4; // Increased from 3 to extend visibility
         // Always call updateActiveChunks every frame to ensure chunks are loaded even for small camera movements
         worldManager_->updateActiveChunks(cameraPos, loadRadiusInSegments, *worldGenerator_);
     }
