@@ -4,6 +4,9 @@
 #include <cmath> // For std::floor
 #include <set> // For std::set
 #include <iostream> // For std::cout
+#include <chrono>
+#include <thread>
+#include <iomanip> // For std::put_time
 
 #include "world/world_manager.h"
 #include "world/chunk_segment.h" // For SEGMENT_WIDTH, SEGMENT_DEPTH, SEGMENT_HEIGHT and ChunkSegment class
@@ -12,6 +15,7 @@
 #include "rendering/texture_atlas.h" // For VoxelEngine::Rendering::TextureAtlas
 #include "rendering/mesh_builder.h"  // For VoxelEngine::Rendering::MeshBuilder
 #include "rendering/voxel_mesh.h"    // For VoxelEngine::Rendering::VoxelMesh
+#include "utils/logging_utils.h"
 
 namespace VoxelCastle {
 namespace World {
@@ -109,11 +113,14 @@ void WorldManager::updateDirtyMeshes(VoxelEngine::Rendering::TextureAtlas& atlas
 }
 
 void WorldManager::enqueueDirtyMeshJobs(VoxelEngine::Rendering::TextureAtlas& atlas, VoxelEngine::Rendering::MeshBuilder& meshBuilder) {
+    // std::cout << "[" << VoxelEngine::Utils::getTimestamp() << "][WorldManager] enqueueDirtyMeshJobs() START - Thread: " << std::this_thread::get_id() << std::endl;
+    
     if (!m_meshJobSystem) {
         m_meshJobSystem = std::make_unique<VoxelEngine::Rendering::MeshJobSystem>(std::thread::hardware_concurrency());
-        std::cout << "[MeshJobSystem] Initialized with " << std::thread::hardware_concurrency() << " threads." << std::endl;
+        std::cout << "[" << VoxelEngine::Utils::getTimestamp() << "][MeshJobSystem] Initialized with " << std::thread::hardware_concurrency() << " threads." << std::endl;
     }
     int enqueued = 0;
+    // std::cout << "[" << VoxelEngine::Utils::getTimestamp() << "][WorldManager] Checking " << m_chunkColumns.size() << " chunk columns for dirty segments" << std::endl;
     for (auto const& [coord, columnPtr] : m_chunkColumns) {
         if (columnPtr) {
             // Hold a shared_ptr to the column for the duration of the mesh job
@@ -121,6 +128,8 @@ void WorldManager::enqueueDirtyMeshJobs(VoxelEngine::Rendering::TextureAtlas& at
             for (uint8_t i = 0; i < VoxelCastle::World::ChunkColumn::CHUNKS_PER_COLUMN; ++i) {
                 VoxelCastle::World::ChunkSegment* segment = columnSharedPtr->getSegmentByIndex(i);
                 if (segment && segment->isDirty() && !segment->mIsRebuildingMesh) {
+                    std::cout << "[" << VoxelEngine::Utils::getTimestamp() << "][WorldManager] Found dirty segment at column (" 
+                              << coord.x << ", " << coord.z << ") segment Y=" << static_cast<int>(i) << std::endl;
                     segment->mIsRebuildingMesh = true;
                     // Copy pointers for lambda capture
                     auto segPtr = segment;
@@ -162,8 +171,9 @@ void WorldManager::enqueueDirtyMeshJobs(VoxelEngine::Rendering::TextureAtlas& at
         }
     }
     if (enqueued > 0) {
-        std::cout << "[MeshJobSystem] Enqueued " << enqueued << " mesh jobs." << std::endl;
+        std::cout << "[" << VoxelEngine::Utils::getTimestamp() << "][MeshJobSystem] Enqueued " << enqueued << " mesh jobs." << std::endl;
     }
+    // std::cout << "[" << VoxelEngine::Utils::getTimestamp() << "][WorldManager] enqueueDirtyMeshJobs() END" << std::endl;
 }
 
 void WorldManager::processFinishedMeshJobs() {

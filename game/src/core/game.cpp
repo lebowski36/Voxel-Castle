@@ -15,6 +15,7 @@
 #include <chrono> // For std::chrono for timing
 #include <set> // Required for std::set
 #include <algorithm> // For std::min/max (potentially useful, good to have)
+#include <iomanip>
 
 #include "core/InputManager.h"  // Input handling module
 // SDL for events, window relative mouse mode
@@ -49,6 +50,19 @@
 // Debug utilities (will be needed for setup/cleanup)
 #include "rendering/debug_utils.h"
 #include "rendering/render_utils.h"
+
+// Timestamp helper for game
+static std::string getTimestampGame() {
+    auto now = std::chrono::system_clock::now();
+    auto time_t = std::chrono::system_clock::to_time_t(now);
+    auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(
+        now.time_since_epoch()) % 1000;
+    
+    std::stringstream ss;
+    ss << std::put_time(std::localtime(&time_t), "%H:%M:%S");
+    ss << '.' << std::setfill('0') << std::setw(3) << ms.count();
+    return ss.str();
+}
 
 Game::Game() 
     : gameWindow_(nullptr),
@@ -121,13 +135,35 @@ void Game::run() {
         return;
     }
 
-    std::cout << "Game::run() - Starting main game loop..." << std::endl;
+    std::cout << "[" << getTimestampGame() << "] [Game] Starting main game loop..." << std::endl;
     // lastFrameTime_ is initialized in initialize()
+    
+    int frameCount = 0;
+    auto lastWindowCheckTime = std::chrono::steady_clock::now();
 
     while(isRunning_ && gameWindow_ && gameWindow_->isRunning()) {
+        frameCount++;
         auto currentTime = std::chrono::steady_clock::now();
         float deltaTime = std::chrono::duration<float>(currentTime - lastFrameTime_).count();
         lastFrameTime_ = currentTime;
+        
+        // Check window state periodically - more frequently during block operations
+        bool shouldLogFrame = (frameCount % 50 == 0) || hasPendingBlockAction();
+        auto timeSinceWindowCheck = std::chrono::duration_cast<std::chrono::milliseconds>(currentTime - lastWindowCheckTime);
+        
+        if (shouldLogFrame || timeSinceWindowCheck.count() > 1000) { // Check at least every second
+            bool windowRunning = gameWindow_ && gameWindow_->isRunning();
+            std::cout << "[" << getTimestampGame() << "] [Game] Frame " << frameCount 
+                     << ", window valid: " << (gameWindow_ != nullptr) 
+                     << ", window running: " << windowRunning
+                     << ", deltaTime: " << deltaTime << "s" << std::endl;
+            lastWindowCheckTime = currentTime;
+            
+            if (!windowRunning) {
+                std::cerr << "[" << getTimestampGame() << "] [Game] CRITICAL: Window stopped running! Breaking main loop." << std::endl;
+                break;
+            }
+        }
 
         // Ensure deltaTime is not excessively large (e.g., after a breakpoint or long pause)
         // This can prevent jerky movements or physics explosions.
@@ -137,22 +173,37 @@ void Game::run() {
             deltaTime = max_deltaTime;
         }
 
+        if (shouldLogFrame) {
+            std::cout << "[" << getTimestampGame() << "] [Game] Processing input..." << std::endl;
+        }
         processInput();
 
         // If processInput decided to quit (e.g. SDL_EVENT_QUIT), isRunning_ will be false.
         // Check before proceeding to update and render to allow a clean exit.
         if (!isRunning_) {
+            std::cout << "[" << getTimestampGame() << "] [Game] isRunning_ set to false, breaking loop" << std::endl;
             break; 
         }
-
+        
+        if (shouldLogFrame) {
+            std::cout << "[" << getTimestampGame() << "] [Game] Calling update..." << std::endl;
+        }
         update(deltaTime);
+        
+        if (shouldLogFrame) {
+            std::cout << "[" << getTimestampGame() << "] [Game] Calling render..." << std::endl;
+        }
         render();
+        
+        if (shouldLogFrame) {
+            std::cout << "[" << getTimestampGame() << "] [Game] Frame " << frameCount << " completed successfully" << std::endl;
+        }
 
         // Optional: Cap framerate or yield to prevent 100% CPU usage if vsync is off
         // For now, relying on vsync or letting it run as fast as possible.
         // std::this_thread::sleep_for(std::chrono::milliseconds(1)); // Example minimal yield
     }
-    std::cout << "Game::run() - Main game loop ended." << std::endl;
+    std::cout << "[" << getTimestampGame() << "] [Game] Main game loop ended after " << frameCount << " frames." << std::endl;
 }
 
 void Game::shutdown() {

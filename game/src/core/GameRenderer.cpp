@@ -83,12 +83,23 @@ void renderGame(
         glUseProgram(meshRenderer.getShaderProgram());
         glUniform1i(debugModeLoc, static_cast<int>(::g_debugRenderMode));
     }
+    // CRITICAL FIX: Don't upload meshes every frame!
+    // This was causing VAO corruption and crashes.
+    // For now, render only the first valid mesh to prevent crashes.
+    // TODO: Implement proper multi-mesh rendering architecture.
+    
+    const VoxelEngine::Rendering::VoxelMesh* firstValidMesh = nullptr;
     for (const auto* vMesh : worldMeshes) {
-        if (vMesh && vMesh->isInitialized()) { 
-             meshRenderer.uploadMesh(*vMesh); 
-             glm::mat4 model = glm::translate(glm::mat4(1.0f), vMesh->getWorldPosition());
-             meshRenderer.draw(model, view, proj);
+        if (vMesh && vMesh->isInitialized()) {
+            firstValidMesh = vMesh;
+            break;
         }
+    }
+    
+    if (firstValidMesh) {
+        meshRenderer.uploadMesh(*firstValidMesh);
+        glm::mat4 model = glm::translate(glm::mat4(1.0f), firstValidMesh->getWorldPosition());
+        meshRenderer.draw(model, view, proj);
     }
 
     // Restore original polygon mode

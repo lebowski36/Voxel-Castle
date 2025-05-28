@@ -14,6 +14,19 @@
 
 #include "../../external/stb_image.h" // Include stb_image for texture loading without implementation
 
+// Timestamp helper for mesh renderer
+static std::string getTimestampMR() {
+    auto now = std::chrono::system_clock::now();
+    auto time_t = std::chrono::system_clock::to_time_t(now);
+    auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(
+        now.time_since_epoch()) % 1000;
+    
+    std::stringstream ss;
+    ss << std::put_time(std::localtime(&time_t), "%H:%M:%S");
+    ss << '.' << std::setfill('0') << std::setw(3) << ms.count();
+    return ss.str();
+}
+
 // Helper function to check and log OpenGL errors with throttling
 void checkGlError(const char* operation) {
     static std::unordered_map<std::string, int> errorCounts;
@@ -32,7 +45,7 @@ void checkGlError(const char* operation) {
         
         // Also throttle by time - don't spam more than once per second for the same error
         if (shouldLog && (lastErrorTime[errorKey] + std::chrono::seconds(1) < now || count <= 3)) {
-            std::cerr << "[OpenGL Error] After " << operation << ": 0x" << std::hex << err << std::dec;
+            std::cerr << "[" << getTimestampMR() << "] [OpenGL Error] After " << operation << ": 0x" << std::hex << err << std::dec;
             if (count > 3) {
                 std::cerr << " (occurrence #" << count << ")";
             }
@@ -40,7 +53,7 @@ void checkGlError(const char* operation) {
             lastErrorTime[errorKey] = now;
             
             if (count == 3) {
-                std::cerr << "[OpenGL Error] Further '" << operation << "' errors will be logged every 1000 occurrences." << std::endl;
+                std::cerr << "[" << getTimestampMR() << "] [OpenGL Error] Further '" << operation << "' errors will be logged every 1000 occurrences." << std::endl;
             }
         }
     }
@@ -55,11 +68,11 @@ static bool textureSamplerWarningLogged = false;
 const std::string BASE_DIRECTORY = "/home/system-x1/Projects/Voxel Castle/";
 
 MeshRenderer::MeshRenderer() : vao(0), vbo(0), ebo(0), shaderProgram(0), textureAtlasID(0), ready(false) {
-    std::cout << "[MeshRenderer] Constructor started." << std::endl;
+    // std::cout << "[" << getTimestampMR() << "] [MeshRenderer] Constructor started." << std::endl;
     checkGlError("Constructor Start");
 
     try {
-        std::cout << "[MeshRenderer] Current Working Directory: " << std::filesystem::current_path().string() << std::endl;
+        // std::cout << "[MeshRenderer] Current Working Directory: " << std::filesystem::current_path().string() << std::endl;
     } catch (const std::filesystem::filesystem_error& e) {
         std::cerr << "[MeshRenderer] Error retrieving current working directory: " << e.what() << std::endl;
     }
@@ -71,7 +84,7 @@ MeshRenderer::MeshRenderer() : vao(0), vbo(0), ebo(0), shaderProgram(0), texture
     const std::string fragmentShaderPath = projectRoot + "assets/shaders/voxel.frag";
     const std::string texturePath = BASE_DIRECTORY + "assets/textures/atlas.png";
 
-    std::cout << "[MeshRenderer] Creating shader program from:" << std::endl;
+    // std::cout << "[MeshRenderer] Creating shader program from:" << std::endl;
     std::cout << "  Vertex shader: " << vertexShaderPath << std::endl;
     std::cout << "  Fragment shader: " << fragmentShaderPath << std::endl;
 
@@ -81,13 +94,13 @@ MeshRenderer::MeshRenderer() : vao(0), vbo(0), ebo(0), shaderProgram(0), texture
     if (shaderProgram == 0) {
         std::cerr << "FATAL: [MeshRenderer] shaderProgram is 0. Shaders failed to load." << std::endl;
     } else {
-        std::cout << "[MeshRenderer] Shader program created successfully. ID: " << shaderProgram << std::endl;
+        // std::cout << "[MeshRenderer] Shader program created successfully. ID: " << shaderProgram << std::endl;
     }
 
     if (!loadTexture(texturePath)) {
         std::cerr << "FATAL: [MeshRenderer] Failed to load texture atlas." << std::endl;
     } else {
-        std::cout << "[MeshRenderer] Texture atlas loaded successfully. ID: " << textureAtlasID << std::endl;
+        // std::cout << "[MeshRenderer] Texture atlas loaded successfully. ID: " << textureAtlasID << std::endl;
     }
     checkGlError("loadTexture");
 
@@ -145,12 +158,12 @@ MeshRenderer::MeshRenderer() : vao(0), vbo(0), ebo(0), shaderProgram(0), texture
     if (!ready) {
         std::cerr << "[MeshRenderer] Constructor: Renderer not ready due to shader, buffer, or texture generation failure." << std::endl;
     } else {
-        std::cout << "[MeshRenderer] Constructor: Renderer is ready." << std::endl;
+        // std::cout << "[MeshRenderer] Constructor: Renderer is ready." << std::endl;
     }
 }
 
 MeshRenderer::~MeshRenderer() {
-    std::cout << "[MeshRenderer] Destructor called." << std::endl;
+    // std::cout << "[MeshRenderer] Destructor called." << std::endl;
     glDeleteVertexArrays(1, &vao);
     checkGlError("glDeleteVertexArrays (destructor)");
     glDeleteBuffers(1, &vbo);
@@ -405,11 +418,14 @@ void MeshRenderer::draw(const glm::mat4& model, const glm::mat4& view, const glm
     glUniformMatrix4fv(projLoc, 1, GL_FALSE, glm::value_ptr(proj));
     checkGlError("glUniformMatrix4fv uProjection (draw)");
 
+    // std::cout << "[" << getTimestampMR() << "] [MeshRenderer] About to bind VAO " << vao << " and draw " << indexCount << " indices" << std::endl;
     glBindVertexArray(vao);
     checkGlError("glBindVertexArray (draw)");
 
+    // std::cout << "[" << getTimestampMR() << "] [MeshRenderer] Calling glDrawElements..." << std::endl;
     glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(indexCount), GL_UNSIGNED_INT, 0);
     checkGlError("glDrawElements (draw)");
+    // std::cout << "[" << getTimestampMR() << "] [MeshRenderer] glDrawElements completed successfully" << std::endl;
 
     glBindVertexArray(0);
     checkGlError("glBindVertexArray unbind (draw)");
@@ -417,6 +433,7 @@ void MeshRenderer::draw(const glm::mat4& model, const glm::mat4& view, const glm
 
     // Disable blending after drawing if it was enabled here
     glDisable(GL_BLEND);
+    // std::cout << "[" << getTimestampMR() << "] [MeshRenderer] Draw function completed successfully" << std::endl;
 }
 
 GLuint MeshRenderer::loadShader(const std::string& path, GLenum type) {

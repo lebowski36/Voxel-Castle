@@ -37,7 +37,7 @@ public:
     void shutdown();
 
 private:
-    void workerThread();
+    void workerThread(size_t workerId);
 
     std::vector<std::thread> m_workers;
     std::queue<std::packaged_task<void()>> m_jobQueue;

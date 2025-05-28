@@ -1,10 +1,11 @@
 #include "interaction/BlockPlacement.h"
 #include "core/game.h"
 #include "SpectatorCamera.h"
+#include "utils/logging_utils.h"
 #include <glm/gtc/matrix_transform.hpp>
 #include <iostream>
 #include <algorithm>
-#include <glad/glad.h> // Add this to check OpenGL errors
+#include <glad/glad.h>
 
 RaycastResult BlockPlacement::raycast(const SpectatorCamera* camera, 
                                      VoxelCastle::World::WorldManager* worldManager, 
@@ -89,31 +90,31 @@ RaycastResult BlockPlacement::raycast(const SpectatorCamera* camera,
 }
 
 void BlockPlacement::handleMouseClick(Game& game, bool isLeftClick) {
-    std::cout << "\n[BlockPlacement] ========= MOUSE CLICK START =========" << std::endl;
-    std::cout << "[BlockPlacement] Click type: " << (isLeftClick ? "LEFT (place)" : "RIGHT (remove)") << std::endl;
+    std::cout << "\n[" << VoxelEngine::Utils::getTimestamp() << "][BlockPlacement] ========= MOUSE CLICK START =========" << std::endl;
+    std::cout << "[" << VoxelEngine::Utils::getTimestamp() << "][BlockPlacement] Click type: " << (isLeftClick ? "LEFT (place)" : "RIGHT (remove)") << std::endl;
     
     // Early exit if critical components are not ready
     if (!game.getWindow()) {
-        std::cerr << "[BlockPlacement] ERROR: Window is null! Aborting click." << std::endl;
+        std::cerr << "[" << VoxelEngine::Utils::getTimestamp() << "][BlockPlacement] ERROR: Window is null! Aborting click." << std::endl;
         return;
     }
-    std::cout << "[BlockPlacement] Window status: Valid" << std::endl;
+    std::cout << "[" << VoxelEngine::Utils::getTimestamp() << "][BlockPlacement] Window status: Valid" << std::endl;
 
     auto camera = game.getCamera();
     if (!camera) {
-        std::cerr << "[BlockPlacement] ERROR: Camera is null! Aborting click." << std::endl;
+        std::cerr << "[" << VoxelEngine::Utils::getTimestamp() << "][BlockPlacement] ERROR: Camera is null! Aborting click." << std::endl;
         return;
     }
-    std::cout << "[BlockPlacement] Camera obtained: " << camera << std::endl;
+    std::cout << "[" << VoxelEngine::Utils::getTimestamp() << "][BlockPlacement] Camera obtained: " << camera << std::endl;
     glm::vec3 pos = camera->getPosition();
-    std::cout << "[BlockPlacement] Camera position: (" << pos.x << ", " << pos.y << ", " << pos.z << ")" << std::endl;
+    std::cout << "[" << VoxelEngine::Utils::getTimestamp() << "][BlockPlacement] Camera position: (" << pos.x << ", " << pos.y << ", " << pos.z << ")" << std::endl;
 
     auto worldManager = game.getWorldManager();
     if (!worldManager) {
-        std::cerr << "[BlockPlacement] ERROR: WorldManager is null! Aborting click." << std::endl;
+        std::cerr << "[" << VoxelEngine::Utils::getTimestamp() << "][BlockPlacement] ERROR: WorldManager is null! Aborting click." << std::endl;
         return;
     }
-    std::cout << "[BlockPlacement] WorldManager obtained: " << worldManager << std::endl;
+    std::cout << "[" << VoxelEngine::Utils::getTimestamp() << "][BlockPlacement] WorldManager obtained: " << worldManager << std::endl;
 
     // Add a check for world readiness if such a method exists, e.g., game.isWorldReady()
     // For now, we assume if worldManager is not null, it's somewhat ready.
@@ -123,12 +124,12 @@ void BlockPlacement::handleMouseClick(Game& game, bool isLeftClick) {
     // }
     
     try {
-        std::cout << "[BlockPlacement] Both pointers valid, starting raycast..." << std::endl;
+        std::cout << "[" << VoxelEngine::Utils::getTimestamp() << "][BlockPlacement] Both pointers valid, starting raycast..." << std::endl;
         
         // Clear any existing OpenGL errors
         GLenum prevErr;
         while ((prevErr = glGetError()) != GL_NO_ERROR) {
-            std::cout << "[BlockPlacement] Clearing previous OpenGL error: 0x" 
+            std::cout << "[" << VoxelEngine::Utils::getTimestamp() << "][BlockPlacement] Clearing previous OpenGL error: 0x" 
                       << std::hex << prevErr << std::dec << std::endl;
         }
         
@@ -138,33 +139,33 @@ void BlockPlacement::handleMouseClick(Game& game, bool isLeftClick) {
         // Check for OpenGL errors after raycast
         GLenum err = glGetError();
         if (err != GL_NO_ERROR) {
-            std::cerr << "[BlockPlacement] OpenGL error after raycast: 0x" 
+            std::cerr << "[" << VoxelEngine::Utils::getTimestamp() << "][BlockPlacement] OpenGL error after raycast: 0x" 
                       << std::hex << err << std::dec << std::endl;
         }
         
-        std::cout << "[BlockPlacement] Raycast completed. Hit: " << rayResult.hit << std::endl;
+        std::cout << "[" << VoxelEngine::Utils::getTimestamp() << "][BlockPlacement] Raycast completed. Hit: " << rayResult.hit << std::endl;
         
         if (!rayResult.hit) {
-            std::cout << "[BlockPlacement] No block in range" << std::endl;
+            std::cout << "[" << VoxelEngine::Utils::getTimestamp() << "][BlockPlacement] No block in range" << std::endl;
             return;
         }
         
-        std::cout << "[BlockPlacement] Hit block at (" << rayResult.blockPosition.x 
+        std::cout << "[" << VoxelEngine::Utils::getTimestamp() << "][BlockPlacement] Hit block at (" << rayResult.blockPosition.x 
                   << ", " << rayResult.blockPosition.y << ", " << rayResult.blockPosition.z << ")" << std::endl;
-        std::cout << "[BlockPlacement] Adjacent position: (" << rayResult.adjacentPosition.x 
+        std::cout << "[" << VoxelEngine::Utils::getTimestamp() << "][BlockPlacement] Adjacent position: (" << rayResult.adjacentPosition.x 
                   << ", " << rayResult.adjacentPosition.y << ", " << rayResult.adjacentPosition.z << ")" << std::endl;
         
-        std::cout << "[BlockPlacement] Processing " << (isLeftClick ? "placement" : "removal") << std::endl;
+        std::cout << "[" << VoxelEngine::Utils::getTimestamp() << "][BlockPlacement] Processing " << (isLeftClick ? "placement" : "removal") << std::endl;
     
         if (isLeftClick) {
-            std::cout << "[BlockPlacement] Checking placement validity..." << std::endl;
+            std::cout << "[" << VoxelEngine::Utils::getTimestamp() << "][BlockPlacement] Checking placement validity..." << std::endl;
             // Place block at adjacent position
             if (isValidPlacement(game, rayResult.adjacentPosition, worldManager)) {
-                std::cout << "[BlockPlacement] Placement valid, getting block type..." << std::endl;
+                std::cout << "[" << VoxelEngine::Utils::getTimestamp() << "][BlockPlacement] Placement valid, getting block type..." << std::endl;
                 VoxelEngine::World::VoxelType blockType = getCurrentBlockType(game);
-                std::cout << "[BlockPlacement] Block type: " << static_cast<int>(blockType) << std::endl;
+                std::cout << "[" << VoxelEngine::Utils::getTimestamp() << "][BlockPlacement] Block type: " << static_cast<int>(blockType) << std::endl;
                 
-                std::cout << "[BlockPlacement] Setting voxel..." << std::endl;
+                std::cout << "[" << VoxelEngine::Utils::getTimestamp() << "][BlockPlacement] Setting voxel..." << std::endl;
                 
                 // Clear any OpenGL errors before setVoxel
                 while (glGetError() != GL_NO_ERROR) {}
@@ -177,34 +178,34 @@ void BlockPlacement::handleMouseClick(Game& game, bool isLeftClick) {
                 // Check for OpenGL errors immediately after setVoxel
                 GLenum errAfterSetVoxel = glGetError();
                 if (errAfterSetVoxel != GL_NO_ERROR) {
-                    std::cerr << "[BlockPlacement] OpenGL error IMMEDIATELY AFTER setVoxel (placement): 0x" 
+                    std::cerr << "[" << VoxelEngine::Utils::getTimestamp() << "][BlockPlacement] OpenGL error IMMEDIATELY AFTER setVoxel (placement): 0x" 
                               << std::hex << errAfterSetVoxel << std::dec << std::endl;
                 }
                 
-                std::cout << "[BlockPlacement] Placed " << static_cast<int>(blockType) << " block at (" 
+                std::cout << "[" << VoxelEngine::Utils::getTimestamp() << "][BlockPlacement] Placed " << static_cast<int>(blockType) << " block at (" 
                           << rayResult.adjacentPosition.x << ", " << rayResult.adjacentPosition.y << ", " << rayResult.adjacentPosition.z << ")" << std::endl;
                           
-                std::cout << "[BlockPlacement] Marking chunk dirty..." << std::endl;
+                std::cout << "[" << VoxelEngine::Utils::getTimestamp() << "][BlockPlacement] Marking chunk dirty..." << std::endl;
                 // Clear OpenGL errors before marking dirty
                 while (glGetError() != GL_NO_ERROR) {}
                 markChunkDirtyForPosition(worldManager, rayResult.adjacentPosition);
                 // Check for OpenGL errors immediately after marking dirty
                 GLenum errAfterMarkDirty = glGetError();
                 if (errAfterMarkDirty != GL_NO_ERROR) {
-                    std::cerr << "[BlockPlacement] OpenGL error IMMEDIATELY AFTER markChunkDirtyForPosition (placement): 0x" 
+                    std::cerr << "[" << VoxelEngine::Utils::getTimestamp() << "][BlockPlacement] OpenGL error IMMEDIATELY AFTER markChunkDirtyForPosition (placement): 0x" 
                               << std::hex << errAfterMarkDirty << std::dec << std::endl;
                 }
-                std::cout << "[BlockPlacement] Chunk marked dirty successfully" << std::endl;
+                std::cout << "[" << VoxelEngine::Utils::getTimestamp() << "][BlockPlacement] Chunk marked dirty successfully" << std::endl;
             } else {
-                std::cout << "[BlockPlacement] Cannot place block at that location" << std::endl;
+                std::cout << "[" << VoxelEngine::Utils::getTimestamp() << "][BlockPlacement] Cannot place block at that location" << std::endl;
             }
         } else { // Right click (remove block)
-            std::cout << "[BlockPlacement] Removing block..." << std::endl;
+            std::cout << "[" << VoxelEngine::Utils::getTimestamp() << "][BlockPlacement] Removing block..." << std::endl;
             
             // Ensure the block being removed is not AIR
             VoxelEngine::World::Voxel voxelToRemove = worldManager->getVoxel(rayResult.blockPosition.x, rayResult.blockPosition.y, rayResult.blockPosition.z);
             if (voxelToRemove.id == static_cast<uint8_t>(VoxelEngine::World::VoxelType::AIR)) {
-                std::cout << "[BlockPlacement] Cannot remove AIR block." << std::endl;
+                std::cout << "[" << VoxelEngine::Utils::getTimestamp() << "][BlockPlacement] Cannot remove AIR block." << std::endl;
                 return; // Exit if trying to remove an AIR block
             }
 
@@ -218,30 +219,30 @@ void BlockPlacement::handleMouseClick(Game& game, bool isLeftClick) {
 
             GLenum errAfterSetVoxel = glGetError();
             if (errAfterSetVoxel != GL_NO_ERROR) {
-                std::cerr << "[BlockPlacement] OpenGL error IMMEDIATELY AFTER setVoxel (removal): 0x" 
+                std::cerr << "[" << VoxelEngine::Utils::getTimestamp() << "][BlockPlacement] OpenGL error IMMEDIATELY AFTER setVoxel (removal): 0x" 
                           << std::hex << errAfterSetVoxel << std::dec << std::endl;
             }
             
-            std::cout << "[BlockPlacement] Removed block at (" 
+            std::cout << "[" << VoxelEngine::Utils::getTimestamp() << "][BlockPlacement] Removed block at (" 
                       << rayResult.blockPosition.x << ", " << rayResult.blockPosition.y << ", " << rayResult.blockPosition.z << ")" << std::endl;
 
-            std::cout << "[BlockPlacement] Marking chunk dirty for removal..." << std::endl;
+            std::cout << "[" << VoxelEngine::Utils::getTimestamp() << "][BlockPlacement] Marking chunk dirty for removal..." << std::endl;
             // Clear OpenGL errors before marking dirty
             while (glGetError() != GL_NO_ERROR) {}
             markChunkDirtyForPosition(worldManager, rayResult.blockPosition); // Mark the chunk of the removed block
             // Check for OpenGL errors immediately after marking dirty
             GLenum errAfterMarkDirty = glGetError();
             if (errAfterMarkDirty != GL_NO_ERROR) {
-                std::cerr << "[BlockPlacement] OpenGL error IMMEDIATELY AFTER markChunkDirtyForPosition (removal): 0x" 
+                std::cerr << "[" << VoxelEngine::Utils::getTimestamp() << "][BlockPlacement] OpenGL error IMMEDIATELY AFTER markChunkDirtyForPosition (removal): 0x" 
                           << std::hex << errAfterMarkDirty << std::dec << std::endl;
             }
-            std::cout << "[BlockPlacement] Chunk marked dirty successfully for removal" << std::endl;
+            std::cout << "[" << VoxelEngine::Utils::getTimestamp() << "][BlockPlacement] Chunk marked dirty successfully for removal" << std::endl;
         }
         
     } catch (const std::exception& e) {
-        std::cout << "[BlockPlacement] EXCEPTION caught: " << e.what() << std::endl;
+        std::cout << "[" << VoxelEngine::Utils::getTimestamp() << "][BlockPlacement] EXCEPTION caught: " << e.what() << std::endl;
     } catch (...) {
-        std::cout << "[BlockPlacement] UNKNOWN EXCEPTION caught!" << std::endl;
+        std::cout << "[" << VoxelEngine::Utils::getTimestamp() << "][BlockPlacement] UNKNOWN EXCEPTION caught!" << std::endl;
     }
 }
 
@@ -280,7 +281,7 @@ void BlockPlacement::cycleBlockType(Game& game, bool forward) {
     // Update the game state using the setter method
     game.setCurrentBlockType(availableBlocks[currentIndex]);
     
-    std::cout << "Selected block type: " << static_cast<int>(availableBlocks[currentIndex]) << std::endl;
+    std::cout << "[" << VoxelEngine::Utils::getTimestamp() << "][BlockPlacement] Selected block type: " << static_cast<int>(availableBlocks[currentIndex]) << std::endl;
 }
 
 bool BlockPlacement::isValidPlacement(const Game& game, 
@@ -314,7 +315,7 @@ bool BlockPlacement::isValidPlacement(const Game& game,
 void BlockPlacement::markChunkDirtyForPosition(VoxelCastle::World::WorldManager* worldManager,
                                               const glm::ivec3& position) {
     if (!worldManager) {
-        std::cout << "[BlockPlacement] ERROR: WorldManager is null, cannot mark chunk dirty" << std::endl;
+        std::cout << "[" << VoxelEngine::Utils::getTimestamp() << "][BlockPlacement] ERROR: WorldManager is null, cannot mark chunk dirty" << std::endl;
         return;
     }
     
@@ -325,7 +326,7 @@ void BlockPlacement::markChunkDirtyForPosition(VoxelCastle::World::WorldManager*
     // Get the chunk column
     auto* chunkColumn = worldManager->getChunkColumn(chunkX, chunkZ);
     if (!chunkColumn) {
-        std::cout << "[BlockPlacement] Warning: No chunk column found at (" << chunkX << ", " << chunkZ << ")" << std::endl;
+        std::cout << "[" << VoxelEngine::Utils::getTimestamp() << "][BlockPlacement] Warning: No chunk column found at (" << chunkX << ", " << chunkZ << ")" << std::endl;
         return;
     }
     
@@ -336,8 +337,8 @@ void BlockPlacement::markChunkDirtyForPosition(VoxelCastle::World::WorldManager*
     auto* segment = chunkColumn->getSegmentByIndex(segmentY);
     if (segment) {
         segment->markDirty(true);
-        std::cout << "[BlockPlacement] Marked chunk segment (" << chunkX << ", " << segmentY << ", " << chunkZ << ") dirty for mesh update" << std::endl;
+        std::cout << "[" << VoxelEngine::Utils::getTimestamp() << "][BlockPlacement] Marked chunk segment (" << chunkX << ", " << segmentY << ", " << chunkZ << ") dirty for mesh update" << std::endl;
     } else {
-        std::cout << "[BlockPlacement] Warning: No chunk segment found at Y index " << segmentY << std::endl;
+        std::cout << "[" << VoxelEngine::Utils::getTimestamp() << "][BlockPlacement] Warning: No chunk segment found at Y index " << segmentY << std::endl;
     }
 }

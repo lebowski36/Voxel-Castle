@@ -10,9 +10,25 @@
 #include <iostream>
 #include <fstream>
 #include <vector>
+#include <chrono>
+#include <sstream>
+#include <iomanip>
 
 namespace VoxelEngine {
     namespace Rendering {
+
+        // Timestamp helper for mesh builder
+        static std::string getTimestampMB() {
+            auto now = std::chrono::system_clock::now();
+            auto time_t = std::chrono::system_clock::to_time_t(now);
+            auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(
+                now.time_since_epoch()) % 1000;
+            
+            std::stringstream ss;
+            ss << std::put_time(std::localtime(&time_t), "%H:%M:%S");
+            ss << '.' << std::setfill('0') << std::setw(3) << ms.count();
+            return ss.str();
+        }
 
         VoxelMesh MeshBuilder::buildMesh(
             const VoxelCastle::World::ChunkSegment& segment,
@@ -20,9 +36,20 @@ namespace VoxelEngine {
             const std::function<VoxelEngine::World::Voxel(int, int, int)>& getVoxel,
             const glm::ivec3& chunkCoords
         ) {
+            std::cout << "[" << getTimestampMB() << "] [MeshBuilder] Starting mesh build for chunk (" 
+                     << chunkCoords.x << ", " << chunkCoords.y << ", " << chunkCoords.z << ")" << std::endl;
+            auto start = std::chrono::steady_clock::now();
+            
             // Use two-phase greedy meshing directly
             Meshing::TwoPhaseGreedyMeshingAlgorithm algorithm;
-            return algorithm.generateMesh(segment, atlas, getVoxel, chunkCoords);
+            VoxelMesh result = algorithm.generateMesh(segment, atlas, getVoxel, chunkCoords);
+            
+            auto end = std::chrono::steady_clock::now();
+            auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
+            std::cout << "[" << getTimestampMB() << "] [MeshBuilder] Mesh build completed in " << duration.count() 
+                     << "ms, generated " << result.vertices.size() << " vertices, " << result.indices.size() << " indices" << std::endl;
+            
+            return result;
         }
 
         VoxelMesh MeshBuilder::buildTwoPhaseGreedyMesh(
@@ -31,9 +58,20 @@ namespace VoxelEngine {
             const std::function<VoxelEngine::World::Voxel(int, int, int)>& getVoxel,
             const glm::ivec3& chunkCoords
         ) {
+            std::cout << "[" << getTimestampMB() << "] [MeshBuilder] Starting two-phase greedy mesh for chunk (" 
+                     << chunkCoords.x << ", " << chunkCoords.y << ", " << chunkCoords.z << ")" << std::endl;
+            auto start = std::chrono::steady_clock::now();
+            
             // Use two-phase greedy meshing directly
             Meshing::TwoPhaseGreedyMeshingAlgorithm algorithm;
-            return algorithm.generateMesh(segment, atlas, getVoxel, chunkCoords);
+            VoxelMesh result = algorithm.generateMesh(segment, atlas, getVoxel, chunkCoords);
+            
+            auto end = std::chrono::steady_clock::now();
+            auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
+            std::cout << "[" << getTimestampMB() << "] [MeshBuilder] Two-phase greedy mesh completed in " << duration.count() 
+                     << "ms, generated " << result.vertices.size() << " vertices, " << result.indices.size() << " indices" << std::endl;
+            
+            return result;
         }
 
         /**

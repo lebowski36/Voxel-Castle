@@ -150,20 +150,23 @@ void processInput(Game& game) {
             game.mouseDeltaY_ += static_cast<float>(-e.motion.yrel);
         }
         else if (e.type == SDL_EVENT_MOUSE_BUTTON_DOWN && game.mouseCaptured_) {
-            std::cout << "[InputManager] Mouse button DOWN detected" << std::endl << std::flush; // Added flush
+            std::cout << "[InputManager] Mouse button DOWN detected - button=" << e.button.button 
+                      << ", click_x=" << e.button.x << ", click_y=" << e.button.y << std::endl << std::flush;
             if (e.button.button == SDL_BUTTON_LEFT) {
-                std::cout << "[InputManager] LEFT mouse button - Setting pendingBlockAction=true, isBlockPlacement=true" << std::endl << std::flush; // Added flush
+                std::cout << "[InputManager] LEFT mouse button - Setting pendingBlockAction=true, isBlockPlacement=true" << std::endl << std::flush;
                 game.leftMousePressed_ = true;
                 game.pendingBlockAction_ = true;  // Request block placement on next frame
                 game.isBlockPlacement_ = true;    // It's a placement (not removal)
+                std::cout << "[InputManager] LEFT click processed successfully" << std::endl << std::flush;
             } else if (e.button.button == SDL_BUTTON_RIGHT) {
-                std::cout << "[InputManager] RIGHT mouse button - Setting pendingBlockAction=true, isBlockPlacement=false" << std::endl << std::flush; // Added flush
+                std::cout << "[InputManager] RIGHT mouse button - Setting pendingBlockAction=true, isBlockPlacement=false" << std::endl << std::flush;
                 game.rightMousePressed_ = true;
                 game.pendingBlockAction_ = true;  // Request block removal on next frame
                 game.isBlockPlacement_ = false;   // It's a removal (not placement)
+                std::cout << "[InputManager] RIGHT click processed successfully" << std::endl << std::flush;
             }
             std::cout << "[InputManager] After setting flags: pendingAction=" 
-                      << game.hasPendingBlockAction() << ", isPlacement=" << game.isBlockPlacement() << std::endl << std::flush; // Added flush
+                      << game.hasPendingBlockAction() << ", isPlacement=" << game.isBlockPlacement() << std::endl << std::flush;
         }
         else if (e.type == SDL_EVENT_MOUSE_BUTTON_UP && game.mouseCaptured_) {
             if (e.button.button == SDL_BUTTON_LEFT) {
