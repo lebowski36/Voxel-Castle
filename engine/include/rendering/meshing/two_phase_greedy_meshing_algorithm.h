@@ -114,7 +114,7 @@ namespace VoxelEngine {
                 );
 
                 /**
-                 * @brief Add a quad to the mesh
+                 * @brief Add a quad to the mesh with proper texture tiling
                  */
                 void addQuad(VoxelMesh& mesh,
                             const VoxelEngine::World::VoxelPosition& p1,

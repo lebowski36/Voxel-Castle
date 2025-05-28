@@ -1,4 +1,5 @@
 #include "rendering/meshing/two_phase_greedy_meshing_algorithm.h"
+#include "rendering/mesh_builder.h"
 #include "world/voxel_types.h"
 #include "world/chunk_segment.h"
 #include "rendering/debug_render_mode.h"
@@ -238,71 +239,95 @@ namespace VoxelEngine {
                 }
             }
 
-            void TwoPhaseGreedyMeshingAlgorithm::addQuad(VoxelMesh& mesh,
-                                                        const VoxelEngine::World::VoxelPosition& p1,
-                                                        const VoxelEngine::World::VoxelPosition& p2,
-                                                        const VoxelEngine::World::VoxelPosition& p3,
-                                                        const VoxelEngine::World::VoxelPosition& p4,
-                                                        const VoxelEngine::World::Normal& normal,
-                                                        VoxelEngine::World::VoxelType voxelType,
-                                                        const TextureAtlas& atlas,
-                                                        int quad_width_voxels,
-                                                        int quad_height_voxels,
-                                                        const glm::ivec3& chunkCoords,
-                                                        float debugLight) {
-
-                uint32_t base_index = static_cast<uint32_t>(mesh.vertices.size());
-
-                float light = debugLight;
-                TextureCoordinates texCoords = atlas.getTextureCoordinates(voxelType);
-                glm::vec2 atlas_origin_uv = texCoords.getBottomLeft();
-
-                // quad_uvs are now 0-W and 0-H
-                glm::vec2 quad_uvs[4];
-                quad_uvs[0] = glm::vec2(0.0f, 0.0f);
-                quad_uvs[1] = glm::vec2(static_cast<float>(quad_width_voxels), 0.0f);
-                quad_uvs[2] = glm::vec2(static_cast<float>(quad_width_voxels), static_cast<float>(quad_height_voxels));
-                quad_uvs[3] = glm::vec2(0.0f, static_cast<float>(quad_height_voxels));
-
-                glm::vec4 debugColor(0.0f);
-                if (::g_debugRenderMode == DebugRenderMode::FACE_DEBUG) {
-                    // Determine direction ID based on normal
-                    int directionId = 0;
-                    if (normal.x > 0.5f) directionId = 1;      // +X (Right)
-                    else if (normal.x < -0.5f) directionId = 2; // -X (Left)
-                    else if (normal.y > 0.5f) directionId = 3;  // +Y (Top)
-                    else if (normal.y < -0.5f) directionId = 4; // -Y (Bottom)
-                    else if (normal.z > 0.5f) directionId = 5;  // +Z (Front)
-                    else if (normal.z < -0.5f) directionId = 6; // -Z (Back)
-                    debugColor = VoxelEngine::Rendering::encodeFaceDebugColor(directionId);
-                }
-                
-                mesh.vertices.emplace_back(p1, normal, quad_uvs[0], atlas_origin_uv, light, debugColor);
-                mesh.vertices.emplace_back(p2, normal, quad_uvs[1], atlas_origin_uv, light, debugColor);
-                mesh.vertices.emplace_back(p3, normal, quad_uvs[2], atlas_origin_uv, light, debugColor);
-                mesh.vertices.emplace_back(p4, normal, quad_uvs[3], atlas_origin_uv, light, debugColor);
-
-                // Standard quad triangulation
-                mesh.indices.push_back(base_index);
-                mesh.indices.push_back(base_index + 1);
-                mesh.indices.push_back(base_index + 2);
-
-                mesh.indices.push_back(base_index);
-                mesh.indices.push_back(base_index + 2);
-                mesh.indices.push_back(base_index + 3);
-
-                if (::g_debugRenderMode == DebugRenderMode::FACE_DEBUG) {
-                    glm::vec3 faceCenterLocal = (static_cast<glm::vec3>(p1) + static_cast<glm::vec3>(p2) + static_cast<glm::vec3>(p3) + static_cast<glm::vec3>(p4)) / 4.0f;
-                    
-                    char coordText[256];
-                    snprintf(coordText, sizeof(coordText), "C(%.0f,%.0f,%.0f)V(%.0f,%.0f,%.0f)", 
-                             static_cast<float>(chunkCoords.x), static_cast<float>(chunkCoords.y), static_cast<float>(chunkCoords.z),
-                             p1.x, p1.y, p1.z);
-                    
-                    mesh.debugFaceTexts.push_back({std::string(coordText), faceCenterLocal, normal});
-                }
-            }
-
         } // namespace Meshing
     } // namespace Rendering
 } // namespace VoxelEngine
+
+void VoxelEngine::Rendering::Meshing::TwoPhaseGreedyMeshingAlgorithm::addQuad(VoxelMesh& mesh,
+                                            const VoxelEngine::World::VoxelPosition& p1,
+                                            const VoxelEngine::World::VoxelPosition& p2,
+                                            const VoxelEngine::World::VoxelPosition& p3,
+                                            const VoxelEngine::World::VoxelPosition& p4,
+                                            const VoxelEngine::World::Normal& normal,
+                                            VoxelEngine::World::VoxelType voxelType,
+                                            const TextureAtlas& atlas,
+                                            int quad_width_voxels,
+                                            int quad_height_voxels,
+                                            const glm::ivec3& chunkCoords,
+                                            float debugLight) {
+
+    uint32_t base_index = static_cast<uint32_t>(mesh.vertices.size());
+
+    float light = debugLight;
+    TextureCoordinates texCoords = atlas.getTextureCoordinates(voxelType);
+    glm::vec2 atlas_origin_uv = texCoords.getBottomLeft();
+
+    // Map UV coordinates to match the actual quad geometry
+    // The quad vertices are ordered as: p1, p2, p3, p4
+    // We need to determine which direction corresponds to U and which to V
+    // based on the vertex positions passed in
+    
+    // Calculate the vectors between vertices to determine orientation
+    glm::vec3 vec_p1_to_p2 = glm::vec3(p2.x - p1.x, p2.y - p1.y, p2.z - p1.z);
+    glm::vec3 vec_p1_to_p4 = glm::vec3(p4.x - p1.x, p4.y - p1.y, p4.z - p1.z);
+    
+    // Determine which vector is longer to establish U and V directions
+    float len_p1_p2 = glm::length(vec_p1_to_p2);
+    float len_p1_p4 = glm::length(vec_p1_to_p4);
+    
+    glm::vec2 quad_uvs[4];
+    
+    // Set UV coordinates based on the quad geometry
+    // p1 is always at (0,0)
+    quad_uvs[0] = glm::vec2(0.0f, 0.0f);  // p1
+    
+    if (len_p1_p2 >= len_p1_p4) {
+        // p1->p2 is the longer edge, use it as U direction
+        quad_uvs[1] = glm::vec2(len_p1_p2, 0.0f);                    // p2
+        quad_uvs[2] = glm::vec2(len_p1_p2, len_p1_p4);              // p3  
+        quad_uvs[3] = glm::vec2(0.0f, len_p1_p4);                   // p4
+    } else {
+        // p1->p4 is the longer edge, use it as U direction  
+        quad_uvs[1] = glm::vec2(0.0f, len_p1_p2);                   // p2
+        quad_uvs[2] = glm::vec2(len_p1_p4, len_p1_p2);              // p3
+        quad_uvs[3] = glm::vec2(len_p1_p4, 0.0f);                   // p4
+    }
+
+    glm::vec4 debugColor(0.0f);
+    if (::g_debugRenderMode == DebugRenderMode::FACE_DEBUG) {
+        // Determine direction ID based on normal
+        int directionId = 0;
+        if (normal.x > 0.5f) directionId = 1;      // +X (Right)
+        else if (normal.x < -0.5f) directionId = 2; // -X (Left)
+        else if (normal.y > 0.5f) directionId = 3;  // +Y (Top)
+        else if (normal.y < -0.5f) directionId = 4; // -Y (Bottom)
+        else if (normal.z > 0.5f) directionId = 5;  // +Z (Front)
+        else if (normal.z < -0.5f) directionId = 6; // -Z (Back)
+        debugColor = VoxelEngine::Rendering::encodeFaceDebugColor(directionId);
+    }
+    
+    mesh.vertices.emplace_back(p1, normal, quad_uvs[0], atlas_origin_uv, light, debugColor);
+    mesh.vertices.emplace_back(p2, normal, quad_uvs[1], atlas_origin_uv, light, debugColor);
+    mesh.vertices.emplace_back(p3, normal, quad_uvs[2], atlas_origin_uv, light, debugColor);
+    mesh.vertices.emplace_back(p4, normal, quad_uvs[3], atlas_origin_uv, light, debugColor);
+
+    // Standard quad triangulation
+    mesh.indices.push_back(base_index);
+    mesh.indices.push_back(base_index + 1);
+    mesh.indices.push_back(base_index + 2);
+
+    mesh.indices.push_back(base_index);
+    mesh.indices.push_back(base_index + 2);
+    mesh.indices.push_back(base_index + 3);
+
+    if (::g_debugRenderMode == DebugRenderMode::FACE_DEBUG) {
+        glm::vec3 faceCenterLocal = (static_cast<glm::vec3>(p1) + static_cast<glm::vec3>(p2) + static_cast<glm::vec3>(p3) + static_cast<glm::vec3>(p4)) / 4.0f;
+        
+        char coordText[256];
+        snprintf(coordText, sizeof(coordText), "C(%.0f,%.0f,%.0f)V(%.0f,%.0f,%.0f)", 
+                 static_cast<float>(chunkCoords.x), static_cast<float>(chunkCoords.y), static_cast<float>(chunkCoords.z),
+                 p1.x, p1.y, p1.z);
+        
+        mesh.debugFaceTexts.push_back({std::string(coordText), faceCenterLocal, normal});
+    }
+}
