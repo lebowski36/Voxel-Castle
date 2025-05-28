@@ -159,7 +159,7 @@ void BlockPlacement::handleMouseClick(Game& game, bool isLeftClick) {
                 
                 std::cout << "[BlockPlacement] Setting voxel..." << std::endl;
                 
-                // Clear any OpenGL errors before
+                // Clear any OpenGL errors before setVoxel
                 while (glGetError() != GL_NO_ERROR) {}
                 
                 worldManager->setVoxel(static_cast<int_fast64_t>(rayResult.adjacentPosition.x), 
@@ -167,19 +167,26 @@ void BlockPlacement::handleMouseClick(Game& game, bool isLeftClick) {
                                      static_cast<int_fast64_t>(rayResult.adjacentPosition.z), 
                                      blockType);
                                      
-                // Check for OpenGL errors after setting voxel
-                GLenum err = glGetError();
-                if (err != GL_NO_ERROR) {
-                    std::cerr << "[BlockPlacement] OpenGL error after setVoxel (placement): 0x" 
-                              << std::hex << err << std::dec << std::endl;
+                // Check for OpenGL errors immediately after setVoxel
+                GLenum errAfterSetVoxel = glGetError();
+                if (errAfterSetVoxel != GL_NO_ERROR) {
+                    std::cerr << "[BlockPlacement] OpenGL error IMMEDIATELY AFTER setVoxel (placement): 0x" 
+                              << std::hex << errAfterSetVoxel << std::dec << std::endl;
                 }
                 
                 std::cout << "[BlockPlacement] Placed " << static_cast<int>(blockType) << " block at (" 
                           << rayResult.adjacentPosition.x << ", " << rayResult.adjacentPosition.y << ", " << rayResult.adjacentPosition.z << ")" << std::endl;
                           
                 std::cout << "[BlockPlacement] Marking chunk dirty..." << std::endl;
-                // CRITICAL: Mark the affected chunk segment as dirty for mesh regeneration
+                // Clear OpenGL errors before marking dirty
+                while (glGetError() != GL_NO_ERROR) {}
                 markChunkDirtyForPosition(worldManager, rayResult.adjacentPosition);
+                // Check for OpenGL errors immediately after marking dirty
+                GLenum errAfterMarkDirty = glGetError();
+                if (errAfterMarkDirty != GL_NO_ERROR) {
+                    std::cerr << "[BlockPlacement] OpenGL error IMMEDIATELY AFTER markChunkDirtyForPosition (placement): 0x" 
+                              << std::hex << errAfterMarkDirty << std::dec << std::endl;
+                }
                 std::cout << "[BlockPlacement] Chunk marked dirty successfully" << std::endl;
             } else {
                 std::cout << "[BlockPlacement] Cannot place block at that location" << std::endl;
@@ -187,17 +194,35 @@ void BlockPlacement::handleMouseClick(Game& game, bool isLeftClick) {
         } else {
             std::cout << "[BlockPlacement] Removing block..." << std::endl;
             // Remove block (right click)
+
+            // Clear any OpenGL errors before setVoxel
+            while (glGetError() != GL_NO_ERROR) {}
+
             worldManager->setVoxel(static_cast<int_fast64_t>(rayResult.blockPosition.x), 
                                  static_cast<int_fast64_t>(rayResult.blockPosition.y), 
                                  static_cast<int_fast64_t>(rayResult.blockPosition.z), 
                                  VoxelEngine::World::VoxelType::AIR);
+
+            // Check for OpenGL errors immediately after setVoxel
+            GLenum errAfterSetVoxelRemoval = glGetError();
+            if (errAfterSetVoxelRemoval != GL_NO_ERROR) {
+                std::cerr << "[BlockPlacement] OpenGL error IMMEDIATELY AFTER setVoxel (removal): 0x" 
+                          << std::hex << errAfterSetVoxelRemoval << std::dec << std::endl;
+            }
             
             std::cout << "[BlockPlacement] Removed block at (" 
                       << rayResult.blockPosition.x << ", " << rayResult.blockPosition.y << ", " << rayResult.blockPosition.z << ")" << std::endl;
                       
             std::cout << "[BlockPlacement] Marking chunk dirty for removal..." << std::endl;
-            // CRITICAL: Mark the affected chunk segment as dirty for mesh regeneration
+            // Clear OpenGL errors before marking dirty
+            while (glGetError() != GL_NO_ERROR) {}
             markChunkDirtyForPosition(worldManager, rayResult.blockPosition);
+            // Check for OpenGL errors immediately after marking dirty
+            GLenum errAfterMarkDirtyRemoval = glGetError();
+            if (errAfterMarkDirtyRemoval != GL_NO_ERROR) {
+                std::cerr << "[BlockPlacement] OpenGL error IMMEDIATELY AFTER markChunkDirtyForPosition (removal): 0x" 
+                          << std::hex << errAfterMarkDirtyRemoval << std::dec << std::endl;
+            }
             std::cout << "[BlockPlacement] Chunk marked dirty successfully" << std::endl;
         }
         

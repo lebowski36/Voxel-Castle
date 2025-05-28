@@ -81,18 +81,23 @@ bool Window::init() {
 }
 
 void Window::handleEvents() {
-    SDL_Event e;
-    while (SDL_PollEvent(&e)) {
-        if (e.type == SDL_EVENT_QUIT) {
-            running = false;
-        }
+    // SDL_Event e;
+    // while (SDL_PollEvent(&e)) {
+    //     if (e.type == SDL_EVENT_QUIT) {
+    //         running = false;
+    //     }
 
-        if (e.type == SDL_EVENT_KEY_DOWN) {
-            if (e.key.scancode == SDL_SCANCODE_ESCAPE) {
-                running = false;
-            }
-        }
-    }
+    //     if (e.type == SDL_EVENT_KEY_DOWN) {
+    //         if (e.key.scancode == SDL_SCANCODE_ESCAPE) {
+    //             running = false;
+    //         }
+    //     }
+    // }
+    // This method is currently not called by the main game loop,
+    // event handling is done in InputManager.cpp.
+    // If this were to be used, it would need to be integrated
+    // with the Game class's event loop.
+    // For now, let's keep it empty to avoid confusion or potential conflicts.
 }
 
 void Window::update() {
