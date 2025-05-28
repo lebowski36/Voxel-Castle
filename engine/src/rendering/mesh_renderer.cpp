@@ -4,6 +4,8 @@
 #include <sstream>
 #include <iostream>
 #include <vector>
+#include <unordered_map>
+#include <chrono>
 #include <glm/gtc/type_ptr.hpp>
 #include <glm/gtc/matrix_transform.hpp> // Added for glm::scale, glm::translate, glm::rotate
 #include <filesystem> // Required for std::filesystem::absolute
@@ -12,11 +14,35 @@
 
 #include "../../external/stb_image.h" // Include stb_image for texture loading without implementation
 
-// Helper function to check and log OpenGL errors
+// Helper function to check and log OpenGL errors with throttling
 void checkGlError(const char* operation) {
+    static std::unordered_map<std::string, int> errorCounts;
+    static std::unordered_map<std::string, std::chrono::steady_clock::time_point> lastErrorTime;
+    
     GLenum err;
     while ((err = glGetError()) != GL_NO_ERROR) {
-        std::cerr << "[OpenGL Error] After " << operation << ": 0x" << std::hex << err << std::dec << std::endl;
+        std::string errorKey = std::string(operation) + "_" + std::to_string(err);
+        auto now = std::chrono::steady_clock::now();
+        
+        errorCounts[errorKey]++;
+        
+        // Only log the first 3 occurrences of each error type, then every 1000th occurrence
+        int count = errorCounts[errorKey];
+        bool shouldLog = (count <= 3) || (count % 1000 == 0);
+        
+        // Also throttle by time - don't spam more than once per second for the same error
+        if (shouldLog && (lastErrorTime[errorKey] + std::chrono::seconds(1) < now || count <= 3)) {
+            std::cerr << "[OpenGL Error] After " << operation << ": 0x" << std::hex << err << std::dec;
+            if (count > 3) {
+                std::cerr << " (occurrence #" << count << ")";
+            }
+            std::cerr << std::endl;
+            lastErrorTime[errorKey] = now;
+            
+            if (count == 3) {
+                std::cerr << "[OpenGL Error] Further '" << operation << "' errors will be logged every 1000 occurrences." << std::endl;
+            }
+        }
     }
 }
 
@@ -181,6 +207,14 @@ void MeshRenderer::uploadMesh(const VoxelMesh& mesh) {
     // }
 
     glBindVertexArray(vao);
+    
+    // Validate VAO state immediately after binding
+    if (vao == 0 || !glIsVertexArray(vao)) {
+        std::cerr << "[MeshRenderer::uploadMesh] ERROR: Invalid VAO (ID: " << vao << ", valid: " << glIsVertexArray(vao) << ")" << std::endl;
+        ready = false;
+        return;
+    }
+    
     checkGlError("glBindVertexArray (uploadMesh initial)");
     
     // Clear any pre-existing OpenGL errors

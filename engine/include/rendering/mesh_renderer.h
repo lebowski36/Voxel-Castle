@@ -10,9 +10,7 @@ namespace Rendering {
 class MeshRenderer {
 public:
     MeshRenderer();
-    ~MeshRenderer();
-
-    void uploadMesh(const VoxelMesh& mesh);
+    ~MeshRenderer();        void uploadMesh(const VoxelMesh& mesh);
     void draw(const glm::mat4& model, const glm::mat4& view, const glm::mat4& proj);
     bool isReady() const { return ready; }
     GLuint getTextureAtlasID() const { return textureAtlasID; } // Added getter
