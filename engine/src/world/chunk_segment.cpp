@@ -133,7 +133,9 @@ namespace VoxelCastle
                                         static_cast<int>(segmentYIndex), 
                                         static_cast<int>(columnWorldZ));
 
-            *mMesh = meshBuilder.buildGreedyMesh(*this, atlas, [=](int x, int y, int z) {
+            // Using Two-Phase Greedy meshing for improved performance and quality
+            // To revert to legacy greedy meshing, replace buildTwoPhaseGreedyMesh with buildGreedyMesh
+            *mMesh = meshBuilder.buildTwoPhaseGreedyMesh(*this, atlas, [=](int x, int y, int z) {
                 int_fast64_t worldX = columnWorldX * CHUNK_WIDTH + x;
                 int_fast64_t worldY = segmentYIndex * CHUNK_HEIGHT + y;
                 int_fast64_t worldZ = columnWorldZ * CHUNK_DEPTH + z;

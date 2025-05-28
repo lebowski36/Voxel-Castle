@@ -42,7 +42,7 @@ namespace VoxelEngine {
                         buildVisibilityMask(visibilityMask, d, u, v, dir, chunk_dims, q, getVoxel);
 
                         // Phase 2: Apply greedy merging to visible faces
-                        processVisibleFaces(mesh, visibilityMask, d, u, v, dir, chunk_dims, q, atlas, chunkCoords);
+                        processVisibleFaces(mesh, visibilityMask, d, u, v, dir, chunk_dims, q, atlas, chunkCoords, getVoxel);
                     }
                 }
 
@@ -56,12 +56,32 @@ namespace VoxelEngine {
                 const int q[3],
                 const std::function<VoxelEngine::World::Voxel(int, int, int)>& getVoxel
             ) {
-                // Initialize all faces as not visible
-                std::fill(visibilityMask.begin(), visibilityMask.end(), FaceInfo());
+                // This function now builds a mask for a SINGLE slice at a time
+                // The visibility mask should be called once per slice, not for all slices
+                // This is handled by the calling function processVisibleFaces
+                
+                // NOTE: This function is now called per slice from processVisibleFaces
+                // and the slice_d parameter is passed via the visibilityMask context
+                // We need to refactor this approach - see processVisibleFaces
+            }
 
-                // For each slice along d
+            void TwoPhaseGreedyMeshingAlgorithm::processVisibleFaces(
+                VoxelMesh& mesh,
+                const std::vector<FaceInfo>& visibilityMask,
+                int d, int u, int v, int dir,
+                const int chunk_dims[3],
+                const int q[3],
+                const TextureAtlas& atlas,
+                const glm::ivec3& chunkCoords,
+                const std::function<VoxelEngine::World::Voxel(int, int, int)>& getVoxel
+            ) {
+                // Process each slice individually to maintain proper 3D positioning
                 for (int slice_d = 0; slice_d < chunk_dims[d]; ++slice_d) {
-                    // Check each position in the slice
+                    // Build visibility mask for this specific slice only
+                    std::vector<FaceInfo> sliceVisibilityMask(chunk_dims[u] * chunk_dims[v]);
+                    std::fill(sliceVisibilityMask.begin(), sliceVisibilityMask.end(), FaceInfo());
+                    
+                    // Check each position in this slice
                     for (int pos_v = 0; pos_v < chunk_dims[v]; ++pos_v) {
                         for (int pos_u = 0; pos_u < chunk_dims[u]; ++pos_u) {
                             int coords[3] = {0, 0, 0};
@@ -75,46 +95,33 @@ namespace VoxelEngine {
                                 VoxelEngine::World::VoxelType voxelType = static_cast<VoxelEngine::World::VoxelType>(voxel.id);
                                 
                                 int maskIndex = pos_v * chunk_dims[u] + pos_u;
-                                visibilityMask[maskIndex] = FaceInfo(voxelType);
+                                sliceVisibilityMask[maskIndex] = FaceInfo(voxelType);
                             }
                         }
                     }
-                }
-            }
+                    
+                    // Create a processed mask for this slice
+                    std::vector<bool> processedMask(chunk_dims[u] * chunk_dims[v], false);
 
-            void TwoPhaseGreedyMeshingAlgorithm::processVisibleFaces(
-                VoxelMesh& mesh,
-                const std::vector<FaceInfo>& visibilityMask,
-                int d, int u, int v, int dir,
-                const int chunk_dims[3],
-                const int q[3],
-                const TextureAtlas& atlas,
-                const glm::ivec3& chunkCoords
-            ) {
-                // Create a processed mask to track which faces have been merged
-                std::vector<bool> processedMask(chunk_dims[u] * chunk_dims[v], false);
-
-                // For each slice along d, process visible faces
-                for (int slice_d = 0; slice_d < chunk_dims[d]; ++slice_d) {
-                    // Process each position in the slice
+                    // Process visible faces in this slice with greedy merging
                     for (int pos_v = 0; pos_v < chunk_dims[v]; ++pos_v) {
                         for (int pos_u = 0; pos_u < chunk_dims[u]; ++pos_u) {
                             int maskIndex = pos_v * chunk_dims[u] + pos_u;
                             
                             // Skip if already processed or not visible
-                            if (processedMask[maskIndex] || !visibilityMask[maskIndex].isVisible) {
+                            if (processedMask[maskIndex] || !sliceVisibilityMask[maskIndex].isVisible) {
                                 continue;
                             }
 
-                            VoxelEngine::World::VoxelType currentType = visibilityMask[maskIndex].voxelType;
+                            VoxelEngine::World::VoxelType currentType = sliceVisibilityMask[maskIndex].voxelType;
                             
-                            // Compute greedy quad dimensions
+                            // Compute greedy quad dimensions for this slice
                             int h_quad, w_quad;
-                            computeQuadDimensions(visibilityMask, pos_u, pos_v, h_quad, w_quad, chunk_dims, currentType, u, v);
+                            computeQuadDimensions(sliceVisibilityMask, pos_u, pos_v, h_quad, w_quad, chunk_dims, currentType, u, v);
 
-                            // Generate the quad
+                            // Generate the quad at the correct slice position
                             int x[3] = {0, 0, 0};
-                            x[d] = slice_d;
+                            x[d] = slice_d;  // Use the actual slice position
                             x[u] = pos_u;
                             x[v] = pos_v;
                             

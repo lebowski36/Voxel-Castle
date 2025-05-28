@@ -75,6 +75,15 @@ namespace VoxelEngine {
             return buildMesh(segment, atlas, getVoxel, chunkCoords, MeshingAlgorithmType::GREEDY);
         }
 
+        VoxelMesh MeshBuilder::buildTwoPhaseGreedyMesh(
+            const VoxelCastle::World::ChunkSegment& segment, 
+            const TextureAtlas& atlas, 
+            const std::function<VoxelEngine::World::Voxel(int, int, int)>& getVoxel,
+            const glm::ivec3& chunkCoords
+        ) {
+            return buildMesh(segment, atlas, getVoxel, chunkCoords, MeshingAlgorithmType::TWO_PHASE_GREEDY);
+        }
+
         /**
          * @brief Adds a single face (composed of two triangles) to the given VoxelMesh.
          *

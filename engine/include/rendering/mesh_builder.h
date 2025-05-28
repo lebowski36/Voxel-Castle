@@ -79,6 +79,17 @@ namespace VoxelEngine {
                 const glm::ivec3& chunkCoords
             );
 
+            /**
+             * @brief Method for two-phase greedy meshing - uses the improved two-phase greedy algorithm.
+             * This is the recommended meshing method for optimal performance and quality.
+             */
+            static VoxelMesh buildTwoPhaseGreedyMesh(
+                const VoxelCastle::World::ChunkSegment& segment, 
+                const TextureAtlas& atlas, 
+                const std::function<VoxelEngine::World::Voxel(int, int, int)>& getVoxel,
+                const glm::ivec3& chunkCoords
+            );
+
         private:
             static MeshingAlgorithmType defaultAlgorithmType;
 

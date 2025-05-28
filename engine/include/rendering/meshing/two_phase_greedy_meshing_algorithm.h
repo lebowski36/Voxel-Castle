@@ -75,7 +75,8 @@ namespace VoxelEngine {
                     const int chunk_dims[3],
                     const int q[3],
                     const TextureAtlas& atlas,
-                    const glm::ivec3& chunkCoords
+                    const glm::ivec3& chunkCoords,
+                    const std::function<VoxelEngine::World::Voxel(int, int, int)>& getVoxel
                 );
 
                 /**

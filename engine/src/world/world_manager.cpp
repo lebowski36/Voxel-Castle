@@ -138,7 +138,9 @@ void WorldManager::enqueueDirtyMeshJobs(VoxelEngine::Rendering::TextureAtlas& at
                             static_cast<int>(colPtr->getBaseZ())       // Z coordinate of the column
                         );
 
-                        *mesh = meshBuilder.buildGreedyMesh(*segPtr, atlas, [=](int x, int y, int z) {
+                        // Using Two-Phase Greedy meshing for improved performance and quality
+                        // To revert to legacy greedy meshing, replace buildTwoPhaseGreedyMesh with buildGreedyMesh
+                        *mesh = meshBuilder.buildTwoPhaseGreedyMesh(*segPtr, atlas, [=](int x, int y, int z) {
                             int_fast64_t worldX = colPtr->getBaseX() + x;
                             int_fast64_t worldY = i * VoxelCastle::World::ChunkSegment::CHUNK_HEIGHT + y;
                             int_fast64_t worldZ = colPtr->getBaseZ() + z;
