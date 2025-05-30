@@ -12,13 +12,73 @@
 // Define the global debug render mode variable
 DebugRenderMode g_debugRenderMode = DebugRenderMode::NORMAL;
 
+// Global variables to track window information for mouse confinement
+static int g_windowPosX = 0;
+static int g_windowPosY = 0;
+static int g_windowWidth = 0;
+static int g_windowHeight = 0;
+static bool g_windowInfoValid = false;
+
+// Function to check if mouse is close to window edge and recenter if needed
+bool checkAndConfineMouseToWindow(Game& game) {
+    if (!game.isMouseCaptured() || !game.getWindow() || !game.getWindow()->getSDLWindow()) {
+        return false;
+    }
+
+    // Update window position and size if needed
+    if (!g_windowInfoValid) {
+        SDL_GetWindowPosition(game.getWindow()->getSDLWindow(), &g_windowPosX, &g_windowPosY);
+        SDL_GetWindowSize(game.getWindow()->getSDLWindow(), &g_windowWidth, &g_windowHeight);
+        g_windowInfoValid = true;
+        
+        DEBUG_LOG("InputManager", "Updated window info: pos=(" + std::to_string(g_windowPosX) + 
+                "," + std::to_string(g_windowPosY) + "), size=" + 
+                std::to_string(g_windowWidth) + "x" + std::to_string(g_windowHeight));
+    }
+    
+    // Get current global mouse position
+    float mouseX, mouseY;
+    SDL_GetMouseState(&mouseX, &mouseY);
+    
+    // Calculate window bounds with padding (20px from edge)
+    const int PADDING = 20;
+    float minX = g_windowPosX + PADDING;
+    float maxX = g_windowPosX + g_windowWidth - PADDING;
+    float minY = g_windowPosY + PADDING;
+    float maxY = g_windowPosY + g_windowHeight - PADDING;
+    
+    // Check if mouse is near the edge of the window
+    bool nearEdge = (mouseX <= minX || mouseX >= maxX || mouseY <= minY || mouseY >= maxY);
+    
+    if (nearEdge) {
+        // Recenter the mouse
+        int centerX = g_windowPosX + g_windowWidth / 2;
+        int centerY = g_windowPosY + g_windowHeight / 2;
+        
+        DEBUG_LOG("InputManager", "Mouse near edge: (" + std::to_string(mouseX) + "," + 
+                std::to_string(mouseY) + "), recentering to (" + 
+                std::to_string(centerX) + "," + std::to_string(centerY) + ")");
+        
+        // Warp mouse to center of window
+        SDL_WarpMouseGlobal(centerX, centerY);
+        return true;
+    }
+    
+    return false;
+}
+
 namespace GameInput {
 
 void processInput(Game& game) {
     // Debug render mode toggle (P key)
     // Reset mouse delta at frame start
-    game.mouseDeltaX_ = 0.0f;
-    game.mouseDeltaY_ = 0.0f;
+    game.setMouseDeltaX(0.0f);
+    game.setMouseDeltaY(0.0f);
+    
+    // Software mouse confinement check
+    if (game.isMouseCaptured()) {
+        checkAndConfineMouseToWindow(game);
+    }
 
     SDL_Event e;
     while (SDL_PollEvent(&e)) {
@@ -48,7 +108,7 @@ void processInput(Game& game) {
             (e.button.button == SDL_BUTTON_LEFT || e.button.button == SDL_BUTTON_RIGHT)) {
             DEBUG_LOG("InputManager", "Mouse " + std::string(e.type == SDL_EVENT_MOUSE_BUTTON_DOWN ? "DOWN" : "UP") + 
                      ", button=" + std::string(e.button.button == SDL_BUTTON_LEFT ? "LEFT" : "RIGHT") +
-                     ", mouseCaptured=" + std::to_string(game.mouseCaptured_));
+                     ", mouseCaptured=" + std::to_string(game.isMouseCaptured()));
         }
         
         if (e.type == SDL_EVENT_QUIT) {
@@ -80,10 +140,46 @@ void processInput(Game& game) {
             }
             switch (e.key.scancode) {
                 case SDL_SCANCODE_ESCAPE:
-                    game.mouseCaptured_ = !game.mouseCaptured_;
-                    if (game.gameWindow_ && game.gameWindow_->getSDLWindow()) {
-                        SDL_SetWindowRelativeMouseMode(game.gameWindow_->getSDLWindow(), game.mouseCaptured_);
-                        std::cout << "[InputManager] Mouse capture toggled: " << game.mouseCaptured_ << std::endl << std::flush; // Added flush
+                    // Toggle mouse capture state using the Game class methods
+                    game.setMouseCaptured(!game.isMouseCaptured());
+                    if (game.getWindow() && game.getWindow()->getSDLWindow()) {
+                        SDL_Window* window = game.getWindow()->getSDLWindow();
+                        
+                        // Force update of window info on next frame
+                        g_windowInfoValid = false;
+                        
+                        if (game.isMouseCaptured()) {
+                            // Enable mouse capture: hide cursor, relative mode, and confine to window
+                            SDL_SetWindowRelativeMouseMode(window, true);
+                            SDL_SetWindowMouseGrab(window, true);
+                            
+                            // Try all available confinement methods (some may not work on Wayland)
+                            SDL_SetWindowMouseRect(window, nullptr); // Confine to entire window
+                            
+                            // Get window position and size for software confinement
+                            int winX, winY, winW, winH;
+                            SDL_GetWindowPosition(window, &winX, &winY);
+                            SDL_GetWindowSize(window, &winW, &winH);
+                            
+                            // Center the mouse in the window as starting point
+                            int centerX = winX + winW / 2;
+                            int centerY = winY + winH / 2;
+                            SDL_WarpMouseGlobal(centerX, centerY);
+                            
+                            INFO_LOG("InputManager", "Mouse capture ENABLED - software confinement active, centered at (" + 
+                                    std::to_string(centerX) + ", " + std::to_string(centerY) + "), window bounds: " +
+                                    std::to_string(winX) + "," + std::to_string(winY) + " " + 
+                                    std::to_string(winW) + "x" + std::to_string(winH));
+                        } else {
+                            // Disable mouse capture: show cursor, absolute mode, release grab
+                            SDL_SetWindowRelativeMouseMode(window, false);
+                            SDL_SetWindowMouseGrab(window, false);
+                            SDL_SetWindowMouseRect(window, nullptr); // Remove confinement
+                            
+                            INFO_LOG("InputManager", "Mouse capture DISABLED - cursor visible, absolute mode, grab released");
+                        }
+                        
+                        std::cout << "[InputManager] Mouse capture toggled: " << game.isMouseCaptured() << std::endl << std::flush; // Added flush
                     }
                     break;
                 case SDL_SCANCODE_O:
@@ -152,11 +248,11 @@ void processInput(Game& game) {
                 default: break;
             }
         }
-        else if (e.type == SDL_EVENT_MOUSE_MOTION && game.mouseCaptured_) {
-            game.mouseDeltaX_ += static_cast<float>(e.motion.xrel);
-            game.mouseDeltaY_ += static_cast<float>(-e.motion.yrel);
+        else if (e.type == SDL_EVENT_MOUSE_MOTION && game.isMouseCaptured()) {
+            game.setMouseDeltaX(game.getMouseDeltaX() + static_cast<float>(e.motion.xrel));
+            game.setMouseDeltaY(game.getMouseDeltaY() + static_cast<float>(-e.motion.yrel));
         }
-        else if (e.type == SDL_EVENT_MOUSE_BUTTON_DOWN && game.mouseCaptured_) {
+        else if (e.type == SDL_EVENT_MOUSE_BUTTON_DOWN && game.isMouseCaptured()) {
             DEBUG_LOG("InputManager", "Mouse button DOWN detected - button=" + std::to_string(e.button.button) + 
                      ", click_x=" + std::to_string(e.button.x) + ", click_y=" + std::to_string(e.button.y));
             
@@ -182,14 +278,14 @@ void processInput(Game& game) {
             DEBUG_LOG("InputManager", "After setting flags: pendingAction=" + 
                      std::to_string(game.hasPendingBlockAction()) + ", isPlacement=" + std::to_string(game.isBlockPlacement()));
         }
-        else if (e.type == SDL_EVENT_MOUSE_BUTTON_UP && game.mouseCaptured_) {
+        else if (e.type == SDL_EVENT_MOUSE_BUTTON_UP && game.isMouseCaptured()) {
             if (e.button.button == SDL_BUTTON_LEFT) {
                 game.leftMousePressed_ = false;
             } else if (e.button.button == SDL_BUTTON_RIGHT) {
                 game.rightMousePressed_ = false;
             }
         }
-        else if (e.type == SDL_EVENT_MOUSE_WHEEL && game.mouseCaptured_) {
+        else if (e.type == SDL_EVENT_MOUSE_WHEEL && game.isMouseCaptured()) {
             // Mouse wheel cycles through block types
             bool forward = e.wheel.y > 0;
             BlockPlacement::cycleBlockType(game, forward);

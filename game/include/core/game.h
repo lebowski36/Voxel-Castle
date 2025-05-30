@@ -72,8 +72,11 @@ public:
     const SpectatorCamera* getCamera() const { return camera_.get(); }
 
     bool isMouseCaptured() const { return mouseCaptured_; }
+    void setMouseCaptured(bool captured) { mouseCaptured_ = captured; }
     float getMouseDeltaX() const { return mouseDeltaX_; }
     float getMouseDeltaY() const { return mouseDeltaY_; }
+    void setMouseDeltaX(float delta) { mouseDeltaX_ = delta; }
+    void setMouseDeltaY(float delta) { mouseDeltaY_ = delta; }
 
     bool isForward() const { return forward_; }
     bool isBackward() const { return backward_; }
