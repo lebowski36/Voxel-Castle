@@ -112,6 +112,10 @@ public:
     bool hasPendingBlockAction() const { return pendingBlockAction_; }
     bool isBlockPlacement() const { return isBlockPlacement_; }
     void clearPendingBlockAction() { pendingBlockAction_ = false; }
+    
+    // World readiness accessors
+    bool isWorldReadyForBlockOperations() const;
+    void markWorldAsFullyLoaded() { isWorldFullyLoaded_ = true; }
 
 private:
     // Helper method for world initialization
@@ -170,6 +174,10 @@ private:
     bool rightMousePressed_ = false;  // Right mouse button state
     bool pendingBlockAction_ = false; // Flag to handle block placement/removal on next frame
     bool isBlockPlacement_ = true;    // Whether action is placement (true) or removal (false)
+    
+    // World readiness state
+    std::chrono::steady_clock::time_point worldInitTime_; // When world was initialized
+    bool isWorldFullyLoaded_ = false; // Whether world is ready for block operations
 
     // Configuration
     const int screenWidth_ = 2400; 

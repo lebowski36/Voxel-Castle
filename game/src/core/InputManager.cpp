@@ -152,6 +152,13 @@ void processInput(Game& game) {
         else if (e.type == SDL_EVENT_MOUSE_BUTTON_DOWN && game.mouseCaptured_) {
             std::cout << "[InputManager] Mouse button DOWN detected - button=" << e.button.button 
                       << ", click_x=" << e.button.x << ", click_y=" << e.button.y << std::endl << std::flush;
+            
+            // Check if world is ready for block operations before processing mouse clicks
+            if (!game.isWorldReadyForBlockOperations()) {
+                std::cout << "[InputManager] World not ready for block operations - ignoring mouse click" << std::endl << std::flush;
+                return; // Ignore the click if world isn't ready
+            }
+            
             if (e.button.button == SDL_BUTTON_LEFT) {
                 std::cout << "[InputManager] LEFT mouse button - Setting pendingBlockAction=true, isBlockPlacement=true" << std::endl << std::flush;
                 game.leftMousePressed_ = true;

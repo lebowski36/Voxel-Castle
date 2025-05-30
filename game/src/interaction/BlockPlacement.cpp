@@ -93,6 +93,17 @@ void BlockPlacement::handleMouseClick(Game& game, bool isLeftClick) {
     std::cout << "\n[" << VoxelEngine::Utils::getTimestamp() << "][BlockPlacement] ========= MOUSE CLICK START =========" << std::endl;
     std::cout << "[" << VoxelEngine::Utils::getTimestamp() << "][BlockPlacement] Click type: " << (isLeftClick ? "LEFT (place)" : "RIGHT (remove)") << std::endl;
     
+    // Add game startup timing protection
+    static auto gameStartTime = std::chrono::steady_clock::now();
+    auto currentTime = std::chrono::steady_clock::now();
+    auto elapsedSeconds = std::chrono::duration_cast<std::chrono::seconds>(currentTime - gameStartTime).count();
+    
+    if (elapsedSeconds < 3) {
+        std::cout << "[" << VoxelEngine::Utils::getTimestamp() << "][BlockPlacement] SAFETY: Game too young (" 
+                  << elapsedSeconds << "s), ignoring click to prevent initialization crashes" << std::endl;
+        return;
+    }
+    
     // Early exit if critical components are not ready
     if (!game.getWindow()) {
         std::cerr << "[" << VoxelEngine::Utils::getTimestamp() << "][BlockPlacement] ERROR: Window is null! Aborting click." << std::endl;
@@ -116,15 +127,30 @@ void BlockPlacement::handleMouseClick(Game& game, bool isLeftClick) {
     }
     std::cout << "[" << VoxelEngine::Utils::getTimestamp() << "][BlockPlacement] WorldManager obtained: " << worldManager << std::endl;
 
-    // Add a check for world readiness if such a method exists, e.g., game.isWorldReady()
-    // For now, we assume if worldManager is not null, it's somewhat ready.
-    // if (!game.isWorldReady()) { // Hypothetical check
-    //     std::cout << "[BlockPlacement] World not ready for interaction. Aborting click." << std::endl;
-    //     return;
-    // }
+    // Check if world is ready for block operations (prevents crashes during early loading)
+    if (!game.isWorldReadyForBlockOperations()) {
+        std::cout << "[" << VoxelEngine::Utils::getTimestamp() << "][BlockPlacement] World not ready for block operations. Please wait for chunks to finish loading." << std::endl;
+        return;
+    }
+    std::cout << "[" << VoxelEngine::Utils::getTimestamp() << "][BlockPlacement] World readiness check passed" << std::endl;
+
+    // Add critical safety checks for camera position validity
+    if (std::isnan(pos.x) || std::isnan(pos.y) || std::isnan(pos.z) || 
+        std::isinf(pos.x) || std::isinf(pos.y) || std::isinf(pos.z)) {
+        std::cerr << "[" << VoxelEngine::Utils::getTimestamp() << "][BlockPlacement] ERROR: Camera position is invalid (NaN/Inf)! Aborting click." << std::endl;
+        return;
+    }
+    
+    // Check if camera front vector is valid
+    glm::vec3 front = camera->getFront();
+    if (std::isnan(front.x) || std::isnan(front.y) || std::isnan(front.z) ||
+        std::isinf(front.x) || std::isinf(front.y) || std::isinf(front.z)) {
+        std::cerr << "[" << VoxelEngine::Utils::getTimestamp() << "][BlockPlacement] ERROR: Camera front vector is invalid! Aborting click." << std::endl;
+        return;
+    }
     
     try {
-        std::cout << "[" << VoxelEngine::Utils::getTimestamp() << "][BlockPlacement] Both pointers valid, starting raycast..." << std::endl;
+        std::cout << "[" << VoxelEngine::Utils::getTimestamp() << "][BlockPlacement] All safety checks passed, starting raycast..." << std::endl;
         
         // Clear any existing OpenGL errors
         GLenum prevErr;
@@ -154,6 +180,24 @@ void BlockPlacement::handleMouseClick(Game& game, bool isLeftClick) {
                   << ", " << rayResult.blockPosition.y << ", " << rayResult.blockPosition.z << ")" << std::endl;
         std::cout << "[" << VoxelEngine::Utils::getTimestamp() << "][BlockPlacement] Adjacent position: (" << rayResult.adjacentPosition.x 
                   << ", " << rayResult.adjacentPosition.y << ", " << rayResult.adjacentPosition.z << ")" << std::endl;
+        
+        // Validate target position coordinates
+        if (std::abs(rayResult.blockPosition.x) > 1000000 || std::abs(rayResult.blockPosition.y) > 1000 || std::abs(rayResult.blockPosition.z) > 1000000) {
+            std::cerr << "[" << VoxelEngine::Utils::getTimestamp() << "][BlockPlacement] ERROR: Target position out of valid range! Aborting." << std::endl;
+            return;
+        }
+        
+        if (isLeftClick && (std::abs(rayResult.adjacentPosition.x) > 1000000 || std::abs(rayResult.adjacentPosition.y) > 1000 || std::abs(rayResult.adjacentPosition.z) > 1000000)) {
+            std::cerr << "[" << VoxelEngine::Utils::getTimestamp() << "][BlockPlacement] ERROR: Adjacent position out of valid range! Aborting." << std::endl;
+            return;
+        }
+        
+        // Additional safety check: ensure target chunk exists or can be created safely
+        glm::ivec3 targetPos = isLeftClick ? rayResult.adjacentPosition : rayResult.blockPosition;
+        if (!isChunkPositionSafe(worldManager, targetPos)) {
+            std::cerr << "[" << VoxelEngine::Utils::getTimestamp() << "][BlockPlacement] ERROR: Chunk at target position is not safe for modification! Aborting." << std::endl;
+            return;
+        }
         
         std::cout << "[" << VoxelEngine::Utils::getTimestamp() << "][BlockPlacement] Processing " << (isLeftClick ? "placement" : "removal") << std::endl;
     
@@ -284,32 +328,109 @@ void BlockPlacement::cycleBlockType(Game& game, bool forward) {
     std::cout << "[" << VoxelEngine::Utils::getTimestamp() << "][BlockPlacement] Selected block type: " << static_cast<int>(availableBlocks[currentIndex]) << std::endl;
 }
 
+bool BlockPlacement::isChunkPositionSafe(VoxelCastle::World::WorldManager* worldManager, const glm::ivec3& position) {
+    if (!worldManager) {
+        return false;
+    }
+    
+    try {
+        // Calculate chunk coordinates
+        int_fast64_t chunkX = VoxelCastle::World::WorldManager::worldToColumnBaseX(position.x);
+        int_fast64_t chunkZ = VoxelCastle::World::WorldManager::worldToColumnBaseZ(position.z);
+        
+        // Check if chunk column already exists (safer than creating new ones during block operations)
+        const auto* chunkColumn = worldManager->getChunkColumn(chunkX, chunkZ);
+        if (!chunkColumn) {
+            std::cout << "[" << VoxelEngine::Utils::getTimestamp() << "][BlockPlacement] Chunk column doesn't exist at (" << chunkX << ", " << chunkZ << "), considering unsafe" << std::endl;
+            return false;
+        }
+        
+        // Calculate segment Y index
+        int_fast32_t segmentY = static_cast<int_fast32_t>(position.y / VoxelCastle::World::ChunkSegment::CHUNK_HEIGHT);
+        
+        // Check if segment exists and is not currently being rebuilt
+        const auto* segment = chunkColumn->getSegmentByIndex(segmentY);
+        if (!segment) {
+            std::cout << "[" << VoxelEngine::Utils::getTimestamp() << "][BlockPlacement] Segment doesn't exist at Y index " << segmentY << ", considering unsafe" << std::endl;
+            return false;
+        }
+        
+        // Check if mesh is currently being rebuilt (thread safety)
+        if (segment->mIsRebuildingMesh) {
+            std::cout << "[" << VoxelEngine::Utils::getTimestamp() << "][BlockPlacement] Segment is currently rebuilding mesh, considering unsafe" << std::endl;
+            return false;
+        }
+        
+        return true;
+        
+    } catch (const std::exception& e) {
+        std::cerr << "[" << VoxelEngine::Utils::getTimestamp() << "][BlockPlacement] Exception in isChunkPositionSafe: " << e.what() << std::endl;
+        return false;
+    } catch (...) {
+        std::cerr << "[" << VoxelEngine::Utils::getTimestamp() << "][BlockPlacement] Unknown exception in isChunkPositionSafe" << std::endl;
+        return false;
+    }
+}
+
 bool BlockPlacement::isValidPlacement(const Game& game, 
                                     const glm::ivec3& position,
                                     VoxelCastle::World::WorldManager* worldManager) {
+    if (!worldManager) {
+        std::cout << "[" << VoxelEngine::Utils::getTimestamp() << "][BlockPlacement] WorldManager is null in isValidPlacement" << std::endl;
+        return false;
+    }
+    
     // Check if position is within world bounds (basic check)
-    // You might want to add more sophisticated bounds checking based on your world size
-    if (position.y < 0 || position.y > 255) {
+    if (position.y < -100 || position.y > 400) {  // Extended range but still reasonable
+        std::cout << "[" << VoxelEngine::Utils::getTimestamp() << "][BlockPlacement] Position Y out of bounds: " << position.y << std::endl;
         return false;
     }
     
-    // Check if the position is already occupied
-    VoxelEngine::World::Voxel existingVoxel = worldManager->getVoxel(position.x, position.y, position.z);
-    if (existingVoxel.id != static_cast<uint8_t>(VoxelEngine::World::VoxelType::AIR)) {
+    try {
+        // Check if the position is already occupied
+        VoxelEngine::World::Voxel existingVoxel = worldManager->getVoxel(position.x, position.y, position.z);
+        if (existingVoxel.id != static_cast<uint8_t>(VoxelEngine::World::VoxelType::AIR)) {
+            std::cout << "[" << VoxelEngine::Utils::getTimestamp() << "][BlockPlacement] Position already occupied by voxel type " << static_cast<int>(existingVoxel.id) << std::endl;
+            return false;
+        }
+        
+        // Check if placement would interfere with player position - improved safety
+        glm::vec3 playerPos = const_cast<Game&>(game).getPlayerPosition();
+        glm::vec3 blockPos = glm::vec3(position);
+        
+        // Validate player position
+        if (std::isnan(playerPos.x) || std::isnan(playerPos.y) || std::isnan(playerPos.z) ||
+            std::isinf(playerPos.x) || std::isinf(playerPos.y) || std::isinf(playerPos.z)) {
+            std::cout << "[" << VoxelEngine::Utils::getTimestamp() << "][BlockPlacement] Player position is invalid (NaN/Inf)" << std::endl;
+            return false;
+        }
+        
+        // Enhanced collision check - prevent placing blocks too close to camera/player
+        float distance = glm::distance(playerPos, blockPos);
+        float minSafeDistance = 2.5f; // Increased minimum distance for safety
+        
+        if (distance < minSafeDistance) {
+            std::cout << "[" << VoxelEngine::Utils::getTimestamp() << "][BlockPlacement] Block too close to player (distance: " 
+                      << distance << " < " << minSafeDistance << ")" << std::endl;
+            return false;
+        }
+        
+        // Additional safety: prevent placing blocks that would intersect with camera frustum near plane
+        // This helps prevent crashes when placing very close to camera
+        if (distance < 3.0f) {
+            std::cout << "[" << VoxelEngine::Utils::getTimestamp() << "][BlockPlacement] Warning: Block close to camera (distance: " 
+                      << distance << "), but within acceptable range" << std::endl;
+        }
+        
+        return true;
+        
+    } catch (const std::exception& e) {
+        std::cerr << "[" << VoxelEngine::Utils::getTimestamp() << "][BlockPlacement] Exception in isValidPlacement: " << e.what() << std::endl;
+        return false;
+    } catch (...) {
+        std::cerr << "[" << VoxelEngine::Utils::getTimestamp() << "][BlockPlacement] Unknown exception in isValidPlacement" << std::endl;
         return false;
     }
-    
-    // Check if placement would interfere with player position
-    glm::vec3 playerPos = const_cast<Game&>(game).getPlayerPosition();
-    glm::vec3 blockPos = glm::vec3(position);
-    
-    // Simple collision check - ensure block isn't placed inside player
-    float distance = glm::distance(playerPos, blockPos);
-    if (distance < 2.0f) { // Player needs some space
-        return false;
-    }
-    
-    return true;
 }
 
 void BlockPlacement::markChunkDirtyForPosition(VoxelCastle::World::WorldManager* worldManager,

@@ -84,6 +84,15 @@ private:
     static bool isValidPlacement(const Game& game, 
                                const glm::ivec3& position,
                                VoxelCastle::World::WorldManager* worldManager);
+    
+    /**
+     * Check if a chunk position is safe for block modification
+     * @param worldManager World manager for chunk access
+     * @param position World position to check
+     * @return True if position is safe to modify
+     */
+    static bool isChunkPositionSafe(VoxelCastle::World::WorldManager* worldManager,
+                                   const glm::ivec3& position);
 
     /**
      * Mark the chunk segment containing the given position as dirty for mesh regeneration

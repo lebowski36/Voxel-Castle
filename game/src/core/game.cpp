@@ -125,6 +125,10 @@ bool Game::initialize() {
         g_initialCameraPosition = glm::vec3(0.0f);
     }
 
+    // Initialize world timer
+    worldInitTime_ = std::chrono::steady_clock::now();
+    isWorldFullyLoaded_ = false; // Will be set to true after initial chunk loading
+
     // World content initialization delegated to WorldSetup module
 
     // [Dynamic Chunk Loading] Static world initialization removed. Chunks will be loaded dynamically as the camera moves.
@@ -132,6 +136,9 @@ bool Game::initialize() {
     // Initial mesh build after world content is set up
     if (isRunning_ && worldManager_ && textureAtlas_ && meshBuilder_) {
         worldManager_->updateDirtyMeshes(*textureAtlas_, *meshBuilder_);
+        
+        // Mark world as ready after initial mesh building - but add a delay for safety
+        // We'll actually set this flag in the game loop after some time has passed
     }
     
     // Initialize UI system
@@ -199,6 +206,24 @@ void Game::run() {
         // Check window state periodically - more frequently during block operations
         bool shouldLogFrame = (frameCount % 50 == 0) || hasPendingBlockAction();
         auto timeSinceWindowCheck = std::chrono::duration_cast<std::chrono::milliseconds>(currentTime - lastWindowCheckTime);
+        
+        // Mark world as ready after some time has passed and initial chunks are loaded
+        if (!isWorldFullyLoaded_) {
+            auto timeSinceInit = std::chrono::duration_cast<std::chrono::seconds>(currentTime - worldInitTime_).count();
+            if (timeSinceInit >= 5 && worldManager_) { // Wait 5 seconds for chunks to load
+                // Additional check: ensure we have chunks around the player
+                if (camera_) {
+                    glm::vec3 playerPos = camera_->getPosition();
+                    int_fast64_t chunkX = VoxelCastle::World::WorldManager::worldToColumnBaseX(static_cast<int_fast64_t>(playerPos.x));
+                    int_fast64_t chunkZ = VoxelCastle::World::WorldManager::worldToColumnBaseZ(static_cast<int_fast64_t>(playerPos.z));
+                    const auto* chunkColumn = worldManager_->getChunkColumn(chunkX, chunkZ);
+                    if (chunkColumn) {
+                        isWorldFullyLoaded_ = true;
+                        std::cout << "[" << getTimestampGame() << "] [Game] World marked as fully loaded and ready for block operations" << std::endl;
+                    }
+                }
+            }
+        }
         
         if (shouldLogFrame || timeSinceWindowCheck.count() > 1000) { // Check at least every second
             bool windowRunning = gameWindow_ && gameWindow_->isRunning();
@@ -372,4 +397,36 @@ void Game::render() {
     if (gameWindow_) {
         gameWindow_->render();
     }
+}
+
+bool Game::isWorldReadyForBlockOperations() const {
+    // Check if world is marked as fully loaded
+    if (!isWorldFullyLoaded_) {
+        return false;
+    }
+    
+    // Ensure minimum time has passed since world initialization (safety buffer)
+    auto now = std::chrono::steady_clock::now();
+    auto timeSinceInit = std::chrono::duration_cast<std::chrono::seconds>(now - worldInitTime_).count();
+    if (timeSinceInit < 3) { // Require at least 3 seconds after initialization
+        return false;
+    }
+    
+    // Check that essential systems are available
+    if (!worldManager_ || !camera_) {
+        return false;
+    }
+    
+    // Additional safety: check that we have some chunks loaded around the player
+    glm::vec3 playerPos = camera_->getPosition();
+    int_fast64_t chunkX = VoxelCastle::World::WorldManager::worldToColumnBaseX(static_cast<int_fast64_t>(playerPos.x));
+    int_fast64_t chunkZ = VoxelCastle::World::WorldManager::worldToColumnBaseZ(static_cast<int_fast64_t>(playerPos.z));
+    
+    // Check that the chunk column where the player is located exists
+    const auto* chunkColumn = worldManager_->getChunkColumn(chunkX, chunkZ);
+    if (!chunkColumn) {
+        return false;
+    }
+    
+    return true;
 }
