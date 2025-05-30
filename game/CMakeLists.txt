@@ -14,6 +14,7 @@ add_executable(VoxelFortressGame
     src/core/GameLogic.cpp # Added GameLogic module
     src/physics/PlayerPhysics.cpp # Added player physics system
     src/interaction/BlockPlacement.cpp # Added block placement system
+    src/utils/debug_logger.cpp # Added debug logger system
     # Example:
     # src/gameplay/player.cpp
     # ...

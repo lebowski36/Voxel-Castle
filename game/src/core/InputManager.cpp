@@ -4,6 +4,7 @@
 #include "platform/Window.h" // Corrected path to Window.h
 #include "world/world_manager.h" // Required for markAllSegmentsDirty
 #include "interaction/BlockPlacement.h" // For block placement handling
+#include "utils/debug_logger.h"
 #include <SDL3/SDL.h>
 #include <glad/glad.h>
 #include <iostream>
@@ -21,6 +22,11 @@ void processInput(Game& game) {
 
     SDL_Event e;
     while (SDL_PollEvent(&e)) {
+        // Log ALL events for diagnostic purposes
+        DEBUG_LOG("InputManager", "SDL Event: type=" + std::to_string(e.type) + 
+                 " (SDL_EVENT_QUIT=" + std::to_string(SDL_EVENT_QUIT) + 
+                 ", SDL_EVENT_MOUSE_BUTTON_DOWN=" + std::to_string(SDL_EVENT_MOUSE_BUTTON_DOWN) + ")");
+        
         // Comment out or modify the general polling log
         // std::cout << "[InputManager] Polled event type: " << e.type << std::endl << std::flush; 
 
@@ -37,15 +43,16 @@ void processInput(Game& game) {
         }
         
         // Debug: Log mouse button events for left/right clicks only
+        // Log mouse events at DEBUG level (less verbose than before)
         if ((e.type == SDL_EVENT_MOUSE_BUTTON_DOWN || e.type == SDL_EVENT_MOUSE_BUTTON_UP) &&
             (e.button.button == SDL_BUTTON_LEFT || e.button.button == SDL_BUTTON_RIGHT)) {
-            std::cout << "[InputManager] Mouse " << (e.type == SDL_EVENT_MOUSE_BUTTON_DOWN ? "DOWN" : "UP") 
-                      << ", button=" << (e.button.button == SDL_BUTTON_LEFT ? "LEFT" : "RIGHT")
-                      << ", mouseCaptured=" << game.mouseCaptured_ << std::endl << std::flush; // Added flush
+            DEBUG_LOG("InputManager", "Mouse " + std::string(e.type == SDL_EVENT_MOUSE_BUTTON_DOWN ? "DOWN" : "UP") + 
+                     ", button=" + std::string(e.button.button == SDL_BUTTON_LEFT ? "LEFT" : "RIGHT") +
+                     ", mouseCaptured=" + std::to_string(game.mouseCaptured_));
         }
         
         if (e.type == SDL_EVENT_QUIT) {
-            std::cout << "[InputManager] SDL_EVENT_QUIT received!" << std::endl << std::flush; // Added flush
+            CRITICAL_LOG("InputManager", "SDL_EVENT_QUIT received - shutting down");
             game.isRunning_ = false;
         }
         else if (e.type == SDL_EVENT_KEY_DOWN) {
@@ -150,30 +157,30 @@ void processInput(Game& game) {
             game.mouseDeltaY_ += static_cast<float>(-e.motion.yrel);
         }
         else if (e.type == SDL_EVENT_MOUSE_BUTTON_DOWN && game.mouseCaptured_) {
-            std::cout << "[InputManager] Mouse button DOWN detected - button=" << e.button.button 
-                      << ", click_x=" << e.button.x << ", click_y=" << e.button.y << std::endl << std::flush;
+            DEBUG_LOG("InputManager", "Mouse button DOWN detected - button=" + std::to_string(e.button.button) + 
+                     ", click_x=" + std::to_string(e.button.x) + ", click_y=" + std::to_string(e.button.y));
             
             // Check if world is ready for block operations before processing mouse clicks
             if (!game.isWorldReadyForBlockOperations()) {
-                std::cout << "[InputManager] World not ready for block operations - ignoring mouse click" << std::endl << std::flush;
-                return; // Ignore the click if world isn't ready
+                WARN_LOG("InputManager", "World not ready for block operations - ignoring mouse click");
+                continue; // Skip this event but continue processing other events
             }
             
             if (e.button.button == SDL_BUTTON_LEFT) {
-                std::cout << "[InputManager] LEFT mouse button - Setting pendingBlockAction=true, isBlockPlacement=true" << std::endl << std::flush;
+                INFO_LOG("InputManager", "LEFT mouse button - Setting pendingBlockAction=true, isBlockPlacement=true");
                 game.leftMousePressed_ = true;
                 game.pendingBlockAction_ = true;  // Request block placement on next frame
                 game.isBlockPlacement_ = true;    // It's a placement (not removal)
-                std::cout << "[InputManager] LEFT click processed successfully" << std::endl << std::flush;
+                DEBUG_LOG("InputManager", "LEFT click processed successfully");
             } else if (e.button.button == SDL_BUTTON_RIGHT) {
-                std::cout << "[InputManager] RIGHT mouse button - Setting pendingBlockAction=true, isBlockPlacement=false" << std::endl << std::flush;
+                INFO_LOG("InputManager", "RIGHT mouse button - Setting pendingBlockAction=true, isBlockPlacement=false");
                 game.rightMousePressed_ = true;
                 game.pendingBlockAction_ = true;  // Request block removal on next frame
                 game.isBlockPlacement_ = false;   // It's a removal (not placement)
-                std::cout << "[InputManager] RIGHT click processed successfully" << std::endl << std::flush;
+                DEBUG_LOG("InputManager", "RIGHT click processed successfully");
             }
-            std::cout << "[InputManager] After setting flags: pendingAction=" 
-                      << game.hasPendingBlockAction() << ", isPlacement=" << game.isBlockPlacement() << std::endl << std::flush;
+            DEBUG_LOG("InputManager", "After setting flags: pendingAction=" + 
+                     std::to_string(game.hasPendingBlockAction()) + ", isPlacement=" + std::to_string(game.isBlockPlacement()));
         }
         else if (e.type == SDL_EVENT_MOUSE_BUTTON_UP && game.mouseCaptured_) {
             if (e.button.button == SDL_BUTTON_LEFT) {

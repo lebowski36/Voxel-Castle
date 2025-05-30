@@ -2,6 +2,7 @@
 #include "core/game.h"
 #include "SpectatorCamera.h"
 #include "utils/logging_utils.h"
+#include "utils/debug_logger.h"
 #include <glm/gtc/matrix_transform.hpp>
 #include <iostream>
 #include <algorithm>
@@ -90,8 +91,8 @@ RaycastResult BlockPlacement::raycast(const SpectatorCamera* camera,
 }
 
 void BlockPlacement::handleMouseClick(Game& game, bool isLeftClick) {
-    std::cout << "\n[" << VoxelEngine::Utils::getTimestamp() << "][BlockPlacement] ========= MOUSE CLICK START =========" << std::endl;
-    std::cout << "[" << VoxelEngine::Utils::getTimestamp() << "][BlockPlacement] Click type: " << (isLeftClick ? "LEFT (place)" : "RIGHT (remove)") << std::endl;
+    INFO_LOG("BlockPlacement", "========= MOUSE CLICK START =========");
+    INFO_LOG("BlockPlacement", "Click type: " + std::string(isLeftClick ? "LEFT (place)" : "RIGHT (remove)"));
     
     // Add game startup timing protection
     static auto gameStartTime = std::chrono::steady_clock::now();
@@ -99,45 +100,45 @@ void BlockPlacement::handleMouseClick(Game& game, bool isLeftClick) {
     auto elapsedSeconds = std::chrono::duration_cast<std::chrono::seconds>(currentTime - gameStartTime).count();
     
     if (elapsedSeconds < 3) {
-        std::cout << "[" << VoxelEngine::Utils::getTimestamp() << "][BlockPlacement] SAFETY: Game too young (" 
-                  << elapsedSeconds << "s), ignoring click to prevent initialization crashes" << std::endl;
+        WARN_LOG("BlockPlacement", "SAFETY: Game too young (" + std::to_string(elapsedSeconds) + 
+                "s), ignoring click to prevent initialization crashes");
         return;
     }
     
     // Early exit if critical components are not ready
     if (!game.getWindow()) {
-        std::cerr << "[" << VoxelEngine::Utils::getTimestamp() << "][BlockPlacement] ERROR: Window is null! Aborting click." << std::endl;
+        ERROR_LOG("BlockPlacement", "Window is null! Aborting click.");
         return;
     }
-    std::cout << "[" << VoxelEngine::Utils::getTimestamp() << "][BlockPlacement] Window status: Valid" << std::endl;
+    DEBUG_LOG("BlockPlacement", "Window status: Valid");
 
     auto camera = game.getCamera();
     if (!camera) {
-        std::cerr << "[" << VoxelEngine::Utils::getTimestamp() << "][BlockPlacement] ERROR: Camera is null! Aborting click." << std::endl;
+        ERROR_LOG("BlockPlacement", "Camera is null! Aborting click.");
         return;
     }
-    std::cout << "[" << VoxelEngine::Utils::getTimestamp() << "][BlockPlacement] Camera obtained: " << camera << std::endl;
     glm::vec3 pos = camera->getPosition();
-    std::cout << "[" << VoxelEngine::Utils::getTimestamp() << "][BlockPlacement] Camera position: (" << pos.x << ", " << pos.y << ", " << pos.z << ")" << std::endl;
+    DEBUG_LOG("BlockPlacement", "Camera position: (" + std::to_string(pos.x) + ", " + 
+             std::to_string(pos.y) + ", " + std::to_string(pos.z) + ")");
 
     auto worldManager = game.getWorldManager();
     if (!worldManager) {
-        std::cerr << "[" << VoxelEngine::Utils::getTimestamp() << "][BlockPlacement] ERROR: WorldManager is null! Aborting click." << std::endl;
+        ERROR_LOG("BlockPlacement", "WorldManager is null! Aborting click.");
         return;
     }
-    std::cout << "[" << VoxelEngine::Utils::getTimestamp() << "][BlockPlacement] WorldManager obtained: " << worldManager << std::endl;
+    DEBUG_LOG("BlockPlacement", "WorldManager obtained successfully");
 
     // Check if world is ready for block operations (prevents crashes during early loading)
     if (!game.isWorldReadyForBlockOperations()) {
-        std::cout << "[" << VoxelEngine::Utils::getTimestamp() << "][BlockPlacement] World not ready for block operations. Please wait for chunks to finish loading." << std::endl;
+        WARN_LOG("BlockPlacement", "World not ready for block operations. Please wait for chunks to finish loading.");
         return;
     }
-    std::cout << "[" << VoxelEngine::Utils::getTimestamp() << "][BlockPlacement] World readiness check passed" << std::endl;
+    INFO_LOG("BlockPlacement", "World readiness check passed");
 
     // Add critical safety checks for camera position validity
     if (std::isnan(pos.x) || std::isnan(pos.y) || std::isnan(pos.z) || 
         std::isinf(pos.x) || std::isinf(pos.y) || std::isinf(pos.z)) {
-        std::cerr << "[" << VoxelEngine::Utils::getTimestamp() << "][BlockPlacement] ERROR: Camera position is invalid (NaN/Inf)! Aborting click." << std::endl;
+        ERROR_LOG("BlockPlacement", "Camera position is invalid (NaN/Inf)! Aborting click.");
         return;
     }
     
@@ -145,18 +146,18 @@ void BlockPlacement::handleMouseClick(Game& game, bool isLeftClick) {
     glm::vec3 front = camera->getFront();
     if (std::isnan(front.x) || std::isnan(front.y) || std::isnan(front.z) ||
         std::isinf(front.x) || std::isinf(front.y) || std::isinf(front.z)) {
-        std::cerr << "[" << VoxelEngine::Utils::getTimestamp() << "][BlockPlacement] ERROR: Camera front vector is invalid! Aborting click." << std::endl;
+        ERROR_LOG("BlockPlacement", "Camera front vector is invalid! Aborting click.");
         return;
     }
     
     try {
-        std::cout << "[" << VoxelEngine::Utils::getTimestamp() << "][BlockPlacement] All safety checks passed, starting raycast..." << std::endl;
+        INFO_LOG("BlockPlacement", "All safety checks passed, starting raycast...");
         
         // Clear any existing OpenGL errors
         GLenum prevErr;
         while ((prevErr = glGetError()) != GL_NO_ERROR) {
-            std::cout << "[" << VoxelEngine::Utils::getTimestamp() << "][BlockPlacement] Clearing previous OpenGL error: 0x" 
-                      << std::hex << prevErr << std::dec << std::endl;
+            WARN_LOG("BlockPlacement", "Clearing previous OpenGL error: 0x" + 
+                    std::to_string(prevErr));
         }
         
         // Perform raycast to find target
@@ -165,37 +166,36 @@ void BlockPlacement::handleMouseClick(Game& game, bool isLeftClick) {
         // Check for OpenGL errors after raycast
         GLenum err = glGetError();
         if (err != GL_NO_ERROR) {
-            std::cerr << "[" << VoxelEngine::Utils::getTimestamp() << "][BlockPlacement] OpenGL error after raycast: 0x" 
-                      << std::hex << err << std::dec << std::endl;
+            ERROR_LOG("BlockPlacement", "OpenGL error after raycast: 0x" + std::to_string(err));
         }
         
-        std::cout << "[" << VoxelEngine::Utils::getTimestamp() << "][BlockPlacement] Raycast completed. Hit: " << rayResult.hit << std::endl;
+        DEBUG_LOG("BlockPlacement", "Raycast completed. Hit: " + std::to_string(rayResult.hit));
         
         if (!rayResult.hit) {
-            std::cout << "[" << VoxelEngine::Utils::getTimestamp() << "][BlockPlacement] No block in range" << std::endl;
+            DEBUG_LOG("BlockPlacement", "No block in range");
             return;
         }
         
-        std::cout << "[" << VoxelEngine::Utils::getTimestamp() << "][BlockPlacement] Hit block at (" << rayResult.blockPosition.x 
-                  << ", " << rayResult.blockPosition.y << ", " << rayResult.blockPosition.z << ")" << std::endl;
-        std::cout << "[" << VoxelEngine::Utils::getTimestamp() << "][BlockPlacement] Adjacent position: (" << rayResult.adjacentPosition.x 
-                  << ", " << rayResult.adjacentPosition.y << ", " << rayResult.adjacentPosition.z << ")" << std::endl;
+        INFO_LOG("BlockPlacement", "Hit block at (" + std::to_string(rayResult.blockPosition.x) + 
+                ", " + std::to_string(rayResult.blockPosition.y) + ", " + std::to_string(rayResult.blockPosition.z) + ")");
+        DEBUG_LOG("BlockPlacement", "Adjacent position: (" + std::to_string(rayResult.adjacentPosition.x) + 
+                 ", " + std::to_string(rayResult.adjacentPosition.y) + ", " + std::to_string(rayResult.adjacentPosition.z) + ")");
         
         // Validate target position coordinates
         if (std::abs(rayResult.blockPosition.x) > 1000000 || std::abs(rayResult.blockPosition.y) > 1000 || std::abs(rayResult.blockPosition.z) > 1000000) {
-            std::cerr << "[" << VoxelEngine::Utils::getTimestamp() << "][BlockPlacement] ERROR: Target position out of valid range! Aborting." << std::endl;
+            ERROR_LOG("BlockPlacement", "Target position out of valid range! Aborting.");
             return;
         }
         
         if (isLeftClick && (std::abs(rayResult.adjacentPosition.x) > 1000000 || std::abs(rayResult.adjacentPosition.y) > 1000 || std::abs(rayResult.adjacentPosition.z) > 1000000)) {
-            std::cerr << "[" << VoxelEngine::Utils::getTimestamp() << "][BlockPlacement] ERROR: Adjacent position out of valid range! Aborting." << std::endl;
+            ERROR_LOG("BlockPlacement", "Adjacent position out of valid range! Aborting.");
             return;
         }
         
         // Additional safety check: ensure target chunk exists or can be created safely
         glm::ivec3 targetPos = isLeftClick ? rayResult.adjacentPosition : rayResult.blockPosition;
         if (!isChunkPositionSafe(worldManager, targetPos)) {
-            std::cerr << "[" << VoxelEngine::Utils::getTimestamp() << "][BlockPlacement] ERROR: Chunk at target position is not safe for modification! Aborting." << std::endl;
+            ERROR_LOG("BlockPlacement", "Chunk at target position is not safe for modification! Aborting.");
             return;
         }
         

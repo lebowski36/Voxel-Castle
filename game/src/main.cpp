@@ -12,6 +12,7 @@
 
 // Game Core
 #include "../include/core/game.h" // Corrected include path
+#include "utils/debug_logger.h" // Debug logging system
 
 // Flecs - ECS
 #include <flecs.h>
@@ -51,20 +52,28 @@ const int SCREEN_HEIGHT = 1800; // 3x original height
 int main(int /*argc*/, char* /*argv*/[]) { // Suppress unused parameter warnings
     std::cout << "Starting VoxelFortress Game - Refactored" << std::endl;
 
+    // Initialize debug logging system
+    VoxelCastle::Utils::DebugLogger::getInstance().startNewSession();
+    INFO_LOG("Main", "VoxelFortress Game Starting - Debug logging initialized");
+
     Game game;
 
     if (game.initialize()) {
+        INFO_LOG("Main", "Game initialization successful - starting main loop");
         game.run();
     } else {
         std::cerr << "Game failed to initialize. Exiting." << std::endl;
+        ERROR_LOG("Main", "Game initialization failed");
         // Potentially return an error code or perform minimal cleanup if necessary
         // before game.shutdown() is called (or if it's not safe to call).
         // For now, we assume shutdown can still be called.
     }
 
+    INFO_LOG("Main", "Game loop ended - shutting down");
     game.shutdown();
 
     std::cout << "VoxelFortress Game Ended Gracefully." << std::endl;
+    INFO_LOG("Main", "Game shutdown complete");
     return 0;
 
 
