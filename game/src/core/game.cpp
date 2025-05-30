@@ -154,17 +154,14 @@ bool Game::initialize() {
         );
         
         // Position it at bottom center of screen
-        float uiSize = 200.0f; // Much larger size for better visibility
+        float uiSize = 120.0f; // Reasonable size for UI element
         float centerX = (screenWidth_ - uiSize) / 2.0f;
+        float bottomY = screenHeight_ - uiSize - 50.0f; // 50px margin from bottom
         
-        // Try a different position - let's put it in the center of the screen
-        // to rule out any coordinate system issues
-        float centerY = (screenHeight_ - uiSize) / 2.0f;
-        
-        std::cout << "[Game] Positioning BlockSelectionUI in screen center at (" << centerX << ", " << centerY 
+        std::cout << "[Game] Positioning BlockSelectionUI at bottom center (" << centerX << ", " << bottomY 
                   << ") with screen size " << screenWidth_ << "x" << screenHeight_ << std::endl;
         
-        blockSelectionUI_->setPosition(centerX, centerY);
+        blockSelectionUI_->setPosition(centerX, bottomY);
         blockSelectionUI_->setSize(uiSize, uiSize);
         
         // Debug: Let's verify the position was set correctly
@@ -175,28 +172,7 @@ bool Game::initialize() {
         // Add to UI system
         uiSystem_->addElement(blockSelectionUI_);
         
-        // DIAGNOSTIC: Create a bright red test panel to verify UI rendering works
-        auto testPanel = std::make_shared<VoxelEngine::UI::UIPanel>(&uiSystem_->getRenderer());
-        testPanel->setColor(glm::vec4(1.0f, 0.0f, 0.0f, 1.0f)); // Bright red
-        testPanel->setSize(150.0f, 150.0f); // Large size
-        
-        // Position it offset from the block selection UI - MOVED TO CENTER OF SCREEN FOR DEBUG
-        float testX = 1200.0f; // Center X of 2400x1800 screen
-        float testY = 900.0f;  // Center Y of 2400x1800 screen
-        
-        std::cout << "[Game] Creating diagnostic test panel at CENTER SCREEN (" << testX << ", " << testY << ")" << std::endl;
-        
-        testPanel->setPosition(testX, testY);
-        uiSystem_->addElement(testPanel);
-        
-        // Also create a green panel in the top-left corner for additional testing - MADE LARGER
-        auto cornerPanel = std::make_shared<VoxelEngine::UI::UIPanel>(&uiSystem_->getRenderer());
-        cornerPanel->setColor(glm::vec4(0.0f, 1.0f, 0.0f, 1.0f)); // Bright green
-        cornerPanel->setSize(300.0f, 300.0f); // Much larger
-        cornerPanel->setPosition(100.0f, 100.0f); // Top-left corner with more margin
-        uiSystem_->addElement(cornerPanel);
-        
-        std::cout << "[Game] UI system initialized successfully with " << 3 << " UI elements" << std::endl;
+        std::cout << "[Game] UI system initialized successfully with BlockSelectionUI" << std::endl;
     }
     
     return isRunning_;
@@ -390,12 +366,6 @@ void Game::render() {
         while (glGetError() != GL_NO_ERROR) {} 
         
         uiSystem_->render();
-        
-        // Force drawing of a test rectangle EVERY frame during debugging
-        static int frameCount = 0;
-        // Draw test rectangle on every frame for now
-        std::cout << "[Game] Drawing test rectangle in frame " << (++frameCount) << std::endl;
-        uiSystem_->getRenderer().drawTestRectangle();
     }
     
     // Swap buffers AFTER all rendering (3D world + UI) is complete
