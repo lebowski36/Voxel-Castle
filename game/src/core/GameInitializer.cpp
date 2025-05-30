@@ -17,13 +17,15 @@
 GameInitializer::InitResult GameInitializer::initialize(int screenWidth, int screenHeight, const char* projectRoot) {
     InitResult result;
     result.isRunning = false;
-    std::cout << "GameInitializer::initialize() - Initializing Game Window..." << std::endl;
+    std::cout << "GameInitializer::initialize() - Initializing Game Window with dimensions: " 
+              << screenWidth << "x" << screenHeight << std::endl;
     result.gameWindow = std::make_unique<Window>("Voxel Fortress - Alpha", screenWidth, screenHeight);
     if (!result.gameWindow || !result.gameWindow->init()) {
         std::cerr << "Failed to initialize the game window!" << std::endl;
         return result;
     }
-    std::cout << "Game Window initialized successfully." << std::endl;
+    std::cout << "Game Window initialized successfully with actual dimensions: " 
+              << result.gameWindow->getWidth() << "x" << result.gameWindow->getHeight() << std::endl;
     glEnable(GL_DEPTH_TEST);
     glDepthFunc(GL_LESS);
     glEnable(GL_CULL_FACE);

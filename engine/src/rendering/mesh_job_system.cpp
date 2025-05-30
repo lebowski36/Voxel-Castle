@@ -5,8 +5,17 @@
 namespace VoxelEngine {
 namespace Rendering {
 
+// Add logging counter for throttling log messages
+thread_local int loggingCounter = 0;
+constexpr int LOG_INTERVAL = 100; // Only log every 100 operations
+
+bool shouldLog() {
+    return (loggingCounter++ % LOG_INTERVAL) == 0;
+}
+
 MeshJobSystem::MeshJobSystem(size_t numThreads) 
     : m_stop(false), m_runningJobs(0) {
+    // System creation logs - keep these as they only happen once
     std::cout << "[" << VoxelEngine::Utils::getTimestamp() << "] [MeshJobSystem] [Thread:" << VoxelEngine::Utils::getThreadInfo() << "] Creating MeshJobSystem with " << numThreads << " threads" << std::endl;
     
     m_workers.reserve(numThreads);
@@ -35,7 +44,11 @@ std::future<void> MeshJobSystem::enqueue(Job job) {
         }
         
         m_jobQueue.emplace([task]() { (*task)(); });
-        std::cout << "[" << VoxelEngine::Utils::getTimestamp() << "] [MeshJobSystem] [Thread:" << VoxelEngine::Utils::getThreadInfo() << "] Job enqueued, queue size: " << m_jobQueue.size() << std::endl;
+        
+        // Only log every LOG_INTERVAL operations
+        if (shouldLog()) {
+            std::cout << "[" << VoxelEngine::Utils::getTimestamp() << "] [MeshJobSystem] [Thread:" << VoxelEngine::Utils::getThreadInfo() << "] Job enqueued, queue size: " << m_jobQueue.size() << std::endl;
+        }
     }
     
     m_condition.notify_one();
@@ -97,13 +110,22 @@ void MeshJobSystem::workerThread(size_t workerId) {
             if (!m_jobQueue.empty()) {
                 task = std::move(m_jobQueue.front());
                 m_jobQueue.pop();
-                std::cout << "[" << VoxelEngine::Utils::getTimestamp() << "] [MeshJobSystem] [Worker:" << workerId << "] [Thread:" << VoxelEngine::Utils::getThreadInfo() << "] Acquired job, queue size: " << m_jobQueue.size() << std::endl;
+                
+                // Reduced logging - only log occasionally
+                if (shouldLog()) {
+                    std::cout << "[" << VoxelEngine::Utils::getTimestamp() << "] [MeshJobSystem] [Worker:" << workerId << "] [Thread:" << VoxelEngine::Utils::getThreadInfo() << "] Acquired job, queue size: " << m_jobQueue.size() << std::endl;
+                }
             }
         }
         
         if (task.valid()) {
             m_runningJobs.fetch_add(1);
-            std::cout << "[" << VoxelEngine::Utils::getTimestamp() << "] [MeshJobSystem] [Worker:" << workerId << "] [Thread:" << VoxelEngine::Utils::getThreadInfo() << "] Starting job execution, running jobs: " << m_runningJobs.load() << std::endl;
+            
+            // Reduced logging - only log occasionally
+            bool logThisJob = shouldLog();
+            if (logThisJob) {
+                std::cout << "[" << VoxelEngine::Utils::getTimestamp() << "] [MeshJobSystem] [Worker:" << workerId << "] [Thread:" << VoxelEngine::Utils::getThreadInfo() << "] Starting job execution, running jobs: " << m_runningJobs.load() << std::endl;
+            }
             
             auto startTime = std::chrono::high_resolution_clock::now();
             
@@ -111,19 +133,29 @@ void MeshJobSystem::workerThread(size_t workerId) {
                 task();
                 auto endTime = std::chrono::high_resolution_clock::now();
                 auto duration = std::chrono::duration_cast<std::chrono::microseconds>(endTime - startTime);
-                std::cout << "[" << VoxelEngine::Utils::getTimestamp() << "] [MeshJobSystem] [Worker:" << workerId << "] [Thread:" << VoxelEngine::Utils::getThreadInfo() << "] Job completed successfully in " << duration.count() << " μs" << std::endl;
+                
+                // Always log errors, but only log successful completions occasionally
+                if (logThisJob) {
+                    std::cout << "[" << VoxelEngine::Utils::getTimestamp() << "] [MeshJobSystem] [Worker:" << workerId << "] [Thread:" << VoxelEngine::Utils::getThreadInfo() << "] Job completed successfully in " << duration.count() << " μs" << std::endl;
+                }
             } catch (const std::exception& e) {
                 auto endTime = std::chrono::high_resolution_clock::now();
                 auto duration = std::chrono::duration_cast<std::chrono::microseconds>(endTime - startTime);
+                // Always log errors
                 std::cout << "[" << VoxelEngine::Utils::getTimestamp() << "] [MeshJobSystem] [Worker:" << workerId << "] [Thread:" << VoxelEngine::Utils::getThreadInfo() << "] CRITICAL: Job failed with exception after " << duration.count() << " μs: " << e.what() << std::endl;
             } catch (...) {
                 auto endTime = std::chrono::high_resolution_clock::now();
                 auto duration = std::chrono::duration_cast<std::chrono::microseconds>(endTime - startTime);
+                // Always log errors
                 std::cout << "[" << VoxelEngine::Utils::getTimestamp() << "] [MeshJobSystem] [Worker:" << workerId << "] [Thread:" << VoxelEngine::Utils::getThreadInfo() << "] CRITICAL: Job failed with unknown exception after " << duration.count() << " μs" << std::endl;
             }
             
             m_runningJobs.fetch_sub(1);
-            std::cout << "[" << VoxelEngine::Utils::getTimestamp() << "] [MeshJobSystem] [Worker:" << workerId << "] [Thread:" << VoxelEngine::Utils::getThreadInfo() << "] Job finished, running jobs: " << m_runningJobs.load() << std::endl;
+            
+            // Reduced logging - only log occasionally
+            if (logThisJob) {
+                std::cout << "[" << VoxelEngine::Utils::getTimestamp() << "] [MeshJobSystem] [Worker:" << workerId << "] [Thread:" << VoxelEngine::Utils::getThreadInfo() << "] Job finished, running jobs: " << m_runningJobs.load() << std::endl;
+            }
         }
     }
     

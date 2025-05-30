@@ -1,15 +1,17 @@
 #include <cmath> // For std::floor
 #include "../../include/core/game.h"       // Defines Game, forward declares SpectatorCamera
-#include "../../include/SpectatorCamera.h" // Full definition of SpectatorCamera
+#includ    // Initialize UI system
+    if (isRunning_ && textureAtlas_) {
+        uiSystem_ = std::make_unique<VoxelEngine::UI::UISystem>();
+        if (!uiSystem_->initialize(screenWidth_, screenHeight_, projectRoot_)) {
+            std::cerr << "Failed to initialize UI system" << std::endl;
+            isRunning_ = false;
+            return false;
+        }/include/SpectatorCamera.h" // Full definition of SpectatorCamera
 #include "../../include/core/GameInitializer.h"    // Initialization and shutdown helper
 #include "core/WorldSetup.h" // Added for world setup
 #include "core/WorldSetupGlobals.h"
 #include "core/GameRenderer.h" // Added for rendering logic
-
-// UI System includes
-#include "ui/UISystem.h"
-#include "ui/elements/BlockSelectionUI.h"
-#include "ui/elements/UIPanel.h"
 
 // Include headers that will be needed for the actual implementations later
 #include <iostream> 
@@ -45,6 +47,10 @@
 #include "rendering/texture_atlas.h"
 #include "rendering/mesh_builder.h"
 #include "rendering/mesh_renderer.h"
+
+// UI System includes
+#include "ui/UISystem.h"
+#include "ui/elements/BlockSelectionUI.h"
 
 // ECS Components & Systems (if directly used or for registration)
 #include "ecs/components/position_component.h"
@@ -135,9 +141,9 @@ bool Game::initialize() {
     }
     
     // Initialize UI system
-    if (isRunning_ && meshRenderer_ && textureAtlas_) {
+    if (isRunning_ && textureAtlas_ && meshRenderer_) {
         uiSystem_ = std::make_unique<VoxelEngine::UI::UISystem>();
-        if (!uiSystem_->initialize(screenWidth_, screenHeight_, projectRoot_)) {
+        if (!uiSystem_->initialize(screenWidth_, screenHeight_)) {
             std::cerr << "Failed to initialize UI system" << std::endl;
             isRunning_ = false;
             return false;
@@ -154,49 +160,17 @@ bool Game::initialize() {
         );
         
         // Position it at bottom center of screen
-        float uiSize = 200.0f; // Much larger size for better visibility
+        float uiSize = 64.0f; // Size of the UI element
         float centerX = (screenWidth_ - uiSize) / 2.0f;
-        
-        // Try a different position - let's put it in the center of the screen
-        // to rule out any coordinate system issues
-        float centerY = (screenHeight_ - uiSize) / 2.0f;
-        
-        std::cout << "[Game] Positioning BlockSelectionUI in screen center at (" << centerX << ", " << centerY 
-                  << ") with screen size " << screenWidth_ << "x" << screenHeight_ << std::endl;
-        
-        blockSelectionUI_->setPosition(centerX, centerY);
+        float bottomY = screenHeight_ - uiSize - 20.0f; // 20px margin from bottom
+        blockSelectionUI_->setPosition(centerX, bottomY);
         blockSelectionUI_->setSize(uiSize, uiSize);
-        
-        // Debug: Let's verify the position was set correctly
-        std::cout << "[Game] Actual BlockSelectionUI position: (" 
-                  << blockSelectionUI_->getPosition().x << ", " 
-                  << blockSelectionUI_->getPosition().y << ")" << std::endl;
+        blockSelectionUI_->setCurrentBlockType(currentBlockType_);
         
         // Add to UI system
         uiSystem_->addElement(blockSelectionUI_);
         
-        // DIAGNOSTIC: Create a bright red test panel to verify UI rendering works
-        auto testPanel = std::make_shared<VoxelEngine::UI::UIPanel>(&uiSystem_->getRenderer());
-        testPanel->setColor(glm::vec4(1.0f, 0.0f, 0.0f, 1.0f)); // Bright red
-        testPanel->setSize(150.0f, 150.0f); // Large size
-        
-        // Position it offset from the block selection UI - MOVED TO CENTER OF SCREEN FOR DEBUG
-        float testX = 1200.0f; // Center X of 2400x1800 screen
-        float testY = 900.0f;  // Center Y of 2400x1800 screen
-        
-        std::cout << "[Game] Creating diagnostic test panel at CENTER SCREEN (" << testX << ", " << testY << ")" << std::endl;
-        
-        testPanel->setPosition(testX, testY);
-        uiSystem_->addElement(testPanel);
-        
-        // Also create a green panel in the top-left corner for additional testing - MADE LARGER
-        auto cornerPanel = std::make_shared<VoxelEngine::UI::UIPanel>(&uiSystem_->getRenderer());
-        cornerPanel->setColor(glm::vec4(0.0f, 1.0f, 0.0f, 1.0f)); // Bright green
-        cornerPanel->setSize(300.0f, 300.0f); // Much larger
-        cornerPanel->setPosition(100.0f, 100.0f); // Top-left corner with more margin
-        uiSystem_->addElement(cornerPanel);
-        
-        std::cout << "[Game] UI system initialized successfully with " << 3 << " UI elements" << std::endl;
+        std::cout << "[Game] UI system initialized successfully" << std::endl;
     }
     
     return isRunning_;
@@ -360,9 +334,6 @@ void Game::render() {
         return; 
     }
 
-    // Clear the color and depth buffers BEFORE rendering
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    
     // Delegate rendering to GameRenderer
     GameRenderer::renderGame(
         *camera_,
@@ -374,32 +345,8 @@ void Game::render() {
         screenHeight_
     );
     
-    // Verify the viewport is properly set for UI rendering
-    GLint viewport[4];
-    glGetIntegerv(GL_VIEWPORT, viewport);
-    if (viewport[2] != screenWidth_ || viewport[3] != screenHeight_) {
-        std::cout << "Correcting viewport before UI rendering: " 
-                  << viewport[0] << "," << viewport[1] << "," << viewport[2] << "x" << viewport[3] 
-                  << " to 0,0," << screenWidth_ << "x" << screenHeight_ << std::endl;
-        glViewport(0, 0, screenWidth_, screenHeight_);
-    }
-    
     // Render UI system on top of the 3D world
     if (uiSystem_) {
-        // Reset any OpenGL error state before UI rendering
-        while (glGetError() != GL_NO_ERROR) {} 
-        
         uiSystem_->render();
-        
-        // Force drawing of a test rectangle EVERY frame during debugging
-        static int frameCount = 0;
-        // Draw test rectangle on every frame for now
-        std::cout << "[Game] Drawing test rectangle in frame " << (++frameCount) << std::endl;
-        uiSystem_->getRenderer().drawTestRectangle();
-    }
-    
-    // Swap buffers AFTER all rendering (3D world + UI) is complete
-    if (gameWindow_) {
-        gameWindow_->render();
     }
 }

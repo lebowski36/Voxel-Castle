@@ -111,7 +111,7 @@ void renderGame(
     // Optional: Debug Atlas Rendering (can be called from here or separately)
     // renderDebugInfo(textureAtlas, screenWidth, screenHeight);
 
-    gameWindow.render(); // Swaps buffers
+    // NOTE: Buffer swap moved to Game::render() after UI rendering is complete
 }
 
 void renderDebugInfo(

@@ -24,6 +24,13 @@ add_library(VoxelEngine STATIC
     src/rendering/debug_utils.cpp # Added DebugUtils source
     src/external/stb_image_impl.cpp # Added stb_image implementation
     src/rendering/Shader.cpp # Added Shader source
+    # UI System sources
+    src/ui/UIElement.cpp # UI base element
+    src/ui/UIRenderer.cpp # UI rendering system
+    src/ui/UISystem.cpp # Main UI system manager
+    src/ui/elements/UITexture.cpp # Basic texture UI element
+    src/ui/elements/UIPanel.cpp # Basic solid color UI element
+    src/ui/elements/BlockSelectionUI.cpp # Block selection UI element
     # Add GLAD source file if compiling it directly
     # Or link against a pre-built GLAD library later
     # For example, if GLAD source is in external/glad/src/glad.c relative to root:

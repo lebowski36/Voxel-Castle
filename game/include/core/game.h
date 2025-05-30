@@ -24,6 +24,10 @@ namespace VoxelEngine {
         class TextRenderer; // Added
         class DebugOverlay; // Forward declare DebugOverlay
     }
+    namespace UI {
+        class UISystem; // Forward declare UISystem
+        class BlockSelectionUI; // Forward declare BlockSelectionUI
+    }
 }
 
 // Custom comparator for glm::vec3 to be used in std::set
@@ -133,6 +137,8 @@ private:
     std::unique_ptr<VoxelEngine::Rendering::MeshBuilder> meshBuilder_;
     std::unique_ptr<VoxelEngine::Rendering::MeshRenderer> meshRenderer_;
     std::unique_ptr<SpectatorCamera> camera_;
+    std::unique_ptr<VoxelEngine::UI::UISystem> uiSystem_; // UI system for game interface
+    std::shared_ptr<VoxelEngine::UI::BlockSelectionUI> blockSelectionUI_; // Block selection UI element
     
     // Game loop state
     bool isRunning_ = false;
