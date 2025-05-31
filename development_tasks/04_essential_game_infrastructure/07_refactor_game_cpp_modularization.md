@@ -19,16 +19,16 @@ Extract major functional blocks into separate classes while maintaining the Game
 - [ ] **1.3** Design interfaces between Game class and extracted modules
 
 ### Phase 2: Game Loop Extraction
-- [ ] **2.1** Create GameLoop class
+- [x] **2.1** Create GameLoop class
   - Extract `run()` method logic (~100 lines)
   - Handle frame timing, delta time calculation
   - Coordinate update/render calls
   - File: `/home/system-x1/Projects/Voxel Castle/game/include/core/GameLoop.h`
   - File: `/home/system-x1/Projects/Voxel Castle/game/src/core/GameLoop.cpp`
-- [ ] **2.2** Update Game class to use GameLoop
+- [x] **2.2** Update Game class to use GameLoop
   - Replace `run()` implementation with GameLoop delegation
   - Test that game loop still functions correctly
-- [ ] **2.3** Build and test Game Loop extraction
+- [x] **2.3** Build and test Game Loop extraction
   - Verify game still runs without regressions
   - Confirm frame timing and input handling work
 
