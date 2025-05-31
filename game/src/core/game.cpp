@@ -10,6 +10,7 @@
 
 // UI System includes
 #include "ui/UISystem.h"
+#include "ui/MenuSystem.h"
 #include "ui/elements/BlockSelectionUI.h"
 #include "ui/elements/UIPanel.h"
 
@@ -83,7 +84,7 @@ Game::Game()
       meshBuilder_(nullptr),
       meshRenderer_(nullptr),
       camera_(nullptr),
-      uiSystem_(nullptr),
+      menuSystem_(nullptr),
       blockSelectionUI_(nullptr),
       mouseCaptureManager_(nullptr),
       gameLoop_(std::make_unique<GameLoop>()),
@@ -162,8 +163,8 @@ bool Game::initialize() {
     
     // Initialize UI system
     if (isRunning_ && meshRenderer_ && textureAtlas_) {
-        uiSystem_ = std::make_unique<VoxelEngine::UI::UISystem>();
-        if (!uiSystem_->initialize(screenWidth_, screenHeight_, projectRoot_)) {
+        menuSystem_ = std::make_unique<VoxelEngine::UI::MenuSystem>();
+        if (!menuSystem_->initialize(screenWidth_, screenHeight_, projectRoot_)) {
             std::cerr << "Failed to initialize UI system" << std::endl;
             isRunning_ = false;
             return false;
@@ -174,7 +175,7 @@ bool Game::initialize() {
         
         // Create block selection UI element with proper constructor parameters
         blockSelectionUI_ = std::make_shared<VoxelEngine::UI::BlockSelectionUI>(
-            &uiSystem_->getRenderer(), 
+            &menuSystem_->getRenderer(), 
             textureAtlas_.get(), 
             atlasTextureId
         );
@@ -189,6 +190,7 @@ bool Game::initialize() {
         
         blockSelectionUI_->setPosition(centerX, bottomY);
         blockSelectionUI_->setSize(uiSize, uiSize);
+        blockSelectionUI_->setVisible(true); // Ensure it's visible by default in gameplay mode
         
         // Debug: Let's verify the position was set correctly
         std::cout << "[Game] Actual BlockSelectionUI position: (" 
@@ -196,7 +198,7 @@ bool Game::initialize() {
                   << blockSelectionUI_->getPosition().y << ")" << std::endl;
         
         // Add to UI system
-        uiSystem_->addElement(blockSelectionUI_);
+        menuSystem_->addElement(blockSelectionUI_);
         
         std::cout << "[Game] UI system initialized successfully with BlockSelectionUI" << std::endl;
     }
@@ -235,9 +237,9 @@ void Game::shutdown() {
     if (blockSelectionUI_) {
         blockSelectionUI_.reset();
     }
-    if (uiSystem_) {
-        uiSystem_->shutdown();
-        uiSystem_.reset();
+    if (menuSystem_) {
+        menuSystem_->shutdown();
+        menuSystem_.reset();
     }
     
     GameInitializer::InitResult resources;
@@ -286,10 +288,32 @@ void Game::toggleMenu() {
     if (gameState_ == GameState::PLAYING) {
         gameState_ = GameState::MENU;
         setMouseCaptured(false); // Show cursor for menu navigation
+        
+        // Hide game UI elements when menu is open
+        if (blockSelectionUI_) {
+            blockSelectionUI_->setVisible(false);
+        }
+        
+        // Show menu
+        if (menuSystem_) {
+            menuSystem_->showMainMenu();
+        }
+        
         std::cout << "[Game] Menu opened - game paused, cursor visible" << std::endl;
     } else {
         gameState_ = GameState::PLAYING;
         setMouseCaptured(true); // Hide cursor for gameplay
+        
+        // Show game UI elements when menu is closed
+        if (blockSelectionUI_) {
+            blockSelectionUI_->setVisible(true);
+        }
+        
+        // Hide menu
+        if (menuSystem_) {
+            menuSystem_->closeMenus();
+        }
+        
         std::cout << "[Game] Menu closed - game resumed, cursor hidden" << std::endl;
     }
 }
@@ -326,8 +350,8 @@ void Game::update(float deltaTime) {
     }
     
     // Update UI system
-    if (uiSystem_) {
-        uiSystem_->update(deltaTime);
+    if (menuSystem_) {
+        menuSystem_->update(deltaTime);
         
         // Sync block selection UI with current block type
         if (blockSelectionUI_ && blockSelectionUI_->getCurrentBlockType() != currentBlockType_) {
@@ -349,7 +373,7 @@ void Game::render() {
         *textureAtlas_,
         *gameWindow_,
         *worldManager_,
-        uiSystem_.get(),
+        menuSystem_.get(),
         screenWidth_,
         screenHeight_
     );

@@ -31,6 +31,11 @@ add_library(VoxelEngine STATIC
     src/ui/elements/UITexture.cpp # Basic texture UI element
     src/ui/elements/UIPanel.cpp # Basic solid color UI element
     src/ui/elements/BlockSelectionUI.cpp # Block selection UI element
+    src/ui/MenuSystem.cpp # Menu system manager
+    src/ui/elements/UIButton.cpp # Button UI element
+    src/ui/elements/UICheckbox.cpp # Checkbox UI element
+    src/ui/elements/MainMenu.cpp # Main menu UI
+    src/ui/elements/SettingsMenu.cpp # Settings menu UI
     # Input system sources
     src/input/MouseCaptureManager.cpp # Mouse capture management
     # Add GLAD source file if compiling it directly

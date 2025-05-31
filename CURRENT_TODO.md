@@ -88,6 +88,7 @@ This protocol outlines how the AI agent (GitHub Copilot) operates. Adherence to 
 - [ ] Implement Save/Load System
 - [ ] Performance Profiling and Optimization
 - [ ] Implement Advanced World Generation System (see `/home/system-x1/Projects/Voxel Castle/development_tasks/05_advanced_engine_features/05_advanced_world_generation.md`)
+- [ ] Implement Proper Game Versioning System
 - [ ] (Optional) Implement Advanced Asynchronous Mesh Generation (see `/home/system-x1/Projects/Voxel Castle/development_tasks/05_advanced_engine_features/04_optional_async_mesh_generation.md`)
 
 ## 📝 Near-Term Priority Tasks

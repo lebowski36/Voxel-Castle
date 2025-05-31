@@ -311,6 +311,11 @@ void processInput(Game& game) {
                 std::cout << "[InputManager] Window gained focus - mouse capture enabled" << std::endl;
             }
         }
+        else if (e.type == SDL_EVENT_WINDOW_CLOSE_REQUESTED) {
+            // Handle window close button (X) click
+            CRITICAL_LOG("InputManager", "Window close requested - shutting down");
+            game.isRunning_ = false;
+        }
     }
 }
 

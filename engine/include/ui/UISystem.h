@@ -31,9 +31,11 @@ public:
     // Access to renderer for custom UI elements
     UIRenderer& getRenderer() { return renderer_; }
 
+protected:
+    std::vector<std::shared_ptr<UIElement>> elements_;
+
 private:
     UIRenderer renderer_;
-    std::vector<std::shared_ptr<UIElement>> elements_;
     
     void renderElement(UIElement* element);
 };

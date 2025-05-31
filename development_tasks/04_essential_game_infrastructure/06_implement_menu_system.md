@@ -18,12 +18,12 @@ Implement a comprehensive menu system with modified input handling where ESC ope
 ## Sub-Tasks
 
 ### Phase 1: Input Handling Modifications
-- [ ] **1.1** Remove ESC key mouse capture toggle from InputManager.cpp
+- [x] **1.1** Remove ESC key mouse capture toggle from InputManager.cpp
   - Location: `/home/system-x1/Projects/Voxel Castle/game/src/core/InputManager.cpp` line ~170
   - Remove or comment out the mouse capture toggle logic
-- [ ] **1.2** Ensure mouse capture is enabled by default
+- [x] **1.2** Ensure mouse capture is enabled by default
   - Verify in Game class initialization that mouse capture starts as true
-- [ ] **1.3** Implement ESC key menu toggle
+- [x] **1.3** Implement ESC key menu toggle
   - Add ESC key handler to open/close main menu
   - Define game state for menu (paused/unpaused)
 
