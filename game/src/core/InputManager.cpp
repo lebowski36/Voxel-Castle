@@ -168,62 +168,8 @@ void processInput(Game& game) {
             }
             switch (e.key.scancode) {
                 case SDL_SCANCODE_ESCAPE:
-                    // Toggle mouse capture state using the Game class methods
-                    game.setMouseCaptured(!game.isMouseCaptured());
-                    if (game.getWindow() && game.getWindow()->getSDLWindow()) {
-                        SDL_Window* window = game.getWindow()->getSDLWindow();
-                        
-                        // Force update of window info on next frame
-                        g_windowInfoValid = false;
-                        
-                        if (game.isMouseCaptured()) {
-                            // Enable mouse capture: hide cursor, relative mode, and confine to window
-                            INFO_LOG("InputManager", "ENABLING mouse capture (running on Wayland - using advanced confinement)");
-                            
-                            // First set relative mode which hides cursor and makes mouse movements relative
-                            SDL_SetWindowRelativeMouseMode(window, true);
-                            
-                            // Then grab the mouse input
-                            SDL_SetWindowMouseGrab(window, true);
-                            
-                            // Get window position and size
-                            int winX, winY, winW, winH;
-                            SDL_GetWindowPosition(window, &winX, &winY);
-                            SDL_GetWindowSize(window, &winW, &winH);
-                            
-                            // Create a specific rectangle for mouse confinement (SDL3 on Wayland may ignore this)
-                            SDL_Rect windowRect = { 0, 0, winW, winH }; // Local window coordinates
-                            SDL_SetWindowMouseRect(window, &windowRect);
-                            
-                            // Center the mouse in the window as starting point
-                            int centerX = winX + winW / 2;
-                            int centerY = winY + winH / 2;
-                            SDL_WarpMouseGlobal(centerX, centerY);
-                            
-                            // Force update window info for the software confinement
-                            g_windowPosX = winX;
-                            g_windowPosY = winY;
-                            g_windowWidth = winW;
-                            g_windowHeight = winH;
-                            g_windowInfoValid = true;
-                            
-                            INFO_LOG("InputManager", "Mouse capture ENABLED - multi-layered confinement active");
-                            DEBUG_LOG("InputManager", "Mouse capture details: relative_mode=ON, grab=ON, rect=" + 
-                                    std::to_string(windowRect.w) + "x" + std::to_string(windowRect.h) + 
-                                    ", centered at (" + std::to_string(centerX) + ", " + std::to_string(centerY) + 
-                                    "), window_bounds: " + std::to_string(winX) + "," + std::to_string(winY) + " " + 
-                                    std::to_string(winW) + "x" + std::to_string(winH));
-                        } else {
-                            // Disable mouse capture: show cursor, absolute mode, release grab
-                            SDL_SetWindowRelativeMouseMode(window, false);
-                            SDL_SetWindowMouseGrab(window, false);
-                            SDL_SetWindowMouseRect(window, nullptr); // Remove confinement
-                            
-                            INFO_LOG("InputManager", "Mouse capture DISABLED - cursor visible, absolute mode, grab released");
-                        }
-                        
-                        std::cout << "[InputManager] Mouse capture toggled: " << game.isMouseCaptured() << std::endl << std::flush; // Added flush
-                    }
+                    // Toggle menu instead of mouse capture
+                    game.toggleMenu();
                     break;
                 case SDL_SCANCODE_O:
                     game.toggleCameraMode();
@@ -357,6 +303,13 @@ void processInput(Game& game) {
                 game.camera_->updateAspect(static_cast<float>(e.window.data1) / static_cast<float>(e.window.data2));
             }
             glViewport(0, 0, e.window.data1, e.window.data2);
+        }
+        else if (e.type == SDL_EVENT_WINDOW_FOCUS_GAINED) {
+            // Automatically enable mouse capture when window gains focus (unless menu is open)
+            if (game.getGameState() == GameState::PLAYING) {
+                game.setMouseCaptured(true);
+                std::cout << "[InputManager] Window gained focus - mouse capture enabled" << std::endl;
+            }
         }
     }
 }

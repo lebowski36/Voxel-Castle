@@ -37,6 +37,9 @@
 #include <glm/gtc/type_ptr.hpp>
 #include <glm/gtx/string_cast.hpp>
 
+// Mouse capture manager
+#include "input/MouseCaptureManager.h"
+
 // Forward declared class implementations (will be needed when unique_ptrs are initialized)
 #include "platform/Window.h" 
 #include "flecs.h" 
@@ -117,6 +120,17 @@ bool Game::initialize() {
     camera_ = std::move(result.camera);
     lastFrameTime_ = result.lastFrameTime;
     isRunning_ = result.isRunning;
+
+    // Initialize mouse capture manager
+    mouseCaptureManager_ = std::make_unique<VoxelEngine::Input::MouseCaptureManager>();
+    SDL_Window* sdlWindow = gameWindow_ ? gameWindow_->getSDLWindow() : nullptr;
+    if (!sdlWindow) {
+        std::cout << "[Game] Warning: No valid SDL window for mouse capture manager" << std::endl;
+    } else if (!mouseCaptureManager_->initialize(sdlWindow, VoxelEngine::Input::MouseCaptureManager::CaptureMode::CAPTURED)) {
+        std::cout << "[Game] Warning: Failed to initialize mouse capture manager" << std::endl;
+    } else {
+        std::cout << "[Game] Mouse capture manager initialized - cursor should now be hidden" << std::endl;
+    }
 
     // Set the global initial camera position for world setup
     if (camera_) {
@@ -281,6 +295,12 @@ void Game::run() {
 }
 
 void Game::shutdown() {
+    // Clean up mouse capture manager
+    if (mouseCaptureManager_) {
+        mouseCaptureManager_->shutdown();
+        mouseCaptureManager_.reset();
+    }
+    
     // Clean up UI system first
     if (blockSelectionUI_) {
         blockSelectionUI_.reset();
@@ -329,6 +349,18 @@ void Game::toggleCameraMode() {
             camera_->setPosition(playerPosition_);
         }
         std::cout << "[Game] Switched to FREE_FLYING camera mode" << std::endl;
+    }
+}
+
+void Game::toggleMenu() {
+    if (gameState_ == GameState::PLAYING) {
+        gameState_ = GameState::MENU;
+        setMouseCaptured(false); // Show cursor for menu navigation
+        std::cout << "[Game] Menu opened - game paused, cursor visible" << std::endl;
+    } else {
+        gameState_ = GameState::PLAYING;
+        setMouseCaptured(true); // Hide cursor for gameplay
+        std::cout << "[Game] Menu closed - game resumed, cursor hidden" << std::endl;
     }
 }
 
@@ -429,4 +461,22 @@ bool Game::isWorldReadyForBlockOperations() const {
     }
     
     return true;
+}
+
+// Mouse capture methods implementation
+bool Game::isMouseCaptured() const {
+    if (mouseCaptureManager_) {
+        return mouseCaptureManager_->isCaptured();
+    }
+    return mouseCaptured_; // Fallback to old boolean
+}
+
+void Game::setMouseCaptured(bool captured) {
+    mouseCaptured_ = captured; // Keep the old boolean in sync
+    
+    if (mouseCaptureManager_) {
+        auto mode = captured ? VoxelEngine::Input::MouseCaptureManager::CaptureMode::CAPTURED 
+                            : VoxelEngine::Input::MouseCaptureManager::CaptureMode::FREE;
+        mouseCaptureManager_->setCaptureMode(mode);
+    }
 }

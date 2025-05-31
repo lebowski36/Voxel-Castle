@@ -31,6 +31,8 @@ add_library(VoxelEngine STATIC
     src/ui/elements/UITexture.cpp # Basic texture UI element
     src/ui/elements/UIPanel.cpp # Basic solid color UI element
     src/ui/elements/BlockSelectionUI.cpp # Block selection UI element
+    # Input system sources
+    src/input/MouseCaptureManager.cpp # Mouse capture management
     # Add GLAD source file if compiling it directly
     # Or link against a pre-built GLAD library later
     # For example, if GLAD source is in external/glad/src/glad.c relative to root:

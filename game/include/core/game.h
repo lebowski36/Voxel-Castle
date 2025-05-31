@@ -9,6 +9,13 @@
 #include "core/InputManager.h"        // Input handling module
 #include "core/CameraMode.h"          // Camera mode enumeration
 #include "world/voxel_types.h"        // For VoxelEngine::World::VoxelType
+#include "input/MouseCaptureManager.h" // Mouse capture management
+
+// Game state enumeration
+enum class GameState {
+    PLAYING,    // Normal gameplay
+    MENU        // Menu is open (game paused)
+};
 
 // Forward declarations to minimize include dependencies in header
 class Window;
@@ -71,8 +78,8 @@ public:
     const VoxelEngine::Rendering::MeshBuilder* getMeshBuilder() const { return meshBuilder_.get(); }    SpectatorCamera* getCamera() { return camera_.get(); }
     const SpectatorCamera* getCamera() const { return camera_.get(); }
 
-    bool isMouseCaptured() const { return mouseCaptured_; }
-    void setMouseCaptured(bool captured) { mouseCaptured_ = captured; }
+    bool isMouseCaptured() const;
+    void setMouseCaptured(bool captured);
     float getMouseDeltaX() const { return mouseDeltaX_; }
     float getMouseDeltaY() const { return mouseDeltaY_; }
     void setMouseDeltaX(float delta) { mouseDeltaX_ = delta; }
@@ -93,6 +100,12 @@ public:
     CameraMode getCameraMode() const { return cameraMode_; }
     void setCameraMode(CameraMode mode) { cameraMode_ = mode; }
     void toggleCameraMode();
+
+    // Game state management
+    GameState getGameState() const { return gameState_; }
+    void setGameState(GameState state) { gameState_ = state; }
+    bool isMenuOpen() const { return gameState_ == GameState::MENU; }
+    void toggleMenu();
 
     // First-person mode input state
     bool isSprinting() const { return sprinting_; }
@@ -146,6 +159,7 @@ private:
     std::unique_ptr<SpectatorCamera> camera_;
     std::unique_ptr<VoxelEngine::UI::UISystem> uiSystem_; // UI system for game interface
     std::shared_ptr<VoxelEngine::UI::BlockSelectionUI> blockSelectionUI_; // Block selection UI element
+    std::unique_ptr<VoxelEngine::Input::MouseCaptureManager> mouseCaptureManager_; // Mouse capture management
     
     // Game loop state
     bool isRunning_ = false;
@@ -161,6 +175,7 @@ private:
 
     // Camera mode and physics input state
     CameraMode cameraMode_ = CameraMode::FREE_FLYING; // Default to free-flying mode
+    GameState gameState_ = GameState::PLAYING; // Default to playing state
     bool sprinting_ = false;   // Shift key for faster movement in first-person
     bool crouching_ = false;   // Ctrl key for crouching in first-person
     bool jumping_ = false;     // Space key for jumping in first-person
