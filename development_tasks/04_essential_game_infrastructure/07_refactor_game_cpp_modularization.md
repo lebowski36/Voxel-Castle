@@ -32,21 +32,14 @@ Extract major functional blocks into separate classes while maintaining the Game
   - Verify game still runs without regressions
   - Confirm frame timing and input handling work
 
-### Phase 3: Game State Management Extraction
-- [ ] **3.1** Create GameStateManager class
-  - Extract menu state management (`toggleMenu()`, game state logic)
-  - Handle camera mode switching
-  - Manage game pause/resume functionality
-  - Mouse capture state coordination
-  - File: `/home/system-x1/Projects/Voxel Castle/game/include/core/GameStateManager.h`
-  - File: `/home/system-x1/Projects/Voxel Castle/game/src/core/GameStateManager.cpp`
-- [ ] **3.2** Update Game class to use GameStateManager
-  - Replace state management methods with GameStateManager delegation
-  - Update ESC key handling integration
-- [ ] **3.3** Build and test Game State Management extraction
-  - Verify ESC menu toggle still works
-  - Confirm mouse capture toggles correctly
-  - Test camera mode switching
+### Phase 3: Game State Management Extraction (WON'T DO)
+- [x] **DECISION: WON'T DO** - Analysis showed this extraction would add more complexity and lines than it removes
+  - Simple state management (GameState enum, basic methods) doesn't justify separate class
+  - Would require additional indirection without substantial benefit
+  - Current implementation in Game class is clean and focused
+- [ ] ~~**3.1** Create GameStateManager class~~
+- [ ] ~~**3.2** Update Game class to use GameStateManager~~
+- [ ] ~~**3.3** Build and test Game State Management extraction~~
 
 ### Phase 4: Render Coordination Extraction
 - [ ] **4.1** Create GameRenderCoordinator class
