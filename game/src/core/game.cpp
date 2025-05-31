@@ -5,6 +5,7 @@
 #include "core/WorldSetup.h" // Added for world setup
 #include "core/WorldSetupGlobals.h"
 #include "core/GameRenderer.h" // Added for rendering logic
+#include "core/GameLoop.h" // Game loop management
 
 // UI System includes
 #include "ui/UISystem.h"
@@ -90,7 +91,8 @@ Game::Game()
       mouseDeltaX_(0.0f),
       mouseDeltaY_(0.0f),
       uiSystem_(nullptr),
-      blockSelectionUI_(nullptr)
+      blockSelectionUI_(nullptr),
+      gameLoop_(std::make_unique<GameLoop>())
       // screenWidth_ and screenHeight_ are const and initialized in header
       // projectRoot_ is const and initialized in header
 {
@@ -205,93 +207,18 @@ void Game::run() {
         return;
     }
 
-    std::cout << "[" << getTimestampGame() << "] [Game] Starting main game loop..." << std::endl;
-    // lastFrameTime_ is initialized in initialize()
-    
-    int frameCount = 0;
-    auto lastWindowCheckTime = std::chrono::steady_clock::now();
-
-    while(isRunning_ && gameWindow_ && gameWindow_->isRunning()) {
-        frameCount++;
-        auto currentTime = std::chrono::steady_clock::now();
-        float deltaTime = std::chrono::duration<float>(currentTime - lastFrameTime_).count();
-        lastFrameTime_ = currentTime;
-        
-        // Check window state periodically - more frequently during block operations
-        bool shouldLogFrame = (frameCount % 50 == 0) || hasPendingBlockAction();
-        auto timeSinceWindowCheck = std::chrono::duration_cast<std::chrono::milliseconds>(currentTime - lastWindowCheckTime);
-        
-        // Mark world as ready after some time has passed and initial chunks are loaded
-        if (!isWorldFullyLoaded_) {
-            auto timeSinceInit = std::chrono::duration_cast<std::chrono::seconds>(currentTime - worldInitTime_).count();
-            if (timeSinceInit >= 5 && worldManager_) { // Wait 5 seconds for chunks to load
-                // Additional check: ensure we have chunks around the player
-                if (camera_) {
-                    glm::vec3 playerPos = camera_->getPosition();
-                    int_fast64_t chunkX = VoxelCastle::World::WorldManager::worldToColumnBaseX(static_cast<int_fast64_t>(playerPos.x));
-                    int_fast64_t chunkZ = VoxelCastle::World::WorldManager::worldToColumnBaseZ(static_cast<int_fast64_t>(playerPos.z));
-                    const auto* chunkColumn = worldManager_->getChunkColumn(chunkX, chunkZ);
-                    if (chunkColumn) {
-                        isWorldFullyLoaded_ = true;
-                        std::cout << "[" << getTimestampGame() << "] [Game] World marked as fully loaded and ready for block operations" << std::endl;
-                    }
-                }
-            }
-        }
-        
-        if (shouldLogFrame || timeSinceWindowCheck.count() > 1000) { // Check at least every second
-            bool windowRunning = gameWindow_ && gameWindow_->isRunning();
-            std::cout << "[" << getTimestampGame() << "] [Game] Frame " << frameCount 
-                     << ", window valid: " << (gameWindow_ != nullptr) 
-                     << ", window running: " << windowRunning
-                     << ", deltaTime: " << deltaTime << "s" << std::endl;
-            lastWindowCheckTime = currentTime;
-            
-            if (!windowRunning) {
-                std::cerr << "[" << getTimestampGame() << "] [Game] CRITICAL: Window stopped running! Breaking main loop." << std::endl;
-                break;
-            }
-        }
-
-        // Ensure deltaTime is not excessively large (e.g., after a breakpoint or long pause)
-        // This can prevent jerky movements or physics explosions.
-        // Adjust max_deltaTime as needed, e.g., 0.1f (100ms) or 0.25f
-        const float max_deltaTime = 0.25f; 
-        if (deltaTime > max_deltaTime) {
-            deltaTime = max_deltaTime;
-        }
-
-        if (shouldLogFrame) {
-            std::cout << "[" << getTimestampGame() << "] [Game] Processing input..." << std::endl;
-        }
-        processInput();
-
-        // If processInput decided to quit (e.g. SDL_EVENT_QUIT), isRunning_ will be false.
-        // Check before proceeding to update and render to allow a clean exit.
-        if (!isRunning_) {
-            std::cout << "[" << getTimestampGame() << "] [Game] isRunning_ set to false, breaking loop" << std::endl;
-            break; 
-        }
-        
-        if (shouldLogFrame) {
-            std::cout << "[" << getTimestampGame() << "] [Game] Calling update..." << std::endl;
-        }
-        update(deltaTime);
-        
-        if (shouldLogFrame) {
-            std::cout << "[" << getTimestampGame() << "] [Game] Calling render..." << std::endl;
-        }
-        render();
-        
-        if (shouldLogFrame) {
-            std::cout << "[" << getTimestampGame() << "] [Game] Frame " << frameCount << " completed successfully" << std::endl;
-        }
-
-        // Optional: Cap framerate or yield to prevent 100% CPU usage if vsync is off
-        // For now, relying on vsync or letting it run as fast as possible.
-        // std::this_thread::sleep_for(std::chrono::milliseconds(1)); // Example minimal yield
+    if (!gameLoop_) {
+        std::cerr << "Game::run() called but GameLoop is not initialized." << std::endl;
+        return;
     }
-    std::cout << "[" << getTimestampGame() << "] [Game] Main game loop ended after " << frameCount << " frames." << std::endl;
+
+    // Delegate to GameLoop
+    int exitCode = gameLoop_->run(*this);
+    
+    // Handle exit code if needed
+    if (exitCode != 0) {
+        std::cerr << "GameLoop returned non-zero exit code: " << exitCode << std::endl;
+    }
 }
 
 void Game::shutdown() {
@@ -367,6 +294,25 @@ void Game::toggleMenu() {
 // Delegates all per-frame game logic to GameLogic module
 #include "core/GameLogic.h"
 void Game::update(float deltaTime) {
+    // Check if world is ready for block operations (world loading logic)
+    if (!isWorldFullyLoaded_) {
+        auto currentTime = std::chrono::steady_clock::now();
+        auto timeSinceInit = std::chrono::duration_cast<std::chrono::seconds>(currentTime - worldInitTime_).count();
+        if (timeSinceInit >= 5 && worldManager_) { // Wait 5 seconds for chunks to load
+            // Additional check: ensure we have chunks around the player
+            if (camera_) {
+                glm::vec3 playerPos = camera_->getPosition();
+                int_fast64_t chunkX = VoxelCastle::World::WorldManager::worldToColumnBaseX(static_cast<int_fast64_t>(playerPos.x));
+                int_fast64_t chunkZ = VoxelCastle::World::WorldManager::worldToColumnBaseZ(static_cast<int_fast64_t>(playerPos.z));
+                const auto* chunkColumn = worldManager_->getChunkColumn(chunkX, chunkZ);
+                if (chunkColumn) {
+                    isWorldFullyLoaded_ = true;
+                    std::cout << "[Game] World marked as fully loaded and ready for block operations" << std::endl;
+                }
+            }
+        }
+    }
+
     GameLogic::update(*this, deltaTime);
 
     if (camera_ && worldManager_ && worldGenerator_) {
@@ -479,4 +425,12 @@ void Game::setMouseCaptured(bool captured) {
                             : VoxelEngine::Input::MouseCaptureManager::CaptureMode::FREE;
         mouseCaptureManager_->setCaptureMode(mode);
     }
+}
+
+bool Game::isWindowRunning() const {
+    return gameWindow_ && gameWindow_->isRunning();
+}
+
+bool Game::hasWindow() const {
+    return gameWindow_ != nullptr;
 }

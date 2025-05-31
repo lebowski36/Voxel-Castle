@@ -10,6 +10,10 @@
 #include "core/CameraMode.h"          // Camera mode enumeration
 #include "world/voxel_types.h"        // For VoxelEngine::World::VoxelType
 #include "input/MouseCaptureManager.h" // Mouse capture management
+#include "core/GameLoop.h"            // Game loop management
+
+// Forward declaration of GameLoop
+class GameLoop;
 
 // Game state enumeration
 enum class GameState {
@@ -60,6 +64,18 @@ public:
 
     // Shuts down all game systems and cleans up resources.
     void shutdown();
+
+    // Check if game is running
+    bool isRunning() const { return isRunning_; }
+    
+    // Set game running state
+    void setRunning(bool running) { isRunning_ = running; }
+    
+    // Check if window is running
+    bool isWindowRunning() const;
+    
+    // Check if window exists
+    bool hasWindow() const;
 
     // --- Public Getters for Core Components and State ---
     Window* getWindow() { return gameWindow_.get(); }
@@ -133,20 +149,17 @@ public:
     bool isWorldReadyForBlockOperations() const;
     void markWorldAsFullyLoaded() { isWorldFullyLoaded_ = true; }
 
+    // Game loop methods (public for GameLoop access)
+    void processInput();
+    void update(float deltaTime);
+    void render();
+
 private:
     // Helper method for world initialization
     void initializeWorldContent();
 
-    // Delegate input processing to InputManager
-    void processInput();
     // Allow InputManager to access private members for input handling
     friend void GameInput::processInput(Game& game);
-
-    // Updates game state.
-    void update(float deltaTime);
-
-    // Renders the game world.
-    void render();
 
     // Core game components - using unique_ptr for automatic memory management
     std::unique_ptr<Window> gameWindow_;
@@ -160,6 +173,7 @@ private:
     std::unique_ptr<VoxelEngine::UI::UISystem> uiSystem_; // UI system for game interface
     std::shared_ptr<VoxelEngine::UI::BlockSelectionUI> blockSelectionUI_; // Block selection UI element
     std::unique_ptr<VoxelEngine::Input::MouseCaptureManager> mouseCaptureManager_; // Mouse capture management
+    std::unique_ptr<GameLoop> gameLoop_; // Game loop management
     
     // Game loop state
     bool isRunning_ = false;
