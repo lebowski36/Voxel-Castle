@@ -33,34 +33,55 @@ bool checkAndConfineMouseToWindow(Game& game) {
         
         DEBUG_LOG("InputManager", "Updated window info: pos=(" + std::to_string(g_windowPosX) + 
                 "," + std::to_string(g_windowPosY) + "), size=" + 
-                std::to_string(g_windowWidth) + "x" + std::to_string(g_windowHeight));
+                std::to_string(g_windowWidth) + "x" + std::to_string(g_windowHeight) + 
+                ", platform: Wayland");
+                
+        // For Wayland, log a special note about known mouse confinement issues
+        DEBUG_LOG("InputManager", "Running on Wayland - SDL mouse confinement has known issues (bug #13073)");
     }
     
-    // Get current global mouse position
+    // Get current global mouse position and mouse button state
     float mouseX, mouseY;
-    SDL_GetMouseState(&mouseX, &mouseY);
+    Uint32 mouseState = SDL_GetMouseState(&mouseX, &mouseY);
     
-    // Calculate window bounds with padding (20px from edge)
-    const int PADDING = 20;
+    // Get global mouse position (needed for Wayland which may report relative coords)
+    float globalMouseX, globalMouseY;
+    SDL_GetGlobalMouseState(&globalMouseX, &globalMouseY);
+    
+    DEBUG_LOG("InputManager", "Mouse position: local=(" + std::to_string(mouseX) + "," + 
+            std::to_string(mouseY) + "), global=(" + 
+            std::to_string(globalMouseX) + "," + std::to_string(globalMouseY) + ")");
+    
+    // Calculate window bounds with minimal padding (5px from edge for more aggressive confinement)
+    const int PADDING = 5;
     float minX = g_windowPosX + PADDING;
     float maxX = g_windowPosX + g_windowWidth - PADDING;
     float minY = g_windowPosY + PADDING;
     float maxY = g_windowPosY + g_windowHeight - PADDING;
     
-    // Check if mouse is near the edge of the window
+    // Check if mouse is near the edge of the window or potentially outside
     bool nearEdge = (mouseX <= minX || mouseX >= maxX || mouseY <= minY || mouseY >= maxY);
+    bool potentiallyOutside = (globalMouseX < g_windowPosX || globalMouseX >= g_windowPosX + g_windowWidth ||
+                              globalMouseY < g_windowPosY || globalMouseY >= g_windowPosY + g_windowHeight);
     
-    if (nearEdge) {
-        // Recenter the mouse
-        int centerX = g_windowPosX + g_windowWidth / 2;
-        int centerY = g_windowPosY + g_windowHeight / 2;
+    if (nearEdge || potentiallyOutside) {
+        // Recenter the mouse - use floats for more precision
+        float centerX = g_windowPosX + g_windowWidth / 2.0f;
+        float centerY = g_windowPosY + g_windowHeight / 2.0f;
         
-        DEBUG_LOG("InputManager", "Mouse near edge: (" + std::to_string(mouseX) + "," + 
-                std::to_string(mouseY) + "), recentering to (" + 
-                std::to_string(centerX) + "," + std::to_string(centerY) + ")");
+        // More detailed logging
+        DEBUG_LOG("InputManager", "Mouse containment: near_edge=" + std::to_string(nearEdge) + 
+                ", outside=" + std::to_string(potentiallyOutside) +
+                ", local=(" + std::to_string(mouseX) + "," + std::to_string(mouseY) + 
+                "), global=(" + std::to_string(globalMouseX) + "," + std::to_string(globalMouseY) + 
+                "), recentering to (" + std::to_string(centerX) + "," + std::to_string(centerY) + ")");
         
-        // Warp mouse to center of window
-        SDL_WarpMouseGlobal(centerX, centerY);
+        // Try to forcibly recapture the mouse with multiple methods
+        SDL_Window* window = game.getWindow()->getSDLWindow();
+        SDL_SetWindowMouseGrab(window, true);
+        
+        // Warp mouse to center of window - use int for the API call
+        SDL_WarpMouseGlobal(static_cast<int>(centerX), static_cast<int>(centerY));
         return true;
     }
     
@@ -75,8 +96,15 @@ void processInput(Game& game) {
     game.setMouseDeltaX(0.0f);
     game.setMouseDeltaY(0.0f);
     
-    // Software mouse confinement check
+    // Software mouse confinement check - check multiple times per frame for more aggressive confinement
+    // This is especially important on Wayland where SDL's built-in confinement has known issues
     if (game.isMouseCaptured()) {
+        // Check twice per frame to be more aggressive with confinement
+        checkAndConfineMouseToWindow(game);
+        
+        // Second check with a small delay to catch fast mouse movements
+        // This adds a backup check even if the mouse has moved since the first check
+        SDL_Delay(1); // Tiny delay to catch mouse movements
         checkAndConfineMouseToWindow(game);
     }
 
@@ -150,25 +178,40 @@ void processInput(Game& game) {
                         
                         if (game.isMouseCaptured()) {
                             // Enable mouse capture: hide cursor, relative mode, and confine to window
+                            INFO_LOG("InputManager", "ENABLING mouse capture (running on Wayland - using advanced confinement)");
+                            
+                            // First set relative mode which hides cursor and makes mouse movements relative
                             SDL_SetWindowRelativeMouseMode(window, true);
+                            
+                            // Then grab the mouse input
                             SDL_SetWindowMouseGrab(window, true);
                             
-                            // Try all available confinement methods (some may not work on Wayland)
-                            SDL_SetWindowMouseRect(window, nullptr); // Confine to entire window
-                            
-                            // Get window position and size for software confinement
+                            // Get window position and size
                             int winX, winY, winW, winH;
                             SDL_GetWindowPosition(window, &winX, &winY);
                             SDL_GetWindowSize(window, &winW, &winH);
+                            
+                            // Create a specific rectangle for mouse confinement (SDL3 on Wayland may ignore this)
+                            SDL_Rect windowRect = { 0, 0, winW, winH }; // Local window coordinates
+                            SDL_SetWindowMouseRect(window, &windowRect);
                             
                             // Center the mouse in the window as starting point
                             int centerX = winX + winW / 2;
                             int centerY = winY + winH / 2;
                             SDL_WarpMouseGlobal(centerX, centerY);
                             
-                            INFO_LOG("InputManager", "Mouse capture ENABLED - software confinement active, centered at (" + 
-                                    std::to_string(centerX) + ", " + std::to_string(centerY) + "), window bounds: " +
-                                    std::to_string(winX) + "," + std::to_string(winY) + " " + 
+                            // Force update window info for the software confinement
+                            g_windowPosX = winX;
+                            g_windowPosY = winY;
+                            g_windowWidth = winW;
+                            g_windowHeight = winH;
+                            g_windowInfoValid = true;
+                            
+                            INFO_LOG("InputManager", "Mouse capture ENABLED - multi-layered confinement active");
+                            DEBUG_LOG("InputManager", "Mouse capture details: relative_mode=ON, grab=ON, rect=" + 
+                                    std::to_string(windowRect.w) + "x" + std::to_string(windowRect.h) + 
+                                    ", centered at (" + std::to_string(centerX) + ", " + std::to_string(centerY) + 
+                                    "), window_bounds: " + std::to_string(winX) + "," + std::to_string(winY) + " " + 
                                     std::to_string(winW) + "x" + std::to_string(winH));
                         } else {
                             // Disable mouse capture: show cursor, absolute mode, release grab
@@ -249,8 +292,27 @@ void processInput(Game& game) {
             }
         }
         else if (e.type == SDL_EVENT_MOUSE_MOTION && game.isMouseCaptured()) {
+            // Store mouse movement for camera
             game.setMouseDeltaX(game.getMouseDeltaX() + static_cast<float>(e.motion.xrel));
             game.setMouseDeltaY(game.getMouseDeltaY() + static_cast<float>(-e.motion.yrel));
+            
+            // Add additional confinement check on mouse movement for more aggressive containment
+            checkAndConfineMouseToWindow(game);
+            
+            // With large/fast movements, also monitor and log the absolute position occasionally
+            // This helps us catch if the mouse leaves the window despite relative mode
+            static int motionCounter = 0;
+            if (++motionCounter % 10 == 0) { // Every 10th motion event
+                float absX, absY;
+                SDL_GetMouseState(&absX, &absY);
+                float globalX, globalY;
+                SDL_GetGlobalMouseState(&globalX, &globalY);
+                
+                DEBUG_LOG("InputManager", "Mouse motion check: rel=(" + 
+                        std::to_string(e.motion.xrel) + "," + std::to_string(e.motion.yrel) + 
+                        "), abs=(" + std::to_string(absX) + "," + std::to_string(absY) + 
+                        "), global=(" + std::to_string(globalX) + "," + std::to_string(globalY) + ")");
+            }
         }
         else if (e.type == SDL_EVENT_MOUSE_BUTTON_DOWN && game.isMouseCaptured()) {
             DEBUG_LOG("InputManager", "Mouse button DOWN detected - button=" + std::to_string(e.button.button) + 
