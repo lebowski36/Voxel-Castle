@@ -1,58 +1,91 @@
 # Voxel Fortress: C++ Custom Engine Development Strategy
 
+## Current Development Status (June 2025)
+
+**Phase 1: Foundational Voxel Engine ✅ COMPLETE**
+
+The foundational systems have been successfully implemented and are operational:
+
+### ✅ Completed Core Systems
+- **Voxel Data Management**: Chunk-based world representation (32³ voxel chunks)
+- **Block Type System**: Flexible block type registry with texture atlas support
+- **ECS Architecture**: Flecs Entity Component System integration
+- **Rendering Pipeline**: OpenGL-based voxel rendering with greedy meshing
+- **Input Handling**: SDL3 input system with camera controls
+- **Game Loop**: Structured game loop with delta time management
+- **World Generation**: Basic procedural terrain generation
+- **Memory Management**: Smart pointer-based resource management
+
+### ✅ Current Operational Features
+- Free-flying spectator camera with smooth movement
+- Real-time world chunk loading/unloading based on camera position
+- Interactive block placement and removal system
+- Texture atlas rendering for different block types
+- Debug information and performance monitoring
+- Mouse capture and release system
+
+## Phase 2: Advanced World Systems & Gameplay Features 🔄 IN PROGRESS
+
+Current development focus areas:
+
+### 🔄 Active Development
+- **UI Framework**: Block selection interface and game menus
+- **Block Interaction**: Refinement of placement/removal mechanics
+- **Game State Management**: Menu system and state transitions
+- **Lighting System**: Basic lighting model for voxel rendering
+
+### 🎯 Next Priorities
+- **Player Physics**: First-person player controller with collision
+- **Advanced World Generation**: Biome systems and geological features
+- **Save/Load System**: World persistence functionality
+- **Performance Optimization**: LOD systems and rendering improvements
+
 ## Core Implementation Philosophy
 
-Development will focus on building a robust and performant custom C++ engine tailored for Voxel Fortress. The strategy emphasizes iterative development, starting with foundational systems and progressively adding complexity.
+Development emphasizes iterative improvement and maintainable code:
 
-## Phase 1: Foundational Voxel Engine (C++)
+- **Performance First**: Profile and optimize critical systems (achieved 60 FPS target)
+- **Modular Design**: Independent, testable engine systems
+- **Documentation**: Clear code documentation and architectural decisions
+- **Version Control**: Structured Git workflow with logical commits
+## Development Practices & Guidelines
 
-The initial development phase will concentrate on establishing the core voxel systems:
+### Architecture Principles
+- **Modularity**: Engine systems are designed as independent, testable components
+- **Performance**: Regular profiling with 60 FPS target maintained
+- **Memory Safety**: RAII and smart pointers prevent memory leaks
+- **Error Handling**: Comprehensive logging and error reporting
 
-1.  **Voxel Data Management:**
-    *   Implement a chunk-based world representation.
-        *   Define standard block size (e.g., 25cm, allowing 4 blocks per meter).
-        *   Establish chunk dimensions (e.g., 32x32x32 blocks, resulting in 8m³ volumes per chunk).
-        *   Consider future support for multi-resolution capabilities (e.g., sub-blocks for finer detail) if performance allows.
-    *   Develop a flexible block type registry or system.
-    *   Design and implement efficient C++ data structures for voxel storage and access.
-    *   Lay the groundwork for basic procedural world generation.
+### Build & Testing
+- **CMake Build System**: Cross-platform compilation support
+- **Continuous Testing**: Manual testing after each major feature
+- **Performance Monitoring**: Frame time tracking and chunk loading metrics
+- **Debug Tools**: Console logging with categorized output levels
 
-2.  **Core Engine Architecture:**
-    *   Establish the chosen Entity Component System (ECS) architecture.
-    *   Implement basic rendering systems to visualize the voxel world (e.g., using OpenGL, Vulkan).
-    *   Set up essential engine modules: input handling, window management, and a main game loop.
+### Code Quality
+- **Documentation**: Clear inline documentation and architectural notes
+- **Version Control**: Structured Git workflow with descriptive commits
+- **Code Reviews**: Peer review for major architectural changes
+- **Standards**: C++17 standard with modern best practices
 
-This phase aims to create a minimal viable voxel engine, allowing for early validation of core mechanics and performance characteristics.
+### Current Development Workflow
+1. **Task Planning**: Detailed sub-tasks in `/development_tasks/` directory
+2. **Implementation**: Focused development on single features
+3. **Testing**: Build and run tests after changes
+4. **Integration**: Confirm functionality before marking complete
+5. **Documentation**: Update relevant documentation files
 
-## Phase 2: Advanced World Systems & Gameplay Features (C++)
+## Project Structure
 
-Building upon the foundational engine, Phase 2 will expand the world's complexity and introduce gameplay elements:
+```
+Voxel Castle/
+├── engine/          # Core engine systems (rendering, ECS, world)
+├── game/            # Game-specific logic and main executable
+├── external/        # Third-party libraries (SDL3, Flecs, GLM)
+├── assets/          # Game assets (textures, shaders, models)
+├── docs/            # Design documentation and specifications
+├── development_tasks/ # Detailed task tracking files
+└── build/           # Compiled binaries and build artifacts
+```
 
-1.  **Hierarchical World Structure:**
-    *   Investigate and implement a hierarchical chunking system to manage large worlds efficiently. This could involve multiple levels of detail or spatial organization.
-    *   Allow for user-selectable world sizes (e.g., Small, Medium, Large) with corresponding performance considerations.
-    *   Develop Level of Detail (LOD) systems for rendering distant terrain and structures.
-
-2.  **Advanced Procedural Generation:**
-    *   Implement sophisticated world generation algorithms, including:
-        *   Biome generation (e.g., using noise functions, climate simulation).
-        *   Cave systems and other geological features.
-        *   Ensure modularity and extensibility for future content.
-
-3.  **Simulation and Gameplay Mechanics:**
-    *   Address simulation of game elements, potentially including high-level simulation for unloaded or distant chunks.
-    *   Begin implementing core gameplay mechanics as defined in the Game Concept documents.
-
-## Development Practices
-
-*   **Modularity:** Design systems to be as modular and independent as possible.
-*   **Performance:** Profile and optimize critical systems regularly, especially voxel processing and rendering.
-*   **Testing:** Implement unit and integration tests for core engine components.
-*   **Documentation:** Maintain clear documentation for engine architecture, systems, and APIs.
-*   **Version Control:** Utilize Git for version control, with a clear branching and merging strategy.
-
-## Version Control
-
-Regularly commit changes to Git. Each commit should represent a logical unit of work. Write clear and concise commit messages.
-
-This document provides a high-level strategic overview. Detailed technical designs for specific systems will be maintained in their respective documentation within the `org/Tech Stack/` directory.
+For detailed technical documentation, see the design documents in `docs/design_specifications/`.
