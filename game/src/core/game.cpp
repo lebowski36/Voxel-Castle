@@ -11,7 +11,7 @@
 // UI System includes
 #include "ui/UISystem.h"
 #include "ui/MenuSystem.h"
-#include "ui/elements/BlockSelectionUI.h"
+#include "ui/elements/HUD.h"
 #include "ui/elements/UIPanel.h"
 
 // Include headers that will be needed for the actual implementations later
@@ -85,7 +85,7 @@ Game::Game()
       meshRenderer_(nullptr),
       camera_(nullptr),
       menuSystem_(nullptr),
-      blockSelectionUI_(nullptr),
+      hudSystem_(nullptr),
       mouseCaptureManager_(nullptr),
       gameLoop_(std::make_unique<GameLoop>()),
       renderCoordinator_(std::make_unique<VoxelCastle::Core::GameRenderCoordinator>()),
@@ -173,8 +173,8 @@ bool Game::initialize() {
         // Get the texture atlas OpenGL texture ID from mesh renderer
         GLuint atlasTextureId = meshRenderer_->getTextureAtlasID();
         
-        // Create block selection UI element with proper constructor parameters
-        blockSelectionUI_ = std::make_shared<VoxelEngine::UI::BlockSelectionUI>(
+        // Create HUD element with proper constructor parameters
+        hudSystem_ = std::make_shared<VoxelEngine::UI::HUD>(
             &menuSystem_->getRenderer(), 
             textureAtlas_.get(), 
             atlasTextureId
@@ -185,22 +185,22 @@ bool Game::initialize() {
         float centerX = (screenWidth_ - uiSize) / 2.0f;
         float bottomY = screenHeight_ - uiSize - 50.0f; // 50px margin from bottom
         
-        std::cout << "[Game] Positioning BlockSelectionUI at bottom center (" << centerX << ", " << bottomY 
+        std::cout << "[Game] Positioning HUD at bottom center (" << centerX << ", " << bottomY 
                   << ") with screen size " << screenWidth_ << "x" << screenHeight_ << std::endl;
         
-        blockSelectionUI_->setPosition(centerX, bottomY);
-        blockSelectionUI_->setSize(uiSize, uiSize);
-        blockSelectionUI_->setVisible(true); // Ensure it's visible by default in gameplay mode
+        hudSystem_->setPosition(centerX, bottomY);
+        hudSystem_->setSize(uiSize, uiSize);
+        hudSystem_->setVisible(true); // Ensure it's visible by default in gameplay mode
         
         // Debug: Let's verify the position was set correctly
-        std::cout << "[Game] Actual BlockSelectionUI position: (" 
-                  << blockSelectionUI_->getPosition().x << ", " 
-                  << blockSelectionUI_->getPosition().y << ")" << std::endl;
+        std::cout << "[Game] Actual HUD position: (" 
+                  << hudSystem_->getPosition().x << ", " 
+                  << hudSystem_->getPosition().y << ")" << std::endl;
         
         // Add to UI system
-        menuSystem_->addElement(blockSelectionUI_);
+        menuSystem_->addElement(hudSystem_);
         
-        std::cout << "[Game] UI system initialized successfully with BlockSelectionUI" << std::endl;
+        std::cout << "[Game] UI system initialized successfully with HUD" << std::endl;
     }
     
     return isRunning_;
@@ -234,8 +234,8 @@ void Game::shutdown() {
     }
     
     // Clean up UI system first
-    if (blockSelectionUI_) {
-        blockSelectionUI_.reset();
+    if (hudSystem_) {
+        hudSystem_.reset();
     }
     if (menuSystem_) {
         menuSystem_->shutdown();
@@ -290,8 +290,8 @@ void Game::toggleMenu() {
         setMouseCaptured(false); // Show cursor for menu navigation
         
         // Hide game UI elements when menu is open
-        if (blockSelectionUI_) {
-            blockSelectionUI_->setVisible(false);
+        if (hudSystem_) {
+            hudSystem_->setVisible(false);
         }
         
         // Show menu
@@ -305,8 +305,8 @@ void Game::toggleMenu() {
         setMouseCaptured(true); // Hide cursor for gameplay
         
         // Show game UI elements when menu is closed
-        if (blockSelectionUI_) {
-            blockSelectionUI_->setVisible(true);
+        if (hudSystem_) {
+            hudSystem_->setVisible(true);
         }
         
         // Hide menu
@@ -354,8 +354,8 @@ void Game::update(float deltaTime) {
         menuSystem_->update(deltaTime);
         
         // Sync block selection UI with current block type
-        if (blockSelectionUI_ && blockSelectionUI_->getCurrentBlockType() != currentBlockType_) {
-            blockSelectionUI_->setCurrentBlockType(currentBlockType_);
+        if (hudSystem_ && hudSystem_->getCurrentBlockType() != currentBlockType_) {
+            hudSystem_->setCurrentBlockType(currentBlockType_);
         }
     }
 }

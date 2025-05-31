@@ -39,7 +39,7 @@ namespace VoxelEngine {
     namespace UI {
         class UISystem; // Forward declare UISystem
         class MenuSystem; // Forward declare MenuSystem
-        class BlockSelectionUI; // Forward declare BlockSelectionUI
+        class HUD; // Forward declare HUD
     }
 }
 
@@ -173,7 +173,7 @@ private:
     std::unique_ptr<VoxelEngine::Rendering::MeshRenderer> meshRenderer_;
     std::unique_ptr<SpectatorCamera> camera_;
     std::unique_ptr<VoxelEngine::UI::MenuSystem> menuSystem_; // Menu system for game interface
-    std::shared_ptr<VoxelEngine::UI::BlockSelectionUI> blockSelectionUI_; // Block selection UI element
+    std::shared_ptr<VoxelEngine::UI::HUD> hudSystem_; // HUD (Heads Up Display) for in-game UI elements
     std::unique_ptr<VoxelEngine::Input::MouseCaptureManager> mouseCaptureManager_; // Mouse capture management
     std::unique_ptr<GameLoop> gameLoop_; // Game loop management
     std::unique_ptr<VoxelCastle::Core::GameRenderCoordinator> renderCoordinator_; // Render coordination

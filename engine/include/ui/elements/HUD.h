@@ -6,12 +6,18 @@
 namespace VoxelEngine {
 namespace UI {
 
-class BlockSelectionUI : public UITexture {
+/**
+ * HUD (Heads Up Display) class
+ * 
+ * This class manages game HUD elements including block selection UI
+ * and other in-game UI elements that appear during gameplay.
+ */
+class HUD : public UITexture {
 public:
-    BlockSelectionUI(UIRenderer* renderer, 
-                    VoxelEngine::Rendering::TextureAtlas* textureAtlas,
-                    GLuint atlasTextureID);
-    virtual ~BlockSelectionUI() = default;
+    HUD(UIRenderer* renderer, 
+        VoxelEngine::Rendering::TextureAtlas* textureAtlas,
+        GLuint atlasTextureID);
+    virtual ~HUD() = default;
 
     // Update the displayed block type
     void setCurrentBlockType(VoxelEngine::World::VoxelType blockType);
@@ -24,6 +30,7 @@ private:
     VoxelEngine::Rendering::TextureAtlas* textureAtlas_;
     VoxelEngine::World::VoxelType currentBlockType_;
     
+    // Update texture coordinates for block display
     void updateTextureCoordinates();
 };
 

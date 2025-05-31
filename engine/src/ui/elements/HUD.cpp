@@ -1,12 +1,12 @@
-#include "ui/elements/BlockSelectionUI.h"
+#include "ui/elements/HUD.h"
 #include <iostream>
 
 namespace VoxelEngine {
 namespace UI {
 
-BlockSelectionUI::BlockSelectionUI(UIRenderer* renderer, 
-                                  VoxelEngine::Rendering::TextureAtlas* textureAtlas,
-                                  GLuint atlasTextureID) :
+HUD::HUD(UIRenderer* renderer, 
+         VoxelEngine::Rendering::TextureAtlas* textureAtlas,
+         GLuint atlasTextureID) :
     UITexture(renderer),
     textureAtlas_(textureAtlas),
     currentBlockType_(VoxelEngine::World::VoxelType::STONE) // Default to STONE
@@ -20,19 +20,19 @@ BlockSelectionUI::BlockSelectionUI(UIRenderer* renderer,
     // Update texture coordinates for the default block type
     updateTextureCoordinates();
     
-    std::cout << "[BlockSelectionUI] Created with default block type: STONE" << std::endl;
+    std::cout << "[HUD] Created with default block type: STONE" << std::endl;
 }
 
-void BlockSelectionUI::setCurrentBlockType(VoxelEngine::World::VoxelType blockType) {
+void HUD::setCurrentBlockType(VoxelEngine::World::VoxelType blockType) {
     if (currentBlockType_ != blockType) {
         currentBlockType_ = blockType;
         updateTextureCoordinates();
         
-        std::cout << "[BlockSelectionUI] Block type changed to: " << static_cast<int>(blockType) << std::endl;
+        std::cout << "[HUD] Block type changed to: " << static_cast<int>(blockType) << std::endl;
     }
 }
 
-void BlockSelectionUI::centerBottomOfScreen(int screenWidth, int screenHeight, int margin) {
+void HUD::centerBottomOfScreen(int screenWidth, int screenHeight, int margin) {
     // Center horizontally
     float x = (screenWidth - size_.x) / 2.0f;
     
@@ -41,13 +41,13 @@ void BlockSelectionUI::centerBottomOfScreen(int screenWidth, int screenHeight, i
     
     setPosition(x, y);
     
-    std::cout << "[BlockSelectionUI] Positioned at (" << x << ", " << y << ") on screen " 
+    std::cout << "[HUD] Positioned at (" << x << ", " << y << ") on screen " 
               << screenWidth << "x" << screenHeight << std::endl;
 }
 
-void BlockSelectionUI::updateTextureCoordinates() {
+void HUD::updateTextureCoordinates() {
     if (!textureAtlas_) {
-        std::cerr << "[BlockSelectionUI] TextureAtlas is null!" << std::endl;
+        std::cerr << "[HUD] TextureAtlas is null!" << std::endl;
         return;
     }
     
@@ -58,7 +58,7 @@ void BlockSelectionUI::updateTextureCoordinates() {
     glm::vec4 uvRect = texCoords.getUVRect();
     setTextureCoords(uvRect);
     
-    std::cout << "[BlockSelectionUI] Updated texture coordinates for block type " 
+    std::cout << "[HUD] Updated texture coordinates for block type " 
               << static_cast<int>(currentBlockType_) 
               << " to UV(" << uvRect.x << ", " << uvRect.y << ", " << uvRect.z << ", " << uvRect.w << ")" << std::endl;
 }

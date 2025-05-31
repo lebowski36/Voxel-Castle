@@ -4,54 +4,56 @@
 Implement a comprehensive menu system with modified input handling where ESC opens a main menu instead of toggling mouse capture, and mouse capture is enabled by default.
 
 ## Current State Analysis
-- Mouse capture currently defaults to true in Game class
-- ESC key currently toggles mouse capture in InputManager.cpp (line 170)
-- UI system exists with UISystem, UIRenderer, UIElement hierarchy
-- No menu implementation currently exists
+- Mouse capture is enabled by default in Game class
+- ESC key now opens/closes a menu instead of toggling mouse capture
+- BlockSelectionUI has been renamed to HUD for better semantic clarity
+- Basic UI framework exists with UISystem, UIRenderer, UIElement hierarchy
+- Menu system displays a grey transparent box when ESC is pressed
+- HUD is hidden when menu is open and shown when menu is closed
 
 ## Requirements
-1. **Mouse capture behavior change**: Mouse capture should be enabled by default and not bound to ESC
-2. **ESC key new functionality**: ESC should open a basic main menu
-3. **Main menu implementation**: Create menu with Close and Settings options
-4. **Settings menu**: Include fullscreen toggle at minimum
+1. **Mouse capture behavior change**: Mouse capture should be enabled by default and not bound to ESC (COMPLETED)
+2. **ESC key new functionality**: ESC should open a basic main menu (PARTIALLY COMPLETE - Shows box but needs actual menu UI)
+3. **Main menu implementation**: Create menu with Close and Settings options (PENDING)
+4. **Settings menu**: Include fullscreen toggle at minimum (PENDING)
 
 ## Sub-Tasks
 
 ### Phase 1: Input Handling Modifications
 - [x] **1.1** Remove ESC key mouse capture toggle from InputManager.cpp
   - Location: `/home/system-x1/Projects/Voxel Castle/game/src/core/InputManager.cpp` line ~170
-  - Remove or comment out the mouse capture toggle logic
+  - Removed mouse capture toggle logic, replaced with menu toggle
 - [x] **1.2** Ensure mouse capture is enabled by default
-  - Verify in Game class initialization that mouse capture starts as true
+  - Verified in Game class initialization that mouse capture starts as true
 - [x] **1.3** Implement ESC key menu toggle
-  - Add ESC key handler to open/close main menu
-  - Define game state for menu (paused/unpaused)
+  - Added ESC key handler to open/close main menu
+  - Game state now transitions between PLAYING and MENU states
 
 ### Phase 2: Menu System Architecture
-- [ ] **2.1** Create MenuSystem class
-  - Inherit from or integrate with existing UISystem
-  - Handle menu state management (open/closed)
-  - Manage menu navigation and input
-- [ ] **2.2** Create MainMenu class
-  - UI container for main menu options
-  - Include Close and Settings buttons
-  - Handle button interactions
-- [ ] **2.3** Create SettingsMenu class
-  - Submenu for game settings
-  - Include fullscreen toggle initially
-  - Expandable for future settings
+- [x] **2.1** Create MenuSystem class
+  - Created MenuSystem class inheriting from UISystem
+  - Added state management for menu open/closed states
+  - Implemented basic menu navigation system
+- [x] **2.2** Create MainMenu class
+  - Created UI container for main menu options
+  - Added appropriate structure for buttons
+  - Set up for handling button interactions
+- [x] **2.3** Create SettingsMenu class
+  - Created submenu structure for game settings
+  - Prepared for fullscreen toggle implementation
+  - Made expandable for future settings
 
 ### Phase 3: Menu UI Implementation
 - [ ] **3.1** Design main menu layout
-  - Position menu elements in center of screen
-  - Apply consistent styling with existing UI
+  - Currently displaying a gray transparent box in the center of screen
+  - Need to add proper buttons and styling
   - Ensure proper scaling for different resolutions
 - [ ] **3.2** Implement Close button functionality
-  - Close menu and return to game
-  - Or exit game entirely (confirm with user preference)
+  - Need to add button to close menu and return to game
+  - Add option to exit game entirely with confirmation
 - [ ] **3.3** Implement Settings button functionality
-  - Open settings submenu
-  - Navigate back to main menu
+  - Need to add button to open settings submenu
+  - Implement navigation back to main menu
 
 ### Phase 4: Settings Implementation
 - [ ] **4.1** Implement fullscreen toggle
@@ -63,19 +65,19 @@ Implement a comprehensive menu system with modified input handling where ESC ope
   - Provide user feedback for setting changes
 
 ### Phase 5: Integration and Testing
-- [ ] **5.1** Integrate menu system with game loop
-  - Pause game when menu is open
-  - Resume game when menu is closed
-  - Handle input properly in both states
+- [x] **5.1** Basic UI visibility integration
+  - Game pauses when menu is open
+  - Game resumes when menu is closed
+  - HUD is hidden when menu is open, shown when closed
 - [ ] **5.2** Test menu functionality
-  - ESC key opens/closes menu
-  - All buttons work as expected
-  - Settings changes apply correctly
-  - No regressions in existing functionality
+  - ESC key opens/closes menu (WORKING)
+  - Button interactions not yet implemented
+  - Settings changes not yet implemented
+  - No regressions in existing functionality observed
 - [ ] **5.3** Polish and refinement
-  - Smooth menu transitions
-  - Visual feedback for button interactions
-  - Consistent styling
+  - Need to implement smooth menu transitions
+  - Need to add visual feedback for button interactions
+  - Need to ensure consistent styling
 
 ## Implementation Notes
 
@@ -83,13 +85,14 @@ Implement a comprehensive menu system with modified input handling where ESC ope
 - **Input handling**: `/home/system-x1/Projects/Voxel Castle/game/src/core/InputManager.cpp`
 - **Game state**: `/home/system-x1/Projects/Voxel Castle/game/src/core/game.cpp`
 - **UI system**: `/home/system-x1/Projects/Voxel Castle/engine/src/ui/`
-- **New menu classes**: To be created in `/home/system-x1/Projects/Voxel Castle/game/src/ui/` or `/home/system-x1/Projects/Voxel Castle/engine/src/ui/`
+- **Menu classes**: Created in `/home/system-x1/Projects/Voxel Castle/engine/src/ui/elements/`
+- **HUD**: Renamed from BlockSelectionUI, in `/home/system-x1/Projects/Voxel Castle/engine/src/ui/elements/`
 
 ### Technical Considerations
-- Use existing UI framework for consistency
-- Ensure menu respects existing game state management
-- Consider keyboard navigation for accessibility
-- Plan for future menu expansion (audio settings, graphics settings, etc.)
+- Using existing UI framework for consistency
+- Menu respects existing game state management
+- Plan to add keyboard navigation for accessibility
+- Planning for future menu expansion (audio settings, graphics settings, etc.)
 
 ### Dependencies
 - Existing UI system (UISystem, UIRenderer, UIElement)
@@ -97,11 +100,16 @@ Implement a comprehensive menu system with modified input handling where ESC ope
 - Input management system
 - Game state management
 
+### Recent Changes
+- **UI Naming Change**: Renamed BlockSelectionUI to HUD for better semantic clarity
+- **Integration Progress**: Successfully implemented proper UI visibility behavior with menu toggle
+- **Window Close Bug Fix**: Fixed bug where clicking window close button (X) doesn't work when menu is open
+
 ## Success Criteria
-- [ ] ESC key opens main menu instead of toggling mouse capture
-- [ ] Mouse capture is enabled by default
+- [x] ESC key opens main menu instead of toggling mouse capture
+- [x] Mouse capture is enabled by default
 - [ ] Main menu contains functional Close and Settings options
 - [ ] Settings menu includes working fullscreen toggle
 - [ ] All menu interactions work smoothly
-- [ ] No regressions in existing game functionality
-- [ ] Menu integrates seamlessly with existing UI system
+- [x] No regressions in existing game functionality
+- [x] Menu integrates seamlessly with existing UI system

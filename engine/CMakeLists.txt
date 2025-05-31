@@ -30,7 +30,7 @@ add_library(VoxelEngine STATIC
     src/ui/UISystem.cpp # Main UI system manager
     src/ui/elements/UITexture.cpp # Basic texture UI element
     src/ui/elements/UIPanel.cpp # Basic solid color UI element
-    src/ui/elements/BlockSelectionUI.cpp # Block selection UI element
+    src/ui/elements/HUD.cpp # Game HUD element
     src/ui/MenuSystem.cpp # Menu system manager
     src/ui/elements/UIButton.cpp # Button UI element
     src/ui/elements/UICheckbox.cpp # Checkbox UI element
