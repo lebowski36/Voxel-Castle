@@ -26,6 +26,7 @@ class Window;
 namespace flecs { class world; }
 namespace VoxelCastle { namespace World { class WorldManager; } }
 namespace VoxelCastle { namespace World { class WorldGenerator; } }
+namespace VoxelCastle { namespace Core { class GameRenderCoordinator; } } // Render coordination
 namespace VoxelEngine { 
     namespace Rendering { 
         class TextureAtlas; 
@@ -174,6 +175,7 @@ private:
     std::shared_ptr<VoxelEngine::UI::BlockSelectionUI> blockSelectionUI_; // Block selection UI element
     std::unique_ptr<VoxelEngine::Input::MouseCaptureManager> mouseCaptureManager_; // Mouse capture management
     std::unique_ptr<GameLoop> gameLoop_; // Game loop management
+    std::unique_ptr<VoxelCastle::Core::GameRenderCoordinator> renderCoordinator_; // Render coordination
     
     // Game loop state
     bool isRunning_ = false;

@@ -7,6 +7,7 @@ add_executable(VoxelFortressGame
     src/SpectatorCamera.cpp
     src/core/game.cpp # Added Game class implementation
     src/core/GameLoop.cpp # Added GameLoop class implementation
+    src/core/GameRenderCoordinator.cpp # Added GameRenderCoordinator class implementation
     src/core/GameInitializer.cpp # Initialization and shutdown helper module
     src/core/InputManager.cpp # Added InputManager module
     src/core/WorldSetup.cpp # Added WorldSetup module

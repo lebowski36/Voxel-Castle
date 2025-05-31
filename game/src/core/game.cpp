@@ -6,6 +6,7 @@
 #include "core/WorldSetupGlobals.h"
 #include "core/GameRenderer.h" // Added for rendering logic
 #include "core/GameLoop.h" // Game loop management
+#include "core/GameRenderCoordinator.h" // Game render coordination
 
 // UI System includes
 #include "ui/UISystem.h"
@@ -77,22 +78,24 @@ Game::Game()
     : gameWindow_(nullptr),
       ecs_(nullptr),
       worldManager_(nullptr),
-      worldGenerator_(nullptr), // Added initialization
+      worldGenerator_(nullptr),
       textureAtlas_(nullptr),
       meshBuilder_(nullptr),
       meshRenderer_(nullptr),
       camera_(nullptr),
+      uiSystem_(nullptr),
+      blockSelectionUI_(nullptr),
+      mouseCaptureManager_(nullptr),
+      gameLoop_(std::make_unique<GameLoop>()),
+      renderCoordinator_(std::make_unique<VoxelCastle::Core::GameRenderCoordinator>()),
       isRunning_(false),
-      // lastFrameTime_ will be initialized in initialize()
+      lastFrameTime_(),
       mouseCaptured_(true),
       speedMultiplier_(1.0f),
       forward_(false), backward_(false), left_(false), right_(false), up_(false), down_(false),
       manualVoxelChangeRequested_(false),
       mouseDeltaX_(0.0f),
-      mouseDeltaY_(0.0f),
-      uiSystem_(nullptr),
-      blockSelectionUI_(nullptr),
-      gameLoop_(std::make_unique<GameLoop>())
+      mouseDeltaY_(0.0f)
       // screenWidth_ and screenHeight_ are const and initialized in header
       // projectRoot_ is const and initialized in header
 {
@@ -334,47 +337,22 @@ void Game::update(float deltaTime) {
 }
 
 void Game::render() {
-    if (!camera_ || !worldManager_ || !meshRenderer_ || !gameWindow_ || !textureAtlas_) {
+    if (!camera_ || !worldManager_ || !meshRenderer_ || !gameWindow_ || !textureAtlas_ || !renderCoordinator_) {
         std::cerr << "Game::render - Required components not available." << std::endl;
         return; 
     }
 
-    // Clear the color and depth buffers BEFORE rendering
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    
-    // Delegate rendering to GameRenderer
-    GameRenderer::renderGame(
+    // Delegate all rendering to the GameRenderCoordinator
+    renderCoordinator_->render(
         *camera_,
         *meshRenderer_,
         *textureAtlas_,
         *gameWindow_,
-        worldManager_->getAllSegmentMeshes(),
+        *worldManager_,
+        uiSystem_.get(),
         screenWidth_,
         screenHeight_
     );
-    
-    // Verify the viewport is properly set for UI rendering
-    GLint viewport[4];
-    glGetIntegerv(GL_VIEWPORT, viewport);
-    if (viewport[2] != screenWidth_ || viewport[3] != screenHeight_) {
-        std::cout << "Correcting viewport before UI rendering: " 
-                  << viewport[0] << "," << viewport[1] << "," << viewport[2] << "x" << viewport[3] 
-                  << " to 0,0," << screenWidth_ << "x" << screenHeight_ << std::endl;
-        glViewport(0, 0, screenWidth_, screenHeight_);
-    }
-    
-    // Render UI system on top of the 3D world
-    if (uiSystem_) {
-        // Reset any OpenGL error state before UI rendering
-        while (glGetError() != GL_NO_ERROR) {} 
-        
-        uiSystem_->render();
-    }
-    
-    // Swap buffers AFTER all rendering (3D world + UI) is complete
-    if (gameWindow_) {
-        gameWindow_->render();
-    }
 }
 
 bool Game::isWorldReadyForBlockOperations() const {
