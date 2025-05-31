@@ -25,9 +25,11 @@ The engine is currently in **active development** with these working features:
 
 ## 5-Minute Setup
 
+If you have all dependencies installed:
+
 ```bash
 # 1. Navigate to project
-cd "/home/system-x1/Projects/Voxel Castle"
+cd "/path/to/Voxel Castle"
 
 # 2. Build the engine
 cmake --build build
@@ -37,6 +39,8 @@ cmake --build build
 ```
 
 You should see a 3D world with terrain. Use the mouse to look around and WASD to fly!
+
+> **First time setup?** See [BUILD_GUIDE.md](BUILD_GUIDE.md) for detailed instructions on installing dependencies for your specific operating system.
 
 ## What You'll See
 

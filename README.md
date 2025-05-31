@@ -87,56 +87,32 @@ We believe in creating games where players create their own stories through inte
 
 ## 🛠️ Building and Running Voxel Fortress
 
-### Prerequisites
-- **C++ Compiler**: GCC 9+ or Clang 10+ with C++17 support
-- **CMake**: Version 3.20 or higher
-- **System Libraries**: OpenGL drivers (typically pre-installed on most systems)
-
-### Quick Start
+### Quick Start (if you have dependencies)
 ```bash
-# 1. Clone and navigate to the project directory
-cd "/home/system-x1/Projects/Voxel Castle"
+# Navigate to project directory
+cd "/path/to/Voxel Castle"
 
-# 2. Build the project (first time setup)
-cmake --build build
-
-# 3. Run the game
-./build/bin/VoxelFortressGame
+# Build and run
+cmake --build build && ./build/bin/VoxelFortressGame
 ```
 
-### Development Build Process
-For development and debugging, use the following commands from the project root:
+### First Time Setup
+**You'll need**: C++ compiler, CMake 3.20+, and OpenGL drivers
 
-```bash
-# Build with console clearing for clean output
-clear && cmake --build "/home/system-x1/Projects/Voxel Castle/build"
-
-# Run with console clearing
-clear && "/home/system-x1/Projects/Voxel Castle/build/bin/VoxelFortressGame"
-```
-
-### Controls
-- **Mouse**: Look around (camera automatically captures mouse)
-- **WASD**: Move camera forward/back/left/right  
-- **Space/Shift**: Move camera up/down
-- **Escape**: Toggle mouse capture
-- **Left Mouse**: Place blocks (when pointing at a surface)
-- **Right Mouse**: Remove blocks (when pointing at a block)
-- **Mouse Wheel**: Cycle through block types
+For detailed setup instructions for your operating system, see **[BUILD_GUIDE.md](BUILD_GUIDE.md)**
 
 ### Current Features
 - **Free-flying Camera**: Explore the procedurally generated voxel world
+- **Interactive Blocks**: Place and remove different block types
 - **Real-time Rendering**: 60 FPS target with optimized chunk-based rendering
 - **Dynamic World**: Chunks load and unload based on camera position
-- **Interactive Blocks**: Place and remove different block types
-- **Debug Information**: Frame rate and chunk loading status in console
 
-### Troubleshooting
-- **Build Issues**: Check `build_log.txt` for detailed error information
-- **Performance**: Game targets 60 FPS but may vary based on hardware
-- **Graphics Issues**: Ensure OpenGL 3.3+ drivers are installed
+### Controls
+- **Mouse**: Look around | **WASD**: Move camera | **Space/Shift**: Up/Down
+- **Escape**: Toggle mouse capture | **Left Click**: Place blocks | **Right Click**: Remove blocks
+- **Mouse Wheel**: Cycle through block types
 
-> **Note**: This is development software. Features are actively being implemented and may contain bugs or incomplete functionality.
+> **First time building?** Check [BUILD_GUIDE.md](BUILD_GUIDE.md) for platform-specific setup instructions.
 
 ## 🔧 Technology Stack
 

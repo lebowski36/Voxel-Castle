@@ -88,4 +88,10 @@ Voxel Castle/
 └── build/           # Compiled binaries and build artifacts
 ```
 
+## Additional Resources
+
+- **[BUILD_GUIDE.md](BUILD_GUIDE.md)** - Detailed build setup for all platforms
+- **[GETTING_STARTED.md](GETTING_STARTED.md)** - Quick onboarding guide for new contributors
+- **[CURRENT_TODO.md](CURRENT_TODO.md)** - Active development tracking
+
 For detailed technical documentation, see the design documents in `docs/design_specifications/`.
