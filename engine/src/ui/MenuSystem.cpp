@@ -155,5 +155,35 @@ void MenuSystem::debugDumpMenuState() {
     std::cout << "[MenuSystem] === END DEBUG MENU STATE DUMP ===" << std::endl;
 }
 
+void MenuSystem::updateScreenSize(int width, int height) {
+    // Update the UI system screen size
+    setScreenSize(width, height);
+    
+    // Recalculate menu positions to keep them centered
+    mainMenu_->setPosition(width / 2.0f - 200.0f, height / 2.0f - 200.0f);
+    mainMenu_->setSize(400.0f, 400.0f);
+    
+    settingsMenu_->setPosition(width / 2.0f - 250.0f, height / 2.0f - 250.0f);
+    settingsMenu_->setSize(500.0f, 500.0f);
+    
+    std::cout << "[MenuSystem] Screen size updated to " << width << "x" << height 
+              << ", menus repositioned" << std::endl;
+}
+
+void MenuSystem::updateFullscreenState(bool isFullscreen) {
+    if (settingsMenu_) {
+        settingsMenu_->updateFullscreenCheckbox(isFullscreen);
+        std::cout << "[MenuSystem] Fullscreen state updated to " << (isFullscreen ? "ON" : "OFF") << std::endl;
+    }
+}
+
+void MenuSystem::requestExit() {
+    if (onExitRequest_) {
+        onExitRequest_();
+    } else {
+        std::cout << "[MenuSystem] No exit request callback set" << std::endl;
+    }
+}
+
 } // namespace UI
 } // namespace VoxelEngine

@@ -199,6 +199,12 @@ bool Game::initialize() {
             return true; // Already in desired state
         });
         
+        // Set up exit request callback
+        menuSystem_->setOnExitRequest([this]() {
+            std::cout << "[Game] Exit requested from menu" << std::endl;
+            requestExit();
+        });
+        
         // Get the texture atlas OpenGL texture ID from mesh renderer
         GLuint atlasTextureId = meshRenderer_->getTextureAtlasID();
         
@@ -373,6 +379,17 @@ bool Game::toggleFullscreen() {
     }
     
     bool success = gameWindow_->toggleFullscreen();
+    
+    if (success && menuSystem_) {
+        // Update screen size for UI positioning
+        int width = gameWindow_->getWidth();
+        int height = gameWindow_->getHeight();
+        menuSystem_->updateScreenSize(width, height);
+        
+        // Update fullscreen checkbox state
+        menuSystem_->updateFullscreenState(isFullscreen());
+    }
+    
     std::cout << "[Game] Fullscreen toggled: " << (success ? "SUCCESS" : "FAILED") << std::endl;
     return success;
 }
@@ -382,6 +399,11 @@ bool Game::isFullscreen() const {
         return false;
     }
     return gameWindow_->isFullscreen();
+}
+
+void Game::requestExit() {
+    std::cout << "[Game] Exit requested. Shutting down..." << std::endl;
+    isRunning_ = false;
 }
 
 // Delegates all per-frame game logic to GameLogic module

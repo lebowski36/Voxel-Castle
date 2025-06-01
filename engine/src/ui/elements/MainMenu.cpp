@@ -5,58 +5,27 @@
 namespace VoxelEngine {
 namespace UI {
 
-MainMenu::MainMenu(UIRenderer* renderer) : UIPanel(renderer) {
-    // Set panel properties (dark semi-transparent background)
-    setColor({0.1f, 0.1f, 0.1f, 0.8f});
+MainMenu::MainMenu(UIRenderer* renderer) : BaseMenu(renderer, "Voxel Castle") {
 }
 
 bool MainMenu::initialize(MenuSystem* menuSystem) {
-    if (!menuSystem) {
-        std::cerr << "[MainMenu] MenuSystem pointer is null" << std::endl;
+    if (!initializeBase(menuSystem)) {
         return false;
     }
 
-    menuSystem_ = menuSystem;
-
-    // Create title panel
-    titlePanel_ = std::make_shared<UIPanel>(renderer_);
-    titlePanel_->setColor({0.2f, 0.2f, 0.3f, 0.9f});
-    titlePanel_->setPosition(0.0f, 0.0f);
-    titlePanel_->setSize(getSize().x, 40.0f);
-    addChild(titlePanel_);
-
-    // Create buttons
-    float buttonWidth = getSize().x - 40.0f;
-    float buttonHeight = 40.0f;
-    float buttonX = 20.0f;
-    float buttonYStart = 60.0f;
-    float buttonSpacing = 20.0f;
-
-    // Close button (returns to game)
-    closeButton_ = std::make_shared<UIButton>(renderer_);
-    closeButton_->setText("Resume Game");
-    closeButton_->setPosition(buttonX, buttonYStart);
-    closeButton_->setSize(buttonWidth, buttonHeight);
+    // Create buttons using the styled button helper
+    closeButton_ = createStyledButton("Resume Game", getNextElementY());
     closeButton_->setOnClick([this]() { onCloseClicked(); });
-    addChild(closeButton_);
+    addElementSpacing();
 
-    // Settings button
-    settingsButton_ = std::make_shared<UIButton>(renderer_);
-    settingsButton_->setText("Settings");
-    settingsButton_->setPosition(buttonX, buttonYStart + buttonHeight + buttonSpacing);
-    settingsButton_->setSize(buttonWidth, buttonHeight);
+    settingsButton_ = createStyledButton("Settings", getNextElementY());
     settingsButton_->setOnClick([this]() { onSettingsClicked(); });
-    addChild(settingsButton_);
+    addElementSpacing();
+
+    exitButton_ = createStyledButton("Exit Game", getNextElementY());
+    exitButton_->setOnClick([this]() { onExitClicked(); });
 
     return true;
-}
-
-void MainMenu::update(float deltaTime) {
-    UIPanel::update(deltaTime);
-}
-
-bool MainMenu::handleInput(float mouseX, float mouseY, bool clicked) {
-    return UIPanel::handleInput(mouseX, mouseY, clicked);
 }
 
 void MainMenu::onCloseClicked() {
@@ -68,6 +37,12 @@ void MainMenu::onCloseClicked() {
 void MainMenu::onSettingsClicked() {
     if (menuSystem_) {
         menuSystem_->showSettingsMenu();
+    }
+}
+
+void MainMenu::onExitClicked() {
+    if (menuSystem_) {
+        menuSystem_->requestExit();
     }
 }
 

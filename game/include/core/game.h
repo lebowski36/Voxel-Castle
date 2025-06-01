@@ -163,6 +163,12 @@ public:
     // UI Input Handling
     void handleMenuInput(float mouseX, float mouseY, bool clicked);
 
+    /**
+     * @brief Request the game to exit
+     * This will safely shut down the game on the next update
+     */
+    void requestExit();
+
 private:
     // Helper method for world initialization
     void initializeWorldContent();

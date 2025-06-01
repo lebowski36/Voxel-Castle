@@ -72,6 +72,11 @@ public:
     bool toggleFullscreen(bool enable);
 
     /**
+     * @brief Request application exit
+     */
+    void requestExit();
+
+    /**
      * @brief Get the current menu state
      * @return The current menu state
      */
@@ -96,10 +101,29 @@ public:
     void setOnFullscreenToggle(std::function<bool(bool)> callback) { onFullscreenToggle_ = callback; }
     
     /**
+     * @brief Set the callback for exit request
+     * @param callback Function to call when exit is requested
+     */
+    void setOnExitRequest(std::function<void()> callback) { onExitRequest_ = callback; }
+
+    /**
      * @brief Alias for setOnFullscreenToggle for backward compatibility
      * @param callback Function to call when fullscreen is toggled
      */
     void setOnFullscreenToggled(std::function<bool(bool)> callback) { onFullscreenToggle_ = callback; }
+
+    /**
+     * @brief Update screen size and reposition menus
+     * @param width New screen width
+     * @param height New screen height
+     */
+    void updateScreenSize(int width, int height);
+    
+    /**
+     * @brief Update fullscreen checkbox state
+     * @param isFullscreen Current fullscreen state
+     */
+    void updateFullscreenState(bool isFullscreen);
 
     /**
      * @brief Debug dump of menu state - to verify in console
@@ -113,6 +137,7 @@ private:
     std::shared_ptr<SettingsMenu> settingsMenu_;
     std::function<void()> onMenuClosed_;
     std::function<bool(bool)> onFullscreenToggle_;
+    std::function<void()> onExitRequest_;
 };
 
 } // namespace UI

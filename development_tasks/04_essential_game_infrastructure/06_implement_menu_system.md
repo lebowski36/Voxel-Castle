@@ -74,11 +74,24 @@ Implement a comprehensive menu system with modified input handling where ESC ope
   - Resume Game button functionality (CONFIRMED WORKING)
   - Settings button functionality (CONFIRMED WORKING)
   - Back button in settings returns to main menu (CONFIRMED WORKING)
-  - Fullscreen toggle needs testing (NOT VISIBLE/NOT IMPLEMENTED)
-- [ ] **5.3** Polish and refinement
-  - Need to implement smooth menu transitions
-  - Need to add visual feedback for button interactions
-  - Need to ensure consistent styling
+  - [x] Fullscreen toggle checkbox functionality (CONFIRMED WORKING)
+- [ ] **5.3** UI Layout and Interaction Fixes
+  - [ ] Fix menu positioning and interaction after fullscreen toggle
+  - [ ] Fix checkbox state not updating visually when fullscreen is applied
+  - [ ] Center buttons properly in menu layout
+  - [ ] Add game title to menu title bar
+  - [ ] Improve overall menu styling and formatting
+- [ ] **5.4** Polish and refinement
+  - [ ] Implement smooth menu transitions
+  - [ ] Add visual feedback for button interactions
+  - [ ] Ensure consistent styling across all menu elements
+
+## Current Issues (Discovered in Testing)
+1. **Fullscreen UI Bug**: After switching to fullscreen, menu becomes unclickable due to positioning issues
+2. **Checkbox State Bug**: Fullscreen checkbox doesn't show as checked when fullscreen is active
+3. **Layout Issues**: Buttons are not properly centered and formatted
+4. **Missing Game Title**: Menu title bar should display the game name
+5. **General Styling**: Menu needs better visual styling and formatting
 
 ## Implementation Notes
 

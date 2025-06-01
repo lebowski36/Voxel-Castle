@@ -1,7 +1,6 @@
 #pragma once
 
-#include "ui/UIElement.h"
-#include "ui/elements/UIPanel.h"
+#include "ui/elements/BaseMenu.h"
 #include "ui/elements/UIButton.h"
 #include "ui/elements/UICheckbox.h"
 #include <memory>
@@ -17,7 +16,7 @@ class MenuSystem;
  * 
  * Provides a container for game settings including fullscreen toggle and back button.
  */
-class SettingsMenu : public UIPanel {
+class SettingsMenu : public BaseMenu {
 public:
     SettingsMenu(UIRenderer* renderer);
     ~SettingsMenu() override = default;
@@ -30,25 +29,14 @@ public:
     bool initialize(MenuSystem* menuSystem);
 
     /**
-     * @brief Update the settings menu
-     * @param deltaTime Time since last update in seconds
+     * @brief Update the fullscreen checkbox state
+     * @param isFullscreen Current fullscreen state
      */
-    void update(float deltaTime) override;
-
-    /**
-     * @brief Handle input events
-     * @param mouseX X position of the mouse in screen coordinates
-     * @param mouseY Y position of the mouse in screen coordinates
-     * @param clicked Whether the mouse button is clicked
-     * @return true if the input was handled, false otherwise
-     */
-    bool handleInput(float mouseX, float mouseY, bool clicked) override;
+    void updateFullscreenCheckbox(bool isFullscreen);
 
 private:
-    MenuSystem* menuSystem_;
     std::shared_ptr<UIButton> backButton_;
     std::shared_ptr<UICheckbox> fullscreenCheckbox_;
-    std::shared_ptr<UIPanel> titlePanel_;
 
     void onBackClicked();
     void onFullscreenToggled(bool checked);
