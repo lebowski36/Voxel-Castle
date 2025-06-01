@@ -69,22 +69,32 @@ Implement a comprehensive menu system with modified input handling where ESC ope
   - Game pauses when menu is open
   - Game resumes when menu is closed
   - HUD is hidden when menu is open, shown when closed
- - [x] **5.2** Core menu functionality
+- [x] **5.2** Core menu functionality
   - ESC key opens/closes menu (CONFIRMED WORKING)
   - Resume Game button functionality (CONFIRMED WORKING)
   - Settings button functionality (CONFIRMED WORKING)
   - Back button in settings returns to main menu (CONFIRMED WORKING)
-  - [x] Fullscreen toggle checkbox functionality (CONFIRMED WORKING)
+  - [x] **5.2.1** Fullscreen toggle checkbox functionality (CONFIRMED WORKING)
 - [ ] **5.3** UI Layout and Interaction Fixes
-  - [ ] Fix menu positioning and interaction after fullscreen toggle
-  - [ ] Fix checkbox state not updating visually when fullscreen is applied
-  - [ ] Center buttons properly in menu layout
-  - [ ] Add game title to menu title bar
-  - [ ] Improve overall menu styling and formatting
+  - [x] **5.3.1** Fix menu positioning and interaction after fullscreen toggle (COMPLETED)
+  - [x] **5.3.2** Fix checkbox state not updating visually when fullscreen is applied (COMPLETED)
+  - [ ] **5.3.3** Center buttons properly in menu layout
+  - [x] **5.3.4** Add game title to menu title bar (CONFIRMED: "Voxel Castle" title exists)
+  - [ ] **5.3.5** Improve overall menu styling and formatting
 - [ ] **5.4** Polish and refinement
-  - [ ] Implement smooth menu transitions
-  - [ ] Add visual feedback for button interactions
-  - [ ] Ensure consistent styling across all menu elements
+  - [ ] **5.4.1** Implement smooth menu transitions
+  - [ ] **5.4.2** Add visual feedback for button interactions
+  - [ ] **5.4.3** Ensure consistent styling across all menu elements
+
+### Phase 6: Enhanced Features
+- [ ] **6.1** UI Scaling System
+  - [ ] **6.1.1** Add UI scale slider to settings menu (1.0x to 2.0x range)
+  - [ ] **6.1.2** Implement unified scaling for both menu and HUD elements
+  - [ ] **6.1.3** Save/load UI scale preference
+- [ ] **6.2** Improved Button Interaction
+  - [ ] **6.2.1** Make text labels clickable (not just button backgrounds)
+  - [ ] **6.2.2** Increase button click areas for better usability
+  - [ ] **6.2.3** Add button hover effects
 
 ## Current Issues (Discovered in Testing)
 1. **Fullscreen UI Bug**: After switching to fullscreen, menu becomes unclickable due to positioning issues

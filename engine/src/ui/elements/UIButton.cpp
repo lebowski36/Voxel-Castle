@@ -58,7 +58,13 @@ void UIButton::render() {
     if (!text_.empty()) {
         float textScale = 1.0f; // Adjust scale as needed
         glm::vec3 textColor = glm::vec3(1.0f); // White text
-        renderer_->drawText(text_, pos.x + 10.0f, pos.y + size_.y / 2.0f, textScale, textColor);
+        
+        // Calculate approximate text width for centering (improved estimate)
+        float estimatedTextWidth = text_.length() * 12.0f * textScale; // Better character width estimate
+        float textX = pos.x + (size_.x - estimatedTextWidth) / 2.0f; // Center horizontally
+        float textY = pos.y + size_.y / 2.0f + 8.0f; // Center vertically with slight offset
+        
+        renderer_->drawText(text_, textX, textY, textScale, textColor);
     }
 }
 

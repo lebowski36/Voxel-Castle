@@ -1,5 +1,6 @@
 #include "ui/UIRenderer.h"
 #include "ui/TextRenderer.h"
+#include "ui/UILogger.h"
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 #include <fstream>
@@ -20,9 +21,10 @@ UIRenderer::~UIRenderer() {
 }
 
 bool UIRenderer::initialize(int screenWidth, int screenHeight, const std::string& projectRoot) {
-    std::cout << "[UIRenderer] Starting initialization..." << std::endl;
-    std::cout << "[UIRenderer] Screen size: " << screenWidth << "x" << screenHeight << std::endl;
-    std::cout << "[UIRenderer] Project root: '" << projectRoot << "'" << std::endl;
+    auto& logger = UILogger::getInstance();
+    logger.info("UIRenderer", "Starting initialization...");
+    logger.info("UIRenderer", "Screen size: " + std::to_string(screenWidth) + "x" + std::to_string(screenHeight));
+    logger.info("UIRenderer", "Project root: '" + projectRoot + "'");
     
     screenWidth_ = screenWidth;
     screenHeight_ = screenHeight;
@@ -31,7 +33,7 @@ bool UIRenderer::initialize(int screenWidth, int screenHeight, const std::string
     // Load default font
     std::string fontPath = projectRoot_ + "/assets/fonts/PressStart2P-Regular.ttf";
     if (!textRenderer_->initialize(fontPath, 16.0f)) {
-        std::cerr << "[UIRenderer] Failed to load default font: " << fontPath << std::endl;
+        logger.error("UIRenderer", "Failed to load default font: " + fontPath);
         // Continue anyway as UI can work without text for now
     }
 
@@ -46,14 +48,14 @@ bool UIRenderer::initialize(int screenWidth, int screenHeight, const std::string
     }
     
     if (!loadShaders()) {
-        std::cerr << "[UIRenderer] Failed to load shaders" << std::endl;
+        logger.error("UIRenderer", "Failed to load shaders");
         return false;
     }
     
     setupQuadGeometry();
     
-    std::cout << "[UIRenderer] Initialized with screen size " << screenWidth_ << "x" << screenHeight_ << std::endl;
-    std::cout << "[UIRenderer] VAO: " << vao_ << ", VBO: " << vbo_ << ", EBO: " << ebo_ << std::endl;
+    logger.info("UIRenderer", "Initialized with screen size " + std::to_string(screenWidth_) + "x" + std::to_string(screenHeight_));
+    logger.info("UIRenderer", "VAO: " + std::to_string(vao_) + ", VBO: " + std::to_string(vbo_) + ", EBO: " + std::to_string(ebo_));
     return true;
 }
 
@@ -282,15 +284,22 @@ void UIRenderer::renderColoredQuad(float x, float y, float width, float height, 
 }
 
 void UIRenderer::renderQuad(float x, float y, float width, float height, const glm::vec4& color) {
-    // Debug logging for UI quad rendering
-    static int logCounter = 0;
-    bool shouldLog = (logCounter++ % 10 == 0); // Log every 10th call
-    
-    if (shouldLog) {
-        std::cout << "[UIRenderer] renderQuad called: pos(" << x << "," << y 
-                  << "), size(" << width << "x" << height 
-                  << "), color(" << color.r << "," << color.g << "," << color.b << "," << color.a << ")" << std::endl;
+    // CRITICAL FIX: Ensure VAO is bound before rendering
+    if (vao_ == 0) {
+        std::cerr << "[UIRenderer] ERROR: VAO is 0, cannot render quad!" << std::endl;
+        return;
     }
+    
+    // Bind VAO to ensure geometry is available
+    glBindVertexArray(vao_);
+    
+    // Ensure shader program is active
+    if (shaderProgram_ == 0) {
+        std::cerr << "[UIRenderer] ERROR: No shader program active!" << std::endl;
+        return;
+    }
+    
+    glUseProgram(shaderProgram_);
     
     // Create model matrix for positioning and scaling
     glm::mat4 model = glm::mat4(1.0f);
@@ -300,34 +309,28 @@ void UIRenderer::renderQuad(float x, float y, float width, float height, const g
     // Set uniforms
     GLint modelLoc = glGetUniformLocation(shaderProgram_, "model");
     if (modelLoc == -1) {
-        if (shouldLog) {
-            std::cerr << "[UIRenderer] ERROR: 'model' uniform not found in shader!" << std::endl;
-        }
+        std::cerr << "[UIRenderer] ERROR: 'model' uniform not found in shader!" << std::endl;
         return;
     }
     glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
     
     GLint colorLoc = glGetUniformLocation(shaderProgram_, "uColor");
     if (colorLoc == -1) {
-        if (shouldLog) {
-            std::cerr << "[UIRenderer] ERROR: 'uColor' uniform not found in shader!" << std::endl;
-        }
+        std::cerr << "[UIRenderer] ERROR: 'uColor' uniform not found in shader!" << std::endl;
         return;
     }
     glUniform4fv(colorLoc, 1, glm::value_ptr(color));
     
     GLint useTextureLoc = glGetUniformLocation(shaderProgram_, "uUseTexture");
     if (useTextureLoc == -1) {
-        if (shouldLog) {
-            std::cerr << "[UIRenderer] ERROR: 'uUseTexture' uniform not found in shader!" << std::endl;
-        }
+        std::cerr << "[UIRenderer] ERROR: 'uUseTexture' uniform not found in shader!" << std::endl;
         return;
     }
     glUniform1i(useTextureLoc, 0); // Don't use texture, just color
     
     // Check for OpenGL errors before drawing
     GLenum err = glGetError();
-    if (err != GL_NO_ERROR && shouldLog) {
+    if (err != GL_NO_ERROR) {
         std::cerr << "[UIRenderer] OpenGL error before drawing quad: 0x" << std::hex << err << std::dec << std::endl;
     }
     
@@ -336,12 +339,8 @@ void UIRenderer::renderQuad(float x, float y, float width, float height, const g
     
     // Check for OpenGL errors after drawing
     err = glGetError();
-    if (err != GL_NO_ERROR && shouldLog) {
+    if (err != GL_NO_ERROR) {
         std::cerr << "[UIRenderer] OpenGL error after drawing quad: 0x" << std::hex << err << std::dec << std::endl;
-    }
-    
-    if (shouldLog) {
-        std::cout << "[UIRenderer] renderQuad completed" << std::endl;
     }
 }
 

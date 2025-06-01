@@ -1,4 +1,5 @@
 #include "ui/UISystem.h"
+#include "ui/UILogger.h"
 #include <algorithm>
 #include <iostream> // Add this header for std::cout and std::cerr
 
@@ -30,28 +31,29 @@ void UISystem::update(float deltaTime) {
 }
 
 void UISystem::render() {
-    // Only log once every 100 frames to reduce console spam
+    // Only log once every 100 frames to reduce file spam
     static int frameCounter = 0;
     bool shouldLog = (frameCounter++ % 100 == 0);
     
+    auto& logger = UILogger::getInstance();
+    
     if (shouldLog) {
-        std::cout << "[UISystem] Rendering " << elements_.size() << " UI elements" << std::endl;
+        logger.debug("UISystem", "Rendering " + std::to_string(elements_.size()) + " UI elements");
     }
     
     if (renderer_.getShaderProgram() == 0) {
-        std::cerr << "[UISystem] ERROR: UI Renderer has invalid shader program (0)" << std::endl;
+        logger.error("UISystem", "UI Renderer has invalid shader program (0)");
         return;
     }
     
     // Debug: verify renderer state before starting
     if (shouldLog) {
-        std::cout << "[UISystem] Renderer screen size: " << renderer_.getScreenWidth() 
-                  << "x" << renderer_.getScreenHeight() << std::endl;
+        logger.debug("UISystem", "Renderer screen size: " + std::to_string(renderer_.getScreenWidth()) + "x" + std::to_string(renderer_.getScreenHeight()));
         
         // Verify OpenGL state
         GLint currentProgram = 0;
         glGetIntegerv(GL_CURRENT_PROGRAM, &currentProgram);
-        std::cout << "[UISystem] Current OpenGL program before beginFrame: " << currentProgram << std::endl;
+        logger.debug("UISystem", "Current OpenGL program before beginFrame: " + std::to_string(currentProgram));
     }
     
     renderer_.beginFrame();
@@ -60,8 +62,8 @@ void UISystem::render() {
         // Verify OpenGL state after beginFrame
         GLint currentProgram = 0;
         glGetIntegerv(GL_CURRENT_PROGRAM, &currentProgram);
-        std::cout << "[UISystem] Current OpenGL program after beginFrame: " << currentProgram << std::endl;
-        std::cout << "[UISystem] Expected program: " << renderer_.getShaderProgram() << std::endl;
+        logger.debug("UISystem", "Current OpenGL program after beginFrame: " + std::to_string(currentProgram));
+        logger.debug("UISystem", "Expected program: " + std::to_string(renderer_.getShaderProgram()));
     }
     
     int visibleCount = 0;

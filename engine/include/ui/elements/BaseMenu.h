@@ -76,10 +76,10 @@ protected:
     void addElementSpacing(float spacing = 20.0f);
 
     // Common styling constants
-    static constexpr float TITLE_HEIGHT = 60.0f;
-    static constexpr float BUTTON_HEIGHT = 50.0f;
-    static constexpr float BUTTON_WIDTH_RATIO = 0.8f; // 80% of menu width
-    static constexpr float ELEMENT_SPACING = 20.0f;
+    static constexpr float TITLE_HEIGHT = 80.0f; // Increased for better title visibility
+    static constexpr float BUTTON_HEIGHT = 60.0f; // Increased to accommodate longer text
+    static constexpr float BUTTON_WIDTH_RATIO = 0.7f; // Slightly narrower for better proportions
+    static constexpr float ELEMENT_SPACING = 25.0f; // Increased spacing
     static constexpr float SIDE_PADDING = 40.0f;
 
     MenuSystem* menuSystem_;

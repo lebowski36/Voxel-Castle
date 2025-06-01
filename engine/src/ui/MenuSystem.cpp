@@ -37,12 +37,12 @@ bool MenuSystem::initialize(int screenWidth, int screenHeight, const std::string
         return false;
     }
     
-    // Set initial positions and sizes
-    mainMenu_->setPosition(screenWidth / 2.0f - 150.0f, screenHeight / 2.0f - 150.0f);
-    mainMenu_->setSize(300.0f, 300.0f);
+    // Set initial positions and sizes (increased for better layout)
+    mainMenu_->setPosition(screenWidth / 2.0f - 200.0f, screenHeight / 2.0f - 175.0f);
+    mainMenu_->setSize(400.0f, 350.0f);
     
-    settingsMenu_->setPosition(screenWidth / 2.0f - 200.0f, screenHeight / 2.0f - 200.0f);
-    settingsMenu_->setSize(400.0f, 400.0f);
+    settingsMenu_->setPosition(screenWidth / 2.0f - 225.0f, screenHeight / 2.0f - 200.0f);
+    settingsMenu_->setSize(450.0f, 400.0f);
     
     // Hide all menus initially
     mainMenu_->setVisible(false);
@@ -168,9 +168,9 @@ void MenuSystem::updateScreenSize(int width, int height) {
     // Calculate menu sizes based on screen dimensions (larger for better visibility)
     // Use at least 30% of screen width and height, but not less than 400x400
     float menuWidth = std::max(400.0f, width * 0.4f);
-    float menuHeight = std::max(400.0f, height * 0.5f);
+    float menuHeight = std::max(350.0f, height * 0.5f); // Increased minimum height
     
-    float settingsWidth = std::max(500.0f, width * 0.5f);
+    float settingsWidth = std::max(450.0f, width * 0.5f); // Increased minimum width
     float settingsHeight = std::max(500.0f, height * 0.6f);
     
     // Recalculate menu positions to keep them centered
