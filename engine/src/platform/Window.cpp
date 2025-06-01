@@ -283,6 +283,12 @@ bool Window::toggleFullscreen() {
         } else {
             FS_LOG("Cleared fullscreen mode for windowed");
         }
+        
+        // CRITICAL FIX: Explicitly restore the window to its original windowed dimensions
+        const int WINDOWED_WIDTH = 1280;
+        const int WINDOWED_HEIGHT = 720;
+        FS_LOG("Explicitly restoring window to initial dimensions: " + std::to_string(WINDOWED_WIDTH) + "x" + std::to_string(WINDOWED_HEIGHT));
+        SDL_SetWindowSize(sdlWindow, WINDOWED_WIDTH, WINDOWED_HEIGHT);
     }
         
     // Use SDL_WINDOW_FULLSCREEN for exclusive fullscreen, 0 for windowed
@@ -332,6 +338,13 @@ bool Window::toggleFullscreen() {
             newDrawableHeight = desktopMode->h;
             FS_LOG("Corrected drawable size to: " + std::to_string(newDrawableWidth) + "x" + std::to_string(newDrawableHeight));
         }
+    } else {
+        // CRITICAL FIX: In windowed mode, use the fixed window size we set earlier
+        const int WINDOWED_WIDTH = 1280;
+        const int WINDOWED_HEIGHT = 720;
+        FS_LOG("OVERRIDE: Using fixed windowed dimensions: " + std::to_string(WINDOWED_WIDTH) + "x" + std::to_string(WINDOWED_HEIGHT));
+        newDrawableWidth = WINDOWED_WIDTH;
+        newDrawableHeight = WINDOWED_HEIGHT;
     }
     
     // Also try getting drawable size for comparison (removed SDL_GL_GetDrawableSize as it doesn't exist in SDL3)
