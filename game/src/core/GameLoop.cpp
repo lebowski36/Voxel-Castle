@@ -11,8 +11,6 @@ int GameLoop::run(Game& game) {
         return -1;
     }
 
-    std::cout << "[GameLoop] Starting main game loop..." << std::endl;
-    
     int frameCount = 0;
     auto lastFrameTime = std::chrono::steady_clock::now();
     auto lastWindowCheckTime = std::chrono::steady_clock::now();
@@ -44,9 +42,6 @@ int GameLoop::run(Game& game) {
             deltaTime = max_deltaTime;
         }
 
-        if (shouldLogFrame) {
-        }
-
         // Process input through Game's interface
         game.processInput();
 
@@ -55,16 +50,8 @@ int GameLoop::run(Game& game) {
             break;
         }
 
-        if (shouldLogFrame) {
-        }
         game.update(deltaTime);
-
-        if (shouldLogFrame) {
-        }
         game.render();
-
-        if (shouldLogFrame) {
-        }
 
         // Apply frame rate limiting
         limitFrameRate(currentTime);

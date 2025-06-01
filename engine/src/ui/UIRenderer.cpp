@@ -310,15 +310,7 @@ void UIRenderer::renderQuad(float x, float y, float width, float height, const g
 
 void UIRenderer::renderTexturedQuad(float x, float y, float width, float height, 
                                    GLuint textureID, const glm::vec4& texCoords) {
-    // Debug logging for UI textured quad rendering
-    static int logCounter = 0;
-    bool shouldLog = (logCounter++ % 10 == 0); // Log every 10th call
-    
-    if (shouldLog) {
-        std::cout << "[UIRenderer] renderTexturedQuad called: pos(" << x << "," << y 
-                  << "), size(" << width << "x" << height 
-                  << "), texture:" << textureID << std::endl;
-    }
+    // Suppressed repetitive logging for renderTexturedQuad calls.
     
     // Check for invalid position
     if (x < -width || x > screenWidth_ || y < -height || y > screenHeight_) {
@@ -335,10 +327,6 @@ void UIRenderer::renderTexturedQuad(float x, float y, float width, float height,
         return;
     }
     
-    // Debug output - increase frequency for troubleshooting
-    static int counter = 0;
-    bool shouldDebug = (counter++ % 100 == 0); // Every 100 frames instead of 300
-    
     // Update vertex buffer with texture coordinates
     float vertices[] = {
         // positions        // texture coords
@@ -347,15 +335,6 @@ void UIRenderer::renderTexturedQuad(float x, float y, float width, float height,
         1.0f, 0.0f,         texCoords.z, texCoords.y,  // top right
         0.0f, 0.0f,         texCoords.x, texCoords.y   // top left
     };
-    
-    if (shouldDebug) {
-        std::cout << "[UIRenderer] Rendering textured quad:" << std::endl
-                  << "- Position: (" << x << ", " << y << ")" << std::endl
-                  << "- Size: " << width << "x" << height << std::endl
-                  << "- Texture ID: " << textureID << std::endl
-                  << "- TexCoords: (" << texCoords.x << ", " << texCoords.y << ", " 
-                  << texCoords.z << ", " << texCoords.w << ")" << std::endl;
-    }
     
     // Save currently bound texture to restore later
     GLint prevTexture = 0;
@@ -440,10 +419,6 @@ void UIRenderer::renderTexturedQuad(float x, float y, float width, float height,
     
     // Restore previous texture binding
     glBindTexture(GL_TEXTURE_2D, prevTexture);
-    
-    if (shouldLog) {
-        std::cout << "[UIRenderer] renderTexturedQuad completed" << std::endl;
-    }
 }
 
 bool UIRenderer::loadShaders() {

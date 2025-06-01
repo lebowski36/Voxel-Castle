@@ -175,9 +175,7 @@ void MenuSystem::updateScreenSize(int width, int height) {
         settingsMenuHeight = settingsMenu_->getSize().y;
     }
     
-    std::cout << "[MenuSystem] updateScreenSize called with dimensions: " << width << "x" << height << std::endl;
-    std::cout << "[MenuSystem] Preserving menu sizes - Main: " << MAIN_MENU_WIDTH << "x" << mainMenuHeight 
-              << ", Settings: " << SETTINGS_MENU_WIDTH << "x" << settingsMenuHeight << std::endl;
+    // Suppressed repetitive logging for menu system operations.
     
     // IMPORTANT: Store references to the menus before updating renderer to avoid brief size flashes
     std::shared_ptr<BaseMenu> mainMenuRef = mainMenu_;

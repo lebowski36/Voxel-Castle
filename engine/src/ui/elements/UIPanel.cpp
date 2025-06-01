@@ -28,9 +28,6 @@ void UIPanel::render() {
     }
     
     if (!isVisible()) {
-        if (shouldLog) {
-            std::cout << "[UIPanel] Not rendering because element is not visible" << std::endl;
-        }
         return;
     }
     
