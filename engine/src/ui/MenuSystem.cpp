@@ -187,17 +187,36 @@ void MenuSystem::updateScreenSize(int width, int height) {
     std::cout << "[MenuSystem] Preserving menu sizes - Main: " << MAIN_MENU_WIDTH << "x" << mainMenuHeight 
               << ", Settings: " << SETTINGS_MENU_WIDTH << "x" << settingsMenuHeight << std::endl;
     
+    // IMPORTANT: Store references to the menus before updating renderer to avoid brief size flashes
+    std::shared_ptr<BaseMenu> mainMenuRef = mainMenu_;
+    std::shared_ptr<BaseMenu> settingsMenuRef = settingsMenu_;
+    
+    // Temporarily remove menus from the UI system's element list to avoid rendering at wrong size
+    std::vector<std::shared_ptr<UIElement>> tempMenus;
+    for (auto it = elements_.begin(); it != elements_.end();) {
+        if ((*it).get() == mainMenu_.get() || (*it).get() == settingsMenu_.get()) {
+            tempMenus.push_back(*it);
+            it = elements_.erase(it);
+        } else {
+            ++it;
+        }
+    }
+    
     // Update the renderer's dimensions (viewport, projection matrix)
     getRenderer().setScreenSize(width, height);
     
-    // Explicitly reset menu sizes to their original fixed dimensions
-    // This is necessary because other code might be setting their sizes incorrectly
-    if (mainMenu_) {
-        mainMenu_->setSize(MAIN_MENU_WIDTH, mainMenuHeight);
+    // Explicitly reset menu sizes to their original fixed dimensions BEFORE adding them back
+    if (mainMenuRef) {
+        mainMenuRef->setSize(MAIN_MENU_WIDTH, mainMenuHeight);
     }
     
-    if (settingsMenu_) {
-        settingsMenu_->setSize(SETTINGS_MENU_WIDTH, settingsMenuHeight);
+    if (settingsMenuRef) {
+        settingsMenuRef->setSize(SETTINGS_MENU_WIDTH, settingsMenuHeight);
+    }
+    
+    // Re-add the menus to the element list
+    for (auto& menu : tempMenus) {
+        elements_.push_back(menu);
     }
     
     // Center the menus with the new screen dimensions

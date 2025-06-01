@@ -75,22 +75,24 @@ Implement a comprehensive menu system with modified input handling where ESC ope
   - Settings button functionality (CONFIRMED WORKING)
   - Back button in settings returns to main menu (CONFIRMED WORKING)
   - [x] **5.2.1** Fullscreen toggle checkbox functionality (CONFIRMED WORKING)
-- [ ] **5.3** UI Layout and Interaction Fixes
+- [x] **5.3** UI Layout and Interaction Fixes (COMPLETED)
   - [x] **5.3.1** Fix menu positioning and interaction after fullscreen toggle (COMPLETED)
   - [x] **5.3.2** Fix checkbox state not updating visually when fullscreen is applied (COMPLETED)
-  - [ ] **5.3.3** Center buttons properly in menu layout
+  - [x] **5.3.3** Center buttons properly in menu layout (COMPLETED)
   - [x] **5.3.4** Add game title to menu title bar (CONFIRMED: "Voxel Castle" title exists)
-  - [ ] **5.3.5** Improve overall menu styling and formatting
-- [ ] **5.4** Polish and refinement
-  - [ ] **5.4.1** Implement smooth menu transitions
-  - [ ] **5.4.2** Add visual feedback for button interactions
-  - [ ] **5.4.3** Ensure consistent styling across all menu elements
+  - [x] **5.3.5** Improve overall menu styling and formatting (COMPLETED)
+- [x] **5.4** Polish and refinement (COMPLETED - REMAINING ITEMS SKIPPED)
+  - [ ] **5.4.1** Implement smooth menu transitions (SKIPPED FOR NOW)
+  - [ ] **5.4.2** Add visual feedback for button interactions (SKIPPED FOR NOW)
+  - [x] **5.4.3** Ensure consistent styling across all menu elements (COMPLETED)
 
 ### Phase 6: Enhanced Features
-- [ ] **6.1** UI Scaling System
-  - [ ] **6.1.1** Add UI scale slider to settings menu (1.0x to 2.0x range)
-  - [ ] **6.1.2** Implement unified scaling for both menu and HUD elements
-  - [ ] **6.1.3** Save/load UI scale preference
+- [ ] **6.1** UI Scaling System & Config Persistence
+  - [ ] **6.1.1** Create modular configuration system for saving/loading user preferences
+  - [ ] **6.1.2** Add UI scale slider to settings menu (1.0x to 2.0x range)
+  - [ ] **6.1.3** Implement unified scaling for both menu and HUD elements
+  - [ ] **6.1.4** Save/load UI scale preference
+  - [ ] **6.1.5** Save/load fullscreen preference
 - [ ] **6.2** Improved Button Interaction
   - [ ] **6.2.1** Make text labels clickable (not just button backgrounds)
   - [ ] **6.2.2** Increase button click areas for better usability
@@ -134,8 +136,8 @@ Implement a comprehensive menu system with modified input handling where ESC ope
 ## Success Criteria
 - [x] ESC key opens main menu instead of toggling mouse capture
 - [x] Mouse capture is enabled by default
-- [ ] Main menu contains functional Close and Settings options
-- [ ] Settings menu includes working fullscreen toggle
-- [ ] All menu interactions work smoothly
+- [x] Main menu contains functional Close and Settings options
+- [x] Settings menu includes working fullscreen toggle
+- [x] All menu interactions work smoothly
 - [x] No regressions in existing game functionality
 - [x] Menu integrates seamlessly with existing UI system
