@@ -86,8 +86,8 @@ MeshRenderer::MeshRenderer() : vao(0), vbo(0), ebo(0), shaderProgram(0), texture
     const std::string texturePath = BASE_DIRECTORY + "assets/textures/atlas.png";
 
     // std::cout << "[MeshRenderer] Creating shader program from:" << std::endl;
-    std::cout << "  Vertex shader: " << vertexShaderPath << std::endl;
-    std::cout << "  Fragment shader: " << fragmentShaderPath << std::endl;
+    DEBUG_LOG("MeshRenderer", "Vertex shader: " + vertexShaderPath);
+    DEBUG_LOG("MeshRenderer", "Fragment shader: " + fragmentShaderPath);
 
     shaderProgram = createShaderProgram(vertexShaderPath, fragmentShaderPath);
     checkGlError("createShaderProgram");

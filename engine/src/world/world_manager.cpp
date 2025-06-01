@@ -175,7 +175,7 @@ void WorldManager::enqueueDirtyMeshJobs(VoxelEngine::Rendering::TextureAtlas& at
         }
     }
     if (enqueued > 0) {
-        std::cout << "[" << VoxelEngine::Utils::getTimestamp() << "][MeshJobSystem] Enqueued " << enqueued << " mesh jobs." << std::endl;
+        DEBUG_LOG("MeshJobSystem", "Enqueued " + std::to_string(enqueued) + " mesh jobs.");
     }
     // std::cout << "[" << VoxelEngine::Utils::getTimestamp() << "][WorldManager] enqueueDirtyMeshJobs() END" << std::endl;
 }
