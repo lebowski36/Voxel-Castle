@@ -4,6 +4,8 @@
 #include <string>
 #include <memory>
 
+#include "ui/TextRenderer.h"
+
 namespace VoxelEngine {
 namespace UI {
 
@@ -30,6 +32,11 @@ public:
     void renderColoredQuad(float x, float y, float width, float height, 
                           const glm::vec4& color);
 
+    // Text rendering
+    bool loadUIFont(const std::string& fontPath, float fontSize = 32.0f);
+    void drawText(const std::string& text, float x, float y, float scale = 1.0f, const glm::vec3& color = glm::vec3(1.0f));
+    float getFontHeight() const;
+
     // Test function to draw a visible rectangle regardless of other UI elements                      
     void drawTestRectangle();
 
@@ -54,6 +61,8 @@ private:
     GLuint loadShader(const std::string& path, GLenum type);
     GLuint createShaderProgram(const std::string& vertPath, const std::string& fragPath);
     void setupQuadGeometry();
+
+    std::unique_ptr<TextRenderer> textRenderer_;
 };
 
 } // namespace UI

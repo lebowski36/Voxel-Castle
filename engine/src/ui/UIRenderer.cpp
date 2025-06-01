@@ -1,4 +1,5 @@
 #include "ui/UIRenderer.h"
+#include "ui/TextRenderer.h"
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 #include <fstream>
@@ -11,6 +12,7 @@ namespace UI {
 UIRenderer::UIRenderer() : 
     shaderProgram_(0), vao_(0), vbo_(0), ebo_(0),
     screenWidth_(800), screenHeight_(600) {
+    textRenderer_ = std::make_unique<TextRenderer>();
 }
 
 UIRenderer::~UIRenderer() {
@@ -25,11 +27,23 @@ bool UIRenderer::initialize(int screenWidth, int screenHeight, const std::string
     screenWidth_ = screenWidth;
     screenHeight_ = screenHeight;
     projectRoot_ = projectRoot;
-    
+
+    // Load default font
+    std::string fontPath = projectRoot_ + "/assets/fonts/PressStart2P-Regular.ttf";
+    if (!textRenderer_->initialize(fontPath, 16.0f)) {
+        std::cerr << "[UIRenderer] Failed to load default font: " << fontPath << std::endl;
+        // Continue anyway as UI can work without text for now
+    }
+
     // Create orthographic projection matrix (0,0 at top-left)
     projectionMatrix_ = glm::ortho(0.0f, static_cast<float>(screenWidth_), 
                                   static_cast<float>(screenHeight_), 0.0f, 
                                   -1.0f, 1.0f);
+    
+    // Set projection matrix for text renderer
+    if (textRenderer_) {
+        textRenderer_->setProjectionMatrix(projectionMatrix_);
+    }
     
     if (!loadShaders()) {
         std::cerr << "[UIRenderer] Failed to load shaders" << std::endl;
@@ -229,6 +243,37 @@ void UIRenderer::setScreenSize(int width, int height) {
     projectionMatrix_ = glm::ortho(0.0f, static_cast<float>(screenWidth_), 
                                   static_cast<float>(screenHeight_), 0.0f, 
                                   -1.0f, 1.0f);
+    
+    // Update text renderer projection matrix
+    if (textRenderer_) {
+        textRenderer_->setProjectionMatrix(projectionMatrix_);
+    }
+}
+
+bool UIRenderer::loadUIFont(const std::string& fontPath, float fontSize) {
+    if (!textRenderer_) {
+        std::cerr << "[UIRenderer] TextRenderer not initialized" << std::endl;
+        return false;
+    }
+    
+    bool result = textRenderer_->initialize(fontPath, fontSize);
+    if (result) {
+        textRenderer_->setProjectionMatrix(projectionMatrix_);
+        std::cout << "[UIRenderer] Font loaded successfully: " << fontPath << std::endl;
+    } else {
+        std::cerr << "[UIRenderer] Failed to load font: " << fontPath << std::endl;
+    }
+    return result;
+}
+
+void UIRenderer::drawText(const std::string& text, float x, float y, float scale, const glm::vec3& color) {
+    if (textRenderer_) {
+        textRenderer_->drawText(text, x, y, scale, color);
+    }
+}
+
+float UIRenderer::getFontHeight() const {
+    return textRenderer_ ? textRenderer_->getFontHeight() : 0.0f;
 }
 
 void UIRenderer::renderColoredQuad(float x, float y, float width, float height, const glm::vec4& color) {

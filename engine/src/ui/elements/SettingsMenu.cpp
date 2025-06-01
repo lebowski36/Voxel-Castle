@@ -25,6 +25,9 @@ bool SettingsMenu::initialize(MenuSystem* menuSystem) {
     titlePanel_->setSize(getSize().x, 40.0f);
     addChild(titlePanel_);
 
+    // Title panel text
+    renderer_->drawText("Settings", titlePanel_->getPosition().x + 10.0f, titlePanel_->getPosition().y + 20.0f, 1.0f, glm::vec3(1.0f));
+
     // Create settings controls
     float controlWidth = getSize().x - 40.0f;
     float controlHeight = 40.0f;

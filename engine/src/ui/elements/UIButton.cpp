@@ -51,27 +51,15 @@ void UIButton::render() {
     }
 
     glm::vec2 pos = getAbsolutePosition();
-    
-    // Determine which color to use based on button state
-    glm::vec4 bgColor;
-    if (isPressed_) {
-        bgColor = clickColor_;
-    } else if (isHovered_) {
-        bgColor = hoverColor_;
-    } else {
-        bgColor = backgroundColor_;
-    }
-    
-    // Render button background
+    glm::vec4 bgColor = isPressed_ ? clickColor_ : (isHovered_ ? hoverColor_ : backgroundColor_);
+
     renderer_->renderColoredQuad(pos.x, pos.y, size_.x, size_.y, bgColor);
-    
-    // Debug output - keep for now to help diagnose rendering issues
-    std::cout << "[UIButton] Rendering button: \"" << text_ << "\" at position: " 
-              << pos.x << ", " << pos.y << " with size: " << size_.x << "x" << size_.y 
-              << " color: " << bgColor.r << ", " << bgColor.g << ", " << bgColor.b << std::endl;
-              
-    // TODO: Add text rendering when font renderer is implemented
-    // For now, we at least have visible colored buttons
+
+    if (!text_.empty()) {
+        float textScale = 1.0f; // Adjust scale as needed
+        glm::vec3 textColor = glm::vec3(1.0f); // White text
+        renderer_->drawText(text_, pos.x + 10.0f, pos.y + size_.y / 2.0f, textScale, textColor);
+    }
 }
 
 bool UIButton::handleInput(float mouseX, float mouseY, bool clicked) {

@@ -49,13 +49,16 @@ void UICheckbox::render() {
         renderer_->renderColoredQuad(pos.x + 4, pos.y + 4, boxSize - 8, boxSize - 8,
                                    glm::vec4(0.2f, 0.6f, 0.9f, 1.0f)); // Blue check
     }
+
+    // Render checkbox label
+    float textScale = 1.0f; // Adjust scale as needed
+    glm::vec3 textColor = glm::vec3(1.0f); // White text
+    renderer_->drawText(label_, pos.x + boxSize + 10.0f, pos.y + boxSize / 2.0f, textScale, textColor);
     
     // Debug output - keep for now
     std::cout << "[UICheckbox] Rendering checkbox: \"" << label_ 
               << "\" at position: " << pos.x << ", " << pos.y
               << " checked: " << (checked_ ? "true" : "false") << std::endl;
-              
-    // TODO: Add text rendering for label when font renderer is implemented
 }
 
 bool UICheckbox::handleInput(float mouseX, float mouseY, bool clicked) {
