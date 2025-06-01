@@ -6,6 +6,7 @@
 #include <glm/glm.hpp>
 #include <iostream>
 #include <cassert>
+#include <algorithm>
 
 namespace VoxelEngine {
     namespace Rendering {
@@ -116,7 +117,7 @@ namespace VoxelEngine {
                             
                             // Compute greedy quad dimensions for this slice
                             int h_quad, w_quad;
-                            computeQuadDimensions(sliceVisibilityMask, pos_u, pos_v, h_quad, w_quad, chunk_dims, currentType, u, v);
+                            computeQuadDimensions(sliceVisibilityMask, processedMask, pos_u, pos_v, h_quad, w_quad, chunk_dims, currentType, u, v);
 
                             // Generate the quad at the correct slice position
                             int x[3] = {0, 0, 0};
@@ -158,6 +159,7 @@ namespace VoxelEngine {
 
             void TwoPhaseGreedyMeshingAlgorithm::computeQuadDimensions(
                 const std::vector<FaceInfo>& visibilityMask,
+                const std::vector<bool>& processedMask,
                 int x_u, int x_v,
                 int& h_quad, int& w_quad,
                 const int chunk_dims[3],
@@ -171,6 +173,10 @@ namespace VoxelEngine {
                     if (checkIndex >= static_cast<int>(visibilityMask.size()) ||
                         !visibilityMask[checkIndex].isVisible ||
                         visibilityMask[checkIndex].voxelType != voxelType) {
+                        break;
+                    }
+                    // NEW: Check if face already processed
+                    if (processedMask[checkIndex]) {
                         break;
                     }
                 }
@@ -188,12 +194,17 @@ namespace VoxelEngine {
                             valid_row = false;
                             break;
                         }
+                        // NEW: Check if face already processed
+                        if (processedMask[checkIndex]) {
+                            valid_row = false;
+                            break;
+                        }
                     }
                     if (!valid_row) break;
                 }
             }
 
-            void TwoPhaseGreedyMeshingAlgorithm::generateQuad(
+        void TwoPhaseGreedyMeshingAlgorithm::generateQuad(
                 VoxelMesh& mesh,
                 int d, int u, int v, int dir,
                 const int x[3], const int q[3],
@@ -237,10 +248,6 @@ namespace VoxelEngine {
                 }
             }
 
-        } // namespace Meshing
-    } // namespace Rendering
-} // namespace VoxelEngine
-
 void VoxelEngine::Rendering::Meshing::TwoPhaseGreedyMeshingAlgorithm::addQuad(VoxelMesh& mesh,
                                             const VoxelEngine::World::VoxelPosition& p1,
                                             const VoxelEngine::World::VoxelPosition& p2,
@@ -260,35 +267,95 @@ void VoxelEngine::Rendering::Meshing::TwoPhaseGreedyMeshingAlgorithm::addQuad(Vo
     TextureCoordinates texCoords = atlas.getTextureCoordinates(voxelType);
     glm::vec2 atlas_origin_uv = texCoords.getBottomLeft();
 
-    // Map UV coordinates to match the actual quad geometry
-    // The quad vertices are ordered as: p1, p2, p3, p4
-    // We need to determine which direction corresponds to U and which to V
-    // based on the vertex positions passed in
-    
-    // Calculate the vectors between vertices to determine orientation
-    glm::vec3 vec_p1_to_p2 = glm::vec3(p2.x - p1.x, p2.y - p1.y, p2.z - p1.z);
-    glm::vec3 vec_p1_to_p4 = glm::vec3(p4.x - p1.x, p4.y - p1.y, p4.z - p1.z);
-    
-    // Determine which vector is longer to establish U and V directions
-    float len_p1_p2 = glm::length(vec_p1_to_p2);
-    float len_p1_p4 = glm::length(vec_p1_to_p4);
+    // Map UV coordinates based on world axis orientation for consistent texture orientation
+    // Vertex order: p1, p2, p3, p4 where p1 is the base corner
+    // p2 = p1 + dv_vec, p3 = p1 + dv_vec + du_vec, p4 = p1 + du_vec
     
     glm::vec2 quad_uvs[4];
     
-    // Set UV coordinates based on the quad geometry
-    // p1 is always at (0,0)
-    quad_uvs[0] = glm::vec2(0.0f, 0.0f);  // p1
-    
-    if (len_p1_p2 >= len_p1_p4) {
-        // p1->p2 is the longer edge, use it as U direction
-        quad_uvs[1] = glm::vec2(len_p1_p2, 0.0f);                    // p2
-        quad_uvs[2] = glm::vec2(len_p1_p2, len_p1_p4);              // p3  
-        quad_uvs[3] = glm::vec2(0.0f, len_p1_p4);                   // p4
+    // Determine face orientation based on normal vector and apply consistent UV mapping
+    if (std::abs(normal.y) > 0.5f) {
+        // Horizontal face (floor/ceiling) - Y+ or Y-
+        // For consistent cardinal orientation: U = X-axis, V = Z-axis
+        // This ensures textures face North consistently
+        
+        float u_min = std::min(std::min(p1.x, p2.x), std::min(p3.x, p4.x));
+        float u_max = std::max(std::max(p1.x, p2.x), std::max(p3.x, p4.x));
+        float v_min = std::min(std::min(p1.z, p2.z), std::min(p3.z, p4.z));
+        float v_max = std::max(std::max(p1.z, p2.z), std::max(p3.z, p4.z));
+        
+        // Normalize UV coordinates relative to quad size
+        float u_size = u_max - u_min;
+        float v_size = v_max - v_min;
+        
+        // Map each vertex based on its X,Z position
+        quad_uvs[0] = glm::vec2((p1.x - u_min), (p1.z - v_min));  // p1
+        quad_uvs[1] = glm::vec2((p2.x - u_min), (p2.z - v_min));  // p2
+        quad_uvs[2] = glm::vec2((p3.x - u_min), (p3.z - v_min));  // p3
+        quad_uvs[3] = glm::vec2((p4.x - u_min), (p4.z - v_min));  // p4
+        
+        // For Y- faces (ceiling), flip V to maintain proper orientation
+        if (normal.y < 0.0f) {
+            for (int i = 0; i < 4; i++) {
+                quad_uvs[i].y = v_size - quad_uvs[i].y;
+            }
+        }
+        
+    } else if (std::abs(normal.x) > 0.5f) {
+        // Vertical face facing East/West (X+ or X-)
+        // U = Z-axis (horizontal), V = Y-axis (up/down)
+        
+        float u_min = std::min(std::min(p1.z, p2.z), std::min(p3.z, p4.z));
+        float u_max = std::max(std::max(p1.z, p2.z), std::max(p3.z, p4.z));
+        float v_min = std::min(std::min(p1.y, p2.y), std::min(p3.y, p4.y));
+        float v_max = std::max(std::max(p1.y, p2.y), std::max(p3.y, p4.y));
+        
+        float u_size = u_max - u_min;
+        float v_size = v_max - v_min;
+        
+        // Map each vertex: U=Z-position, V=Y-position
+        quad_uvs[0] = glm::vec2((p1.z - u_min), (p1.y - v_min));  // p1
+        quad_uvs[1] = glm::vec2((p2.z - u_min), (p2.y - v_min));  // p2
+        quad_uvs[2] = glm::vec2((p3.z - u_min), (p3.y - v_min));  // p3
+        quad_uvs[3] = glm::vec2((p4.z - u_min), (p4.y - v_min));  // p4
+        
+        // For X- faces (west-facing), flip U to maintain consistent orientation
+        if (normal.x < 0.0f) {
+            for (int i = 0; i < 4; i++) {
+                quad_uvs[i].x = u_size - quad_uvs[i].x;
+            }
+        }
+        
+    } else if (std::abs(normal.z) > 0.5f) {
+        // Vertical face facing North/South (Z+ or Z-)
+        // U = X-axis (horizontal), V = Y-axis (up/down)
+        
+        float u_min = std::min(std::min(p1.x, p2.x), std::min(p3.x, p4.x));
+        float u_max = std::max(std::max(p1.x, p2.x), std::max(p3.x, p4.x));
+        float v_min = std::min(std::min(p1.y, p2.y), std::min(p3.y, p4.y));
+        float v_max = std::max(std::max(p1.y, p2.y), std::max(p3.y, p4.y));
+        
+        float u_size = u_max - u_min;
+        float v_size = v_max - v_min;
+        
+        // Map each vertex: U=X-position, V=Y-position
+        quad_uvs[0] = glm::vec2((p1.x - u_min), (p1.y - v_min));  // p1
+        quad_uvs[1] = glm::vec2((p2.x - u_min), (p2.y - v_min));  // p2
+        quad_uvs[2] = glm::vec2((p3.x - u_min), (p3.y - v_min));  // p3
+        quad_uvs[3] = glm::vec2((p4.x - u_min), (p4.y - v_min));  // p4
+        
+        // For Z+ faces (north-facing), flip U to maintain consistent left-right orientation
+        if (normal.z > 0.0f) {
+            for (int i = 0; i < 4; i++) {
+                quad_uvs[i].x = u_size - quad_uvs[i].x;
+            }
+        }
     } else {
-        // p1->p4 is the longer edge, use it as U direction  
-        quad_uvs[1] = glm::vec2(0.0f, len_p1_p2);                   // p2
-        quad_uvs[2] = glm::vec2(len_p1_p4, len_p1_p2);              // p3
-        quad_uvs[3] = glm::vec2(len_p1_p4, 0.0f);                   // p4
+        // Fallback for edge cases - use simple quad mapping
+        quad_uvs[0] = glm::vec2(0.0f, 0.0f);  // p1
+        quad_uvs[1] = glm::vec2(0.0f, 1.0f);  // p2
+        quad_uvs[2] = glm::vec2(1.0f, 1.0f);  // p3
+        quad_uvs[3] = glm::vec2(1.0f, 0.0f);  // p4
     }
 
     mesh.vertices.emplace_back(p1, normal, quad_uvs[0], atlas_origin_uv, light);
@@ -305,3 +372,6 @@ void VoxelEngine::Rendering::Meshing::TwoPhaseGreedyMeshingAlgorithm::addQuad(Vo
     mesh.indices.push_back(base_index + 2);
     mesh.indices.push_back(base_index + 3);
 }
+        } // namespace Meshing
+    } // namespace Rendering
+} // namespace VoxelEngine

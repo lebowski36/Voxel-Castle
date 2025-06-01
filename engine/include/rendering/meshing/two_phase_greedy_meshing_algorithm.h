@@ -90,9 +90,11 @@ namespace VoxelEngine {
 
                 /**
                  * @brief Helper to compute greedy quad dimensions
+                 * @param processedMask Mask tracking which faces have already been consumed by previous quads
                  */
                 void computeQuadDimensions(
                     const std::vector<FaceInfo>& visibilityMask,
+                    const std::vector<bool>& processedMask,
                     int x_u, int x_v,
                     int& h_quad, int& w_quad,
                     const int chunk_dims[3],
