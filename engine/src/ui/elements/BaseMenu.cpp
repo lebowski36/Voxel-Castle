@@ -5,6 +5,7 @@
 #include <iostream>
 #include <algorithm>
 #include <cmath>
+#include <map>
 
 namespace VoxelEngine {
 namespace UI {
@@ -77,20 +78,47 @@ void BaseMenu::setSize(float width, float height) {
     logger.debug("BaseMenu", "setSize called - Old size: (" + std::to_string(getSize().x) + ", " + std::to_string(getSize().y) + ")");
     logger.debug("BaseMenu", "setSize called - New size: (" + std::to_string(width) + ", " + std::to_string(height) + ")");
     
-    // Safeguard against excessive scaling of menu sizes (likely from fullscreen toggle)
-    // If we already have a non-default size and the new width is more than 2x larger,
-    // it's likely due to fullscreen scaling which we want to avoid
-    glm::vec2 currentSize = getSize();
-    static const float DEFAULT_SIZE = 100.0f; // The initial default size
-    static const float REASONABLE_MAX_WIDTH = 800.0f; // Maximum reasonable menu width
+    // Store fixed menu dimensions for specific menu types
+    static std::map<const void*, glm::vec2> fixedMenuSizes;
     
-    if (currentSize.x > DEFAULT_SIZE && width > REASONABLE_MAX_WIDTH) {
-        logger.warning("BaseMenu", "Prevented excessive menu scaling (width: " + std::to_string(width) + ")");
-        // Keep existing size
-        return;
+    // For main menu and settings menu, we want to preserve their width (400px and 450px)
+    // Store the fixed sizes the first time we see a successful size setting
+    glm::vec2 currentSize = getSize();
+    
+    // First-time setting a proper size (after auto-calculating height)
+    if (currentSize.x == 100.0f && (width == 400.0f || width == 450.0f)) {
+        // This is an initialization to the proper menu width 
+        // Save this as the fixed size for this menu instance
+        glm::vec2 fixedSize(width, height);
+        fixedMenuSizes[this] = fixedSize;
+        logger.info("BaseMenu", "Established fixed menu size: (" + std::to_string(width) + "x" + std::to_string(height) + ")");
+    }
+    // Check if this menu has a fixed size we should enforce
+    else if (fixedMenuSizes.find(this) != fixedMenuSizes.end()) {
+        // We know the correct size for this menu
+        glm::vec2 correctSize = fixedMenuSizes[this];
+        
+        // If dimensions changed dramatically, it's likely a fullscreen toggle resize
+        // Ignore the resize and keep our fixed dimensions
+        if (std::abs(width - correctSize.x) > 50.0f) {  // Allow small adjustments
+            logger.warning("BaseMenu", "Preventing menu resize from " + std::to_string(correctSize.x) + "x" + 
+                          std::to_string(correctSize.y) + " to " + std::to_string(width) + "x" + std::to_string(height));
+            
+            // If forced to be too large, explicitly restore our known good size
+            if (width > 800.0f) {
+                // Call parent setSize with the correct size
+                UIPanel::setSize(correctSize.x, correctSize.y);
+                logger.debug("BaseMenu", "Restored fixed menu size: (" + std::to_string(correctSize.x) + 
+                            "x" + std::to_string(correctSize.y) + ")");
+                
+                // Ensure buttons are centered correctly
+                repositionButtons();
+            }
+            return;  // Ignore this resize request entirely
+        }
     }
     
-    // Call parent setSize
+    // Call parent setSize for acceptable size changes
     UIPanel::setSize(width, height);
     
     logger.debug("BaseMenu", "setSize completed - Actual size: (" + std::to_string(getSize().x) + ", " + std::to_string(getSize().y) + ")");

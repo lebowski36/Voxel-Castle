@@ -393,11 +393,19 @@ bool Game::toggleFullscreen() {
             std::cout << "[Game] Camera aspect ratio updated to: " << width << "x" << height << std::endl;
         }
         
-        // Update UI systems with increased size for better visibility
+        // Update UI systems - but keep menu sizes the same
         if (menuSystem_) {
-            // Update menu system dimensions - this will also update the UI renderer
-            menuSystem_->updateScreenSize(width, height);
+            // First update fullscreen state since this doesn't resize anything
             menuSystem_->updateFullscreenState(isFullscreen());
+            
+            // Store current menu sizes
+            glm::vec2 mainSize = menuSystem_->getMainMenuSize();
+            glm::vec2 settingsSize = menuSystem_->getSettingsMenuSize();
+            
+            // Update screen dimensions in the renderer
+            menuSystem_->updateScreenSize(width, height);
+            
+            // Double-check menu sizes were preserved properly
             std::cout << "[Game] Menu system updated for new screen size: " << width << "x" << height << std::endl;
         }
         

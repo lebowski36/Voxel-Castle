@@ -126,6 +126,18 @@ public:
     void updateFullscreenState(bool isFullscreen);
 
     /**
+     * @brief Get the size of the main menu
+     * @return Size of the main menu as a glm::vec2
+     */
+    glm::vec2 getMainMenuSize() const;
+
+    /**
+     * @brief Get the size of the settings menu
+     * @return Size of the settings menu as a glm::vec2
+     */
+    glm::vec2 getSettingsMenuSize() const;
+
+    /**
      * @brief Debug dump of menu state - to verify in console
      * Logs the current state of menu and visibility of elements
      */
