@@ -2,6 +2,8 @@
 #include <filesystem>
 #include <iostream>
 #include <map>
+#include <fstream>
+#include <string>
 
 namespace VoxelCastle {
 namespace Utils {
@@ -39,7 +41,8 @@ void DebugLogger::startNewSession() {
     ss << "_" << std::setfill('0') << std::setw(3) << ms.count();
     sessionTimestamp_ = ss.str();
     
-    std::cout << "[DebugLogger] Started new session: " << sessionTimestamp_ << std::endl;
+    // Redirected verbose session start message to file-based logging
+    logToFile("[DebugLogger] Started new session: " + sessionTimestamp_);
 }
 
 std::string DebugLogger::getCurrentTimestamp() {
@@ -71,6 +74,7 @@ std::ofstream& DebugLogger::getLogFile(const std::string& subsystem) {
         std::string filename = "debug_logs/" + subsystem + "_" + sessionTimestamp_ + ".log";
         auto file = std::make_unique<std::ofstream>(filename, std::ios::app);
         if (!file->is_open()) {
+            // Preserved critical error message
             std::cerr << "[DebugLogger] Failed to open log file: " << filename << std::endl;
         } else {
             *file << "[" << getCurrentTimestamp() << "] ===== LOG SESSION STARTED =====" << std::endl;
@@ -127,6 +131,13 @@ DebugLogger::~DebugLogger() {
             *file << "[" << getCurrentTimestamp() << "] ===== LOG SESSION ENDED =====" << std::endl;
             file->close();
         }
+    }
+}
+
+void logToFile(const std::string& message) {
+    std::ofstream logFile("debug_log.txt", std::ios::app);
+    if (logFile.is_open()) {
+        logFile << message << std::endl;
     }
 }
 

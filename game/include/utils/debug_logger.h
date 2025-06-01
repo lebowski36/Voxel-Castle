@@ -57,5 +57,7 @@ private:
 #define ERROR_LOG(subsystem, message) VoxelCastle::Utils::DebugLogger::getInstance().error(subsystem, message)
 #define CRITICAL_LOG(subsystem, message) VoxelCastle::Utils::DebugLogger::getInstance().critical(subsystem, message)
 
+extern void logToFile(const std::string& message);
+
 } // namespace Utils
 } // namespace VoxelCastle

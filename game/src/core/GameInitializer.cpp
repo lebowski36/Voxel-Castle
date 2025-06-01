@@ -8,6 +8,7 @@
 #include "rendering/mesh_renderer.h"
 #include "SpectatorCamera.h"
 #include "rendering/debug_utils.h"
+#include "utils/debug_logger.h"
 #include <iostream>
 #include <glad/glad.h>
 #include <glm/gtc/matrix_transform.hpp>
@@ -17,8 +18,8 @@
 GameInitializer::InitResult GameInitializer::initialize(int screenWidth, int screenHeight, const char* projectRoot) {
     InitResult result;
     result.isRunning = false;
-    std::cout << "GameInitializer::initialize() - Initializing Game Window with dimensions: " 
-              << screenWidth << "x" << screenHeight << std::endl;
+    // Redirected verbose initialization and shutdown logs to file-based logging
+    VoxelCastle::Utils::logToFile("GameInitializer::initialize() - Initializing Game Window with dimensions: " + std::to_string(screenWidth) + "x" + std::to_string(screenHeight));
     result.gameWindow = std::make_unique<Window>("Voxel Fortress - Alpha", screenWidth, screenHeight);
     if (!result.gameWindow || !result.gameWindow->init()) {
         std::cerr << "Failed to initialize the game window!" << std::endl;
@@ -70,5 +71,6 @@ void GameInitializer::shutdown(InitResult& resources, int screenWidth, int scree
     if (resources.worldGenerator) resources.worldGenerator.reset();
 
     resources.isRunning = false;
-    std::cout << "GameInitializer::shutdown() - Complete." << std::endl;
+    // Redirected verbose initialization and shutdown logs to file-based logging
+    VoxelCastle::Utils::logToFile("GameInitializer::shutdown() - Complete.");
 }

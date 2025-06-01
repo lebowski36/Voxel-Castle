@@ -199,15 +199,16 @@ void BlockPlacement::handleMouseClick(Game& game, bool isLeftClick) {
             return;
         }
         
-        std::cout << "[" << VoxelEngine::Utils::getTimestamp() << "][BlockPlacement] Processing " << (isLeftClick ? "placement" : "removal") << std::endl;
+        // Redirected verbose block placement logs to file-based logging
+        VoxelCastle::Utils::logToFile("[" + VoxelEngine::Utils::getTimestamp() + "][BlockPlacement] Processing " + (isLeftClick ? "placement" : "removal"));
     
         if (isLeftClick) {
-            std::cout << "[" << VoxelEngine::Utils::getTimestamp() << "][BlockPlacement] Checking placement validity..." << std::endl;
+            VoxelCastle::Utils::logToFile("[" + VoxelEngine::Utils::getTimestamp() + "][BlockPlacement] Checking placement validity...");
             // Place block at adjacent position
             if (isValidPlacement(game, rayResult.adjacentPosition, worldManager)) {
-                std::cout << "[" << VoxelEngine::Utils::getTimestamp() << "][BlockPlacement] Placement valid, getting block type..." << std::endl;
+                VoxelCastle::Utils::logToFile("[" + VoxelEngine::Utils::getTimestamp() + "][BlockPlacement] Placement valid, getting block type...");
                 VoxelEngine::World::VoxelType blockType = getCurrentBlockType(game);
-                std::cout << "[" << VoxelEngine::Utils::getTimestamp() << "][BlockPlacement] Block type: " << static_cast<int>(blockType) << std::endl;
+                VoxelCastle::Utils::logToFile("[" + VoxelEngine::Utils::getTimestamp() + "][BlockPlacement] Block type: " + std::to_string(static_cast<int>(blockType)));
                 
                 std::cout << "[" << VoxelEngine::Utils::getTimestamp() << "][BlockPlacement] Setting voxel..." << std::endl;
                 

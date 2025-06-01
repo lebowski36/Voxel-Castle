@@ -33,9 +33,7 @@ void PlayerPhysics::update(Game& game, float deltaTime) {
     // This allows simultaneous movement and looking around
     camera->setPosition(game.getPlayerPosition());
     
-    // Debug output to verify camera integration
-    std::cout << "\rCamera Front: (" << camera->getFront().x << ", " << camera->getFront().y << ", " << camera->getFront().z << ")   ";
-    std::cout.flush();
+    // Removed verbose camera and player position logs
 }
 
 void PlayerPhysics::applyGravity(Game& game, float deltaTime) {
@@ -173,7 +171,6 @@ void PlayerPhysics::handleCollision(Game& game, VoxelCastle::World::WorldManager
         if (isSolidFrontFeet && !isSolidFrontKnee && hasHeadClearance && isOnGround) {
             // Apply step-up - move player up by 1.0 voxel height
             playerPos.y += 1.0f;
-            std::cout << "Step up!" << std::endl;
         } 
         // If there's a solid block in front that we can't step onto
         else if ((isSolidFrontFeet || isSolidFrontKnee) && isOnGround) {
@@ -186,12 +183,4 @@ void PlayerPhysics::handleCollision(Game& game, VoxelCastle::World::WorldManager
     }
     
     // TODO: Add fall damage calculation
-    
-    // Debug output
-    std::cout << "\rPos: (" << playerPos.x << ", " << playerPos.y << ", " << playerPos.z 
-              << ") Vel: (" << playerVel.x << ", " << playerVel.y << ", " << playerVel.z 
-              << ") OnGround: " << isOnGround 
-              << " EyeHeight: " << PhysicsConstants::EYE_HEIGHT << " voxels"
-              << "   ";
-    std::cout.flush();
 }

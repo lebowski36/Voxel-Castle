@@ -51,7 +51,6 @@ const int SCREEN_WIDTH = 2400; // 3x original width
 const int SCREEN_HEIGHT = 1800; // 3x original height
 
 int main(int /*argc*/, char* /*argv*/[]) { // Suppress unused parameter warnings
-    std::cout << "Starting VoxelFortress Game - Refactored" << std::endl;
 
     // Initialize debug logging system
     VoxelCastle::Utils::DebugLogger::getInstance().startNewSession();
@@ -73,7 +72,6 @@ int main(int /*argc*/, char* /*argv*/[]) { // Suppress unused parameter warnings
     INFO_LOG("Main", "Game loop ended - shutting down");
     game.shutdown();
 
-    std::cout << "VoxelFortress Game Ended Gracefully." << std::endl;
     INFO_LOG("Main", "Game shutdown complete");
     return 0;
 
