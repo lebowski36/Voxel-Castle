@@ -1,6 +1,8 @@
 #include "SpectatorCamera.h"
 #include <glm/gtc/matrix_transform.hpp>
 #include <algorithm>
+#include <iostream> // Added iostream
+#include <ostream> // Added ostream
 
 SpectatorCamera::SpectatorCamera(
     glm::vec3 position, float yaw, float pitch, float fov, float aspect, float nearPlane, float farPlane)
@@ -38,6 +40,10 @@ void SpectatorCamera::processMouse(float xoffset, float yoffset, bool constrainP
 }
 
 void SpectatorCamera::updateAspect(float newAspect) {
+    // Only log if there's a meaningful change
+    if (std::abs(aspect - newAspect) > 0.001f) {
+        std::cout << "[SpectatorCamera] Aspect ratio updated: " << aspect << " -> " << newAspect << std::endl;
+    }
     aspect = newAspect;
 }
 

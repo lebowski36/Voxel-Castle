@@ -156,18 +156,36 @@ void MenuSystem::debugDumpMenuState() {
 }
 
 void MenuSystem::updateScreenSize(int width, int height) {
-    // Update the UI system screen size
+    // Double-check the dimensions we're working with to debug issues
+    std::cout << "[MenuSystem] Updating screen size to " << width << "x" << height << std::endl;
+    
+    // Update both the MenuSystem and underlying UISystem screen size
     setScreenSize(width, height);
     
+    // Explicitly update the renderer dimensions too - we need to use getRenderer() since we inherit from UISystem
+    getRenderer().setScreenSize(width, height);
+    
+    // Calculate menu sizes based on screen dimensions (larger for better visibility)
+    // Use at least 30% of screen width and height, but not less than 400x400
+    float menuWidth = std::max(400.0f, width * 0.4f);
+    float menuHeight = std::max(400.0f, height * 0.5f);
+    
+    float settingsWidth = std::max(500.0f, width * 0.5f);
+    float settingsHeight = std::max(500.0f, height * 0.6f);
+    
     // Recalculate menu positions to keep them centered
-    mainMenu_->setPosition(width / 2.0f - 200.0f, height / 2.0f - 200.0f);
-    mainMenu_->setSize(400.0f, 400.0f);
+    mainMenu_->setPosition(width / 2.0f - menuWidth / 2.0f, height / 2.0f - menuHeight / 2.0f);
+    mainMenu_->setSize(menuWidth, menuHeight);
     
-    settingsMenu_->setPosition(width / 2.0f - 250.0f, height / 2.0f - 250.0f);
-    settingsMenu_->setSize(500.0f, 500.0f);
+    settingsMenu_->setPosition(width / 2.0f - settingsWidth / 2.0f, height / 2.0f - settingsHeight / 2.0f);
+    settingsMenu_->setSize(settingsWidth, settingsHeight);
     
-    std::cout << "[MenuSystem] Screen size updated to " << width << "x" << height 
-              << ", menus repositioned" << std::endl;
+    // Verify that the changes took effect
+    int currentRendererWidth = getRenderer().getScreenWidth();
+    int currentRendererHeight = getRenderer().getScreenHeight();
+    
+    std::cout << "[MenuSystem] Screen size updated. Renderer now: " << currentRendererWidth << "x" << currentRendererHeight 
+              << ", menus repositioned and scaled to " << menuWidth << "x" << menuHeight << std::endl;
 }
 
 void MenuSystem::updateFullscreenState(bool isFullscreen) {

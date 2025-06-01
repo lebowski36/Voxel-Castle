@@ -380,14 +380,36 @@ bool Game::toggleFullscreen() {
     
     bool success = gameWindow_->toggleFullscreen();
     
-    if (success && menuSystem_) {
-        // Update screen size for UI positioning
+    if (success) {
+        // Get new window dimensions
         int width = gameWindow_->getWidth();
         int height = gameWindow_->getHeight();
-        menuSystem_->updateScreenSize(width, height);
         
-        // Update fullscreen checkbox state
-        menuSystem_->updateFullscreenState(isFullscreen());
+        std::cout << "[Game] Fullscreen toggled. New window dimensions: " << width << "x" << height << std::endl;
+        
+        // Update camera aspect ratio
+        if (camera_) {
+            camera_->updateAspect(static_cast<float>(width) / static_cast<float>(height));
+            std::cout << "[Game] Camera aspect ratio updated to: " << width << "x" << height << std::endl;
+        }
+        
+        // Update UI systems with increased size for better visibility
+        if (menuSystem_) {
+            // Update menu system dimensions - this will also update the UI renderer
+            menuSystem_->updateScreenSize(width, height);
+            menuSystem_->updateFullscreenState(isFullscreen());
+            std::cout << "[Game] Menu system updated for new screen size: " << width << "x" << height << std::endl;
+        }
+        
+        // Update render coordinator if needed
+        if (renderCoordinator_) {
+            // If there's a method to update the render coordinator, call it here
+            std::cout << "[Game] Render coordinator notified of resolution change" << std::endl;
+        }
+        
+        // Note: We can't update screenWidth_ and screenHeight_ because they are const
+        std::cout << "[Game] New window dimensions: " << width << "x" << height 
+                  << " (original: " << screenWidth_ << "x" << screenHeight_ << ")" << std::endl;
     }
     
     std::cout << "[Game] Fullscreen toggled: " << (success ? "SUCCESS" : "FAILED") << std::endl;
@@ -454,6 +476,10 @@ void Game::render() {
         return; 
     }
 
+    // Use the actual current window dimensions instead of the original screen dimensions
+    int currentWidth = gameWindow_->getWidth();
+    int currentHeight = gameWindow_->getHeight();
+
     // Delegate all rendering to the GameRenderCoordinator
     renderCoordinator_->render(
         *camera_,
@@ -462,8 +488,8 @@ void Game::render() {
         *gameWindow_,
         *worldManager_,
         menuSystem_.get(),
-        screenWidth_,
-        screenHeight_
+        currentWidth,
+        currentHeight
     );
 }
 

@@ -7,6 +7,7 @@ project(VoxelEngine LANGUAGES CXX)
 add_library(VoxelEngine STATIC
     src/core/engine_core.cpp
     src/platform/Window.cpp
+    src/platform/fullscreen_debug.cpp # Added fullscreen_debug.cpp
     src/ecs/systems/movement_system.cpp
     src/world/chunk_segment.cpp # Added ChunkSegment source
     src/world/chunk_column.cpp # Added ChunkColumn source
@@ -71,6 +72,15 @@ target_link_libraries(VoxelEngine PRIVATE
     OpenGL::GL # Standard CMake target for OpenGL
     glad
     flecs::flecs # Link against the Flecs library
+)
+
+# Link VoxelEngine against its dependencies
+target_link_libraries(VoxelEngine PUBLIC
+    SDL3::SDL3-static # Link against SDL3 static library
+    glad            # Link against GLAD
+    OpenGL::GL      # Link against OpenGL
+    Threads::Threads # Link against pthreads
+    flecs::flecs    # Link against Flecs
 )
 
 # Set C++ standard for the engine

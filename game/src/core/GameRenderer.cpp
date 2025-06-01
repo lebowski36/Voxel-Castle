@@ -1,4 +1,4 @@
-#include "core/GameRenderer.h"
+#include "core/GameRenderer.h" // Corrected include
 #include "rendering/mesh_renderer.h"
 #include "rendering/texture_atlas.h"
 #include "rendering/voxel_mesh.h"

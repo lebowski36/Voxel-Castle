@@ -55,6 +55,9 @@ add_subdirectory(external/flecs)
 # Find OpenGL
 find_package(OpenGL REQUIRED)
 
+# Find Threads (for pthread)
+find_package(Threads REQUIRED)
+
 # Add subdirectories for engine and game
 add_subdirectory(engine)
 add_subdirectory(game)
