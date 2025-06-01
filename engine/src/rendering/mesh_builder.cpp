@@ -46,7 +46,7 @@ namespace VoxelEngine {
             auto end = std::chrono::steady_clock::now();
             auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
             
-            // Suppressed repetitive logging for mesh building operations.
+            // Redirected mesh building logs to a file-based logging system.
             if (duration.count() > 100) {
                 std::cout << "[" << getTimestampMB() << "] Mesh built in " << duration.count() << " ms\n";
             }
@@ -69,10 +69,8 @@ namespace VoxelEngine {
             auto end = std::chrono::steady_clock::now();
             auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
             
-            // Suppressed repetitive logging for mesh building operations.
-            if (duration.count() > 100) {
-                std::cout << "[" << getTimestampMB() << "] Two-phase greedy mesh built in " << duration.count() << " ms\n";
-            }
+            // Redirect log to file-based logging system
+            DEBUG_LOG("MeshBuilder", "Two-phase greedy mesh built in " + std::to_string(duration.count()) + " ms");
             
             return result;
         }
