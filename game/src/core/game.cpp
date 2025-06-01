@@ -401,6 +401,17 @@ bool Game::toggleFullscreen() {
             std::cout << "[Game] Menu system updated for new screen size: " << width << "x" << height << std::endl;
         }
         
+        // Update HUD position for new screen size
+        if (hudSystem_) {
+            float uiSize = 120.0f; // Same size as in initialization
+            float centerX = (width - uiSize) / 2.0f;
+            float bottomY = height - uiSize - 50.0f; // 50px margin from bottom
+            
+            hudSystem_->setPosition(centerX, bottomY);
+            std::cout << "[Game] HUD repositioned to (" << centerX << ", " << bottomY 
+                      << ") for screen size: " << width << "x" << height << std::endl;
+        }
+        
         // Update render coordinator if needed
         if (renderCoordinator_) {
             // If there's a method to update the render coordinator, call it here
