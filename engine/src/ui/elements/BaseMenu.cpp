@@ -77,6 +77,19 @@ void BaseMenu::setSize(float width, float height) {
     logger.debug("BaseMenu", "setSize called - Old size: (" + std::to_string(getSize().x) + ", " + std::to_string(getSize().y) + ")");
     logger.debug("BaseMenu", "setSize called - New size: (" + std::to_string(width) + ", " + std::to_string(height) + ")");
     
+    // Safeguard against excessive scaling of menu sizes (likely from fullscreen toggle)
+    // If we already have a non-default size and the new width is more than 2x larger,
+    // it's likely due to fullscreen scaling which we want to avoid
+    glm::vec2 currentSize = getSize();
+    static const float DEFAULT_SIZE = 100.0f; // The initial default size
+    static const float REASONABLE_MAX_WIDTH = 800.0f; // Maximum reasonable menu width
+    
+    if (currentSize.x > DEFAULT_SIZE && width > REASONABLE_MAX_WIDTH) {
+        logger.warning("BaseMenu", "Prevented excessive menu scaling (width: " + std::to_string(width) + ")");
+        // Keep existing size
+        return;
+    }
+    
     // Call parent setSize
     UIPanel::setSize(width, height);
     

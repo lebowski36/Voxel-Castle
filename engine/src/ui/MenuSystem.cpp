@@ -168,17 +168,21 @@ void MenuSystem::updateScreenSize(int width, int height) {
     // Double-check the dimensions we're working with to debug issues
     std::cout << "[MenuSystem] Updating screen size to " << width << "x" << height << std::endl;
     
+    // Save original menu sizes
+    glm::vec2 origMainSize = mainMenu_->getSize();
+    glm::vec2 origSettingsSize = settingsMenu_->getSize();
+    
     // Update both the MenuSystem and underlying UISystem screen size
     setScreenSize(width, height);
     
     // Explicitly update the renderer dimensions too - we need to use getRenderer() since we inherit from UISystem
     getRenderer().setScreenSize(width, height);
     
-    // KEEP MENU SIZES COMPLETELY FIXED - do not resize based on screen dimensions
-    // The menus should maintain their auto-calculated sizes regardless of screen size
-    // Only reposition them to stay centered
+    // CRITICAL: Restore original menu sizes to prevent scaling due to full/windowed transitions
+    mainMenu_->setSize(origMainSize.x, origMainSize.y);
+    settingsMenu_->setSize(origSettingsSize.x, origSettingsSize.y);
     
-    // Center menus without changing their sizes
+    // Center menus using their original sizes
     centerMenus(width, height);
     
     // Verify that the changes took effect
@@ -208,17 +212,21 @@ void MenuSystem::requestExit() {
 }
 
 void MenuSystem::centerMenus(int screenWidth, int screenHeight) {
-    // Center main menu
+    // Center main menu with bounds checks to prevent off-screen menus
     glm::vec2 mainSize = mainMenu_->getSize();
-    float mainX = screenWidth / 2.0f - mainSize.x / 2.0f;
-    float mainY = screenHeight / 2.0f - mainSize.y / 2.0f;
+    float mainX = std::max(10.0f, std::min(screenWidth / 2.0f - mainSize.x / 2.0f, screenWidth - mainSize.x - 10.0f));
+    float mainY = std::max(10.0f, std::min(screenHeight / 2.0f - mainSize.y / 2.0f, screenHeight - mainSize.y - 10.0f));
     mainMenu_->setPosition(mainX, mainY);
     
-    // Center settings menu
+    // Center settings menu with bounds checks to prevent off-screen menus
     glm::vec2 settingsSize = settingsMenu_->getSize();
-    float settingsX = screenWidth / 2.0f - settingsSize.x / 2.0f;
-    float settingsY = screenHeight / 2.0f - settingsSize.y / 2.0f;
+    float settingsX = std::max(10.0f, std::min(screenWidth / 2.0f - settingsSize.x / 2.0f, screenWidth - settingsSize.x - 10.0f));
+    float settingsY = std::max(10.0f, std::min(screenHeight / 2.0f - settingsSize.y / 2.0f, screenHeight - settingsSize.y - 10.0f));
     settingsMenu_->setPosition(settingsX, settingsY);
+    
+    // Log positions for debugging
+    std::cout << "[MenuSystem] Centered menus - Main menu at (" << mainX << "," << mainY 
+              << "), Settings menu at (" << settingsX << "," << settingsY << ")" << std::endl;
 }
 
 } // namespace UI
