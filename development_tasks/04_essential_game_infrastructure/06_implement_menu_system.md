@@ -69,11 +69,12 @@ Implement a comprehensive menu system with modified input handling where ESC ope
   - Game pauses when menu is open
   - Game resumes when menu is closed
   - HUD is hidden when menu is open, shown when closed
-- [ ] **5.2** Core menu functionality
+ - [x] **5.2** Core menu functionality
   - ESC key opens/closes menu (CONFIRMED WORKING)
-  - Resume Game button functionality needs testing
-  - Settings button functionality needs testing
-  - Fullscreen toggle needs testing
+  - Resume Game button functionality (CONFIRMED WORKING)
+  - Settings button functionality (CONFIRMED WORKING)
+  - Back button in settings returns to main menu (CONFIRMED WORKING)
+  - Fullscreen toggle needs testing (NOT VISIBLE/NOT IMPLEMENTED)
 - [ ] **5.3** Polish and refinement
   - Need to implement smooth menu transitions
   - Need to add visual feedback for button interactions
