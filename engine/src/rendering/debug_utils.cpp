@@ -1,5 +1,6 @@
 #include "rendering/debug_utils.h"
 #include "rendering/render_utils.h" // For createShaderProgram
+#include "../../game/include/utils/debug_logger.h"
 #include <glad/glad.h>
 #include <glm/gtc/matrix_transform.hpp>
 #include <iostream> // For std::cerr, std::cout
@@ -98,7 +99,7 @@ void setupSingleTileDebugQuad(int /*screenWidth*/, int /*screenHeight*/) {
 
     glBindBuffer(GL_ARRAY_BUFFER, 0);
     glBindVertexArray(0);
-    std::cout << "[Debug] Setup single stone tile debug quad (Top-Right). UVs: TL(" << u_start << "," << v_top << "), BR(" << u_end << "," << v_bottom << ")" << std::endl;
+    DEBUG_LOG("DebugUtils", "Setup single stone tile debug quad (Top-Right). UVs: TL(" + std::to_string(u_start) + "," + std::to_string(v_top) + "), BR(" + std::to_string(u_end) + "," + std::to_string(v_bottom) + ")");
 }
 
 void drawDebugAtlasQuad(GLuint textureID, int screenWidth, int screenHeight) {

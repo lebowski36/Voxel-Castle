@@ -1,4 +1,5 @@
 #include "ui/UIElement.h"
+#include "../../game/include/utils/debug_logger.h"
 #include <algorithm>
 #include <iostream> // Added for std::cerr
 
@@ -9,11 +10,10 @@ UIElement::UIElement() = default;
 
 void UIElement::setPosition(float x, float y) {
     // Check if position is likely to be off-screen (using common sense values)
-    // This is just a warning, not a restriction
+    // This is just a warning, not a restriction - redirect to file logging
     static const float MAX_REASONABLE_COORDINATE = 5000.0f; // Arbitrary large value
     if (x < 0 || y < 0 || x > MAX_REASONABLE_COORDINATE || y > MAX_REASONABLE_COORDINATE) {
-        std::cerr << "[WARNING] UI Element positioned outside reasonable bounds: (" 
-                  << x << ", " << y << ")" << std::endl;
+        DEBUG_LOG("UIElement", "UI Element positioned outside reasonable bounds: (" + std::to_string(x) + ", " + std::to_string(y) + ")");
     }
     
     position_ = glm::vec2(x, y);

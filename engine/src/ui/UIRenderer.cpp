@@ -1,6 +1,7 @@
 #include "ui/UIRenderer.h"
 #include "ui/TextRenderer.h"
 #include "ui/UILogger.h"
+#include "../../game/include/utils/debug_logger.h"
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 #include <fstream>
@@ -74,7 +75,7 @@ void UIRenderer::beginFrame() {
     GLenum err = glGetError();
     if (err != GL_NO_ERROR) {
         if (errorCount++ % 100 == 0) {  // Only log occasionally
-            std::cerr << "[UIRenderer] Clearing OpenGL errors: 0x" << std::hex << err << std::dec << std::endl;
+            DEBUG_LOG("UIRenderer", "Clearing OpenGL errors: 0x" + std::to_string(err));
         }
         while (glGetError() != GL_NO_ERROR) {} // Clear all errors
     }
@@ -150,7 +151,7 @@ void UIRenderer::endFrame() {
     bool shouldLog = (frameCounter++ % 100 == 0);
     
     if (shouldLog) {
-        std::cout << "[UIRenderer] Ending UI frame" << std::endl;
+        DEBUG_LOG("UIRenderer", "Ending UI frame");
         
         // Check if we have any OpenGL errors before restoring state
         GLenum err = glGetError();
@@ -440,7 +441,7 @@ bool UIRenderer::loadShaders() {
         return false;
     }
     
-    std::cout << "[UIRenderer] Both shader files exist, continuing with compilation" << std::endl;
+    DEBUG_LOG("UIRenderer", "Both shader files exist, continuing with compilation");
 
     // Reset any existing shader
     if (shaderProgram_) {
@@ -451,7 +452,7 @@ bool UIRenderer::loadShaders() {
     shaderProgram_ = createShaderProgram(vertexShaderPath, fragmentShaderPath);
     
     if (shaderProgram_ != 0) {
-        std::cout << "[UIRenderer] Shader program created successfully with ID: " << shaderProgram_ << std::endl;
+        DEBUG_LOG("UIRenderer", "Shader program created successfully with ID: " + std::to_string(shaderProgram_));
         
         // Validate that we can find the required uniforms
         GLint projLoc = glGetUniformLocation(shaderProgram_, "projection");
@@ -460,12 +461,12 @@ bool UIRenderer::loadShaders() {
         GLint useTexLoc = glGetUniformLocation(shaderProgram_, "uUseTexture");
         GLint texLoc = glGetUniformLocation(shaderProgram_, "uTexture");
         
-        std::cout << "[UIRenderer] Shader uniform locations:" << std::endl;
-        std::cout << "- projection: " << projLoc << std::endl;
-        std::cout << "- model: " << modelLoc << std::endl;
-        std::cout << "- uColor: " << colorLoc << std::endl;
-        std::cout << "- uUseTexture: " << useTexLoc << std::endl;
-        std::cout << "- uTexture: " << texLoc << std::endl;
+        DEBUG_LOG("UIRenderer", "Shader uniform locations:");
+        DEBUG_LOG("UIRenderer", "- projection: " + std::to_string(projLoc));
+        DEBUG_LOG("UIRenderer", "- model: " + std::to_string(modelLoc));
+        DEBUG_LOG("UIRenderer", "- uColor: " + std::to_string(colorLoc));
+        DEBUG_LOG("UIRenderer", "- uUseTexture: " + std::to_string(useTexLoc));
+        DEBUG_LOG("UIRenderer", "- uTexture: " + std::to_string(texLoc));
     } else {
         std::cerr << "[UIRenderer] Failed to create shader program!" << std::endl;
     }
@@ -490,7 +491,7 @@ GLuint UIRenderer::loadShader(const std::string& path, GLenum type) {
         return 0;
     }
     
-    std::cout << "[UIRenderer] Shader file loaded: " << path << " (" << source.size() << " bytes)" << std::endl;
+    DEBUG_LOG("UIRenderer", "Shader file loaded: " + path + " (" + std::to_string(source.size()) + " bytes)");
     
     const char* sourceCStr = source.c_str();
     
@@ -508,7 +509,7 @@ GLuint UIRenderer::loadShader(const std::string& path, GLenum type) {
         return 0;
     }
     
-    std::cout << "[UIRenderer] Shader compiled successfully: " << path << std::endl;
+    DEBUG_LOG("UIRenderer", "Shader compiled successfully: " + path);
     return shader;
 }
 
@@ -544,7 +545,7 @@ GLuint UIRenderer::createShaderProgram(const std::string& vertPath, const std::s
         glDeleteProgram(program);
         program = 0;
     } else {
-        std::cout << "[UIRenderer] Shader program linked successfully: ID=" << program << std::endl;
+        DEBUG_LOG("UIRenderer", "Shader program linked successfully: ID=" + std::to_string(program));
     }
     
     glDeleteShader(vertexShader);

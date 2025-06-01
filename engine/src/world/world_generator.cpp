@@ -3,6 +3,7 @@
 #include "util/noise.h"
 #include "world/voxel_types.h"
 #include "world/voxel.h"
+#include "../../game/include/utils/debug_logger.h"
 #include <cmath>
 #include <iostream> // Added for logging
 
@@ -46,7 +47,7 @@ void WorldGenerator::generateChunkSegment(ChunkSegment& segment, int worldX, int
 
             // Added for logging task 3.1 - log for local (0,0) and (15,15)
             if (worldX == 0 && worldY == 0 && worldZ == 0 && ((x == 0 && z == 0) || (x == 15 && z == 15))) {
-                std::cout << "  [Debug] Local (" << x << "," << z << "): nx=" << nx << ", nz=" << nz << ", noise_val=" << noise_val << ", columnHeight=" << columnHeight << std::endl;
+                DEBUG_LOG("WorldGenerator", "Local (" + std::to_string(x) + "," + std::to_string(z) + "): nx=" + std::to_string(nx) + ", nz=" + std::to_string(nz) + ", noise_val=" + std::to_string(noise_val) + ", columnHeight=" + std::to_string(columnHeight));
             }
 
             for (int y = 0; y < height; ++y) {
@@ -66,7 +67,7 @@ void WorldGenerator::generateChunkSegment(ChunkSegment& segment, int worldX, int
                 // Added for logging task 3.1 - log for local (0,y,0) and (15,y,15)
                 if (worldX == 0 && worldY == 0 && worldZ == 0 && ((x == 0 && z == 0) || (x == 15 && z == 15))) {
                     if (y == 0 || y == 15 || y == columnHeight || y == columnHeight + 1) { // Log specific y values
-                         std::cout << "    [Debug] Local (" << x << "," << y << "," << z << "): globalY=" << globalY << ", type=" << static_cast<int>(type) << std::endl;
+                         DEBUG_LOG("WorldGenerator", "Local (" + std::to_string(x) + "," + std::to_string(y) + "," + std::to_string(z) + "): globalY=" + std::to_string(globalY) + ", type=" + std::to_string(static_cast<int>(type)));
                     }
                 }
             }

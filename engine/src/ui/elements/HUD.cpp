@@ -1,4 +1,5 @@
 #include "ui/elements/HUD.h"
+#include "../../../game/include/utils/debug_logger.h"
 #include <iostream>
 
 namespace VoxelEngine {
@@ -58,9 +59,7 @@ void HUD::updateTextureCoordinates() {
     glm::vec4 uvRect = texCoords.getUVRect();
     setTextureCoords(uvRect);
     
-    std::cout << "[HUD] Updated texture coordinates for block type " 
-              << static_cast<int>(currentBlockType_) 
-              << " to UV(" << uvRect.x << ", " << uvRect.y << ", " << uvRect.z << ", " << uvRect.w << ")" << std::endl;
+    DEBUG_LOG("HUD", "Updated texture coordinates for block type " + std::to_string(static_cast<int>(currentBlockType_)) + " to UV(" + std::to_string(uvRect.x) + ", " + std::to_string(uvRect.y) + ", " + std::to_string(uvRect.z) + ", " + std::to_string(uvRect.w) + ")");
 }
 
 } // namespace UI

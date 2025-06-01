@@ -1,5 +1,6 @@
 #include "rendering/mesh_renderer.h"
 #include "rendering/texture_atlas.h" // Added to access TILE_UV_WIDTH and TILE_UV_HEIGHT
+#include "../../game/include/utils/debug_logger.h"
 #include <fstream>
 #include <sstream>
 #include <iostream>
@@ -319,18 +320,18 @@ void MeshRenderer::draw(const glm::mat4& model, const glm::mat4& view, const glm
     retryCount = 0; // Reset retry count if ready
     retriesExhausted = false; // Reset flag if ready
 
-    // Only do detailed debug on first successful frame - removed redundant frame logging
+    // Only do detailed debug on first successful frame - redirect to file
     if (!initialDebugDone) {
-        std::cout << "\n==== MESH RENDERER DETAILED DEBUG ====" << std::endl;
-        std::cout << "Texture Atlas ID: " << textureAtlasID << std::endl;
-        std::cout << "Shader Program ID: " << shaderProgram << std::endl;
-        std::cout << "VAO: " << vao << ", VBO: " << vbo << ", EBO: " << ebo << std::endl;
-        std::cout << "Index Count: " << indexCount << std::endl;
-        std::cout << "======================================\n" << std::endl;
+        DEBUG_LOG("MeshRenderer", "==== MESH RENDERER DETAILED DEBUG ====");
+        DEBUG_LOG("MeshRenderer", "Texture Atlas ID: " + std::to_string(textureAtlasID));
+        DEBUG_LOG("MeshRenderer", "Shader Program ID: " + std::to_string(shaderProgram));
+        DEBUG_LOG("MeshRenderer", "VAO: " + std::to_string(vao) + ", VBO: " + std::to_string(vbo) + ", EBO: " + std::to_string(ebo));
+        DEBUG_LOG("MeshRenderer", "Index Count: " + std::to_string(indexCount));
+        DEBUG_LOG("MeshRenderer", "======================================");
         
         // Log the sampler warning summary here, only once
         if (textureSamplerWarningLogged) {
-            std::cerr << "[MeshRenderer::draw] Summary (logged once): uTextureSampler uniform location was not found. This may indicate it is not used in the shader or an issue with shader compilation/linking." << std::endl;
+            DEBUG_LOG("MeshRenderer", "Summary (logged once): uTextureSampler uniform location was not found. This may indicate it is not used in the shader or an issue with shader compilation/linking.");
         }
         initialDebugDone = true;
     }
@@ -448,7 +449,7 @@ GLuint MeshRenderer::loadShader(const std::string& path, GLenum type) {
         std::cerr << "Filesystem error when resolving path '" << path << "': " << e.what() << std::endl;
     }
 
-    std::cout << "[MeshRenderer::loadShader] Attempting to open shader: " << path << " (Absolute: " << absolute_path_str << ")" << std::endl;
+    DEBUG_LOG("MeshRenderer", "Attempting to open shader: " + path + " (Absolute: " + absolute_path_str + ")");
 
     std::ifstream file(path);
     std::stringstream ss;
@@ -551,12 +552,11 @@ bool MeshRenderer::loadTexture(const std::string& path) {
         resolvedPath = BASE_DIRECTORY + "assets/textures/" + path; // Prepend the base directory
     }
 
-    std::cout << "[MeshRenderer::loadTexture] Base directory: " << BASE_DIRECTORY << std::endl;
-    std::cout << "[MeshRenderer::loadTexture] Resolved path: " << resolvedPath << std::endl;
+    DEBUG_LOG("MeshRenderer", "Loading texture from: " + resolvedPath);
 
     // Check if file exists and is accessible
     if (!std::filesystem::exists(resolvedPath)) {
-        std::cerr << "[MeshRenderer::loadTexture] File not found: " << resolvedPath << std::endl;
+        std::cerr << "[ERROR] Texture file not found: " << resolvedPath << std::endl;
         return false;
     }
 
@@ -564,18 +564,19 @@ bool MeshRenderer::loadTexture(const std::string& path) {
     stbi_set_flip_vertically_on_load(true);
     unsigned char* data = stbi_load(resolvedPath.c_str(), &width, &height, &channels, 0);
     if (!data) {
-        std::cerr << "[MeshRenderer::loadTexture] Error loading texture '" << resolvedPath << "': " << stbi_failure_reason() << std::endl;
+        std::cerr << "[ERROR] Error loading texture '" << resolvedPath << "': " << stbi_failure_reason() << std::endl;
         return false;
     }
 
-    std::cout << "[MeshRenderer::loadTexture] Texture loaded successfully. Dimensions: " << width << "x" << height << ", Channels: " << channels << std::endl;
+    std::cout << "[INFO] Loading texture atlas..." << std::endl;
+    DEBUG_LOG("MeshRenderer", "Texture loaded successfully. Dimensions: " + std::to_string(width) + "x" + std::to_string(height) + ", Channels: " + std::to_string(channels));
 
     GLenum format;
     if (channels == 1) { format = GL_RED; }
     else if (channels == 3) { format = GL_RGB; }
     else if (channels == 4) { format = GL_RGBA; }
     else {
-        std::cerr << "[MeshRenderer::loadTexture] Error loading texture: Unknown number of channels: " << channels << " for texture " << resolvedPath << std::endl;
+        std::cerr << "[ERROR] Unknown number of channels: " << channels << " for texture " << resolvedPath << std::endl;
         stbi_image_free(data);
         return false;
     }

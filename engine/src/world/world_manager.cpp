@@ -121,7 +121,7 @@ void WorldManager::enqueueDirtyMeshJobs(VoxelEngine::Rendering::TextureAtlas& at
     
     if (!m_meshJobSystem) {
         m_meshJobSystem = std::make_unique<VoxelEngine::Rendering::MeshJobSystem>(std::thread::hardware_concurrency());
-        std::cout << "[" << VoxelEngine::Utils::getTimestamp() << "][MeshJobSystem] Initialized with " << std::thread::hardware_concurrency() << " threads." << std::endl;
+        std::cout << "[INFO] ECS system initialized" << std::endl;
     }
     int enqueued = 0;
     // std::cout << "[" << VoxelEngine::Utils::getTimestamp() << "][WorldManager] Checking " << m_chunkColumns.size() << " chunk columns for dirty segments" << std::endl;
@@ -201,7 +201,7 @@ void WorldManager::processFinishedMeshJobs() {
     const int uploadLogInterval = 60; // Print every 60 calls/frames
     uploadLogCounter++;
     if (processed > 0 && (uploadLogCounter % uploadLogInterval == 0)) {
-        std::cout << "[MeshJobSystem] Uploaded " << processed << " finished meshes to main thread (interval summary)." << std::endl;
+        DEBUG_LOG("MeshJobSystem", "Uploaded " + std::to_string(processed) + " finished meshes to main thread (interval summary).");
     }
 }
 

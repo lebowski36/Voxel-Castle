@@ -40,9 +40,10 @@ bool Window::init() {
     // Initialize SDL_video and SDL_events
     if (!SDL_Init(SDL_INIT_VIDEO | SDL_INIT_EVENTS)) { 
         FS_LOG("SDL_Init failed: " + std::string(SDL_GetError()));
-        std::cerr << "Failed to initialize SDL: " << SDL_GetError() << std::endl;
+        std::cerr << "[ERROR] Failed to initialize SDL: " << SDL_GetError() << std::endl;
         return false;
     }
+    std::cout << "[INFO] Initializing OpenGL context..." << std::endl;
     FS_LOG("SDL_Init(SDL_INIT_VIDEO | SDL_INIT_EVENTS) successful.");
 
     // Restore OpenGL 3.3 Core attributes
@@ -70,7 +71,7 @@ bool Window::init() {
     sdlWindow = SDL_CreateWindow(windowTitle.c_str(), windowWidth, windowHeight, SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE);
     if (!sdlWindow) {
         FS_LOG("Failed to create SDL window: " + std::string(SDL_GetError()));
-        std::cerr << "Failed to create SDL window: " << SDL_GetError() << std::endl;
+        std::cerr << "[ERROR] Failed to create SDL window: " << SDL_GetError() << std::endl;
         SDL_Quit(); 
         return false;
     }
@@ -91,7 +92,7 @@ bool Window::init() {
     if (!glContext) {
         std::string errorMsg = SDL_GetError();
         FS_LOG("Failed to create OpenGL context: " + (errorMsg.empty() ? "No SDL error message." : errorMsg));
-        std::cerr << "Failed to create OpenGL context: " << (errorMsg.empty() ? "No SDL error message." : errorMsg) << std::endl;
+        std::cerr << "[ERROR] Failed to create OpenGL context: " << (errorMsg.empty() ? "No SDL error message." : errorMsg) << std::endl;
         SDL_DestroyWindow(sdlWindow);
         sdlWindow = nullptr;
         SDL_Quit();
@@ -123,12 +124,12 @@ bool Window::init() {
     // Verify window and context are valid before making current
     if (!sdlWindow) {
         FS_LOG("Critical: sdlWindow is NULL before SDL_GL_MakeCurrent!");
-        std::cerr << "Critical: sdlWindow is NULL before SDL_GL_MakeCurrent!" << std::endl;
+        std::cerr << "[ERROR] Critical: sdlWindow is NULL before SDL_GL_MakeCurrent!" << std::endl;
         return false;
     }
     if (!glContext) {
         FS_LOG("Critical: glContext is NULL before SDL_GL_MakeCurrent!");
-        std::cerr << "Critical: glContext is NULL before SDL_GL_MakeCurrent!" << std::endl;
+        std::cerr << "[ERROR] Critical: glContext is NULL before SDL_GL_MakeCurrent!" << std::endl;
         return false;
     }
     
@@ -141,7 +142,7 @@ bool Window::init() {
         const char* sdlErrorCStr = SDL_GetError(); // Get error message C-string
         std::string errorMsg = sdlErrorCStr ? sdlErrorCStr : "Unknown error (SDL_GetError returned NULL)";
         FS_LOG("Failed to make OpenGL context current. Return code: " + std::to_string(makeCurrentResult) + ", Error: " + errorMsg);
-        std::cerr << "Failed to make OpenGL context current. Return code: " << makeCurrentResult << ", Error: " << errorMsg << std::endl;
+        std::cerr << "[ERROR] Failed to make OpenGL context current. Return code: " << makeCurrentResult << ", Error: " << errorMsg << std::endl;
         
         // Try to get more detailed error information
         FS_LOG("Additional debugging: Window valid: " + std::string(sdlWindow ? "yes" : "no") + ", Context valid: " + std::string(glContext ? "yes" : "no"));
@@ -184,7 +185,7 @@ bool Window::init() {
 
     if (!gladLoadGLLoader((GLADloadproc)SDL_GL_GetProcAddress)) {
         FS_LOG("Failed to initialize GLAD.");
-        std::cerr << "Failed to initialize GLAD" << std::endl;
+        std::cerr << "[ERROR] Failed to initialize GLAD" << std::endl;
         SDL_GL_DestroyContext(glContext); 
         SDL_DestroyWindow(sdlWindow);
         sdlWindow = nullptr;

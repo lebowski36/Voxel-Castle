@@ -238,6 +238,10 @@ bool Game::initialize() {
         std::cout << "[Game] UI system initialized successfully with HUD" << std::endl;
     }
     
+    // Add clean startup message
+    std::cout << "\n=== Voxel Fortress Game ===" << std::endl;
+    std::cout << "[INFO] Game ready - Press ESC for menu" << std::endl;
+    
     return isRunning_;
 }
 
@@ -289,6 +293,8 @@ void Game::shutdown() {
     resources.isRunning = isRunning_;
     GameInitializer::shutdown(resources, screenWidth_, screenHeight_, projectRoot_.c_str());
     isRunning_ = false;
+    
+    std::cout << "[INFO] Game session ended - goodbye!" << std::endl;
 }
 
 void Game::processInput() {

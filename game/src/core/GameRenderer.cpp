@@ -6,6 +6,7 @@
 #include "platform/Window.h"   // For gameWindow->render() and potentially dimensions
 #include "rendering/debug_render_mode.h" // Added for ::g_debugRenderMode
 #include "rendering/debug_utils.h"
+#include "utils/debug_logger.h"
 
 #include <glad/glad.h>
 #include <glm/gtc/matrix_transform.hpp>
@@ -68,11 +69,8 @@ void renderGame(
                 }
             }
 
-            // Only log brief summary without position details
-            std::cout << "[GameRenderer] Frame: " << frameCounter 
-                      << ", Meshes: " << meshCount 
-                      << ", Vertices: " << totalVertices 
-                      << ", Unique Positions: " << uniquePositions.size() << std::endl;
+            // Only log brief summary without position details - redirect to file
+            DEBUG_LOG("GameRenderer", "Frame: " + std::to_string(frameCounter) + ", Meshes: " + std::to_string(meshCount) + ", Vertices: " + std::to_string(totalVertices) + ", Unique Positions: " + std::to_string(uniquePositions.size()));
         }
     }
     frameCounter++;

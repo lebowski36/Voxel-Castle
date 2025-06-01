@@ -96,15 +96,12 @@ void processInput(Game& game) {
         // Comment out or modify the general polling log
         // std::cout << "[InputManager] Polled event type: " << e.type << std::endl << std::flush; 
 
-        // Only log significant events to reduce spam
+        // Only log significant events to reduce spam - redirect to file
         if (e.type != SDL_EVENT_MOUSE_MOTION) { // Add condition to exclude mouse motion
             if (e.type == SDL_EVENT_QUIT || e.type == SDL_EVENT_KEY_DOWN || 
                 e.type == SDL_EVENT_MOUSE_BUTTON_DOWN || e.type == SDL_EVENT_MOUSE_BUTTON_UP ||
                 e.type == SDL_EVENT_MOUSE_WHEEL) {
-                std::cout << "[InputManager] Significant event type: " << e.type << std::endl << std::flush;
-            } else {
-                 // Optionally, log other non-mouse-motion events if desired, or keep this silent
-                 // std::cout << "[InputManager] Other event type: " << e.type << std::endl << std::flush;
+                DEBUG_LOG("InputManager", "Significant event type: " + std::to_string(e.type));
             }
         }
         
@@ -143,6 +140,7 @@ void processInput(Game& game) {
             }
             switch (e.key.scancode) {
                 case SDL_SCANCODE_ESCAPE:
+                    std::cout << "[INFO] Key pressed: ESC" << std::endl;
                     // Toggle menu instead of mouse capture
                     game.toggleMenu();
                     break;
@@ -278,7 +276,7 @@ void processInput(Game& game) {
             // Automatically enable mouse capture when window gains focus (unless menu is open)
             if (game.getGameState() == GameState::PLAYING) {
                 game.setMouseCaptured(true);
-                std::cout << "[InputManager] Window gained focus - mouse capture enabled" << std::endl;
+                DEBUG_LOG("InputManager", "Window gained focus - mouse capture enabled");
             }
         }
         else if (e.type == SDL_EVENT_WINDOW_CLOSE_REQUESTED) {

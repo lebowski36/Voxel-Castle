@@ -92,13 +92,13 @@ void update(Game& game, float deltaTime) {
 
     // Update game window (if it has its own update logic, e.g., title, etc.)
     if (shouldLogFrame) {
-        std::cout << "[" << getTimestampGL() << "] [GameLogic] Updating window..." << std::endl;
+        DEBUG_LOG("GameLogic", "Updating window...");
     }
     if (game.getWindow()) {
         game.getWindow()->update(); 
     }
     if (shouldLogFrame) {
-        std::cout << "[" << getTimestampGL() << "] [GameLogic] Window update completed" << std::endl;
+        DEBUG_LOG("GameLogic", "Window update completed");
     }
 
     // --- Game Specific Update Logic ---
@@ -143,7 +143,7 @@ void update(Game& game, float deltaTime) {
 
     // Asynchronous mesh generation: enqueue jobs and upload finished meshes
     if (shouldLogFrame) {
-        std::cout << "[" << getTimestampGL() << "] [GameLogic] Processing mesh jobs..." << std::endl;
+        DEBUG_LOG("GameLogic", "Processing mesh jobs...");
     }
     if (game.getWorldManager() && game.getTextureAtlas() && game.getMeshBuilder()) {
         game.getWorldManager()->enqueueDirtyMeshJobs(*game.getTextureAtlas(), *game.getMeshBuilder());
@@ -154,7 +154,7 @@ void update(Game& game, float deltaTime) {
     }
     
     if (shouldLogFrame) {
-        std::cout << "[" << getTimestampGL() << "] [GameLogic] Update completed successfully" << std::endl;
+        DEBUG_LOG("GameLogic", "Update completed successfully");
     }
 }
 
