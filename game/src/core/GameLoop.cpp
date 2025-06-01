@@ -1,6 +1,7 @@
 #include "../../include/core/GameLoop.h"
 #include "../../include/core/game.h"
 #include <iostream>
+#include "../utils/debug_logger.h"
 #include <thread>
 
 int GameLoop::run(Game& game) {
@@ -11,6 +12,7 @@ int GameLoop::run(Game& game) {
     }
 
     std::cout << "[GameLoop] Starting main game loop..." << std::endl;
+    INFO_LOG("GameLoop", "Starting main game loop...");
     
     int frameCount = 0;
     auto lastFrameTime = std::chrono::steady_clock::now();
@@ -21,64 +23,66 @@ int GameLoop::run(Game& game) {
         auto currentTime = std::chrono::steady_clock::now();
         float deltaTime = calculateDeltaTime(currentTime, lastFrameTime);
         lastFrameTime = currentTime;
-        
+
         // Check window state periodically - more frequently during block operations
         bool shouldLogFrame = (frameCount % 50 == 0) || game.hasPendingBlockAction();
         auto timeSinceWindowCheck = std::chrono::duration_cast<std::chrono::milliseconds>(currentTime - lastWindowCheckTime);
-        
+
         if (shouldLogFrame || timeSinceWindowCheck.count() > 1000) { // Check at least every second
             bool windowRunning = game.isWindowRunning();
-            std::cout << "[GameLoop] Frame " << frameCount 
-                     << ", window valid: " << game.hasWindow() 
-                     << ", window running: " << windowRunning
-                     << ", deltaTime: " << deltaTime << "s" << std::endl;
+            DEBUG_LOG("GameLoop", "Frame " + std::to_string(frameCount) +
+                ", window valid: " + std::to_string(game.hasWindow()) +
+                ", window running: " + std::to_string(windowRunning) +
+                ", deltaTime: " + std::to_string(deltaTime) + "s");
             lastWindowCheckTime = currentTime;
-            
+
             if (!windowRunning) {
                 std::cerr << "[GameLoop] CRITICAL: Window stopped running! Breaking main loop." << std::endl;
+                CRITICAL_LOG("GameLoop", "CRITICAL: Window stopped running! Breaking main loop.");
                 break;
             }
         }
 
         // Ensure deltaTime is not excessively large (e.g., after a breakpoint or long pause)
         // This can prevent jerky movements or physics explosions.
-        const float max_deltaTime = 0.25f; 
+        const float max_deltaTime = 0.25f;
         if (deltaTime > max_deltaTime) {
             deltaTime = max_deltaTime;
         }
 
         if (shouldLogFrame) {
-            std::cout << "[GameLoop] Processing input..." << std::endl;
+            DEBUG_LOG("GameLoop", "Processing input...");
         }
-        
+
         // Process input through Game's interface
         game.processInput();
 
         // Check if game wants to exit (processInput might have changed isRunning)
         if (!game.isRunning()) {
-            std::cout << "[GameLoop] Game signaled exit, breaking loop" << std::endl;
-            break; 
+            INFO_LOG("GameLoop", "Game signaled exit, breaking loop");
+            break;
         }
-        
+
         if (shouldLogFrame) {
-            std::cout << "[GameLoop] Calling update..." << std::endl;
+            DEBUG_LOG("GameLoop", "Calling update...");
         }
         game.update(deltaTime);
-        
+
         if (shouldLogFrame) {
-            std::cout << "[GameLoop] Calling render..." << std::endl;
+            DEBUG_LOG("GameLoop", "Calling render...");
         }
         game.render();
-        
+
         if (shouldLogFrame) {
-            std::cout << "[GameLoop] Frame " << frameCount << " completed successfully" << std::endl;
+            DEBUG_LOG("GameLoop", "Frame " + std::to_string(frameCount) + " completed successfully");
         }
 
         // Apply frame rate limiting
         limitFrameRate(currentTime);
     }
-    
+
     std::cout << "[GameLoop] Main game loop ended after " << frameCount << " frames." << std::endl;
+    INFO_LOG("GameLoop", "Main game loop ended after " + std::to_string(frameCount) + " frames.");
     return 0;
 }
 
