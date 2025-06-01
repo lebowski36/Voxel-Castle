@@ -1,6 +1,7 @@
 #include "ui/elements/UIPanel.h"
 #include "ui/UIRenderer.h"
 #include <iostream>
+#include "../../../../game/include/utils/debug_logger.h"
 
 namespace VoxelEngine {
 namespace UI {
@@ -9,12 +10,10 @@ UIPanel::UIPanel(UIRenderer* renderer) :
     renderer_(renderer),
     color_(1.0f, 1.0f, 1.0f, 1.0f) // Default to white
 {
-    std::cout << "[UIPanel] Created with default white color" << std::endl;
 }
 
 void UIPanel::setColor(const glm::vec4& color) {
     color_ = color;
-    std::cout << "[UIPanel] Color set to RGBA(" << color.r << ", " << color.g << ", " << color.b << ", " << color.a << ")" << std::endl;
 }
 
 void UIPanel::render() {
@@ -48,22 +47,6 @@ void UIPanel::render() {
                   << ") may be off-screen. Viewport: " << viewport[2] << "x" << viewport[3] << std::endl;
     }
     
-    if (shouldLog) {
-        std::cout << "[UIPanel] Rendering solid color panel at (" << absPos.x << ", " << absPos.y 
-                  << "), size: (" << size_.x << ", " << size_.y 
-                  << "), color: RGBA(" << color_.r << ", " << color_.g << ", " << color_.b << ", " << color_.a << ")" << std::endl;
-                  
-        // Check current OpenGL state
-        GLint currentShader = 0;
-        glGetIntegerv(GL_CURRENT_PROGRAM, &currentShader);
-        std::cout << "[UIPanel] Current shader program: " << currentShader << std::endl;
-                  
-        // Check depth testing state
-        GLboolean depthTestEnabled;
-        glGetBooleanv(GL_DEPTH_TEST, &depthTestEnabled);
-        std::cout << "[UIPanel] Depth testing enabled: " << (depthTestEnabled ? "yes" : "no") << std::endl;
-    }
-              
     // Render using the solid color quad method
     renderer_->renderQuad(absPos.x, absPos.y, size_.x, size_.y, color_);
 }

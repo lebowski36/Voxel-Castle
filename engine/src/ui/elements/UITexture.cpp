@@ -1,5 +1,6 @@
 #include "ui/elements/UITexture.h"
 #include "ui/UIRenderer.h"
+#include "../../../../game/include/utils/debug_logger.h"
 #include <iostream> // Add this header for std::cout and std::cerr
 
 namespace VoxelEngine {
@@ -62,45 +63,6 @@ void UITexture::render() {
     if (isOffScreen && shouldLog) {
         std::cerr << "[UITexture] WARNING: Element at (" << absPos.x << ", " << absPos.y 
                   << ") may be off-screen. Viewport: " << viewport[2] << "x" << viewport[3] << std::endl;
-    }
-    
-    if (shouldLog) {
-        std::cout << "[UITexture] Rendering at (" << absPos.x << ", " << absPos.y 
-                  << "), size: (" << size_.x << ", " << size_.y 
-                  << "), texture: " << textureID_ << std::endl;
-        
-        std::cout << "[UITexture] UV coordinates: (" 
-                  << textureCoords_.x << ", " << textureCoords_.y << ", " 
-                  << textureCoords_.z << ", " << textureCoords_.w << ")" << std::endl;
-                  
-        // Check current OpenGL state
-        GLint currentShader = 0;
-        glGetIntegerv(GL_CURRENT_PROGRAM, &currentShader);
-        std::cout << "[UITexture] Current shader program: " << currentShader << std::endl;
-                  
-        // Check if texture is valid (basic check)
-        GLint prevTexture;
-        glGetIntegerv(GL_TEXTURE_BINDING_2D, &prevTexture);
-        glBindTexture(GL_TEXTURE_2D, textureID_);
-        
-        GLint width = 0, height = 0;
-        glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_WIDTH, &width);
-        glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_HEIGHT, &height);
-        
-        GLenum err = glGetError();
-        if (err != GL_NO_ERROR) {
-            std::cerr << "[UITexture] OpenGL error checking texture: 0x" << std::hex << err << std::dec << std::endl;
-        } else {
-            std::cout << "[UITexture] Texture dimensions: " << width << "x" << height << std::endl;
-        }
-        
-        // Restore previous texture binding
-        glBindTexture(GL_TEXTURE_2D, prevTexture);
-        
-        // Check depth testing state
-        GLboolean depthTestEnabled;
-        glGetBooleanv(GL_DEPTH_TEST, &depthTestEnabled);
-        std::cout << "[UITexture] Depth testing enabled: " << (depthTestEnabled ? "yes" : "no") << std::endl;
     }
               
     // Attempt to render with the renderer

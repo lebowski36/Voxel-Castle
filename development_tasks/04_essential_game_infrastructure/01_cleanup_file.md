@@ -81,6 +81,8 @@ Remove verbose console logging spam and establish clean, professional console ou
   - Consistent prefixes for different message types
   - Clean startup banner with version info
   - Organized shutdown summary
+- [ ] **5.4**: Exclude low-level input and movement details from console logs:
+  - Mouse movements, WSAD inputs, and camera movements should not appear in console logs.
 
 ### Sub-task 6: Test and Validate Clean Output
 - [ ] **6.1**: Verify clean console output:
@@ -154,3 +156,38 @@ This task is complete when:
 4. The game runs silently during normal operation (no spam)
 5. Error messages are still clearly visible when problems occur
 6. Console output follows consistent formatting standards
+
+## Task: Massively Reduce Debug Log Verbosity to High-Level Info Only
+
+### Objective
+Drastically cut down the debug log to show only the most critical high-level events, removing all unnecessary details.
+
+### Current Issue
+The log is still too verbose, filled with low-level details like individual segment updates, job enqueuing, and per-frame rendering.
+
+### Solution
+Keep only major game state changes and significant user interactions, eliminating everything else.
+
+### Outputs to Keep
+- Game start, pause, resume, and shutdown
+- User inputs (e.g., key presses, mouse clicks)
+- Major game events (e.g., menu opened/closed)
+
+### Outputs to Cut
+- **WorldManager**: Remove all messages, including summaries like "Found X dirty segments".
+- **MeshJobSystem**: Remove all messages, including batch enqueuing and shutdown details.
+- **UIRenderer**: Remove all messages, including frame start/end.
+- **GameLogic**: Remove all frame-specific updates (e.g., "Update start, frame: 100").
+- **Shutdown Details**: Remove worker thread messages; keep only one shutdown message.
+- **Mouse Movements, WSAD Inputs, Camera Movements**: Exclude these to avoid spamming.
+
+### New Log Example
+```
+[Game] Started
+[InputManager] Key pressed: ESC
+[Game] Menu opened - paused
+[Game] Shutdown
+```
+
+### Result
+The log will only show when the game starts, stops, pauses, resumes, or reacts to user inputs—nothing more.

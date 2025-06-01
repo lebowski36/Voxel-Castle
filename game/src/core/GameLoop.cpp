@@ -1,7 +1,7 @@
 #include "../../include/core/GameLoop.h"
 #include "../../include/core/game.h"
 #include <iostream>
-#include "../utils/debug_logger.h"
+#include "../../include/utils/debug_logger.h"
 #include <thread>
 
 int GameLoop::run(Game& game) {
@@ -12,7 +12,6 @@ int GameLoop::run(Game& game) {
     }
 
     std::cout << "[GameLoop] Starting main game loop..." << std::endl;
-    INFO_LOG("GameLoop", "Starting main game loop...");
     
     int frameCount = 0;
     auto lastFrameTime = std::chrono::steady_clock::now();
@@ -30,15 +29,10 @@ int GameLoop::run(Game& game) {
 
         if (shouldLogFrame || timeSinceWindowCheck.count() > 1000) { // Check at least every second
             bool windowRunning = game.isWindowRunning();
-            DEBUG_LOG("GameLoop", "Frame " + std::to_string(frameCount) +
-                ", window valid: " + std::to_string(game.hasWindow()) +
-                ", window running: " + std::to_string(windowRunning) +
-                ", deltaTime: " + std::to_string(deltaTime) + "s");
             lastWindowCheckTime = currentTime;
 
             if (!windowRunning) {
                 std::cerr << "[GameLoop] CRITICAL: Window stopped running! Breaking main loop." << std::endl;
-                CRITICAL_LOG("GameLoop", "CRITICAL: Window stopped running! Breaking main loop.");
                 break;
             }
         }
@@ -51,7 +45,6 @@ int GameLoop::run(Game& game) {
         }
 
         if (shouldLogFrame) {
-            DEBUG_LOG("GameLoop", "Processing input...");
         }
 
         // Process input through Game's interface
@@ -59,22 +52,18 @@ int GameLoop::run(Game& game) {
 
         // Check if game wants to exit (processInput might have changed isRunning)
         if (!game.isRunning()) {
-            INFO_LOG("GameLoop", "Game signaled exit, breaking loop");
             break;
         }
 
         if (shouldLogFrame) {
-            DEBUG_LOG("GameLoop", "Calling update...");
         }
         game.update(deltaTime);
 
         if (shouldLogFrame) {
-            DEBUG_LOG("GameLoop", "Calling render...");
         }
         game.render();
 
         if (shouldLogFrame) {
-            DEBUG_LOG("GameLoop", "Frame " + std::to_string(frameCount) + " completed successfully");
         }
 
         // Apply frame rate limiting
@@ -82,7 +71,6 @@ int GameLoop::run(Game& game) {
     }
 
     std::cout << "[GameLoop] Main game loop ended after " << frameCount << " frames." << std::endl;
-    INFO_LOG("GameLoop", "Main game loop ended after " + std::to_string(frameCount) + " frames.");
     return 0;
 }
 

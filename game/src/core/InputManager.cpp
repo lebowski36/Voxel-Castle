@@ -30,14 +30,6 @@ bool checkAndConfineMouseToWindow(Game& game) {
         SDL_GetWindowPosition(game.getWindow()->getSDLWindow(), &g_windowPosX, &g_windowPosY);
         SDL_GetWindowSize(game.getWindow()->getSDLWindow(), &g_windowWidth, &g_windowHeight);
         g_windowInfoValid = true;
-        
-        DEBUG_LOG("InputManager", "Updated window info: pos=(" + std::to_string(g_windowPosX) + 
-                "," + std::to_string(g_windowPosY) + "), size=" + 
-                std::to_string(g_windowWidth) + "x" + std::to_string(g_windowHeight) + 
-                ", platform: Wayland");
-                
-        // For Wayland, log a special note about known mouse confinement issues
-        DEBUG_LOG("InputManager", "Running on Wayland - SDL mouse confinement has known issues (bug #13073)");
     }
     
     // Get current global mouse position and mouse button state
@@ -47,10 +39,6 @@ bool checkAndConfineMouseToWindow(Game& game) {
     // Get global mouse position (needed for Wayland which may report relative coords)
     float globalMouseX, globalMouseY;
     SDL_GetGlobalMouseState(&globalMouseX, &globalMouseY);
-    
-    DEBUG_LOG("InputManager", "Mouse position: local=(" + std::to_string(mouseX) + "," + 
-            std::to_string(mouseY) + "), global=(" + 
-            std::to_string(globalMouseX) + "," + std::to_string(globalMouseY) + ")");
     
     // Calculate window bounds with minimal padding (5px from edge for more aggressive confinement)
     const int PADDING = 5;
@@ -68,13 +56,6 @@ bool checkAndConfineMouseToWindow(Game& game) {
         // Recenter the mouse - use floats for more precision
         float centerX = g_windowPosX + g_windowWidth / 2.0f;
         float centerY = g_windowPosY + g_windowHeight / 2.0f;
-        
-        // More detailed logging
-        DEBUG_LOG("InputManager", "Mouse containment: near_edge=" + std::to_string(nearEdge) + 
-                ", outside=" + std::to_string(potentiallyOutside) +
-                ", local=(" + std::to_string(mouseX) + "," + std::to_string(mouseY) + 
-                "), global=(" + std::to_string(globalMouseX) + "," + std::to_string(globalMouseY) + 
-                "), recentering to (" + std::to_string(centerX) + "," + std::to_string(centerY) + ")");
         
         // Try to forcibly recapture the mouse with multiple methods
         SDL_Window* window = game.getWindow()->getSDLWindow();
@@ -111,10 +92,7 @@ void processInput(Game& game) {
     SDL_Event e;
     while (SDL_PollEvent(&e)) {
         // Log ALL events for diagnostic purposes
-        DEBUG_LOG("InputManager", "SDL Event: type=" + std::to_string(e.type) + 
-                 " (SDL_EVENT_QUIT=" + std::to_string(SDL_EVENT_QUIT) + 
-                 ", SDL_EVENT_MOUSE_BUTTON_DOWN=" + std::to_string(SDL_EVENT_MOUSE_BUTTON_DOWN) + ")");
-        
+
         // Comment out or modify the general polling log
         // std::cout << "[InputManager] Polled event type: " << e.type << std::endl << std::flush; 
 
@@ -134,9 +112,6 @@ void processInput(Game& game) {
         // Log mouse events at DEBUG level (less verbose than before)
         if ((e.type == SDL_EVENT_MOUSE_BUTTON_DOWN || e.type == SDL_EVENT_MOUSE_BUTTON_UP) &&
             (e.button.button == SDL_BUTTON_LEFT || e.button.button == SDL_BUTTON_RIGHT)) {
-            DEBUG_LOG("InputManager", "Mouse " + std::string(e.type == SDL_EVENT_MOUSE_BUTTON_DOWN ? "DOWN" : "UP") + 
-                     ", button=" + std::string(e.button.button == SDL_BUTTON_LEFT ? "LEFT" : "RIGHT") +
-                     ", mouseCaptured=" + std::to_string(game.isMouseCaptured()));
         }
         
         if (e.type == SDL_EVENT_QUIT) {
@@ -253,11 +228,6 @@ void processInput(Game& game) {
                 SDL_GetMouseState(&absX, &absY);
                 float globalX, globalY;
                 SDL_GetGlobalMouseState(&globalX, &globalY);
-                
-                DEBUG_LOG("InputManager", "Mouse motion check: rel=(" + 
-                        std::to_string(e.motion.xrel) + "," + std::to_string(e.motion.yrel) + 
-                        "), abs=(" + std::to_string(absX) + "," + std::to_string(absY) + 
-                        "), global=(" + std::to_string(globalX) + "," + std::to_string(globalY) + ")");
             }
         }
         // Handle mouse button events when mouse is NOT captured (likely for UI)
@@ -270,9 +240,6 @@ void processInput(Game& game) {
             }
         }
         else if (e.type == SDL_EVENT_MOUSE_BUTTON_DOWN && game.isMouseCaptured()) {
-            DEBUG_LOG("InputManager", "Mouse button DOWN detected - button=" + std::to_string(e.button.button) + 
-                     ", click_x=" + std::to_string(e.button.x) + ", click_y=" + std::to_string(e.button.y));
-            
             // Check if world is ready for block operations before processing mouse clicks
             if (!game.isWorldReadyForBlockOperations()) {
                 WARN_LOG("InputManager", "World not ready for block operations - ignoring mouse click");
@@ -280,20 +247,14 @@ void processInput(Game& game) {
             }
             
             if (e.button.button == SDL_BUTTON_LEFT) {
-                INFO_LOG("InputManager", "LEFT mouse button - Setting pendingBlockAction=true, isBlockPlacement=true");
                 game.leftMousePressed_ = true;
                 game.pendingBlockAction_ = true;  // Request block placement on next frame
                 game.isBlockPlacement_ = true;    // It's a placement (not removal)
-                DEBUG_LOG("InputManager", "LEFT click processed successfully");
             } else if (e.button.button == SDL_BUTTON_RIGHT) {
-                INFO_LOG("InputManager", "RIGHT mouse button - Setting pendingBlockAction=true, isBlockPlacement=false");
                 game.rightMousePressed_ = true;
                 game.pendingBlockAction_ = true;  // Request block removal on next frame
                 game.isBlockPlacement_ = false;   // It's a removal (not placement)
-                DEBUG_LOG("InputManager", "RIGHT click processed successfully");
             }
-            DEBUG_LOG("InputManager", "After setting flags: pendingAction=" + 
-                     std::to_string(game.hasPendingBlockAction()) + ", isPlacement=" + std::to_string(game.isBlockPlacement()));
         }
         else if (e.type == SDL_EVENT_MOUSE_BUTTON_UP && game.isMouseCaptured()) {
             if (e.button.button == SDL_BUTTON_LEFT) {

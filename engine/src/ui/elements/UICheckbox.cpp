@@ -2,6 +2,7 @@
 #include "ui/UIRenderer.h"
 #include <iostream>
 #include <glm/gtc/type_ptr.hpp>
+#include "../../../../game/include/utils/debug_logger.h"
 
 namespace VoxelEngine {
 namespace UI {
@@ -56,9 +57,7 @@ void UICheckbox::render() {
     renderer_->drawText(label_, pos.x + boxSize + 10.0f, pos.y + boxSize / 2.0f, textScale, textColor);
     
     // Debug output - keep for now
-    std::cout << "[UICheckbox] Rendering checkbox: \"" << label_ 
-              << "\" at position: " << pos.x << ", " << pos.y
-              << " checked: " << (checked_ ? "true" : "false") << std::endl;
+    DEBUG_LOG("UICheckbox", "Rendering checkbox: \"" + label_ + "\" at position: " + std::to_string(pos.x) + ", " + std::to_string(pos.y));
 }
 
 bool UICheckbox::handleInput(float mouseX, float mouseY, bool clicked) {

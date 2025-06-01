@@ -24,10 +24,6 @@ void VoxelCastle::Core::GameRenderCoordinator::render(
     
     // If dimensions don't match, this might indicate a window size change or fullscreen toggle
     if (actualWidth != screenWidth || actualHeight != screenHeight) {
-        std::cout << "[GameRenderCoordinator] Dimension change detected: " 
-                  << screenWidth << "x" << screenHeight << " -> "
-                  << actualWidth << "x" << actualHeight << std::endl;
-        
         // Force the dimensions to be correct
         screenWidth = actualWidth;
         screenHeight = actualHeight;
@@ -36,15 +32,6 @@ void VoxelCastle::Core::GameRenderCoordinator::render(
         camera.updateAspect(static_cast<float>(actualWidth) / static_cast<float>(actualHeight));
     }
     
-    // Log viewport dimensions occasionally to verify
-    static int frameCounter = 0;
-    if (frameCounter++ % 300 == 0) {  // Log every 5 seconds at 60fps
-        std::cout << "[GameRenderCoordinator] Rendering with dimensions: " 
-                  << screenWidth << "x" << screenHeight 
-                  << " (Window reports: " << gameWindow.getWidth() << "x" << gameWindow.getHeight() << ")" 
-                  << std::endl;
-    }
-
     // Always set viewport explicitly before rendering anything
     glViewport(0, 0, screenWidth, screenHeight);
     
@@ -75,12 +62,6 @@ void VoxelCastle::Core::GameRenderCoordinator::renderWorldScene(
     // Explicitly set viewport for 3D rendering
     glViewport(0, 0, screenWidth, screenHeight);
 
-    // Debug dimensions occasionally
-    static int frameCounter = 0;
-    if (frameCounter++ % 600 == 0) {  // Log every 10 seconds at 60fps
-        std::cout << "[GameRenderCoordinator] World rendering dimensions: " << screenWidth << "x" << screenHeight << std::endl;
-    }
-    
     // Delegate to the existing GameRenderer
     GameRenderer::renderGame(
         camera,
@@ -107,12 +88,6 @@ void VoxelCastle::Core::GameRenderCoordinator::renderUIOverlay(VoxelEngine::UI::
         // Ensure the renderer has up-to-date dimensions
         // Sometimes the UISystem's internal dimensions might be outdated
         // This is particularly important after toggling fullscreen
-        
-        // Debug output to verify dimensions
-        static int frameCounter = 0;
-        if (frameCounter++ % 300 == 0) {  // Log every 5 seconds at 60fps
-            std::cout << "[GameRenderCoordinator] UI Viewport dimensions: " << rendererWidth << "x" << rendererHeight << std::endl;
-        }
         
         // Ensure the viewport is properly set for UI rendering
         ensureViewportForUI(rendererWidth, rendererHeight);

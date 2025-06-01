@@ -91,9 +91,8 @@ RaycastResult BlockPlacement::raycast(const SpectatorCamera* camera,
 }
 
 void BlockPlacement::handleMouseClick(Game& game, bool isLeftClick) {
-    INFO_LOG("BlockPlacement", "========= MOUSE CLICK START =========");
-    INFO_LOG("BlockPlacement", "Click type: " + std::string(isLeftClick ? "LEFT (place)" : "RIGHT (remove)"));
-    
+    // Removed verbose logging for raycasting and block placement details.
+
     // Add game startup timing protection
     static auto gameStartTime = std::chrono::steady_clock::now();
     auto currentTime = std::chrono::steady_clock::now();
@@ -209,8 +208,6 @@ void BlockPlacement::handleMouseClick(Game& game, bool isLeftClick) {
                 VoxelCastle::Utils::logToFile("[" + VoxelEngine::Utils::getTimestamp() + "][BlockPlacement] Placement valid, getting block type...");
                 VoxelEngine::World::VoxelType blockType = getCurrentBlockType(game);
                 VoxelCastle::Utils::logToFile("[" + VoxelEngine::Utils::getTimestamp() + "][BlockPlacement] Block type: " + std::to_string(static_cast<int>(blockType)));
-                
-                std::cout << "[" << VoxelEngine::Utils::getTimestamp() << "][BlockPlacement] Setting voxel..." << std::endl;
                 
                 // Clear any OpenGL errors before setVoxel
                 while (glGetError() != GL_NO_ERROR) {}

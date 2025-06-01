@@ -4,6 +4,7 @@
 #include <iostream>
 #include <typeinfo>  // For typeid
 #include <algorithm> // For std::max
+#include "../../../../game/include/utils/debug_logger.h"
 
 namespace VoxelEngine {
 namespace UI {
@@ -56,7 +57,6 @@ bool MenuSystem::initialize(int screenWidth, int screenHeight, const std::string
     addElement(mainMenu_);
     addElement(settingsMenu_);
     
-    std::cout << "[MenuSystem] Initialized successfully" << std::endl;
     return true;
 }
 
@@ -75,7 +75,6 @@ void MenuSystem::showMainMenu() {
     mainMenu_->setVisible(true);
     settingsMenu_->setVisible(false);
     menuState_ = MenuState::MAIN_MENU;
-    std::cout << "[MenuSystem] Showing main menu" << std::endl;
     
     // Ensure the block selection UI stays hidden during menu display
     // Block selection UI is identified by checking if it's not one of our menu elements
@@ -93,7 +92,6 @@ void MenuSystem::showSettingsMenu() {
     mainMenu_->setVisible(false);
     settingsMenu_->setVisible(true);
     menuState_ = MenuState::SETTINGS;
-    std::cout << "[MenuSystem] Showing settings menu" << std::endl;
     
     // Ensure game UI elements stay hidden when switching to settings
     for (const auto& element : elements_) {
@@ -112,12 +110,6 @@ void MenuSystem::closeMenus() {
     if (onMenuClosed_) {
         onMenuClosed_();
     }
-    
-    std::cout << "[MenuSystem] All menus closed" << std::endl;
-    
-    // Note: We don't restore visibility of game UI elements here
-    // That should be handled by the Game class since it knows which
-    // elements should be visible in gameplay mode
 }
 
 bool MenuSystem::toggleFullscreen(bool enable) {
@@ -248,7 +240,6 @@ void MenuSystem::updateScreenSize(int width, int height) {
 void MenuSystem::updateFullscreenState(bool isFullscreen) {
     if (settingsMenu_) {
         settingsMenu_->updateFullscreenCheckbox(isFullscreen);
-        std::cout << "[MenuSystem] Fullscreen state updated to " << (isFullscreen ? "ON" : "OFF") << std::endl;
     }
 }
 
@@ -261,10 +252,6 @@ void MenuSystem::requestExit() {
 }
 
 void MenuSystem::centerMenus(int screenWidth, int screenHeight) {
-    // Minimum screen dimensions we're designing for - handle case when window is smaller
-    const int MIN_EXPECTED_WIDTH = 800;
-    const int MIN_EXPECTED_HEIGHT = 600;
-    
     // Center main menu with bounds checks to prevent off-screen menus
     glm::vec2 mainSize = mainMenu_->getSize();
     
@@ -302,12 +289,6 @@ void MenuSystem::centerMenus(int screenWidth, int screenHeight) {
     }
     
     settingsMenu_->setPosition(settingsX, settingsY);
-    
-    // Log positions for debugging
-    std::cout << "[MenuSystem] Centered menus - Screen: " << screenWidth << "x" << screenHeight 
-              << ", Main menu at (" << mainX << "," << mainY << ") size: " << mainSize.x << "x" << mainSize.y
-              << ", Settings menu at (" << settingsX << "," << settingsY << ") size: " << settingsSize.x << "x" << settingsSize.y 
-              << std::endl;
 }
 
 glm::vec2 MenuSystem::getMainMenuSize() const {

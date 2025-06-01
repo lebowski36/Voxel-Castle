@@ -4,6 +4,7 @@
 #include "world/voxel_types.h"
 #include "world/chunk_segment.h"
 #include "rendering/texture_atlas.h"
+#include "../../game/include/utils/debug_logger.h"
 
 #include <glm/glm.hpp>
 #include <glm/gtc/type_ptr.hpp>
@@ -36,8 +37,6 @@ namespace VoxelEngine {
             const std::function<VoxelEngine::World::Voxel(int, int, int)>& getVoxel,
             const glm::ivec3& chunkCoords
         ) {
-            std::cout << "[" << getTimestampMB() << "] [MeshBuilder] Starting mesh build for chunk (" 
-                     << chunkCoords.x << ", " << chunkCoords.y << ", " << chunkCoords.z << ")" << std::endl;
             auto start = std::chrono::steady_clock::now();
             
             // Use two-phase greedy meshing directly
@@ -46,8 +45,6 @@ namespace VoxelEngine {
             
             auto end = std::chrono::steady_clock::now();
             auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
-            std::cout << "[" << getTimestampMB() << "] [MeshBuilder] Mesh build completed in " << duration.count() 
-                     << "ms, generated " << result.vertices.size() << " vertices, " << result.indices.size() << " indices" << std::endl;
             
             return result;
         }
@@ -58,8 +55,6 @@ namespace VoxelEngine {
             const std::function<VoxelEngine::World::Voxel(int, int, int)>& getVoxel,
             const glm::ivec3& chunkCoords
         ) {
-            std::cout << "[" << getTimestampMB() << "] [MeshBuilder] Starting two-phase greedy mesh for chunk (" 
-                     << chunkCoords.x << ", " << chunkCoords.y << ", " << chunkCoords.z << ")" << std::endl;
             auto start = std::chrono::steady_clock::now();
             
             // Use two-phase greedy meshing directly
@@ -68,8 +63,6 @@ namespace VoxelEngine {
             
             auto end = std::chrono::steady_clock::now();
             auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
-            std::cout << "[" << getTimestampMB() << "] [MeshBuilder] Two-phase greedy mesh completed in " << duration.count() 
-                     << "ms, generated " << result.vertices.size() << " vertices, " << result.indices.size() << " indices" << std::endl;
             
             return result;
         }

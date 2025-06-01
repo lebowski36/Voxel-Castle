@@ -69,27 +69,6 @@ void UIRenderer::shutdown() {
 }
 
 void UIRenderer::beginFrame() {
-    // Enhanced debugging for UI visibility issues
-    static int frameCount = 0;
-    bool shouldDebugLog = (frameCount++ % 100 == 0); // Reduce logging frequency
-    
-    if (shouldDebugLog) {
-        std::cout << "\n[UIRenderer] ==== START UI FRAME DEBUG INFO =====" << std::endl;
-        std::cout << "[UIRenderer] Screen size: " << screenWidth_ << "x" << screenHeight_ << std::endl;
-        
-        // Check if shader program exists
-        std::cout << "[UIRenderer] Shader program ID: " << shaderProgram_ << std::endl;
-        
-        // Check VAO/VBO state
-        std::cout << "[UIRenderer] VAO: " << vao_ << ", VBO: " << vbo_ << ", EBO: " << ebo_ << std::endl;
-        
-        // Check current viewport
-        GLint viewport[4];
-        glGetIntegerv(GL_VIEWPORT, viewport);
-        std::cout << "[UIRenderer] Current viewport: (" << viewport[0] << ", " << viewport[1] << ", " 
-                 << viewport[2] << ", " << viewport[3] << ")" << std::endl;
-    }
-
     // Clear any existing OpenGL errors first, but don't spam the console
     static int errorCount = 0;
     GLenum err = glGetError();
@@ -153,20 +132,6 @@ void UIRenderer::beginFrame() {
     GLint projLoc = glGetUniformLocation(shaderProgram_, "projection");
     if (projLoc != -1) {
         glUniformMatrix4fv(projLoc, 1, GL_FALSE, glm::value_ptr(projectionMatrix_));
-        
-        if (shouldDebugLog) {
-            std::cout << "[UIRenderer] Set projection matrix uniform at location " << projLoc << std::endl;
-            // Print the projection matrix values for debugging
-            std::cout << "[UIRenderer] Projection matrix values:" << std::endl;
-            for (int i = 0; i < 4; i++) {
-                std::cout << "  [";
-                for (int j = 0; j < 4; j++) {
-                    std::cout << projectionMatrix_[i][j];
-                    if (j < 3) std::cout << ", ";
-                }
-                std::cout << "]" << std::endl;
-            }
-        }
     } else {
         std::cerr << "[UIRenderer] ERROR: 'projection' uniform not found in shader!" << std::endl;
     }
@@ -177,27 +142,6 @@ void UIRenderer::beginFrame() {
     }
     
     glBindVertexArray(vao_);
-    
-    // Save OpenGL state values for debugging only
-    if (shouldDebugLog) {
-        GLint boundVAO;
-        glGetIntegerv(GL_VERTEX_ARRAY_BINDING, &boundVAO);
-        if (boundVAO != vao_) {
-            std::cerr << "[UIRenderer] ERROR: Failed to bind VAO! Expected: " 
-                    << vao_ << ", got: " << boundVAO << std::endl;
-        }
-        
-        GLint boundProgram;
-        glGetIntegerv(GL_CURRENT_PROGRAM, &boundProgram);
-        if (boundProgram != shaderProgram_) {
-            std::cerr << "[UIRenderer] ERROR: Shader program binding issue! Expected: " 
-                    << shaderProgram_ << ", got: " << boundProgram << std::endl;
-        }
-    }
-    
-    if (shouldDebugLog) {
-        std::cout << "[UIRenderer] UI beginFrame completed successfully" << std::endl;
-    }
 }
 
 void UIRenderer::endFrame() {
