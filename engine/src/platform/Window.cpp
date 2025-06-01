@@ -236,14 +236,60 @@ bool Window::toggleFullscreen() {
         return false;
     }
     
+    // Debug: Check available display modes
+    SDL_DisplayID displayID = SDL_GetDisplayForWindow(sdlWindow);
+    FS_LOG("Current display ID: " + std::to_string(displayID));
+    
+    SDL_DisplayMode **modes = SDL_GetFullscreenDisplayModes(displayID, nullptr);
+    if (modes) {
+        FS_LOG("Available fullscreen display modes:");
+        for (int i = 0; modes[i]; i++) {
+            FS_LOG("  Mode " + std::to_string(i) + ": " + 
+                   std::to_string(modes[i]->w) + "x" + std::to_string(modes[i]->h) + 
+                   " @ " + std::to_string((int)modes[i]->refresh_rate) + "Hz");
+        }
+        SDL_free(modes);
+    }
+    
     int preToggleWidth, preToggleHeight;
     SDL_GetWindowSize(sdlWindow, &preToggleWidth, &preToggleHeight); 
     FS_LOG("Pre-toggle logical window dimensions: " + std::to_string(preToggleWidth) + "x" + std::to_string(preToggleHeight));
 
     fullscreen = !fullscreen;
     FS_LOG("Attempting to set fullscreen to: " + std::string(fullscreen ? "true" : "false"));
+    
+    if (fullscreen) {
+        // Get the desktop display mode (native resolution)
+        const SDL_DisplayMode *desktopMode = SDL_GetDesktopDisplayMode(displayID);
+        if (desktopMode) {
+            FS_LOG("Desktop mode: " + std::to_string(desktopMode->w) + "x" + std::to_string(desktopMode->h) + 
+                   " @ " + std::to_string((int)desktopMode->refresh_rate) + "Hz");
+            
+            // Create a display mode structure for fullscreen
+            SDL_DisplayMode fullscreenMode = *desktopMode;
+            FS_LOG("Setting fullscreen mode to: " + std::to_string(fullscreenMode.w) + "x" + std::to_string(fullscreenMode.h));
+            
+            // Set the fullscreen mode explicitly
+            if (!SDL_SetWindowFullscreenMode(sdlWindow, &fullscreenMode)) {
+                FS_LOG("SDL_SetWindowFullscreenMode failed: " + std::string(SDL_GetError()));
+            } else {
+                FS_LOG("SDL_SetWindowFullscreenMode successful");
+            }
+        }
+    } else {
+        // For windowed mode, clear the fullscreen mode
+        if (!SDL_SetWindowFullscreenMode(sdlWindow, nullptr)) {
+            FS_LOG("SDL_SetWindowFullscreenMode(clear) failed: " + std::string(SDL_GetError()));
+        } else {
+            FS_LOG("Cleared fullscreen mode for windowed");
+        }
+    }
         
-    if (!SDL_SetWindowFullscreen(sdlWindow, fullscreen)) {
+    // Use SDL_WINDOW_FULLSCREEN for exclusive fullscreen, 0 for windowed
+    Uint32 fullscreenFlag = fullscreen ? SDL_WINDOW_FULLSCREEN : 0;
+    FS_LOG("Using SDL fullscreen flag: " + std::to_string(fullscreenFlag));
+    
+    if (!SDL_SetWindowFullscreen(sdlWindow, fullscreenFlag)) {
         FS_LOG("SDL_SetWindowFullscreen failed: " + std::string(SDL_GetError()));
         std::cerr << "Failed to set SDL_WindowFullscreen state: " << SDL_GetError() << std::endl;
         fullscreen = !fullscreen; 
@@ -256,10 +302,45 @@ bool Window::toggleFullscreen() {
     SDL_Delay(100); // 100ms delay
     FS_LOG("SDL_Delay(100) after SDL_SetWindowFullscreen.");
 
+    // Debug: Check multiple ways to get window size
+    int logicalWidth, logicalHeight;
+    SDL_GetWindowSize(sdlWindow, &logicalWidth, &logicalHeight);
+    FS_LOG("Post-toggle SDL_GetWindowSize (logical): " + std::to_string(logicalWidth) + "x" + std::to_string(logicalHeight));
+
     int newDrawableWidth, newDrawableHeight;
     // Use SDL_GetWindowSizeInPixels instead of SDL_GL_GetDrawableSize
     SDL_GetWindowSizeInPixels(sdlWindow, &newDrawableWidth, &newDrawableHeight);
     FS_LOG("SDL_GetWindowSizeInPixels reported: " + std::to_string(newDrawableWidth) + "x" + std::to_string(newDrawableHeight));
+    
+    // CRITICAL FIX: SDL3 on Linux reports wrong size after fullscreen. Query OpenGL directly!
+    GLint viewport[4];
+    glGetIntegerv(GL_VIEWPORT, viewport);
+    FS_LOG("Current OpenGL viewport: " + std::to_string(viewport[0]) + ", " + std::to_string(viewport[1]) + 
+           ", " + std::to_string(viewport[2]) + ", " + std::to_string(viewport[3]));
+    
+    // Query the actual OpenGL framebuffer size (this should be correct even if SDL lies)
+    GLint framebufferWidth, framebufferHeight;
+    glGetIntegerv(GL_FRAMEBUFFER_BINDING, &framebufferWidth); // Get current framebuffer
+    glGetIntegerv(GL_VIEWPORT, viewport); // Get current viewport again
+    
+    // In fullscreen mode, trust the desktop mode dimensions instead of SDL
+    if (fullscreen) {
+        const SDL_DisplayMode *desktopMode = SDL_GetDesktopDisplayMode(displayID);
+        if (desktopMode) {
+            FS_LOG("OVERRIDE: Using desktop mode dimensions instead of SDL reported size");
+            newDrawableWidth = desktopMode->w;
+            newDrawableHeight = desktopMode->h;
+            FS_LOG("Corrected drawable size to: " + std::to_string(newDrawableWidth) + "x" + std::to_string(newDrawableHeight));
+        }
+    }
+    
+    // Also try getting drawable size for comparison (removed SDL_GL_GetDrawableSize as it doesn't exist in SDL3)
+    FS_LOG("Using drawable size: " + std::to_string(newDrawableWidth) + "x" + std::to_string(newDrawableHeight));
+    
+    // Check actual window flags
+    Uint32 windowFlags = SDL_GetWindowFlags(sdlWindow);
+    FS_LOG("Window flags after toggle: " + std::to_string(windowFlags) + 
+           " (FULLSCREEN=" + std::to_string(SDL_WINDOW_FULLSCREEN) + ")");
     
     windowWidth = newDrawableWidth; 
     windowHeight = newDrawableHeight;
