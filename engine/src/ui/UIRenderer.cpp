@@ -278,6 +278,26 @@ float UIRenderer::getFontHeight() const {
     return textRenderer_ ? textRenderer_->getFontHeight() : 0.0f;
 }
 
+float UIRenderer::getTextWidth(const std::string& text, float scale) const {
+    if (!textRenderer_) {
+        return 0.0f;
+    }
+    
+    // Calculate text width by summing up character advances
+    float totalWidth = 0.0f;
+    for (char c : text) {
+        const auto* glyph = textRenderer_->getFontManager()->getGlyph(c);
+        if (glyph) {
+            totalWidth += glyph->advance * scale;
+        }
+    }
+    return totalWidth;
+}
+
+float UIRenderer::getTextHeight(float scale) const {
+    return getFontHeight() * scale;
+}
+
 void UIRenderer::renderColoredQuad(float x, float y, float width, float height, const glm::vec4& color) {
     // This is essentially the same as renderQuad, which already handles colored quads
     renderQuad(x, y, width, height, color);

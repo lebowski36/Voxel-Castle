@@ -1,8 +1,10 @@
 #include "ui/elements/BaseMenu.h"
 #include "ui/MenuSystem.h"
 #include "ui/UIRenderer.h"
+#include "ui/UILogger.h"
 #include <iostream>
 #include <algorithm>
+#include <cmath>
 
 namespace VoxelEngine {
 namespace UI {
@@ -11,6 +13,10 @@ BaseMenu::BaseMenu(UIRenderer* renderer, const std::string& title)
     : UIPanel(renderer), menuSystem_(nullptr), title_(title), currentY_(TITLE_HEIGHT + ELEMENT_SPACING * 2) {
     // Set consistent menu styling with darker background for better button contrast
     setColor({0.05f, 0.05f, 0.1f, 0.9f}); // Very dark blue-black background
+    
+    // DEBUG: Log initial size
+    auto& logger = UILogger::getInstance();
+    logger.debug("BaseMenu", "Constructor - Initial size: (" + std::to_string(getSize().x) + ", " + std::to_string(getSize().y) + ")");
 }
 
 bool BaseMenu::initializeBase(MenuSystem* menuSystem) {
@@ -20,7 +26,7 @@ bool BaseMenu::initializeBase(MenuSystem* menuSystem) {
     }
 
     menuSystem_ = menuSystem;
-    createTitlePanel();
+    // No title panel creation - we'll render title text directly
     return true;
 }
 
@@ -39,21 +45,22 @@ void BaseMenu::render() {
         renderer_->renderColoredQuad(pos.x, pos.y, size_.x, size_.y, color_);
     }
     
-    // Render title panel first (so it's behind the text)
-    if (titlePanel_ && titlePanel_->isVisible()) {
-        titlePanel_->render();
+    // Render the title text directly on the menu background (centered properly)
+    if (!title_.empty() && renderer_) {
+        glm::vec2 pos = getAbsolutePosition();
+        
+        // Calculate title text centering using actual text measurements
+        float titleScale = 1.5f;
+        float actualTitleWidth = renderer_->getTextWidth(title_, titleScale);
+        float titleX = pos.x + (getSize().x - actualTitleWidth) / 2.0f; // Center horizontally
+        float titleY = pos.y + TITLE_HEIGHT / 2.0f + 12.0f; // Center in title area
+        
+        renderer_->drawText(title_, titleX, titleY, titleScale, glm::vec3(1.0f, 1.0f, 1.0f));
     }
     
-    // Render the title text on top of the title panel
-    if (!title_.empty() && titlePanel_ && renderer_) {
-        float titleX = getPosition().x + 20.0f; // Left padding
-        float titleY = getPosition().y + TITLE_HEIGHT / 2.0f + 12.0f; // Better vertical centering
-        renderer_->drawText(title_, titleX, titleY, 1.5f, glm::vec3(1.0f, 1.0f, 1.0f)); // Larger text scale
-    }
-    
-    // Render all other children (buttons, etc.) - skip the title panel since we already rendered it
+    // Render all children (buttons, etc.)
     for (auto& child : children_) {
-        if (child && child->isVisible() && child != titlePanel_) {
+        if (child && child->isVisible()) {
             child->render();
         }
     }
@@ -61,25 +68,98 @@ void BaseMenu::render() {
 
 void BaseMenu::setTitle(const std::string& title) {
     title_ = title;
-    updateTitleText();
+    // Title text will be rendered directly in the render() method
+}
+
+void BaseMenu::setSize(float width, float height) {
+    // DEBUG: Log size changes
+    auto& logger = UILogger::getInstance();
+    logger.debug("BaseMenu", "setSize called - Old size: (" + std::to_string(getSize().x) + ", " + std::to_string(getSize().y) + ")");
+    logger.debug("BaseMenu", "setSize called - New size: (" + std::to_string(width) + ", " + std::to_string(height) + ")");
+    
+    // Call parent setSize
+    UIPanel::setSize(width, height);
+    
+    logger.debug("BaseMenu", "setSize completed - Actual size: (" + std::to_string(getSize().x) + ", " + std::to_string(getSize().y) + ")");
+    
+    // Reposition all existing buttons to be centered in the new menu size
+    repositionButtons();
+}
+
+void BaseMenu::repositionButtons() {
+    auto& logger = UILogger::getInstance();
+    logger.debug("BaseMenu", "Repositioning buttons after size change - Menu size: (" + std::to_string(getSize().x) + ", " + std::to_string(getSize().y) + ")");
+    
+    // Find all UIButton children and reposition them
+    for (auto& child : children_) {
+        // Check if this child is a UIButton
+        auto button = std::dynamic_pointer_cast<UIButton>(child);
+        if (button) {
+            // Get current button properties
+            glm::vec2 currentPos = button->getPosition();
+            glm::vec2 currentSize = button->getSize();
+            
+            // Recalculate centered X position with current menu width
+            float newButtonX = (getSize().x - currentSize.x) / 2.0f;
+            
+            // Keep the same Y position
+            button->setPosition(newButtonX, currentPos.y);
+            
+            logger.debug("BaseMenu", "Repositioned button - Old pos: (" + std::to_string(currentPos.x) + ", " + std::to_string(currentPos.y) + 
+                        ") New pos: (" + std::to_string(newButtonX) + ", " + std::to_string(currentPos.y) + ")");
+        }
+    }
+}
+
+void BaseMenu::autoResizeHeight() {
+    auto& logger = UILogger::getInstance();
+    
+    // Calculate required height based on current content
+    // The currentY_ represents the Y position of the last button
+    // We need to add the button height and bottom margin
+    float bottomMargin = 40.0f; // Add some breathing room at the bottom
+    float requiredHeight = currentY_ + BUTTON_HEIGHT + bottomMargin;
+    
+    // Only resize if the calculated height is different from current height
+    if (std::abs(getSize().y - requiredHeight) > 1.0f) {
+        float currentWidth = getSize().x;
+        
+        logger.debug("BaseMenu", "Auto-resizing height - Current: " + std::to_string(getSize().y) + 
+                    " Required: " + std::to_string(requiredHeight) + " (currentY_: " + std::to_string(currentY_) + 
+                    ", buttonHeight: " + std::to_string(BUTTON_HEIGHT) + ", bottomMargin: " + std::to_string(bottomMargin) + ")");
+        
+        // Set new size (this will trigger repositionButtons via setSize override)
+        UIPanel::setSize(currentWidth, requiredHeight);
+        
+        logger.debug("BaseMenu", "Auto-resize completed - New height: " + std::to_string(getSize().y));
+    }
 }
 
 std::shared_ptr<UIButton> BaseMenu::createStyledButton(const std::string& text, float yPosition) {
     auto button = std::make_shared<UIButton>(renderer_);
     
-    // Calculate dynamic button width based on text length
+    // Calculate dynamic button width based on actual text measurements
     float textScale = 1.0f;
-    float estimatedTextWidth = text.length() * 12.0f * textScale; // Character width estimate
-    float textPadding = 40.0f; // Padding on both sides
-    float buttonWidth = estimatedTextWidth + textPadding;
+    float actualTextWidth = renderer_->getTextWidth(text, textScale);
+    float textPadding = 80.0f; // Increased padding for more margin around text
+    float buttonWidth = actualTextWidth + textPadding;
     
     // Ensure minimum width and don't exceed maximum width
-    float minWidth = 150.0f;
-    float maxWidth = getSize().x * 0.8f;
+    float minWidth = 220.0f; // Increased minimum width for better appearance
+    float maxWidth = getSize().x * 0.75f; // Slightly smaller max to ensure centering
     buttonWidth = std::max(minWidth, std::min(buttonWidth, maxWidth));
     
     // Center the button horizontally in the menu
     float buttonX = (getSize().x - buttonWidth) / 2.0f;
+    
+    // DEBUG: Log positioning information to UI log
+    auto& logger = UILogger::getInstance();
+    glm::vec2 menuPos = getAbsolutePosition();
+    logger.debug("BaseMenu", "Creating button '" + text + "':");
+    logger.debug("BaseMenu", "  Menu absolute position: (" + std::to_string(menuPos.x) + ", " + std::to_string(menuPos.y) + ")");
+    logger.debug("BaseMenu", "  Menu size: (" + std::to_string(getSize().x) + ", " + std::to_string(getSize().y) + ")");
+    logger.debug("BaseMenu", "  Button relative position: (" + std::to_string(buttonX) + ", " + std::to_string(yPosition) + ")");
+    logger.debug("BaseMenu", "  Button size: (" + std::to_string(buttonWidth) + ", " + std::to_string(BUTTON_HEIGHT) + ")");
     
     button->setText(text);
     button->setPosition(buttonX, yPosition);
@@ -91,6 +171,14 @@ std::shared_ptr<UIButton> BaseMenu::createStyledButton(const std::string& text, 
     button->setClickColor({0.6f, 0.7f, 0.8f, 0.95f}); // Even lighter when clicked
     
     addChild(button);
+    
+    // DEBUG: Log final button position after adding as child
+    glm::vec2 buttonAbsPos = button->getAbsolutePosition();
+    logger.debug("BaseMenu", "  Button absolute position after addChild: (" + std::to_string(buttonAbsPos.x) + ", " + std::to_string(buttonAbsPos.y) + ")");
+    
+    // Auto-resize menu height to fit all content with bottom margin
+    autoResizeHeight();
+    
     return button;
 }
 
@@ -100,25 +188,6 @@ float BaseMenu::getNextElementY() {
 
 void BaseMenu::addElementSpacing(float spacing) {
     currentY_ += BUTTON_HEIGHT + spacing;
-}
-
-void BaseMenu::createTitlePanel() {
-    titlePanel_ = std::make_shared<UIPanel>(renderer_);
-    titlePanel_->setColor({0.15f, 0.2f, 0.3f, 0.98f}); // More distinct blue-tinted background for title
-    titlePanel_->setPosition(0.0f, 0.0f);
-    titlePanel_->setSize(getSize().x, TITLE_HEIGHT);
-    addChild(titlePanel_);
-    
-    updateTitleText();
-}
-
-void BaseMenu::updateTitleText() {
-    if (!titlePanel_ || !renderer_ || title_.empty()) {
-        return;
-    }
-    
-    // Title text will be rendered by the renderer during draw calls
-    // The actual text rendering happens in the render phase
 }
 
 } // namespace UI

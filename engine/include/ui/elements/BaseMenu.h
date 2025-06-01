@@ -54,6 +54,11 @@ public:
      */
     void setTitle(const std::string& title);
 
+    /**
+     * @brief Override setSize to add debug logging
+     */
+    void setSize(float width, float height);
+
 protected:
     /**
      * @brief Create a styled button with consistent appearance
@@ -75,6 +80,16 @@ protected:
      */
     void addElementSpacing(float spacing = 20.0f);
 
+    /**
+     * @brief Reposition all button children when menu size changes
+     */
+    void repositionButtons();
+
+    /**
+     * @brief Automatically resize menu height based on current content
+     */
+    void autoResizeHeight();
+
     // Common styling constants
     static constexpr float TITLE_HEIGHT = 80.0f; // Increased for better title visibility
     static constexpr float BUTTON_HEIGHT = 60.0f; // Increased to accommodate longer text
@@ -83,13 +98,8 @@ protected:
     static constexpr float SIDE_PADDING = 40.0f;
 
     MenuSystem* menuSystem_;
-    std::shared_ptr<UIPanel> titlePanel_;
     std::string title_;
     float currentY_; // Current Y position for next element
-
-private:
-    void createTitlePanel();
-    void updateTitleText();
 };
 
 } // namespace UI

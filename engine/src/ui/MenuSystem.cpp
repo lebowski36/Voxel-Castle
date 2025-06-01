@@ -37,12 +37,15 @@ bool MenuSystem::initialize(int screenWidth, int screenHeight, const std::string
         return false;
     }
     
-    // Set initial positions and sizes (increased for better layout)
-    mainMenu_->setPosition(screenWidth / 2.0f - 200.0f, screenHeight / 2.0f - 175.0f);
-    mainMenu_->setSize(400.0f, 350.0f);
+    // Set widths only - preserve auto-calculated heights
+    glm::vec2 mainSize = mainMenu_->getSize();
+    glm::vec2 settingsSize = settingsMenu_->getSize();
+    mainMenu_->setSize(400.0f, mainSize.y); // Keep auto-calculated height
+    settingsMenu_->setSize(450.0f, settingsSize.y); // Keep auto-calculated height
     
-    settingsMenu_->setPosition(screenWidth / 2.0f - 225.0f, screenHeight / 2.0f - 200.0f);
-    settingsMenu_->setSize(450.0f, 400.0f);
+    // Position menus after they auto-calculate their heights
+    // Note: This will be called again in showMainMenu/showSettingsMenu to ensure proper centering
+    centerMenus(screenWidth, screenHeight);
     
     // Hide all menus initially
     mainMenu_->setVisible(false);
@@ -65,6 +68,9 @@ void MenuSystem::render() {
 }
 
 void MenuSystem::showMainMenu() {
+    // Re-center menus in case they were auto-resized
+    centerMenus(getRenderer().getScreenWidth(), getRenderer().getScreenHeight());
+    
     mainMenu_->setVisible(true);
     settingsMenu_->setVisible(false);
     menuState_ = MenuState::MAIN_MENU;
@@ -80,6 +86,9 @@ void MenuSystem::showMainMenu() {
 }
 
 void MenuSystem::showSettingsMenu() {
+    // Re-center menus in case they were auto-resized
+    centerMenus(getRenderer().getScreenWidth(), getRenderer().getScreenHeight());
+    
     mainMenu_->setVisible(false);
     settingsMenu_->setVisible(true);
     menuState_ = MenuState::SETTINGS;
@@ -165,27 +174,22 @@ void MenuSystem::updateScreenSize(int width, int height) {
     // Explicitly update the renderer dimensions too - we need to use getRenderer() since we inherit from UISystem
     getRenderer().setScreenSize(width, height);
     
-    // Calculate menu sizes based on screen dimensions (larger for better visibility)
-    // Use at least 30% of screen width and height, but not less than 400x400
-    float menuWidth = std::max(400.0f, width * 0.4f);
-    float menuHeight = std::max(350.0f, height * 0.5f); // Increased minimum height
+    // KEEP MENU SIZES COMPLETELY FIXED - do not resize based on screen dimensions
+    // The menus should maintain their auto-calculated sizes regardless of screen size
+    // Only reposition them to stay centered
     
-    float settingsWidth = std::max(450.0f, width * 0.5f); // Increased minimum width
-    float settingsHeight = std::max(500.0f, height * 0.6f);
-    
-    // Recalculate menu positions to keep them centered
-    mainMenu_->setPosition(width / 2.0f - menuWidth / 2.0f, height / 2.0f - menuHeight / 2.0f);
-    mainMenu_->setSize(menuWidth, menuHeight);
-    
-    settingsMenu_->setPosition(width / 2.0f - settingsWidth / 2.0f, height / 2.0f - settingsHeight / 2.0f);
-    settingsMenu_->setSize(settingsWidth, settingsHeight);
+    // Center menus without changing their sizes
+    centerMenus(width, height);
     
     // Verify that the changes took effect
     int currentRendererWidth = getRenderer().getScreenWidth();
     int currentRendererHeight = getRenderer().getScreenHeight();
+    glm::vec2 mainSize = mainMenu_->getSize();
+    glm::vec2 settingsSize = settingsMenu_->getSize();
     
     std::cout << "[MenuSystem] Screen size updated. Renderer now: " << currentRendererWidth << "x" << currentRendererHeight 
-              << ", menus repositioned and scaled to " << menuWidth << "x" << menuHeight << std::endl;
+              << ", menu sizes preserved: main(" << mainSize.x << "x" << mainSize.y << ") settings(" 
+              << settingsSize.x << "x" << settingsSize.y << ")" << std::endl;
 }
 
 void MenuSystem::updateFullscreenState(bool isFullscreen) {
@@ -201,6 +205,20 @@ void MenuSystem::requestExit() {
     } else {
         std::cout << "[MenuSystem] No exit request callback set" << std::endl;
     }
+}
+
+void MenuSystem::centerMenus(int screenWidth, int screenHeight) {
+    // Center main menu
+    glm::vec2 mainSize = mainMenu_->getSize();
+    float mainX = screenWidth / 2.0f - mainSize.x / 2.0f;
+    float mainY = screenHeight / 2.0f - mainSize.y / 2.0f;
+    mainMenu_->setPosition(mainX, mainY);
+    
+    // Center settings menu
+    glm::vec2 settingsSize = settingsMenu_->getSize();
+    float settingsX = screenWidth / 2.0f - settingsSize.x / 2.0f;
+    float settingsY = screenHeight / 2.0f - settingsSize.y / 2.0f;
+    settingsMenu_->setPosition(settingsX, settingsY);
 }
 
 } // namespace UI

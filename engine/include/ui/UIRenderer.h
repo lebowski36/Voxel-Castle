@@ -36,6 +36,10 @@ public:
     bool loadUIFont(const std::string& fontPath, float fontSize = 32.0f);
     void drawText(const std::string& text, float x, float y, float scale = 1.0f, const glm::vec3& color = glm::vec3(1.0f));
     float getFontHeight() const;
+    
+    // Text measurement functions
+    float getTextWidth(const std::string& text, float scale = 1.0f) const;
+    float getTextHeight(float scale = 1.0f) const;
 
     // Test function to draw a visible rectangle regardless of other UI elements                      
     void drawTestRectangle();

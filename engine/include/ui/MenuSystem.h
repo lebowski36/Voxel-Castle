@@ -132,6 +132,13 @@ public:
     void debugDumpMenuState();
 
 private:
+    /**
+     * @brief Center menus on screen based on their current sizes
+     * @param screenWidth Current screen width
+     * @param screenHeight Current screen height
+     */
+    void centerMenus(int screenWidth, int screenHeight);
+
     MenuState menuState_ = MenuState::NONE;
     std::shared_ptr<MainMenu> mainMenu_;
     std::shared_ptr<SettingsMenu> settingsMenu_;
