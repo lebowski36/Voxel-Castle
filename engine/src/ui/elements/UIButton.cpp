@@ -9,6 +9,12 @@ namespace UI {
 UIButton::UIButton(UIRenderer* renderer) : UIElement(), renderer_(renderer) {
     // Default size for buttons
     setSize(120.0f, 40.0f);
+    
+    // Set default colors
+    backgroundColor_ = glm::vec4(0.2f, 0.3f, 0.4f, 1.0f);  // Dark blue-gray
+    textColor_ = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);        // White
+    hoverColor_ = glm::vec4(0.3f, 0.4f, 0.5f, 1.0f);       // Lighter blue-gray
+    clickColor_ = glm::vec4(0.4f, 0.5f, 0.6f, 1.0f);       // Even lighter blue-gray
 }
 
 void UIButton::setText(const std::string& text) {
@@ -40,13 +46,10 @@ void UIButton::update(float deltaTime) {
 }
 
 void UIButton::render() {
-    if (!isVisible()) {
+    if (!isVisible() || !renderer_) {
         return;
     }
 
-    // Get access to the renderer from the UISystem
-    // For now, we'll implement a simplified version
-    
     glm::vec2 pos = getAbsolutePosition();
     
     // Determine which color to use based on button state
@@ -59,14 +62,16 @@ void UIButton::render() {
         bgColor = backgroundColor_;
     }
     
-    // The actual implementation would use the UIRenderer to draw the button
-    // This is a placeholder that will be implemented later
-    // For now, this just means the button won't be visible
+    // Render button background
+    renderer_->renderColoredQuad(pos.x, pos.y, size_.x, size_.y, bgColor);
     
-    // TODO: Implement proper rendering using UIRenderer methods
-    std::cout << "[UIButton] render() called for button: " << text_ << " at position: " 
-              << pos.x << ", " << pos.y << " with color: " 
-              << bgColor.r << ", " << bgColor.g << ", " << bgColor.b << std::endl;
+    // Debug output - keep for now to help diagnose rendering issues
+    std::cout << "[UIButton] Rendering button: \"" << text_ << "\" at position: " 
+              << pos.x << ", " << pos.y << " with size: " << size_.x << "x" << size_.y 
+              << " color: " << bgColor.r << ", " << bgColor.g << ", " << bgColor.b << std::endl;
+              
+    // TODO: Add text rendering when font renderer is implemented
+    // For now, we at least have visible colored buttons
 }
 
 bool UIButton::handleInput(float mouseX, float mouseY, bool clicked) {
@@ -92,12 +97,24 @@ bool UIButton::handleInput(float mouseX, float mouseY, bool clicked) {
             onClick_();
         }
         
-        return true;
-    } else {
+        return true; // Indicate that the input was handled
+    }
+    
+    // If not clicked, or not hovered, check if we were pressed and now released
+    if (isPressed_ && !clicked && isHovered_) {
+        // This is a click release event on the button
+        // We already handled the action on press, so just reset pressed state
+        isPressed_ = false;
+        // Optionally, could have a separate onRelease callback here
+    }
+    
+    // If mouse is not over the button, or if it's not a click event, reset pressed state
+    if (!isHovered_ || (!clicked && isPressed_ && !isHovered_)) { 
+        // If mouse moves off while pressed, or if released outside
         isPressed_ = false;
     }
     
-    return isHovered_;
+    return false; // Input not handled by this button (or handled on press)
 }
 
 } // namespace UI

@@ -28,7 +28,7 @@ void UICheckbox::update(float deltaTime) {
 }
 
 void UICheckbox::render() {
-    if (!isVisible()) {
+    if (!isVisible() || !renderer_) {
         return;
     }
 
@@ -37,14 +37,25 @@ void UICheckbox::render() {
     // Box size (square)
     float boxSize = 20.0f;
     
-    // The actual implementation would use the UIRenderer to draw the checkbox
-    // This is a placeholder that will be implemented later
-    // For now, this just means the checkbox won't be visible
+    // Draw checkbox border - dark gray
+    renderer_->renderColoredQuad(pos.x, pos.y, boxSize, boxSize, glm::vec4(0.3f, 0.3f, 0.3f, 1.0f));
     
-    // TODO: Implement proper rendering using UIRenderer methods
-    std::cout << "[UICheckbox] render() called for checkbox: " << label_ 
-              << " at position: " << pos.x << ", " << pos.y
+    // Draw checkbox inner area - slightly lighter gray
+    renderer_->renderColoredQuad(pos.x + 2, pos.y + 2, boxSize - 4, boxSize - 4, 
+                               glm::vec4(0.4f, 0.4f, 0.4f, 1.0f));
+    
+    // If checked, draw a checkmark (simple colored box for now)
+    if (checked_) {
+        renderer_->renderColoredQuad(pos.x + 4, pos.y + 4, boxSize - 8, boxSize - 8,
+                                   glm::vec4(0.2f, 0.6f, 0.9f, 1.0f)); // Blue check
+    }
+    
+    // Debug output - keep for now
+    std::cout << "[UICheckbox] Rendering checkbox: \"" << label_ 
+              << "\" at position: " << pos.x << ", " << pos.y
               << " checked: " << (checked_ ? "true" : "false") << std::endl;
+              
+    // TODO: Add text rendering for label when font renderer is implemented
 }
 
 bool UICheckbox::handleInput(float mouseX, float mouseY, bool clicked) {

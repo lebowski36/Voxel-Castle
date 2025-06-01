@@ -66,11 +66,16 @@ void SettingsMenu::onBackClicked() {
 }
 
 void SettingsMenu::onFullscreenToggled(bool checked) {
-    // This would connect to the window management system to toggle fullscreen
-    std::cout << "[SettingsMenu] Fullscreen toggled: " << (checked ? "ON" : "OFF") << std::endl;
-    
-    // TODO: Implement fullscreen toggle logic
-    // This will be implemented in Phase 4 of the menu system implementation
+    if (menuSystem_) {
+        bool success = menuSystem_->toggleFullscreen(checked);
+        std::cout << "[SettingsMenu] Fullscreen toggled " << (checked ? "ON" : "OFF") 
+                  << " - result: " << (success ? "SUCCESS" : "FAILED") << std::endl;
+        
+        // If toggle failed, update checkbox to match actual state
+        if (!success) {
+            fullscreenCheckbox_->setChecked(!checked);
+        }
+    }
 }
 
 } // namespace UI

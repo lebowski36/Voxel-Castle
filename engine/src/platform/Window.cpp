@@ -7,7 +7,7 @@
 
 Window::Window(const std::string &title, int width, int height)
     : windowTitle(title), windowWidth(width), windowHeight(height), 
-      sdlWindow(nullptr), glContext(nullptr), running(false) {}
+      sdlWindow(nullptr), glContext(nullptr), running(false), fullscreen(false) {}
 
 Window::~Window() {
     cleanUp();
@@ -102,6 +102,8 @@ void Window::handleEvents() {
 
 void Window::update() {
     // Game logic updates would go here
+    // This method can be used for window-specific updates
+    // For now, it's empty as there's nothing specific to update
 }
 
 void Window::render() {
@@ -109,6 +111,43 @@ void Window::render() {
 
     // Swap buffers
     SDL_GL_SwapWindow(sdlWindow);
+    // This method is called by the Game class to render each frame
+}
+
+bool Window::toggleFullscreen() {
+    if (!sdlWindow) {
+        std::cerr << "Cannot toggle fullscreen: Window is null" << std::endl;
+        return false;
+    }
+    
+    // Toggle fullscreen state
+    fullscreen = !fullscreen;
+    
+    std::cout << "Toggling fullscreen mode: " << (fullscreen ? "ON" : "OFF") << std::endl;
+    
+    // Set the new fullscreen state
+    SDL_WindowFlags flags = fullscreen ? 
+        SDL_WINDOW_FULLSCREEN : 
+        SDL_WINDOW_RESIZABLE;
+        
+    if (SDL_SetWindowFullscreen(sdlWindow, fullscreen) != 0) {
+        std::cerr << "Failed to toggle fullscreen mode: " << SDL_GetError() << std::endl;
+        fullscreen = !fullscreen; // Revert the state
+        return false;
+    }
+    
+    // When returning from fullscreen, restore the window size
+    if (!fullscreen) {
+        SDL_SetWindowSize(sdlWindow, windowWidth, windowHeight);
+        // Reset viewport in case size changed
+        glViewport(0, 0, windowWidth, windowHeight);
+    }
+    
+    return true;
+}
+
+bool Window::isFullscreen() const {
+    return fullscreen;
 }
 
 void Window::cleanUp() {

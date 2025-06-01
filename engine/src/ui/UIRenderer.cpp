@@ -231,6 +231,11 @@ void UIRenderer::setScreenSize(int width, int height) {
                                   -1.0f, 1.0f);
 }
 
+void UIRenderer::renderColoredQuad(float x, float y, float width, float height, const glm::vec4& color) {
+    // This is essentially the same as renderQuad, which already handles colored quads
+    renderQuad(x, y, width, height, color);
+}
+
 void UIRenderer::renderQuad(float x, float y, float width, float height, const glm::vec4& color) {
     // Debug logging for UI quad rendering
     static int logCounter = 0;

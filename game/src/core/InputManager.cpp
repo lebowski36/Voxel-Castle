@@ -260,6 +260,15 @@ void processInput(Game& game) {
                         "), global=(" + std::to_string(globalX) + "," + std::to_string(globalY) + ")");
             }
         }
+        // Handle mouse button events when mouse is NOT captured (likely for UI)
+        else if ((e.type == SDL_EVENT_MOUSE_BUTTON_DOWN || e.type == SDL_EVENT_MOUSE_BUTTON_UP) && !game.isMouseCaptured()) {
+            bool clicked = (e.type == SDL_EVENT_MOUSE_BUTTON_DOWN);
+            // Pass UI input to the game instance to handle
+            // We only care about left clicks for UI
+            if (e.button.button == SDL_BUTTON_LEFT) {
+                 game.handleMenuInput(static_cast<float>(e.button.x), static_cast<float>(e.button.y), clicked);
+            }
+        }
         else if (e.type == SDL_EVENT_MOUSE_BUTTON_DOWN && game.isMouseCaptured()) {
             DEBUG_LOG("InputManager", "Mouse button DOWN detected - button=" + std::to_string(e.button.button) + 
                      ", click_x=" + std::to_string(e.button.x) + ", click_y=" + std::to_string(e.button.y));

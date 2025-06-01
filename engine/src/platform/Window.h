@@ -17,6 +17,12 @@ public:
     void render();
     void cleanUp();
 
+    // Toggle fullscreen mode
+    bool toggleFullscreen();
+    
+    // Check if the window is in fullscreen mode
+    bool isFullscreen() const;
+
     bool isRunning() const { return running; }
     int getWidth() const { return windowWidth; }
     int getHeight() const { return windowHeight; }
@@ -29,6 +35,7 @@ private:
     
     SDL_Window* sdlWindow = nullptr;
     SDL_GLContext glContext = nullptr; // OpenGL context
+    bool fullscreen = false; // Track fullscreen state
 
     bool running;
 };

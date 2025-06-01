@@ -2,6 +2,7 @@
 #include "ui/elements/MainMenu.h"
 #include "ui/elements/SettingsMenu.h"
 #include <iostream>
+#include <typeinfo>  // For typeid
 
 namespace VoxelEngine {
 namespace UI {
@@ -107,6 +108,51 @@ void MenuSystem::closeMenus() {
     // Note: We don't restore visibility of game UI elements here
     // That should be handled by the Game class since it knows which
     // elements should be visible in gameplay mode
+}
+
+bool MenuSystem::toggleFullscreen(bool enable) {
+    if (onFullscreenToggle_) {
+        return onFullscreenToggle_(enable);
+    }
+    
+    // If no callback is set, just log a message and return false
+    std::cout << "[MenuSystem] No fullscreen toggle callback set" << std::endl;
+    return false;
+}
+
+void MenuSystem::debugDumpMenuState() {
+    std::cout << "\n[MenuSystem] === DEBUG MENU STATE DUMP ===" << std::endl;
+    
+    // Report current menu state
+    std::cout << "[MenuSystem] Current State: ";
+    switch (menuState_) {
+        case MenuState::NONE:      std::cout << "NONE (No menu active)"; break;
+        case MenuState::MAIN_MENU: std::cout << "MAIN_MENU"; break;
+        case MenuState::SETTINGS:  std::cout << "SETTINGS"; break;
+        default:                   std::cout << "UNKNOWN (" << static_cast<int>(menuState_) << ")"; break;
+    }
+    std::cout << std::endl;
+    
+    // Report menu visibility
+    std::cout << "[MenuSystem] Main Menu: " << (mainMenu_ && mainMenu_->isVisible() ? "Visible" : "Hidden") << std::endl;
+    std::cout << "[MenuSystem] Settings Menu: " << (settingsMenu_ && settingsMenu_->isVisible() ? "Visible" : "Hidden") << std::endl;
+    
+    // Report callback states
+    std::cout << "[MenuSystem] OnMenuClosed callback: " << (onMenuClosed_ ? "Set" : "Not set") << std::endl;
+    std::cout << "[MenuSystem] OnFullscreenToggle callback: " << (onFullscreenToggle_ ? "Set" : "Not set") << std::endl;
+    
+    // List all UI elements
+    std::cout << "[MenuSystem] All UI Elements (" << elements_.size() << " total):" << std::endl;
+    for (size_t i = 0; i < elements_.size(); i++) {
+        const auto& element = elements_[i];
+        std::cout << "  [" << i << "] Type: " << typeid(*element).name()
+                  << ", Visible: " << (element->isVisible() ? "Yes" : "No")
+                  << ", Pos: (" << element->getPosition().x << "," << element->getPosition().y << ")"
+                  << ", Size: (" << element->getSize().x << "x" << element->getSize().y << ")"
+                  << std::endl;
+    }
+    
+    std::cout << "[MenuSystem] === END DEBUG MENU STATE DUMP ===" << std::endl;
 }
 
 } // namespace UI

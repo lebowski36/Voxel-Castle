@@ -48,8 +48,13 @@ void UIElement::setParent(UIElement* parent) {
 
 bool UIElement::containsPoint(float x, float y) const {
     glm::vec2 absPos = getAbsolutePosition();
-    return x >= absPos.x && x <= absPos.x + size_.x &&
-           y >= absPos.y && y <= absPos.y + size_.y;
+    bool contains = x >= absPos.x && x <= absPos.x + size_.x &&
+                    y >= absPos.y && y <= absPos.y + size_.y;
+    // std::cout << "[UIElement::containsPoint] Mouse (" << x << "," << y 
+    //           << ") vs Element AbsPos: (" << absPos.x << "," << absPos.y 
+    //           << ") Size: (" << size_.x << "," << size_.y 
+    //           << ") Contains: " << std::boolalpha << contains << std::endl;
+    return contains;
 }
 
 glm::vec2 UIElement::getAbsolutePosition() const {

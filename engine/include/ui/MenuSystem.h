@@ -65,6 +65,13 @@ public:
     void closeMenus();
 
     /**
+     * @brief Toggle fullscreen mode
+     * @param enable True to enable fullscreen, false to disable
+     * @return True if successful, false otherwise
+     */
+    bool toggleFullscreen(bool enable);
+
+    /**
      * @brief Get the current menu state
      * @return The current menu state
      */
@@ -81,12 +88,31 @@ public:
      * @param callback Function to call when menu is closed
      */
     void setOnMenuClosed(std::function<void()> callback) { onMenuClosed_ = callback; }
+    
+    /**
+     * @brief Set the callback for fullscreen toggle
+     * @param callback Function to call when fullscreen is toggled
+     */
+    void setOnFullscreenToggle(std::function<bool(bool)> callback) { onFullscreenToggle_ = callback; }
+    
+    /**
+     * @brief Alias for setOnFullscreenToggle for backward compatibility
+     * @param callback Function to call when fullscreen is toggled
+     */
+    void setOnFullscreenToggled(std::function<bool(bool)> callback) { onFullscreenToggle_ = callback; }
+
+    /**
+     * @brief Debug dump of menu state - to verify in console
+     * Logs the current state of menu and visibility of elements
+     */
+    void debugDumpMenuState();
 
 private:
     MenuState menuState_ = MenuState::NONE;
     std::shared_ptr<MainMenu> mainMenu_;
     std::shared_ptr<SettingsMenu> settingsMenu_;
     std::function<void()> onMenuClosed_;
+    std::function<bool(bool)> onFullscreenToggle_;
 };
 
 } // namespace UI

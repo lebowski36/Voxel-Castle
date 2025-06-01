@@ -36,44 +36,44 @@ Implement a comprehensive menu system with modified input handling where ESC ope
   - Implemented basic menu navigation system
 - [x] **2.2** Create MainMenu class
   - Created UI container for main menu options
-  - Added appropriate structure for buttons
-  - Set up for handling button interactions
+  - Added Resume Game and Settings buttons
+  - Implemented button click handlers
 - [x] **2.3** Create SettingsMenu class
   - Created submenu structure for game settings
   - Prepared for fullscreen toggle implementation
   - Made expandable for future settings
 
 ### Phase 3: Menu UI Implementation
-- [ ] **3.1** Design main menu layout
-  - Currently displaying a gray transparent box in the center of screen
-  - Need to add proper buttons and styling
-  - Ensure proper scaling for different resolutions
-- [ ] **3.2** Implement Close button functionality
-  - Need to add button to close menu and return to game
-  - Add option to exit game entirely with confirmation
-- [ ] **3.3** Implement Settings button functionality
-  - Need to add button to open settings submenu
-  - Implement navigation back to main menu
+- [x] **3.1** Design main menu layout
+  - Created dark semi-transparent panel background
+  - Added title panel and properly positioned buttons
+  - Buttons are created but may need rendering fixes
+- [x] **3.2** Implement Close button functionality
+  - Connected "Resume Game" button to menu system's closeMenus() method
+  - Set up onMenuClosed callback to handle game state restoration
+- [x] **3.3** Implement Settings button functionality
+  - Connected Settings button to show settings menu
+  - Implemented Back button to navigate from settings to main menu
 
 ### Phase 4: Settings Implementation
-- [ ] **4.1** Implement fullscreen toggle
-  - Connect to existing window management system
-  - Save setting preference (if save system exists)
-  - Apply setting immediately
-- [ ] **4.2** Add settings validation and error handling
-  - Handle fullscreen toggle failures gracefully
-  - Provide user feedback for setting changes
+- [x] **4.1** Implement fullscreen toggle
+  - Added fullscreen toggle to Window class
+  - Connected checkbox to Game's fullscreen toggle functionality
+  - Implemented toggle in real-time
+- [x] **4.2** Add settings validation and error handling
+  - Added success/failure handling for fullscreen toggle
+  - Implemented checkbox state restoration if toggle fails
 
 ### Phase 5: Integration and Testing
 - [x] **5.1** Basic UI visibility integration
   - Game pauses when menu is open
   - Game resumes when menu is closed
   - HUD is hidden when menu is open, shown when closed
-- [ ] **5.2** Test menu functionality
-  - ESC key opens/closes menu (WORKING)
-  - Button interactions not yet implemented
-  - Settings changes not yet implemented
-  - No regressions in existing functionality observed
+- [ ] **5.2** Core menu functionality
+  - ESC key opens/closes menu (CONFIRMED WORKING)
+  - Resume Game button functionality needs testing
+  - Settings button functionality needs testing
+  - Fullscreen toggle needs testing
 - [ ] **5.3** Polish and refinement
   - Need to implement smooth menu transitions
   - Need to add visual feedback for button interactions
@@ -104,6 +104,8 @@ Implement a comprehensive menu system with modified input handling where ESC ope
 - **UI Naming Change**: Renamed BlockSelectionUI to HUD for better semantic clarity
 - **Integration Progress**: Successfully implemented proper UI visibility behavior with menu toggle
 - **Window Close Bug Fix**: Fixed bug where clicking window close button (X) doesn't work when menu is open
+- **Menu Layout Progress**: Main menu now displays grey transparent panel with button structure in place
+- **File Cleanup**: Removed old BlockSelectionUI files, updated all references to use HUD
 
 ## Success Criteria
 - [x] ESC key opens main menu instead of toggling mouse capture

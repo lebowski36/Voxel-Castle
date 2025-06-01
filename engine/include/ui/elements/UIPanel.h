@@ -21,6 +21,7 @@ public:
 
     // UIElement interface
     void render() override;
+    bool handleInput(float mouseX, float mouseY, bool clicked) override;
 
 protected:
     UIRenderer* renderer_;

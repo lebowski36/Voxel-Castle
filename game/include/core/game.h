@@ -124,6 +124,10 @@ public:
     void setGameState(GameState state) { gameState_ = state; }
     bool isMenuOpen() const { return gameState_ == GameState::MENU; }
     void toggleMenu();
+    
+    // Fullscreen toggle for menu system
+    bool toggleFullscreen();
+    bool isFullscreen() const;
 
     // First-person mode input state
     bool isSprinting() const { return sprinting_; }
@@ -155,6 +159,9 @@ public:
     void processInput();
     void update(float deltaTime);
     void render();
+
+    // UI Input Handling
+    void handleMenuInput(float mouseX, float mouseY, bool clicked);
 
 private:
     // Helper method for world initialization

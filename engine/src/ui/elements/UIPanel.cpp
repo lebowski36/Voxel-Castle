@@ -68,5 +68,30 @@ void UIPanel::render() {
     renderer_->renderQuad(absPos.x, absPos.y, size_.x, size_.y, color_);
 }
 
+bool UIPanel::handleInput(float mouseX, float mouseY, bool clicked) {
+    if (!isVisible() || !containsPoint(mouseX, mouseY)) {
+        return false;
+    }
+
+    // If the panel itself is clicked and contains the point, 
+    // it has technically handled the input for its area.
+    // Now, iterate through children to see if they handle it more specifically.
+    for (auto it = children_.rbegin(); it != children_.rend(); ++it) {
+        auto& child = *it;
+        if (child && child->isVisible()) {
+            if (child->handleInput(mouseX, mouseY, clicked)) {
+                return true; // Child handled the input
+            }
+        }
+    }
+    
+    // If no child handled it, but the click was within the panel, 
+    // the panel itself can be considered to have handled it (e.g., to prevent clicks passing through).
+    // However, for simple panels that are just containers, we might want to return false 
+    // if no children handled it, unless the panel itself has specific click behavior.
+    // For now, let's assume if a click is on a panel and no child takes it, the panel 'absorbs' it.
+    return true; 
+}
+
 } // namespace UI
 } // namespace VoxelEngine

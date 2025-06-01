@@ -170,6 +170,35 @@ bool Game::initialize() {
             return false;
         }
         
+        // Set up menu closed callback to ensure proper game state restoration
+        menuSystem_->setOnMenuClosed([this]() {
+            // Only restore game state if we're still in menu state
+            // This prevents issues if ESC was used to close menu instead of button
+            if (gameState_ == GameState::MENU) {
+                gameState_ = GameState::PLAYING;
+                setMouseCaptured(true);
+                
+                // Ensure game UI is visible again
+                if (hudSystem_) {
+                    hudSystem_->setVisible(true);
+                }
+                
+                std::cout << "[Game] Menu closed via callback - game resumed, cursor hidden" << std::endl;
+            }
+        });
+        
+        // Set up fullscreen toggle callback
+        menuSystem_->setOnFullscreenToggled([this](bool enable) -> bool {
+            // If enable is true, we want to enable fullscreen
+            // If enable is false, we want to disable fullscreen
+            // Our toggleFullscreen() just toggles the current state, so we need to check
+            // if the current state already matches what we want
+            if (isFullscreen() != enable) {
+                return toggleFullscreen();
+            }
+            return true; // Already in desired state
+        });
+        
         // Get the texture atlas OpenGL texture ID from mesh renderer
         GLuint atlasTextureId = meshRenderer_->getTextureAtlasID();
         
@@ -284,6 +313,25 @@ void Game::toggleCameraMode() {
     }
 }
 
+// --- UI Input Handling ---
+void Game::handleMenuInput(float mouseX, float mouseY, bool clicked) {
+    if (menuSystem_ && isMenuOpen()) {
+        // Debug: Log incoming mouse coordinates and click state
+        std::cout << "[Game] handleMenuInput: mouseX=" << mouseX << ", mouseY=" << mouseY << ", clicked=" << clicked << std::endl;
+        
+        // Pass input to the menu system
+        bool inputHandled = menuSystem_->handleInput(mouseX, mouseY, clicked);
+        
+        // Debug: Log whether the menu system handled the input
+        if (inputHandled) {
+            std::cout << "[Game] MenuSystem handled the input." << std::endl;
+        } else {
+            std::cout << "[Game] MenuSystem did NOT handle the input." << std::endl;
+        }
+    }
+}
+
+// --- Game State Management ---
 void Game::toggleMenu() {
     if (gameState_ == GameState::PLAYING) {
         gameState_ = GameState::MENU;
@@ -316,6 +364,24 @@ void Game::toggleMenu() {
         
         std::cout << "[Game] Menu closed - game resumed, cursor hidden" << std::endl;
     }
+}
+
+bool Game::toggleFullscreen() {
+    if (!gameWindow_) {
+        std::cerr << "[Game] Cannot toggle fullscreen: Window is null" << std::endl;
+        return false;
+    }
+    
+    bool success = gameWindow_->toggleFullscreen();
+    std::cout << "[Game] Fullscreen toggled: " << (success ? "SUCCESS" : "FAILED") << std::endl;
+    return success;
+}
+
+bool Game::isFullscreen() const {
+    if (!gameWindow_) {
+        return false;
+    }
+    return gameWindow_->isFullscreen();
 }
 
 // Delegates all per-frame game logic to GameLogic module
