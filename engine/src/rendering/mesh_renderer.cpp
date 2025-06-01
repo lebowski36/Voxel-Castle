@@ -239,7 +239,6 @@ void MeshRenderer::uploadMesh(const VoxelMesh& mesh) {
     
     static size_t upload_count = 0;
     upload_count++;
-    bool should_log = (upload_count % 1000 == 0) || (mesh.vertices.size() > 8000);
 
     glBindBuffer(GL_ARRAY_BUFFER, vbo);
     checkGlError("glBindBuffer GL_ARRAY_BUFFER (uploadMesh)");

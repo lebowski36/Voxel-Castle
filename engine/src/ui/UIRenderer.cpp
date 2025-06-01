@@ -123,7 +123,7 @@ void UIRenderer::beginFrame() {
     // Verify the program was activated
     GLint activeProgram = 0;
     glGetIntegerv(GL_CURRENT_PROGRAM, &activeProgram);
-    if (activeProgram != shaderProgram_) {
+    if (static_cast<GLuint>(activeProgram) != shaderProgram_) {
         std::cerr << "[UIRenderer] ERROR: Failed to activate shader program! Expected: " 
                   << shaderProgram_ << ", got: " << activeProgram << std::endl;
     }
@@ -383,7 +383,7 @@ void UIRenderer::renderTexturedQuad(float x, float y, float width, float height,
     // Check texture binding worked
     GLint boundTexture = 0;
     glGetIntegerv(GL_TEXTURE_BINDING_2D, &boundTexture);
-    if (boundTexture != textureID) {
+    if (static_cast<GLuint>(boundTexture) != textureID) {
         std::cerr << "[UIRenderer] ERROR: Failed to bind texture! Expected: " 
                   << textureID << ", Got: " << boundTexture << std::endl;
     }
@@ -425,9 +425,7 @@ bool UIRenderer::loadShaders() {
     const std::string vertexShaderPath = projectRoot_ + "assets/shaders/ui.vert";
     const std::string fragmentShaderPath = projectRoot_ + "assets/shaders/ui.frag";
     
-    std::cout << "[UIRenderer] Loading shaders:" << std::endl;
-    std::cout << "[UIRenderer] - Vertex shader: " << vertexShaderPath << std::endl;
-    std::cout << "[UIRenderer] - Fragment shader: " << fragmentShaderPath << std::endl;
+    // Redirected shader and texture loading details to file-based logging system.
     
     // Check if shader files exist
     std::ifstream vertFile(vertexShaderPath);

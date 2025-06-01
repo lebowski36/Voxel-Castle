@@ -1,5 +1,6 @@
 #include "ui/UISystem.h"
 #include "ui/UILogger.h"
+#include "../../game/include/utils/debug_logger.h"
 #include <algorithm>
 #include <iostream> // Add this header for std::cout and std::cerr
 
@@ -77,29 +78,26 @@ void UISystem::render() {
             if (pos.x < -size.x || pos.y < -size.y || 
                 pos.x > renderer_.getScreenWidth() || pos.y > renderer_.getScreenHeight()) {
                 if (shouldLog) {
-                    std::cerr << "[UISystem] Warning: Element at (" << pos.x << "," << pos.y 
-                              << ") with size (" << size.x << "," << size.y 
-                              << ") may be outside screen bounds " 
-                              << renderer_.getScreenWidth() << "x" << renderer_.getScreenHeight() << std::endl;
+                    logger.warning("UISystem", "Element at (" + std::to_string(pos.x) + "," + std::to_string(pos.y) 
+                                   + ") with size (" + std::to_string(size.x) + "," + std::to_string(size.y) 
+                                   + ") may be outside screen bounds " 
+                                   + std::to_string(renderer_.getScreenWidth()) + "x" + std::to_string(renderer_.getScreenHeight()));
                 }
             }
             
             if (shouldLog) {
-                std::cout << "[UISystem] Rendering element at (" << pos.x << ", " << pos.y 
-                          << "), size: (" << size.x << ", " << size.y << ")" << std::endl;
+                DEBUG_LOG("UISystem", "Rendering element at (" + std::to_string(pos.x) + ", " + std::to_string(pos.y) + ")");
             }
             
             renderElement(element.get());
             visibleCount++;
         } else if (shouldLog && element) {
-            std::cout << "[UISystem] Skipping invisible element at (" 
-                      << element->getPosition().x << ", " << element->getPosition().y << ")" << std::endl;
+            DEBUG_LOG("UISystem", "Skipping invisible element at (" + std::to_string(element->getPosition().x) + ", " + std::to_string(element->getPosition().y) + ")");
         }
     }
     
     if (shouldLog) {
-        std::cout << "[UISystem] Rendered " << visibleCount << " visible elements out of " 
-                  << elements_.size() << " total" << std::endl;
+        DEBUG_LOG("UISystem", "Rendered " + std::to_string(visibleCount) + " visible elements out of " + std::to_string(elements_.size()) + " total");
     }
     
     renderer_.endFrame();

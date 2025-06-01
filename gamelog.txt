@@ -1,0 +1,6 @@
+[23:02:31.346] [GameLogic] Update start, frame: 100, deltaTime: 0.0206356s
+[23:02:33.498] [GameLogic] Update start, frame: 200, deltaTime: 0.0240134s
+[23:02:35.668] [GameLogic] Update start, frame: 300, deltaTime: 0.0169991s
+[23:03:51.764] [GameLogic] Update start, frame: 100, deltaTime: 0.0215796s
+[23:03:53.704] [GameLogic] Update start, frame: 200, deltaTime: 0.0230366s
+[23:03:55.375] [GameLogic] Update start, frame: 300, deltaTime: 0.0168364s

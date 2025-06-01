@@ -28,9 +28,9 @@ public:
     const std::vector<std::shared_ptr<UIElement>>& getChildren() const { return children_; }
 
     // Virtual interface
-    virtual void update(float deltaTime) {}
+    virtual void update(float deltaTime) { (void)deltaTime; }
     virtual void render() = 0;
-    virtual bool handleInput(float mouseX, float mouseY, bool clicked) { return false; }
+    virtual bool handleInput(float mouseX, float mouseY, bool clicked) { (void)mouseX; (void)mouseY; (void)clicked; return false; }
 
     // Utility methods
     bool containsPoint(float x, float y) const;

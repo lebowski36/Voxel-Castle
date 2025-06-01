@@ -10,3 +10,7 @@ GameInitializer::shutdown() - Complete.
 [DebugLogger] Started new session: 20250601_223104_989
 GameInitializer::initialize() - Initializing Game Window with dimensions: 1280x720
 GameInitializer::shutdown() - Complete.
+[DebugLogger] Started new session: 20250601_230228_451
+[DebugLogger] Started new session: 20250601_230228_451
+[DebugLogger] Started new session: 20250601_230349_065
+[DebugLogger] Started new session: 20250601_230349_066

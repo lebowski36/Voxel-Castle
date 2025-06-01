@@ -6,12 +6,14 @@
 #include "rendering/texture_atlas.h"
 #include "rendering/mesh_builder.h"
 #include "interaction/BlockPlacement.h"
+#include "utils/debug_logger.h"
 #include <iostream>
 #include <flecs.h> // For flecs::world definition
 #include "platform/Window.h" // For Window definition
 #include <chrono>
 #include <sstream>
 #include <iomanip>
+#include <fstream>
 
 namespace GameLogic {
 
@@ -36,7 +38,8 @@ void update(Game& game, float deltaTime) {
     bool shouldLogFrame = (frameCount % 100 == 0) || game.hasPendingBlockAction();
     
     if (shouldLogFrame) {
-        std::cout << "[" << getTimestampGL() << "] [GameLogic] Update start, frame: " << frameCount 
+        std::ofstream logFile("gamelog.txt", std::ios_base::app);
+        logFile << "[" << getTimestampGL() << "] [GameLogic] Update start, frame: " << frameCount 
                   << ", deltaTime: " << deltaTime << "s" << std::endl;
     }
     
@@ -81,7 +84,7 @@ void update(Game& game, float deltaTime) {
 
     // Progress ECS systems
     if (shouldLogFrame) {
-        std::cout << "[" << getTimestampGL() << "] [GameLogic] Progressing ECS systems..." << std::endl;
+        DEBUG_LOG("GameLogic", "Progressing ECS systems...");
     }
     if (game.getECS()) {
         game.getECS()->progress(deltaTime); // Pass deltaTime if your system uses it
@@ -147,7 +150,7 @@ void update(Game& game, float deltaTime) {
         game.getWorldManager()->processFinishedMeshJobs();
     }
     if (shouldLogFrame) {
-        std::cout << "[" << getTimestampGL() << "] [GameLogic] Mesh jobs processing completed" << std::endl;
+        DEBUG_LOG("GameLogic", "Mesh jobs processing completed");
     }
     
     if (shouldLogFrame) {

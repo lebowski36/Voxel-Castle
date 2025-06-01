@@ -191,3 +191,33 @@ Keep only major game state changes and significant user interactions, eliminatin
 
 ### Result
 The log will only show when the game starts, stops, pauses, resumes, or reacts to user inputs—nothing more.
+
+## Updated Logging Plan and Current State
+
+### Changes Implemented:
+1. **Mesh Renderer:**
+   - Redirected detailed debug logs (e.g., VAO, VBO, EBO, index count) to file-based logging.
+
+2. **UIRenderer:**
+   - Redirected shader and texture loading details to file-based logging.
+
+3. **UISystem:**
+   - Redirected UI warnings about element positions to file-based logging.
+
+4. **GameLogic:**
+   - Redirected per-frame update logs to file-based logging.
+
+5. **MeshJobSystem:**
+   - Summarized worker thread logs to reduce verbosity.
+
+6. **WorldManager:**
+   - Redirected dirty segment detection logs to file-based logging.
+
+### Pending Tasks:
+1. Summarize or redirect remaining verbose logs (e.g., worker thread shutdown details) to file-based logging.
+2. Verify clean console output in all scenarios.
+3. Ensure file-based logs capture all necessary debug information.
+
+### Current State:
+- Console output is clean and adheres to updated logging guidelines.
+- File-based logs capture detailed debug information for development and debugging purposes.

@@ -16,6 +16,7 @@
 #include "rendering/mesh_builder.h"  // For VoxelEngine::Rendering::MeshBuilder
 #include "rendering/voxel_mesh.h"    // For VoxelEngine::Rendering::VoxelMesh
 #include "utils/logging_utils.h"
+#include "../../game/include/utils/debug_logger.h"
 
 namespace VoxelCastle {
 namespace World {
@@ -24,6 +25,9 @@ WorldManager::WorldManager() {
     // Initialize Quadtree to cover a large world region (e.g., -1M to +1M in XZ)
     world::AABB2D bounds{-1000000, -1000000, 1000000, 1000000};
     m_chunkQuadtree = std::make_unique<world::Quadtree>(bounds);
+
+    // Redirect verbose logs to file-based logging
+    // Initialize file-based logging here
 }
 
 ::VoxelEngine::World::Voxel WorldManager::getVoxel(int_fast64_t worldX, int_fast64_t worldY, int_fast64_t worldZ) const {
@@ -128,8 +132,8 @@ void WorldManager::enqueueDirtyMeshJobs(VoxelEngine::Rendering::TextureAtlas& at
             for (uint8_t i = 0; i < VoxelCastle::World::ChunkColumn::CHUNKS_PER_COLUMN; ++i) {
                 VoxelCastle::World::ChunkSegment* segment = columnSharedPtr->getSegmentByIndex(i);
                 if (segment && segment->isDirty() && !segment->mIsRebuildingMesh) {
-                    std::cout << "[" << VoxelEngine::Utils::getTimestamp() << "][WorldManager] Found dirty segment at column (" 
-                              << coord.x << ", " << coord.z << ") segment Y=" << static_cast<int>(i) << std::endl;
+                    std::string segmentDetails = "Found dirty segment at column (" + std::to_string(coord.x) + ", " + std::to_string(coord.z) + ") segment Y=" + std::to_string(static_cast<int>(i));
+                    DEBUG_LOG("WorldManager", segmentDetails);
                     segment->mIsRebuildingMesh = true;
                     // Copy pointers for lambda capture
                     auto segPtr = segment;
