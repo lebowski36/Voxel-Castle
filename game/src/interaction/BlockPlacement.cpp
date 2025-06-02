@@ -355,7 +355,7 @@ bool BlockPlacement::isChunkPositionSafe(VoxelCastle::World::WorldManager* world
         
         // Check if mesh is currently being rebuilt (thread safety)
         if (segment->mIsRebuildingMesh) {
-            std::cout << "[BlockPlacement] [ERROR] Chunk at target position is not safe for modification! Aborting." << std::endl;
+            DEBUG_LOG("BlockPlacement", "[ERROR] Chunk at target position is not safe for modification! Aborting.");
             return false;
         }
         
@@ -388,8 +388,8 @@ bool BlockPlacement::isValidPlacement(const Game& game,
         // Check if the position is already occupied
         VoxelEngine::World::Voxel existingVoxel = worldManager->getVoxel(position.x, position.y, position.z);
         if (existingVoxel.id != static_cast<uint8_t>(VoxelEngine::World::VoxelType::AIR)) {
-            std::cout << "[BlockPlacement] Position already occupied by voxel type " << static_cast<int>(existingVoxel.id) << std::endl;
-            std::cout << "[BlockPlacement] Cannot place block at that location" << std::endl;
+            DEBUG_LOG("BlockPlacement", "Position already occupied by voxel type " + std::to_string(static_cast<int>(existingVoxel.id)));
+            DEBUG_LOG("BlockPlacement", "Cannot place block at that location");
             return false;
         }
         
@@ -435,7 +435,7 @@ bool BlockPlacement::isValidPlacement(const Game& game,
 void BlockPlacement::markChunkDirtyForPosition(VoxelCastle::World::WorldManager* worldManager,
                                               const glm::ivec3& position) {
     if (!worldManager) {
-        std::cout << "[" << VoxelEngine::Utils::getTimestamp() << "][BlockPlacement] ERROR: WorldManager is null, cannot mark chunk dirty" << std::endl;
+        DEBUG_LOG("BlockPlacement", "ERROR: WorldManager is null, cannot mark chunk dirty");
         return;
     }
     
@@ -446,7 +446,7 @@ void BlockPlacement::markChunkDirtyForPosition(VoxelCastle::World::WorldManager*
     // Get the chunk column
     auto* chunkColumn = worldManager->getChunkColumn(chunkX, chunkZ);
     if (!chunkColumn) {
-        std::cout << "[" << VoxelEngine::Utils::getTimestamp() << "][BlockPlacement] Warning: No chunk column found at (" << chunkX << ", " << chunkZ << ")" << std::endl;
+        DEBUG_LOG("BlockPlacement", "Warning: No chunk column found at (" + std::to_string(chunkX) + ", " + std::to_string(chunkZ) + ")");
         return;
     }
     
@@ -457,8 +457,8 @@ void BlockPlacement::markChunkDirtyForPosition(VoxelCastle::World::WorldManager*
     auto* segment = chunkColumn->getSegmentByIndex(segmentY);
     if (segment) {
         segment->markDirty(true);
-        std::cout << "[" << VoxelEngine::Utils::getTimestamp() << "][BlockPlacement] Marked chunk segment (" << chunkX << ", " << segmentY << ", " << chunkZ << ") dirty for mesh update" << std::endl;
+        DEBUG_LOG("BlockPlacement", "Marked chunk segment (" + std::to_string(chunkX) + ", " + std::to_string(segmentY) + ", " + std::to_string(chunkZ) + ") dirty for mesh update");
     } else {
-        std::cout << "[" << VoxelEngine::Utils::getTimestamp() << "][BlockPlacement] Warning: No chunk segment found at Y index " << segmentY << std::endl;
+        DEBUG_LOG("BlockPlacement", "Warning: No chunk segment found at Y index " + std::to_string(segmentY));
     }
 }
