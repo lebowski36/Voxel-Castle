@@ -401,6 +401,9 @@ bool BlockPlacement::isValidPlacement(const Game& game,
         return false;
     }
     
+    DEBUG_LOG("BlockPlacement", std::string("isValidPlacement called for position: (") + 
+             std::to_string(position.x) + ", " + std::to_string(position.y) + ", " + std::to_string(position.z) + ")");
+    
     try {
         // Check if the position is already occupied
         VoxelEngine::World::Voxel existingVoxel = worldManager->getVoxel(position.x, position.y, position.z);
@@ -413,6 +416,8 @@ bool BlockPlacement::isValidPlacement(const Game& game,
         // Check camera mode - only apply collision detection for first-person mode
         // Spectator cameras (FREE_FLYING mode) should have no collision restrictions
         CameraMode cameraMode = game.getCameraMode();
+        DEBUG_LOG("BlockPlacement", std::string("Camera mode: ") + (cameraMode == CameraMode::FIRST_PERSON ? "FIRST_PERSON" : "FREE_FLYING"));
+        
         if (cameraMode == CameraMode::FIRST_PERSON) {
             // Check if placement would interfere with player position - proper bounding box collision
             glm::vec3 cameraPos = const_cast<Game&>(game).getPlayerPosition();
@@ -429,7 +434,7 @@ bool BlockPlacement::isValidPlacement(const Game& game,
             // Camera is at eye level (6.6 voxel units above feet)
             const float EYE_HEIGHT = 6.6f;        // Eyes are 6.6 voxel units above feet
             const float PLAYER_HEIGHT = 7.2f;     // Total player height (1.8m = 7.2 voxel units)
-            const float PLAYER_RADIUS = 0.6f;     // Player radius (0.15m = 0.6 voxel units, like Minecraft)
+            const float PLAYER_RADIUS = 0.8f;     // Player radius (0.2m = 0.8 voxel units) - compromise between physics and placement
             
             // Calculate player's feet position from camera position
             glm::vec3 playerFeet = cameraPos;
@@ -438,6 +443,13 @@ bool BlockPlacement::isValidPlacement(const Game& game,
             // Calculate player's head position
             glm::vec3 playerHead = playerFeet;
             playerHead.y += PLAYER_HEIGHT;
+            
+            DEBUG_LOG("BlockPlacement", std::string("Collision check - Camera pos: (") + 
+                     std::to_string(cameraPos.x) + ", " + std::to_string(cameraPos.y) + ", " + std::to_string(cameraPos.z) + ")");
+            DEBUG_LOG("BlockPlacement", std::string("Player feet pos: (") + 
+                     std::to_string(playerFeet.x) + ", " + std::to_string(playerFeet.y) + ", " + std::to_string(playerFeet.z) + ")");
+            DEBUG_LOG("BlockPlacement", std::string("Block pos: (") + 
+                     std::to_string(position.x) + ", " + std::to_string(position.y) + ", " + std::to_string(position.z) + ")");
             
             // Player bounding box (capsule approximated as cylinder)
             // Bottom: playerFeet.y
@@ -458,15 +470,18 @@ bool BlockPlacement::isValidPlacement(const Game& game,
             const float TOTAL_CLEARANCE_HEIGHT = 8.0f; // 8 voxels = 2m total height from feet
             float clearanceHeight = playerFeet.y + TOTAL_CLEARANCE_HEIGHT;
             
-            // Check if block is completely below player feet - ALWAYS ALLOW
-            if (blockMax.y <= playerFeet.y) {
-                DEBUG_LOG("BlockPlacement", "Block below player feet - placement allowed");
-                // Skip all collision checks for blocks below player
+            // Check if block is completely below player feet + small buffer - ALWAYS ALLOW
+            // Add 0.25f buffer (quarter block) so blocks at feet level can be placed
+            const float FEET_BUFFER = 0.25f; // Quarter block buffer below feet
+            if (blockMax.y <= playerFeet.y + FEET_BUFFER) {
+                DEBUG_LOG("BlockPlacement", std::string("Block below player feet (with buffer) - placement allowed. ") +
+                         "Block Y max: " + std::to_string(blockMax.y) + " <= Player feet Y + buffer: " + std::to_string(playerFeet.y + FEET_BUFFER));
+                return true; // Skip all collision checks for blocks below player + buffer
             }
             // Check if block is completely above 2m total height from feet - ALWAYS ALLOW  
             else if (blockMin.y >= clearanceHeight) {
                 DEBUG_LOG("BlockPlacement", "Block above 2m zone from feet - placement allowed");
-                // Skip all collision checks for blocks above 2m from feet
+                return true; // Skip all collision checks for blocks above 2m from feet
             }
             // Only check collision for blocks within the player's body + clearance zone
             else {

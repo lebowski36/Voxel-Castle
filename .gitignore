@@ -53,3 +53,5 @@ debug_logs/
 # Misc
 *.tmp
 *.bak
+debug_log.txt
+gamelog.txt
