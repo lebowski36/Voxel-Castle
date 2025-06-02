@@ -49,6 +49,11 @@ void WorldManager::setVoxel(int_fast64_t worldX, int_fast64_t worldY, int_fast64
     if (column) {
         // Corrected: Call ChunkColumn::setVoxel with world coordinates and the provided voxel object.
         column->setVoxel(worldX, worldY, worldZ, voxel);
+        
+        // Track modification for save system
+        WorldCoordXZ coord = {colX, colZ};
+        m_modifiedChunks.insert(coord);
+        m_chunkModificationTimes[coord] = std::chrono::system_clock::now();
     }
     // Else: Potentially log an error if column creation failed, though getOrCreate should handle it or throw
 }
@@ -292,6 +297,29 @@ void WorldManager::markAllSegmentsDirty() {
         }
     }
     std::cout << "[WorldManager] Marked all segments dirty for mesh regeneration." << std::endl;
+}
+
+// === Save System Integration Implementation ===
+
+std::vector<WorldCoordXZ> WorldManager::getModifiedChunks() const {
+    return std::vector<WorldCoordXZ>(m_modifiedChunks.begin(), m_modifiedChunks.end());
+}
+
+void WorldManager::clearModifiedChunks() {
+    m_modifiedChunks.clear();
+    m_chunkModificationTimes.clear();
+}
+
+size_t WorldManager::getChunkCount() const {
+    return m_chunkColumns.size();
+}
+
+std::chrono::system_clock::time_point WorldManager::getChunkModificationTime(const WorldCoordXZ& coord) const {
+    auto it = m_chunkModificationTimes.find(coord);
+    if (it != m_chunkModificationTimes.end()) {
+        return it->second;
+    }
+    return std::chrono::system_clock::time_point{}; // Return epoch if not found
 }
 
 } // namespace World

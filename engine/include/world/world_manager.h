@@ -11,6 +11,9 @@
 #include <queue>
 #include <mutex>
 #include <thread>
+#include <unordered_set>
+#include <unordered_map>
+#include <chrono>
 #include <glm/vec3.hpp> // For glm::vec3
 
 
@@ -48,6 +51,26 @@ struct WorldCoordXZ {
             return x < other.x;
         }
         return z < other.z;
+    }
+
+    /**
+     * @brief Equality operator for WorldCoordXZ, enabling use in std::unordered_set and std::unordered_map.
+     * @param other The other WorldCoordXZ to compare against.
+     * @return True if coordinates are equal, false otherwise.
+     */
+    bool operator==(const WorldCoordXZ& other) const {
+        return x == other.x && z == other.z;
+    }
+};
+
+/**
+ * @struct WorldCoordXZHash
+ * @brief Hash function for WorldCoordXZ to enable use in unordered containers.
+ */
+struct WorldCoordXZHash {
+    std::size_t operator()(const WorldCoordXZ& coord) const {
+        return std::hash<int_fast64_t>()(coord.x) ^ 
+               (std::hash<int_fast64_t>()(coord.z) << 1);
     }
 };
 
@@ -201,6 +224,18 @@ public:
      */
     std::unique_ptr<::VoxelEngine::Rendering::MeshJobSystem> m_meshJobSystem;
 
+    /**
+     * @brief Set of chunk coordinates that have been modified since last save.
+     * Used for incremental saving to only save chunks that have changed.
+     */
+    std::unordered_set<WorldCoordXZ, WorldCoordXZHash> m_modifiedChunks;
+
+    /**
+     * @brief Map storing modification timestamps for chunks.
+     * Used to track when each chunk was last modified.
+     */
+    std::unordered_map<WorldCoordXZ, std::chrono::system_clock::time_point, WorldCoordXZHash> m_chunkModificationTimes;
+
 public:
     /**
      * @brief Query all ChunkColumns in a given XZ region (inclusive).
@@ -225,6 +260,33 @@ public:
      * This is useful when a global change (like debug mode switch) requires all meshes to be rebuilt.
      */
     void markAllSegmentsDirty();
+
+    // === Save System Integration ===
+    
+    /**
+     * @brief Get list of all modified chunks since last save.
+     * @return Vector of chunk coordinates that have been modified.
+     */
+    std::vector<WorldCoordXZ> getModifiedChunks() const;
+
+    /**
+     * @brief Reset modified chunks tracking after save.
+     * Should be called after a successful save operation.
+     */
+    void clearModifiedChunks();
+
+    /**
+     * @brief Get the total number of loaded chunks.
+     * @return Number of chunks currently loaded in memory.
+     */
+    size_t getChunkCount() const;
+
+    /**
+     * @brief Get modification time for a specific chunk.
+     * @param coord The chunk coordinate to query.
+     * @return The time point when the chunk was last modified, or epoch if not found.
+     */
+    std::chrono::system_clock::time_point getChunkModificationTime(const WorldCoordXZ& coord) const;
 
 private:
     // Helper to convert world coordinates to ChunkColumn base coordinates
