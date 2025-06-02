@@ -1,5 +1,6 @@
 #include "interaction/BlockPlacement.h"
 #include "core/game.h"
+#include "core/CameraMode.h"
 #include "SpectatorCamera.h"
 #include "utils/logging_utils.h"
 #include "utils/debug_logger.h"
@@ -409,32 +410,104 @@ bool BlockPlacement::isValidPlacement(const Game& game,
             return false;
         }
         
-        // Check if placement would interfere with player position - improved safety
-        glm::vec3 playerPos = const_cast<Game&>(game).getPlayerPosition();
-        glm::vec3 blockPos = glm::vec3(position);
-        
-        // Validate player position
-        if (std::isnan(playerPos.x) || std::isnan(playerPos.y) || std::isnan(playerPos.z) ||
-            std::isinf(playerPos.x) || std::isinf(playerPos.y) || std::isinf(playerPos.z)) {
-            DEBUG_LOG("BlockPlacement", "Player position is invalid (NaN/Inf)");
-            return false;
-        }
-        
-        // Enhanced collision check - prevent placing blocks too close to camera/player
-        float distance = glm::distance(playerPos, blockPos);
-        float minSafeDistance = 2.5f; // Increased minimum distance for safety
-        
-        if (distance < minSafeDistance) {
-            DEBUG_LOG("BlockPlacement", "Block too close to player (distance: " + 
-                      std::to_string(distance) + " < " + std::to_string(minSafeDistance) + ")");
-            return false;
-        }
-        
-        // Additional safety: prevent placing blocks that would intersect with camera frustum near plane
-        // This helps prevent crashes when placing very close to camera
-        if (distance < 3.0f) {
-            DEBUG_LOG("BlockPlacement", "Warning: Block close to camera (distance: " + 
-                      std::to_string(distance) + "), but within acceptable range");
+        // Check camera mode - only apply collision detection for first-person mode
+        // Spectator cameras (FREE_FLYING mode) should have no collision restrictions
+        CameraMode cameraMode = game.getCameraMode();
+        if (cameraMode == CameraMode::FIRST_PERSON) {
+            // Check if placement would interfere with player position - proper bounding box collision
+            glm::vec3 cameraPos = const_cast<Game&>(game).getPlayerPosition();
+            glm::vec3 blockPos = glm::vec3(position);
+            
+            // Validate camera position
+            if (std::isnan(cameraPos.x) || std::isnan(cameraPos.y) || std::isnan(cameraPos.z) ||
+                std::isinf(cameraPos.x) || std::isinf(cameraPos.y) || std::isinf(cameraPos.z)) {
+                DEBUG_LOG("BlockPlacement", "Camera position is invalid (NaN/Inf)");
+                return false;
+            }
+            
+            // Calculate player's actual bounding box considering camera offset
+            // Camera is at eye level (6.6 voxel units above feet)
+            const float EYE_HEIGHT = 6.6f;        // Eyes are 6.6 voxel units above feet
+            const float PLAYER_HEIGHT = 7.2f;     // Total player height (1.8m = 7.2 voxel units)
+            const float PLAYER_RADIUS = 0.6f;     // Player radius (0.15m = 0.6 voxel units, like Minecraft)
+            
+            // Calculate player's feet position from camera position
+            glm::vec3 playerFeet = cameraPos;
+            playerFeet.y -= EYE_HEIGHT;  // Camera is at eye level, so feet are EYE_HEIGHT below
+            
+            // Calculate player's head position
+            glm::vec3 playerHead = playerFeet;
+            playerHead.y += PLAYER_HEIGHT;
+            
+            // Player bounding box (capsule approximated as cylinder)
+            // Bottom: playerFeet.y
+            // Top: playerHead.y  
+            // Center horizontally: playerFeet.x, playerFeet.z
+            // Radius: PLAYER_RADIUS
+            
+            // Check if the block would intersect with the player's cylindrical bounding box
+            // Block occupies space from position to position + vec3(1,1,1)
+            glm::vec3 blockMin = blockPos;
+            glm::vec3 blockMax = blockPos + glm::vec3(1.0f, 1.0f, 1.0f);
+            
+            // SPECIAL RULES for vertical placement:
+            // 1. All blocks BELOW player feet should be placeable (no horizontal restriction)
+            // 2. All blocks ABOVE 2m total height should be placeable (no horizontal restriction)
+            // 3. Only blocks WITHIN the 2m zone should check horizontal collision
+            
+            const float TOTAL_CLEARANCE_HEIGHT = 8.0f; // 8 voxels = 2m total height from feet
+            float clearanceHeight = playerFeet.y + TOTAL_CLEARANCE_HEIGHT;
+            
+            // Check if block is completely below player feet - ALWAYS ALLOW
+            if (blockMax.y <= playerFeet.y) {
+                DEBUG_LOG("BlockPlacement", "Block below player feet - placement allowed");
+                // Skip all collision checks for blocks below player
+            }
+            // Check if block is completely above 2m total height from feet - ALWAYS ALLOW  
+            else if (blockMin.y >= clearanceHeight) {
+                DEBUG_LOG("BlockPlacement", "Block above 2m zone from feet - placement allowed");
+                // Skip all collision checks for blocks above 2m from feet
+            }
+            // Only check collision for blocks within the player's body + clearance zone
+            else {
+                // Block is in the zone where we need to check horizontal collision
+                bool verticalOverlap = (blockMax.y > playerFeet.y && blockMin.y < playerHead.y);
+                
+                if (verticalOverlap) {
+                    // Only if there's actual body overlap, check horizontal distance
+                    glm::vec2 playerCenter2D = glm::vec2(playerFeet.x, playerFeet.z);
+                    
+                    // Find closest point on block's horizontal bounds to player center
+                    glm::vec2 closestPoint2D;
+                    closestPoint2D.x = glm::clamp(playerCenter2D.x, blockMin.x, blockMax.x);
+                    closestPoint2D.y = glm::clamp(playerCenter2D.y, blockMin.z, blockMax.z);
+                    
+                    // Calculate horizontal distance from player center to closest point on block
+                    float horizontalDistance = glm::distance(playerCenter2D, closestPoint2D);
+                    
+                    // If horizontal distance is less than player radius AND there's vertical overlap, there's a collision
+                    if (horizontalDistance < PLAYER_RADIUS) {
+                        DEBUG_LOG("BlockPlacement", std::string("FIRST_PERSON mode: Block would intersect with player bounding box - ") +
+                                 "horizontal distance: " + std::to_string(horizontalDistance) + 
+                                 " < player radius: " + std::to_string(PLAYER_RADIUS) +
+                                 ", block Y range: [" + std::to_string(blockMin.y) + ", " + std::to_string(blockMax.y) + "]" +
+                                 ", player Y range: [" + std::to_string(playerFeet.y) + ", " + std::to_string(playerHead.y) + "]");
+                        DEBUG_LOG("BlockPlacement", std::string("Player feet at (") + std::to_string(playerFeet.x) + 
+                                 ", " + std::to_string(playerFeet.y) + ", " + std::to_string(playerFeet.z) + ")");
+                        DEBUG_LOG("BlockPlacement", std::string("Block at (") + std::to_string(position.x) + 
+                                 ", " + std::to_string(position.y) + ", " + std::to_string(position.z) + ")");
+                        return false;
+                    }
+                }
+            }
+            
+            // The new collision system above handles all cases precisely:
+            // - Blocks below feet: Always allowed
+            // - Blocks above 2m from feet: Always allowed  
+            // - Blocks within 2m zone from feet: Check horizontal collision only
+        } else if (cameraMode == CameraMode::FREE_FLYING) {
+            // Spectator mode - no collision restrictions
+            DEBUG_LOG("BlockPlacement", "FREE_FLYING mode: Skipping collision detection for spectator camera");
         }
         
         return true;
