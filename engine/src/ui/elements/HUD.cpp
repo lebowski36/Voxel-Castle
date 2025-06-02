@@ -29,7 +29,7 @@ void HUD::setCurrentBlockType(VoxelEngine::World::VoxelType blockType) {
         currentBlockType_ = blockType;
         updateTextureCoordinates();
         
-        std::cout << "[HUD] Block type changed to: " << static_cast<int>(blockType) << std::endl;
+        DEBUG_LOG("HUD", "Block type changed to: " + std::to_string(static_cast<int>(blockType)));
     }
 }
 

@@ -390,12 +390,13 @@ bool Game::toggleFullscreen() {
         int width = gameWindow_->getWidth();
         int height = gameWindow_->getHeight();
         
-        std::cout << "[Game] Fullscreen toggled. New window dimensions: " << width << "x" << height << std::endl;
+        std::cout << "[Game] Fullscreen toggled: " << (isFullscreen() ? "ON" : "OFF") 
+                  << " (" << width << "x" << height << ")" << std::endl;
         
         // Update camera aspect ratio
         if (camera_) {
             camera_->updateAspect(static_cast<float>(width) / static_cast<float>(height));
-            std::cout << "[Game] Camera aspect ratio updated to: " << width << "x" << height << std::endl;
+            DEBUG_LOG("Game", "Camera aspect ratio updated to: " + std::to_string(width) + "x" + std::to_string(height));
         }
         
         // Update UI systems - but keep menu sizes the same
@@ -411,7 +412,7 @@ bool Game::toggleFullscreen() {
             menuSystem_->updateScreenSize(width, height);
             
             // Double-check menu sizes were preserved properly
-            std::cout << "[Game] Menu system updated for new screen size: " << width << "x" << height << std::endl;
+            DEBUG_LOG("Game", "Menu system updated for new screen size: " + std::to_string(width) + "x" + std::to_string(height));
         }
         
         // Update HUD position for new screen size
@@ -429,15 +430,15 @@ bool Game::toggleFullscreen() {
         // Update render coordinator if needed
         if (renderCoordinator_) {
             // If there's a method to update the render coordinator, call it here
-            std::cout << "[Game] Render coordinator notified of resolution change" << std::endl;
+            DEBUG_LOG("Game", "Render coordinator notified of resolution change");
         }
         
         // Note: We can't update screenWidth_ and screenHeight_ because they are const
-        std::cout << "[Game] New window dimensions: " << width << "x" << height 
-                  << " (original: " << screenWidth_ << "x" << screenHeight_ << ")" << std::endl;
+        DEBUG_LOG("Game", "New window dimensions: " + std::to_string(width) + "x" + std::to_string(height) +
+                  " (original: " + std::to_string(screenWidth_) + "x" + std::to_string(screenHeight_) + ")");
+    } else {
+        std::cout << "[Game] Fullscreen toggle FAILED" << std::endl;
     }
-    
-    std::cout << "[Game] Fullscreen toggled: " << (success ? "SUCCESS" : "FAILED") << std::endl;
     return success;
 }
 

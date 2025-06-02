@@ -357,3 +357,7 @@ GameInitializer::shutdown() - Complete.
 [18:58:16.231][BlockPlacement] Placement valid, getting block type...
 [18:58:16.231][BlockPlacement] Block type: 4
 [18:58:16.596][BlockPlacement] Processing removal
+[DebugLogger] Started new session: 20250602_190236_565
+[DebugLogger] Started new session: 20250602_190236_565
+[DebugLogger] Started new session: 20250602_190245_290
+[DebugLogger] Started new session: 20250602_190245_291

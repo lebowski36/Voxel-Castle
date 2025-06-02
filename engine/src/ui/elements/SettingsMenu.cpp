@@ -1,5 +1,6 @@
 #include "ui/elements/SettingsMenu.h"
 #include "ui/MenuSystem.h"
+#include "../../../game/include/utils/debug_logger.h"
 #include <iostream>
 
 namespace VoxelEngine {
@@ -50,8 +51,8 @@ void SettingsMenu::onBackClicked() {
 void SettingsMenu::onFullscreenToggled(bool checked) {
     if (menuSystem_) {
         bool success = menuSystem_->toggleFullscreen(checked);
-        std::cout << "[SettingsMenu] Fullscreen toggled " << (checked ? "ON" : "OFF") 
-                  << " - result: " << (success ? "SUCCESS" : "FAILED") << std::endl;
+        DEBUG_LOG("SettingsMenu", "Fullscreen toggled " + std::string(checked ? "ON" : "OFF") + 
+                  " - result: " + std::string(success ? "SUCCESS" : "FAILED"));
         
         // If toggle failed, update checkbox to match actual state
         if (!success) {
