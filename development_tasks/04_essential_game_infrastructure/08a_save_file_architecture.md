@@ -121,7 +121,16 @@ public:
 #### Chunk Modification Tracking
 ```cpp
 // Add to WorldManager class
+struct WorldCoordXZHash {
+    std::size_t operator()(const WorldCoordXZ& coord) const {
+        return std::hash<int_fast64_t>()(coord.x) ^ 
+               (std::hash<int_fast64_t>()(coord.z) << 1);
+    }
+};
+
+// Track modified chunks
 std::unordered_set<WorldCoordXZ, WorldCoordXZHash> modifiedChunks;
+std::unordered_map<WorldCoordXZ, std::chrono::system_clock::time_point, WorldCoordXZHash> chunkModificationTimes;
 
 // Add to setVoxel method
 void setVoxel(...) {
@@ -130,39 +139,183 @@ void setVoxel(...) {
     // Track modification
     WorldCoordXZ coord = {worldToColumnBaseX(worldX), worldToColumnBaseZ(worldZ)};
     modifiedChunks.insert(coord);
+    chunkModificationTimes[coord] = std::chrono::system_clock::now();
 }
 ```
 
-#### Serialization Methods
+#### Chunk Serialization Implementation
 ```cpp
 // Save a single chunk to binary
-bool saveChunkToBinary(const ChunkColumn* column, std::string fileName);
+bool WorldManager::saveChunkToBinary(const ChunkColumn* column, const std::string& fileName) {
+    if (!column) return false;
+    
+    std::ofstream file(fileName, std::ios::binary);
+    if (!file.is_open()) return false;
+    
+    BinaryWriter writer(file);
+    
+    // Write header
+    writer.writeUInt32(0x56435743); // "VCWC" magic number
+    writer.writeUInt32(1);          // Version 1
+    writer.writeInt64(column->getBaseX());
+    writer.writeInt64(column->getBaseZ());
+    
+    // Determine which segments exist and are modified
+    uint16_t segmentBitmap = 0;
+    for (int i = 0; i < ChunkColumn::CHUNKS_PER_COLUMN; ++i) {
+        const ChunkSegment* segment = column->getChunkSegment(i);
+        if (segment && !segment->isEmpty()) {
+            segmentBitmap |= (1 << i);
+        }
+    }
+    
+    // Write segment bitmap
+    writer.writeUInt16(segmentBitmap);
+    
+    // Write each segment that exists and is not empty
+    for (int i = 0; i < ChunkColumn::CHUNKS_PER_COLUMN; ++i) {
+        if (segmentBitmap & (1 << i)) {
+            const ChunkSegment* segment = column->getChunkSegment(i);
+            if (segment) {
+                // Get raw voxel data
+                std::vector<uint8_t> rawData;
+                rawData.reserve(ChunkSegment::SEGMENT_WIDTH * 
+                               ChunkSegment::SEGMENT_HEIGHT * 
+                               ChunkSegment::SEGMENT_DEPTH * sizeof(VoxelEngine::World::Voxel));
+                
+                // Copy voxel data to buffer
+                for (int x = 0; x < ChunkSegment::SEGMENT_WIDTH; ++x) {
+                    for (int y = 0; y < ChunkSegment::SEGMENT_HEIGHT; ++y) {
+                        for (int z = 0; z < ChunkSegment::SEGMENT_DEPTH; ++z) {
+                            VoxelEngine::World::Voxel voxel = segment->getVoxel(x, y, z);
+                            // Pack voxel data into buffer
+                            rawData.push_back(static_cast<uint8_t>(voxel.type));
+                            // Add additional voxel properties if needed
+                        }
+                    }
+                }
+                
+                // Compress data using LZ4
+                uint8_t compressionType = 2; // LZ4
+                writer.writeUInt8(compressionType);
+                writer.writeCompressed(rawData.data(), rawData.size());
+            }
+        }
+    }
+    
+    return true;
+}
 
 // Load a chunk from binary
-bool loadChunkFromBinary(std::string fileName, ChunkColumn* column);
+bool WorldManager::loadChunkFromBinary(const std::string& fileName, ChunkColumn* column) {
+    if (!column) return false;
+    
+    std::ifstream file(fileName, std::ios::binary);
+    if (!file.is_open()) return false;
+    
+    BinaryReader reader(file);
+    
+    // Read and verify header
+    uint32_t magicNumber = reader.readUInt32();
+    if (magicNumber != 0x56435743) return false; // "VCWC"
+    
+    uint32_t version = reader.readUInt32();
+    if (version != 1) return false; // Only support version 1 for now
+    
+    int64_t baseX = reader.readInt64();
+    int64_t baseZ = reader.readInt64();
+    
+    // Verify chunk coordinates match
+    if (baseX != column->getBaseX() || baseZ != column->getBaseZ()) {
+        return false;
+    }
+    
+    // Read segment bitmap
+    uint16_t segmentBitmap = reader.readUInt16();
+    
+    // Read each segment
+    for (int i = 0; i < ChunkColumn::CHUNKS_PER_COLUMN; ++i) {
+        if (segmentBitmap & (1 << i)) {
+            // Get or create segment
+            ChunkSegment* segment = column->getOrCreateChunkSegment(i);
+            if (!segment) continue;
+            
+            // Read compression type
+            uint8_t compressionType = reader.readUInt8();
+            
+            // Read compressed data
+            std::vector<uint8_t> decompressedData;
+            decompressedData.resize(ChunkSegment::SEGMENT_WIDTH * 
+                                   ChunkSegment::SEGMENT_HEIGHT * 
+                                   ChunkSegment::SEGMENT_DEPTH);
+            
+            size_t bytesRead = reader.readCompressed(decompressedData.data(), decompressedData.size());
+            if (bytesRead == 0) return false;
+            
+            // Apply voxel data to segment
+            size_t index = 0;
+            for (int x = 0; x < ChunkSegment::SEGMENT_WIDTH; ++x) {
+                for (int y = 0; y < ChunkSegment::SEGMENT_HEIGHT; ++y) {
+                    for (int z = 0; z < ChunkSegment::SEGMENT_DEPTH; ++z) {
+                        if (index < decompressedData.size()) {
+                            VoxelEngine::World::VoxelType type = 
+                                static_cast<VoxelEngine::World::VoxelType>(decompressedData[index++]);
+                            VoxelEngine::World::Voxel voxel(type);
+                            segment->setVoxel(x, y, z, voxel);
+                            // Read additional voxel properties if needed
+                        }
+                    }
+                }
+            }
+            
+            // Mark segment as generated but not dirty
+            segment->setGenerated(true);
+            segment->markDirty(false);
+        }
+    }
+    
+    return true;
+}
 
 // Get list of all modified chunks
-std::vector<WorldCoordXZ> getModifiedChunks() const;
+std::vector<WorldCoordXZ> WorldManager::getModifiedChunks() const {
+    return std::vector<WorldCoordXZ>(modifiedChunks.begin(), modifiedChunks.end());
+}
 
 // Reset modified chunks tracking after save
-void clearModifiedChunks();
+void WorldManager::clearModifiedChunks() {
+    modifiedChunks.clear();
+    chunkModificationTimes.clear();
+}
 ```
 
 ### 3. SaveManager Class
 
 ```cpp
+// Save information structure
+struct SaveInfo {
+    std::string name;
+    std::string displayName;
+    std::string timestamp;
+    uint64_t playTimeSeconds;
+    std::string screenshotPath;
+    std::string lastPlayedDate;
+    bool hasQuickSave;
+    bool hasAutoSave;
+};
+
 class SaveManager {
 public:
-    SaveManager();
+    SaveManager(Game* game);
     ~SaveManager();
     
     // Initialize manager with a save directory
     bool initialize(const std::string& baseSaveDir);
     
     // Create a new save with given name
-    bool createSave(const std::string& saveName);
+    bool createSave(const std::string& saveName, const std::string& displayName = "");
     
-    // Save current game state
+    // Save current game state (main interface)
     bool saveGame(const std::string& saveName, bool isQuickSave = false);
     
     // Load game from save
@@ -178,26 +331,60 @@ public:
     void startAutoSave(int intervalMinutes);
     void stopAutoSave();
     
+    // Force an immediate auto-save
+    bool performAutoSave();
+    
+    // Take screenshot for save preview
+    bool captureScreenshot(const std::string& savePath);
+    
     // Get list of available saves
     std::vector<SaveInfo> listSaves();
+    
+    // Get detailed info about a specific save
+    SaveInfo getSaveInfo(const std::string& saveName);
     
     // Delete a save
     bool deleteSave(const std::string& saveName);
     
+    // Check if save/load operation is in progress
+    bool isOperationInProgress() const { return isSaving_ || isLoading_; }
+    
+    // Get current save name
+    std::string getCurrentSaveName() const { return currentSaveName_; }
+    
 private:
-    // Save metadata
+    // Save metadata (game version, timestamp, player position, etc)
     bool saveMetadata(const std::string& savePath);
     
-    // Save player data
+    // Save player data (inventory, stats, etc)
     bool savePlayerData(const std::string& savePath);
     
-    // Save chunks (can be run in background thread)
-    bool saveChunks(const std::string& savePath);
+    // Save chunks (optimized for background thread)
+    bool saveChunks(const std::string& savePath, bool incrementalOnly = false);
     
-    // Thread management
-    void saveThreadFunction();
+    // Update chunk manifest
+    bool updateChunkManifest(const std::string& savePath, 
+                            const std::vector<WorldCoordXZ>& savedChunks);
+    
+    // Create backup of existing save before modifying
+    bool createBackup(const std::string& saveName);
+    
+    // Auto-save thread function
+    void autoSaveThreadFunction();
+    
+    // Handle save errors and recovery
+    void handleSaveError(const std::string& saveName, const std::string& errorMessage);
+    
+    // Log save/load operations
+    void logOperation(const std::string& operation, const std::string& saveName, bool success);
+    
+    // Chunk saving helper functions
+    bool saveModifiedChunks(const std::string& chunksDir);
+    bool ensureSaveDirectories(const std::string& savePath);
     
     // Internal state
+    Game* game_;                   // Reference to main game object
+    WorldManager* worldManager_;   // Reference to world manager
     std::string baseSaveDirectory_;
     std::string currentSaveName_;
     bool isSaving_;
@@ -205,10 +392,249 @@ private:
     
     // Auto-save
     bool autoSaveEnabled_;
-    int autoSaveInterval_;
+    int autoSaveInterval_;         // Minutes between auto-saves
+    int autoSaveRotateCount_;      // Number of auto-save backups to keep
     std::thread autoSaveThread_;
     std::atomic<bool> stopAutoSaveThread_;
+    std::mutex saveMutex_;
+    
+    // Save statistics
+    struct SaveStats {
+        size_t totalChunks;
+        size_t modifiedChunks;
+        size_t totalSaveSize;
+        size_t compressedSize;
+        double saveTimeMs;
+    } lastSaveStats_;
 };
+
+// Implementation of key methods
+
+bool SaveManager::saveGame(const std::string& saveName, bool isQuickSave) {
+    // Acquire mutex for thread safety
+    std::lock_guard<std::mutex> lock(saveMutex_);
+    
+    if (isSaving_ || isLoading_) {
+        return false; // Already in progress
+    }
+    
+    // Set save state
+    isSaving_ = true;
+    
+    // Notify game of save operation starting
+    game_->changeState(GameState::SAVING);
+    
+    // Start time for statistics
+    auto startTime = std::chrono::high_resolution_clock::now();
+    
+    // Create temporary save path
+    std::string savePath = baseSaveDirectory_ + "/" + saveName;
+    std::string tempPath = savePath + "_temp";
+    
+    // Create backup of existing save
+    if (std::filesystem::exists(savePath)) {
+        createBackup(saveName);
+    }
+    
+    // Ensure temp directory exists
+    ensureSaveDirectories(tempPath);
+    
+    // Take screenshot for save preview
+    captureScreenshot(tempPath);
+    
+    // Save metadata
+    if (!saveMetadata(tempPath)) {
+        handleSaveError(saveName, "Failed to save metadata");
+        return false;
+    }
+    
+    // Save player data
+    if (!savePlayerData(tempPath)) {
+        handleSaveError(saveName, "Failed to save player data");
+        return false;
+    }
+    
+    // Save chunks
+    SaveStats stats;
+    stats.totalChunks = worldManager_->getChunkCount();
+    stats.modifiedChunks = worldManager_->modifiedChunks.size();
+    
+    if (!saveChunks(tempPath)) {
+        handleSaveError(saveName, "Failed to save chunks");
+        return false;
+    }
+    
+    // Calculate save time
+    auto endTime = std::chrono::high_resolution_clock::now();
+    stats.saveTimeMs = std::chrono::duration<double, std::milli>(endTime - startTime).count();
+    lastSaveStats_ = stats;
+    
+    // Log statistics
+    std::cout << "[SaveManager] Saved " << stats.modifiedChunks 
+              << " modified chunks out of " << stats.totalChunks
+              << " in " << stats.saveTimeMs << "ms" << std::endl;
+    
+    // Atomic directory rename for data integrity
+    try {
+        if (std::filesystem::exists(savePath)) {
+            std::filesystem::remove_all(savePath);
+        }
+        std::filesystem::rename(tempPath, savePath);
+    } catch (const std::filesystem::filesystem_error& e) {
+        handleSaveError(saveName, "Failed to finalize save: " + std::string(e.what()));
+        return false;
+    }
+    
+    // Update current save name
+    currentSaveName_ = saveName;
+    
+    // Clear modified chunks tracking
+    worldManager_->clearModifiedChunks();
+    
+    // Notify game of save operation completion
+    game_->changeState(GameState::PLAYING);
+    isSaving_ = false;
+    
+    return true;
+}
+
+void SaveManager::autoSaveThreadFunction() {
+    using namespace std::chrono_literals;
+    
+    while (!stopAutoSaveThread_) {
+        // Sleep for the interval
+        for (int i = 0; i < autoSaveInterval_ * 60 && !stopAutoSaveThread_; ++i) {
+            std::this_thread::sleep_for(1s);
+        }
+        
+        // Skip if stopping or no modified chunks
+        if (stopAutoSaveThread_ || worldManager_->modifiedChunks.empty()) {
+            continue;
+        }
+        
+        // Generate auto-save name
+        std::string autoSaveName = currentSaveName_.empty() ? 
+                                  "autosave" : 
+                                  currentSaveName_ + "_auto";
+        
+        // Attempt auto-save
+        std::cout << "[SaveManager] Performing auto-save..." << std::endl;
+        bool success = saveGame(autoSaveName, false);
+        
+        // Clean up old auto-saves if needed
+        if (success && autoSaveRotateCount_ > 0) {
+            // Find and remove old auto-saves
+            auto saves = listSaves();
+            // Implementation for rotating auto-saves
+        }
+    }
+}
+
+bool SaveManager::loadGame(const std::string& saveName) {
+    // Acquire mutex for thread safety
+    std::lock_guard<std::mutex> lock(saveMutex_);
+    
+    if (isSaving_ || isLoading_) {
+        return false; // Already in progress
+    }
+    
+    // Set loading state
+    isLoading_ = true;
+    
+    // Notify game of load operation starting
+    game_->changeState(GameState::LOADING);
+    
+    std::string savePath = baseSaveDirectory_ + "/" + saveName;
+    
+    // Check if save exists
+    if (!std::filesystem::exists(savePath)) {
+        handleSaveError(saveName, "Save does not exist");
+        return false;
+    }
+    
+    // Read metadata first to verify version compatibility
+    GameMetadata metadata;
+    if (!JsonUtils::readMetadata(savePath + "/metadata.json", metadata)) {
+        handleSaveError(saveName, "Failed to read metadata");
+        return false;
+    }
+    
+    // Reset world
+    worldManager_->reset();
+    
+    // Load player data
+    if (!loadPlayerData(savePath)) {
+        handleSaveError(saveName, "Failed to load player data");
+        return false;
+    }
+    
+    // Read chunk manifest
+    std::vector<ChunkInfo> chunkList;
+    if (!JsonUtils::readChunkManifest(savePath + "/chunks/manifest.json", chunkList)) {
+        handleSaveError(saveName, "Failed to read chunk manifest");
+        return false;
+    }
+    
+    // Load chunks near player first
+    glm::vec3 playerPos = game_->getPlayerPosition();
+    
+    // Sort chunks by distance to player
+    std::sort(chunkList.begin(), chunkList.end(),
+        [&playerPos](const ChunkInfo& a, const ChunkInfo& b) {
+            float distA = glm::distance(
+                glm::vec3(a.x * ChunkSegment::SEGMENT_WIDTH, 0, a.z * ChunkSegment::SEGMENT_DEPTH),
+                playerPos);
+            float distB = glm::distance(
+                glm::vec3(b.x * ChunkSegment::SEGMENT_WIDTH, 0, b.z * ChunkSegment::SEGMENT_DEPTH),
+                playerPos);
+            return distA < distB;
+        });
+    
+    // Load chunks (nearest first)
+    int loadedChunks = 0;
+    for (const auto& chunk : chunkList) {
+        // Construct chunk filename
+        std::string chunkFile = savePath + "/chunks/chunk_" + 
+                               std::to_string(chunk.x) + "_" + 
+                               std::to_string(chunk.z) + ".bin";
+        
+        // Create ChunkColumn
+        ChunkColumn* column = worldManager_->getOrCreateChunkColumn(
+            chunk.x * ChunkSegment::SEGMENT_WIDTH, 
+            chunk.z * ChunkSegment::SEGMENT_DEPTH);
+        
+        if (column) {
+            if (loadChunkFromBinary(chunkFile, column)) {
+                loadedChunks++;
+            }
+        }
+        
+        // Update progress every 10 chunks
+        if (loadedChunks % 10 == 0) {
+            float progress = static_cast<float>(loadedChunks) / chunkList.size();
+            // Update load progress indicator
+        }
+        
+        // Break after loading essential chunks to show something quickly
+        if (loadedChunks >= 25) {
+            // Continue loading others in background
+            break;
+        }
+    }
+    
+    // Set current save name
+    currentSaveName_ = saveName;
+    
+    // Notify game of load completion
+    game_->changeState(GameState::PLAYING);
+    isLoading_ = false;
+    
+    // Continue loading remaining chunks in background
+    // This would be implemented with a separate thread
+    
+    return true;
+}
+```
 ```
 
 ### 4. JSON Utilities
