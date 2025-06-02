@@ -274,7 +274,7 @@ void processInput(Game& game) {
         }
         else if (e.type == SDL_EVENT_WINDOW_FOCUS_GAINED) {
             // Automatically enable mouse capture when window gains focus (unless menu is open)
-            if (game.getGameState() == GameState::PLAYING) {
+            if (game.isPlaying()) {
                 game.setMouseCaptured(true);
                 DEBUG_LOG("InputManager", "Window gained focus - mouse capture enabled");
             }

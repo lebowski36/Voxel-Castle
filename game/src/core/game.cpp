@@ -190,7 +190,7 @@ bool Game::initialize() {
             // Only restore game state if we're still in menu state
             // This prevents issues if ESC was used to close menu instead of button
             if (gameState_ == GameState::MENU) {
-                gameState_ = GameState::PLAYING;
+                gameState_ = previousPlayingState_;
                 setMouseCaptured(true);
                 
                 // Ensure game UI is visible again
@@ -339,6 +339,13 @@ void Game::toggleCameraMode() {
     if (cameraMode_ == CameraMode::FREE_FLYING) {
         // Switch to first-person mode
         cameraMode_ = CameraMode::FIRST_PERSON;
+        
+        // Update game state to match camera mode (only if currently playing)
+        if (isPlaying()) {
+            gameState_ = GameState::FIRST_PERSON_MODE;
+            previousPlayingState_ = GameState::FIRST_PERSON_MODE;
+        }
+        
         // Initialize player position from current camera position
         if (camera_) {
             playerPosition_ = camera_->getPosition();
@@ -350,6 +357,13 @@ void Game::toggleCameraMode() {
     } else {
         // Switch to free-flying mode
         cameraMode_ = CameraMode::FREE_FLYING;
+        
+        // Update game state to match camera mode (only if currently playing)
+        if (isPlaying()) {
+            gameState_ = GameState::STRATEGIC_MODE;
+            previousPlayingState_ = GameState::STRATEGIC_MODE;
+        }
+        
         // Sync camera position with player position
         if (camera_) {
             camera_->setPosition(playerPosition_);
@@ -375,7 +389,9 @@ void Game::handleMenuInput(float mouseX, float mouseY, bool clicked) {
 
 // --- Game State Management ---
 void Game::toggleMenu() {
-    if (gameState_ == GameState::PLAYING) {
+    if (isPlaying()) {
+        // Store current playing state to restore later
+        previousPlayingState_ = gameState_;
         gameState_ = GameState::MENU;
         setMouseCaptured(false); // Show cursor for menu navigation
         
@@ -393,8 +409,9 @@ void Game::toggleMenu() {
         }
         
         std::cout << "[Game] Menu opened - game paused, cursor visible" << std::endl;
-    } else {
-        gameState_ = GameState::PLAYING;
+    } else if (gameState_ == GameState::MENU) {
+        // Restore previous playing state
+        gameState_ = previousPlayingState_;
         setMouseCaptured(true); // Hide cursor for gameplay
         
         // Show game UI elements when menu is closed

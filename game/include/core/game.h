@@ -19,8 +19,23 @@ class GameLoop;
 
 // Game state enumeration
 enum class GameState {
-    PLAYING,    // Normal gameplay
-    MENU        // Menu is open (game paused)
+    // Basic states
+    PLAYING,              // Normal gameplay (general playing state)
+    MENU,                 // Menu is open (game paused)
+    
+    // Control mode specific states
+    FIRST_PERSON_MODE,    // First-person avatar control mode
+    STRATEGIC_MODE,       // Strategic overseer mode (free camera + colony management)
+    HYBRID_MODE,          // Hybrid mode allowing quick switching
+    
+    // Transition states
+    TRANSITIONING,        // Transitioning between control modes
+    LOADING,              // Loading game state or save file
+    SAVING,               // Saving game state
+    
+    // Specialized states
+    PAUSED,               // Game explicitly paused (distinct from menu)
+    AUTO_SAVING           // Auto-save in progress
 };
 
 // Forward declarations to minimize include dependencies in header
@@ -128,6 +143,27 @@ public:
     bool isMenuOpen() const { return gameState_ == GameState::MENU; }
     void toggleMenu();
     
+    // Enhanced state management helper functions
+    bool isPlaying() const { 
+        return gameState_ == GameState::PLAYING || 
+               gameState_ == GameState::FIRST_PERSON_MODE || 
+               gameState_ == GameState::STRATEGIC_MODE || 
+               gameState_ == GameState::HYBRID_MODE; 
+    }
+    bool isPaused() const { 
+        return gameState_ == GameState::MENU || 
+               gameState_ == GameState::PAUSED; 
+    }
+    bool isInTransition() const {
+        return gameState_ == GameState::TRANSITIONING ||
+               gameState_ == GameState::LOADING ||
+               gameState_ == GameState::SAVING ||
+               gameState_ == GameState::AUTO_SAVING;
+    }
+    bool canAcceptInput() const {
+        return isPlaying() && !isInTransition();
+    }
+
     // Fullscreen toggle for menu system
     bool toggleFullscreen();
     bool isFullscreen() const;
@@ -216,7 +252,8 @@ private:
 
     // Camera mode and physics input state
     CameraMode cameraMode_ = CameraMode::FREE_FLYING; // Default to free-flying mode
-    GameState gameState_ = GameState::PLAYING; // Default to playing state
+    GameState gameState_ = GameState::STRATEGIC_MODE; // Default to strategic mode (matches FREE_FLYING camera)
+    GameState previousPlayingState_ = GameState::STRATEGIC_MODE; // Store previous state when entering menu
     bool sprinting_ = false;   // Shift key for faster movement in first-person
     bool crouching_ = false;   // Ctrl key for crouching in first-person
     bool jumping_ = false;     // Space key for jumping in first-person
