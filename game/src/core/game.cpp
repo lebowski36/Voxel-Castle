@@ -133,6 +133,19 @@ bool Game::initialize() {
     lastFrameTime_ = result.lastFrameTime;
     isRunning_ = result.isRunning;
 
+    // Initialize state manager
+    stateManager_ = std::make_unique<VoxelCastle::Core::GameStateManager>();
+    stateManager_->initialize(GameState::STRATEGIC_MODE);
+    stateManager_->setDebugLogging(true); // Enable debug logging for state transitions
+    stateManager_->registerStateChangeCallback([this](GameState from, GameState to) {
+        onStateChanged(from, to);
+    });
+    
+    // Register state change callback
+    stateManager_->registerStateChangeCallback([this](GameState from, GameState to) {
+        onStateChanged(from, to);
+    });
+
     // Initialize mouse capture manager
     mouseCaptureManager_ = std::make_unique<VoxelEngine::Input::MouseCaptureManager>();
     SDL_Window* sdlWindow = gameWindow_ ? gameWindow_->getSDLWindow() : nullptr;
@@ -189,8 +202,13 @@ bool Game::initialize() {
         menuSystem_->setOnMenuClosed([this]() {
             // Only restore game state if we're still in menu state
             // This prevents issues if ESC was used to close menu instead of button
-            if (gameState_ == GameState::MENU) {
-                gameState_ = previousPlayingState_;
+            if (isMenuOpen()) {
+                if (stateManager_) {
+                    stateManager_->popState();
+                } else {
+                    // Legacy fallback
+                    gameState_ = previousPlayingState_;
+                }
                 setMouseCaptured(true);
                 
                 // Ensure game UI is visible again
@@ -341,7 +359,10 @@ void Game::toggleCameraMode() {
         cameraMode_ = CameraMode::FIRST_PERSON;
         
         // Update game state to match camera mode (only if currently playing)
-        if (isPlaying()) {
+        if (isPlaying() && stateManager_) {
+            stateManager_->requestStateChange(GameState::FIRST_PERSON_MODE);
+        } else if (isPlaying()) {
+            // Legacy fallback
             gameState_ = GameState::FIRST_PERSON_MODE;
             previousPlayingState_ = GameState::FIRST_PERSON_MODE;
         }
@@ -359,7 +380,10 @@ void Game::toggleCameraMode() {
         cameraMode_ = CameraMode::FREE_FLYING;
         
         // Update game state to match camera mode (only if currently playing)
-        if (isPlaying()) {
+        if (isPlaying() && stateManager_) {
+            stateManager_->requestStateChange(GameState::STRATEGIC_MODE);
+        } else if (isPlaying()) {
+            // Legacy fallback
             gameState_ = GameState::STRATEGIC_MODE;
             previousPlayingState_ = GameState::STRATEGIC_MODE;
         }
@@ -389,45 +413,61 @@ void Game::handleMenuInput(float mouseX, float mouseY, bool clicked) {
 
 // --- Game State Management ---
 void Game::toggleMenu() {
-    if (isPlaying()) {
-        // Store current playing state to restore later
-        previousPlayingState_ = gameState_;
-        gameState_ = GameState::MENU;
-        setMouseCaptured(false); // Show cursor for menu navigation
-        
-        // Hide game UI elements when menu is open
-        if (hudSystem_) {
-            hudSystem_->setVisible(false);
+    if (stateManager_) {
+        if (isPlaying()) {
+            // Use the state manager to push menu state onto stack
+            stateManager_->pushState(GameState::MENU);
+        } else if (isMenuOpen()) {
+            // Pop back to previous state
+            stateManager_->popState();
+            
+            // Hide menu UI explicitly
+            if (menuSystem_) {
+                menuSystem_->closeMenus();
+            }
         }
-        if (crosshairSystem_) {
-            crosshairSystem_->setVisible(false);
+    } else {
+        // Legacy fallback code
+        if (isPlaying()) {
+            // Store current playing state to restore later
+            previousPlayingState_ = gameState_;
+            gameState_ = GameState::MENU;
+            setMouseCaptured(false); // Show cursor for menu navigation
+            
+            // Hide game UI elements when menu is open
+            if (hudSystem_) {
+                hudSystem_->setVisible(false);
+            }
+            if (crosshairSystem_) {
+                crosshairSystem_->setVisible(false);
+            }
+            
+            // Show menu
+            if (menuSystem_) {
+                menuSystem_->showMainMenu();
+            }
+            
+            std::cout << "[Game] Menu opened - game paused, cursor visible" << std::endl;
+        } else if (gameState_ == GameState::MENU) {
+            // Restore previous playing state
+            gameState_ = previousPlayingState_;
+            setMouseCaptured(true); // Hide cursor for gameplay
+            
+            // Show game UI elements when menu is closed
+            if (hudSystem_) {
+                hudSystem_->setVisible(true);
+            }
+            if (crosshairSystem_) {
+                crosshairSystem_->setVisible(true);
+            }
+            
+            // Hide menu
+            if (menuSystem_) {
+                menuSystem_->closeMenus();
+            }
+            
+            std::cout << "[Game] Menu closed - game resumed, cursor hidden" << std::endl;
         }
-        
-        // Show menu
-        if (menuSystem_) {
-            menuSystem_->showMainMenu();
-        }
-        
-        std::cout << "[Game] Menu opened - game paused, cursor visible" << std::endl;
-    } else if (gameState_ == GameState::MENU) {
-        // Restore previous playing state
-        gameState_ = previousPlayingState_;
-        setMouseCaptured(true); // Hide cursor for gameplay
-        
-        // Show game UI elements when menu is closed
-        if (hudSystem_) {
-            hudSystem_->setVisible(true);
-        }
-        if (crosshairSystem_) {
-            crosshairSystem_->setVisible(true);
-        }
-        
-        // Hide menu
-        if (menuSystem_) {
-            menuSystem_->closeMenus();
-        }
-        
-        std::cout << "[Game] Menu closed - game resumed, cursor hidden" << std::endl;
     }
 }
 

@@ -8,6 +8,7 @@
 #include "../SpectatorCamera.h" // Include the full definition of SpectatorCamera
 #include "core/InputManager.h"        // Input handling module
 #include "core/CameraMode.h"          // Camera mode enumeration
+#include "core/GameStateManager.h"    // Enhanced state management
 #include "world/voxel_types.h"        // For VoxelEngine::World::VoxelType
 #include "input/MouseCaptureManager.h" // Mouse capture management
 #include "core/GameLoop.h"            // Game loop management
@@ -138,32 +139,17 @@ public:
     void toggleCameraMode();
 
     // Game state management
-    GameState getGameState() const { return gameState_; }
-    void setGameState(GameState state) { gameState_ = state; }
-    bool isMenuOpen() const { return gameState_ == GameState::MENU; }
+    GameState getGameState() const;
+    void setGameState(GameState state);
+    bool isMenuOpen() const;
     void toggleMenu();
     
-    // Enhanced state management helper functions
-    bool isPlaying() const { 
-        return gameState_ == GameState::PLAYING || 
-               gameState_ == GameState::FIRST_PERSON_MODE || 
-               gameState_ == GameState::STRATEGIC_MODE || 
-               gameState_ == GameState::HYBRID_MODE; 
-    }
-    bool isPaused() const { 
-        return gameState_ == GameState::MENU || 
-               gameState_ == GameState::PAUSED; 
-    }
-    bool isInTransition() const {
-        return gameState_ == GameState::TRANSITIONING ||
-               gameState_ == GameState::LOADING ||
-               gameState_ == GameState::SAVING ||
-               gameState_ == GameState::AUTO_SAVING;
-    }
-    bool canAcceptInput() const {
-        return isPlaying() && !isInTransition();
-    }
-
+    // Enhanced state management helper functions (delegate to GameStateManager)
+    bool isPlaying() const;
+    bool isPaused() const;
+    bool isInTransition() const;
+    bool canAcceptInput() const;
+    
     // Fullscreen toggle for menu system
     bool toggleFullscreen();
     bool isFullscreen() const;
@@ -218,12 +204,16 @@ private:
     // Helper method for world initialization
     void initializeWorldContent();
 
+    // State transition handler
+    void onStateChanged(GameState from, GameState to);
+
     // Allow InputManager to access private members for input handling
     friend void GameInput::processInput(Game& game);
 
     // Core game components - using unique_ptr for automatic memory management
     std::unique_ptr<Window> gameWindow_;
     std::unique_ptr<flecs::world> ecs_;
+    std::unique_ptr<VoxelCastle::Core::GameStateManager> stateManager_;
     std::unique_ptr<VoxelCastle::World::WorldManager> worldManager_;
     std::unique_ptr<VoxelCastle::World::WorldGenerator> worldGenerator_;
     std::unique_ptr<VoxelEngine::Rendering::TextureAtlas> textureAtlas_;

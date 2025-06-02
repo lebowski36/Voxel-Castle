@@ -58,11 +58,11 @@ Based on project documentation review, this voxel fortress colony simulation has
 ## Sub-Tasks
 
 ### Phase 1: Enhanced State Architecture
-- [ ] **1.1** Expand GameState enumeration
-  - [ ] **1.1.1** Add control mode states: FIRST_PERSON_MODE, STRATEGIC_MODE, HYBRID_MODE
-  - [ ] **1.1.2** Add transition states: TRANSITIONING, LOADING, SAVING
-  - [ ] **1.1.3** Add specialized states: PAUSED, AUTO_SAVING
-  - [ ] **1.1.4** Update existing code to use expanded state system
+- [x] **1.1** Expand GameState enumeration
+  - [x] **1.1.1** Add control mode states: FIRST_PERSON_MODE, STRATEGIC_MODE, HYBRID_MODE
+  - [x] **1.1.2** Add transition states: TRANSITIONING, LOADING, SAVING
+  - [x] **1.1.3** Add specialized states: PAUSED, AUTO_SAVING
+  - [x] **1.1.4** Update existing code to use expanded state system
 
 - [ ] **1.2** Create GameStateManager class
   - [ ] **1.2.1** Design state machine with transition rules
