@@ -97,10 +97,7 @@ Based on project documentation review, this voxel fortress colony simulation has
 
 ### Phase 3: Save/Load System Foundation
 - [ ] **3.1** Save file architecture
-  - [ ] **3.1.1** Design save file format (JSON or binary)
-  - [ ] **3.1.2** Create versioning system for save compatibility
-  - [ ] **3.1.3** Implement compression for world data
-  - [ ] **3.1.4** Design incremental/differential saving
+ - [See detailed plan](08a_save_file_architecture.md)
 
 - [ ] **3.2** Core serialization framework
   - [ ] **3.2.1** Create Serializable interface for game objects
@@ -213,6 +210,7 @@ Based on project documentation review, this voxel fortress colony simulation has
 - **Core State Management**: `game/src/core/GameStateManager.cpp`, `game/include/core/GameStateManager.h`
 - **Time Management**: `game/src/core/TimeManager.cpp`, `game/include/core/TimeManager.h`
 - **Save System**: `game/src/systems/SaveManager.cpp`, `game/include/systems/SaveManager.h`
+- **Save File Architecture**: `development_tasks/04_essential_game_infrastructure/08a_save_file_architecture.md`
 - **Configuration**: `game/src/systems/ConfigManager.cpp`, `game/include/systems/ConfigManager.h`
 - **Enhanced Game State**: `game/include/core/GameState.h` (expand existing enum)
 - **Integration**: Update existing `game/src/core/game.cpp` and related files
