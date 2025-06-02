@@ -9,6 +9,7 @@
 #include "core/InputManager.h"        // Input handling module
 #include "core/CameraMode.h"          // Camera mode enumeration
 #include "core/GameStateManager.h"    // Enhanced state management
+#include "core/TimeManager.h"         // Time control system
 #include "world/voxel_types.h"        // For VoxelEngine::World::VoxelType
 #include "input/MouseCaptureManager.h" // Mouse capture management
 #include "core/GameLoop.h"            // Game loop management
@@ -185,6 +186,16 @@ public:
     VoxelEngine::Rendering::BlockOutlineRenderer* getBlockOutlineRenderer() const { 
         return blockOutlineRenderer_.get(); 
     }
+    
+    // Time control methods
+    bool isPauseSimulation() const;
+    bool togglePauseSimulation();
+    void setTimeScale(VoxelCastle::Core::TimeManager::TimeScale scale);
+    void increaseTimeScale();
+    void decreaseTimeScale();
+    float getTimeScaleFactor() const;
+    std::string getTimeScaleString() const;
+    VoxelCastle::Core::TimeManager* getTimeManager() const { return timeManager_.get(); }
 
     // Game loop methods (public for GameLoop access)
     void processInput();
@@ -214,6 +225,7 @@ private:
     std::unique_ptr<Window> gameWindow_;
     std::unique_ptr<flecs::world> ecs_;
     std::unique_ptr<VoxelCastle::Core::GameStateManager> stateManager_;
+    std::unique_ptr<VoxelCastle::Core::TimeManager> timeManager_;
     std::unique_ptr<VoxelCastle::World::WorldManager> worldManager_;
     std::unique_ptr<VoxelCastle::World::WorldGenerator> worldGenerator_;
     std::unique_ptr<VoxelEngine::Rendering::TextureAtlas> textureAtlas_;

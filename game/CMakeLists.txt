@@ -19,6 +19,8 @@ add_executable(VoxelFortressGame
     src/utils/debug_logger.cpp # Added debug logger system
     src/core/GameStateManager.cpp # State management system
     src/core/GameStateDelegate.cpp # State delegate methods for Game class
+    src/core/TimeManager.cpp # Time control system
+    src/core/GameTimeControl.cpp # Game time control methods
     # Example:
     # src/gameplay/player.cpp
     # ...

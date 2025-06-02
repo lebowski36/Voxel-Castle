@@ -141,9 +141,31 @@ bool Game::initialize() {
         onStateChanged(from, to);
     });
     
-    // Register state change callback
+    // Initialize time manager
+    timeManager_ = std::make_unique<VoxelCastle::Core::TimeManager>(ecs_.get());
+    timeManager_->initialize();
+    
+    // Initialize time manager
+    timeManager_ = std::make_unique<VoxelCastle::Core::TimeManager>(ecs_.get());
+    timeManager_->initialize();
+    
+    // Register state change callback to handle pausing when entering menu
     stateManager_->registerStateChangeCallback([this](GameState from, GameState to) {
         onStateChanged(from, to);
+        
+        // Auto-pause simulation when entering menu or explicit pause state
+        if (to == GameState::MENU || to == GameState::PAUSED) {
+            timeManager_->pause();
+        } 
+        // Auto-resume simulation when returning to gameplay (if not explicitly paused)
+        else if (from == GameState::MENU && (to == GameState::PLAYING || 
+                 to == GameState::FIRST_PERSON_MODE || 
+                 to == GameState::STRATEGIC_MODE || 
+                 to == GameState::HYBRID_MODE)) {
+            if (to != GameState::PAUSED) {
+                timeManager_->resume();
+            }
+        }
     });
 
     // Initialize mouse capture manager
@@ -557,6 +579,8 @@ void Game::requestExit() {
 // Delegates all per-frame game logic to GameLogic module
 #include "core/GameLogic.h"
 void Game::update(float deltaTime) {
+    // Apply time scaling to simulation updates
+    float scaledDeltaTime = timeManager_ ? timeManager_->update(deltaTime) : deltaTime;
     // Check if world is ready for block operations (world loading logic)
     if (!isWorldFullyLoaded_) {
         auto currentTime = std::chrono::steady_clock::now();
@@ -576,7 +600,7 @@ void Game::update(float deltaTime) {
         }
     }
 
-    GameLogic::update(*this, deltaTime);
+    GameLogic::update(*this, scaledDeltaTime);
 
     if (camera_ && worldManager_ && worldGenerator_) {
         glm::vec3 cameraPos = camera_->getPosition();

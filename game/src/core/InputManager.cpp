@@ -116,6 +116,8 @@ void processInput(Game& game) {
             game.isRunning_ = false;
         }
         else if (e.type == SDL_EVENT_KEY_DOWN) {
+            // Debug - print scancode of all keys 
+            std::cout << "[DEBUG] Key pressed, scancode: " << e.key.scancode << std::endl;
             if (e.key.scancode == SDL_SCANCODE_P) {
                 DebugRenderMode oldMode = g_debugRenderMode;
                 g_debugRenderMode = static_cast<DebugRenderMode>((static_cast<int>(g_debugRenderMode) + 1) % 2);
@@ -175,6 +177,35 @@ void processInput(Game& game) {
                     }
                     break;
                 case SDL_SCANCODE_M: game.manualVoxelChangeRequested_ = true; break;
+                // Time control keys
+                case SDL_SCANCODE_PAUSE: // Add pause key
+                case SDL_SCANCODE_P: // Alternative pause key (easier to use than PAUSE)
+                case SDL_SCANCODE_BACKSPACE: // Alternative pause key
+                    if (game.canAcceptInput()) {
+                        bool isPaused = game.togglePauseSimulation();
+                        std::cout << "[Time] Simulation " << (isPaused ? "paused" : "resumed") << std::endl;
+                    }
+                    break;
+                    
+                case SDL_SCANCODE_EQUALS: // + key for speed up
+                case SDL_SCANCODE_KP_PLUS:
+                case SDL_SCANCODE_RIGHTBRACKET: // Additional key for '+'
+                    std::cout << "[DEBUG] Time speed-up key detected: " << e.key.scancode << std::endl;
+                    if (game.canAcceptInput()) { // Allow in any playing state
+                        game.increaseTimeScale();
+                        std::cout << "[Time] Speed increased: " << game.getTimeScaleString() << std::endl;
+                    }
+                    break;
+                    
+                case SDL_SCANCODE_MINUS: // - key for slow down
+                case SDL_SCANCODE_KP_MINUS:
+                case SDL_SCANCODE_SLASH: // Additional key for '-'
+                    std::cout << "[DEBUG] Time slow-down key detected: " << e.key.scancode << std::endl;
+                    if (game.canAcceptInput()) { // Allow in any playing state
+                        game.decreaseTimeScale();
+                        std::cout << "[Time] Speed decreased: " << game.getTimeScaleString() << std::endl;
+                    }
+                    break;
                 default: break;
             }
         }
