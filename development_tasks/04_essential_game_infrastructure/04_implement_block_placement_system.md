@@ -47,7 +47,7 @@ Implement interactive block placement and removal system with real-time mesh upd
 
 - [x] **2.3: Visual Feedback** ✅ COMPLETE
   - [x] Add block outline/highlight for block being pointed at ✅ COMPLETE (Face highlighting implemented)
-  - [x] Show placement preview (where new block will be placed) ✅ COMPLETE (Ghost block preview implemented)
+  - [x] Show placement preview (where new block will be placed) ✅ COMPLETE (Textured block preview implemented)
   - [ ] Add visual confirmation when blocks are placed/removed
   - ~~Consider adding sound effects for placement/removal actions~~ (NOT NEEDED)
 

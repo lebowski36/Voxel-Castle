@@ -3,6 +3,7 @@
 #include "../../include/SpectatorCamera.h"
 #include "rendering/mesh_renderer.h"
 #include "rendering/block_outline_renderer.h"
+#include "rendering/texture_atlas.h"
 #include "interaction/BlockPlacement.h"
 #include "ui/UISystem.h"
 #include "world/world_manager.h"
@@ -93,14 +94,26 @@ void VoxelCastle::Core::GameRenderCoordinator::renderWorldScene(
         
         // Render placement preview (ghost block) at the adjacent position
         // Always show preview when targeting a valid block (for better UX)
-        // Use a semi-transparent green color for the placement preview
-        glm::vec3 previewColor(0.0f, 1.0f, 0.0f); // Green
+        
+        // Get the current block type and its texture coordinates
+        auto currentBlockType = game.getCurrentBlockType();
+        auto textureCoords = textureAtlas.getTextureCoordinates(currentBlockType);
+        
+        // Get the texture atlas ID from the mesh renderer
+        GLuint textureAtlasID = meshRenderer.getTextureAtlasID();
+        
+        // Calculate tile UV span (same for all tiles)
+        glm::vec2 tileUVSpan(VoxelEngine::Rendering::TILE_UV_WIDTH, 
+                           VoxelEngine::Rendering::TILE_UV_HEIGHT);
+        
         float previewAlpha = 0.3f; // Semi-transparent
         
         outlineRenderer->renderBlockPreview(targetedBlock.adjacentPosition,
                                            view,
                                            projection,
-                                           previewColor,
+                                           textureAtlasID,
+                                           textureCoords.getBottomLeft(),
+                                           tileUVSpan,
                                            previewAlpha);
     }
 }

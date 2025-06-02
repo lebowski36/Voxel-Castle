@@ -294,19 +294,44 @@ void BlockOutlineRenderer::createFaceHighlightMesh() {
 }
 
 void BlockOutlineRenderer::createBlockPreviewMesh() {
-    // Cube vertices (0 to 1 range, will be translated)
+    // Cube vertices with positions and texture coordinates
+    // Each vertex: x, y, z, u, v
     float vertices[] = {
-        // Bottom face (Y = 0)
-        0.0f, 0.0f, 0.0f,  // 0
-        1.0f, 0.0f, 0.0f,  // 1
-        1.0f, 0.0f, 1.0f,  // 2
-        0.0f, 0.0f, 1.0f,  // 3
+        // Bottom face (Y = 0) - looking down at this face
+        0.0f, 0.0f, 0.0f,  0.0f, 1.0f,  // 0
+        1.0f, 0.0f, 0.0f,  1.0f, 1.0f,  // 1
+        1.0f, 0.0f, 1.0f,  1.0f, 0.0f,  // 2
+        0.0f, 0.0f, 1.0f,  0.0f, 0.0f,  // 3
         
-        // Top face (Y = 1)
-        0.0f, 1.0f, 0.0f,  // 4
-        1.0f, 1.0f, 0.0f,  // 5
-        1.0f, 1.0f, 1.0f,  // 6
-        0.0f, 1.0f, 1.0f   // 7
+        // Top face (Y = 1) - looking down at this face
+        0.0f, 1.0f, 0.0f,  0.0f, 0.0f,  // 4
+        1.0f, 1.0f, 0.0f,  1.0f, 0.0f,  // 5
+        1.0f, 1.0f, 1.0f,  1.0f, 1.0f,  // 6
+        0.0f, 1.0f, 1.0f,  0.0f, 1.0f,  // 7
+        
+        // Front face (Z = 1) - looking at this face
+        0.0f, 0.0f, 1.0f,  0.0f, 0.0f,  // 8
+        1.0f, 0.0f, 1.0f,  1.0f, 0.0f,  // 9
+        1.0f, 1.0f, 1.0f,  1.0f, 1.0f,  // 10
+        0.0f, 1.0f, 1.0f,  0.0f, 1.0f,  // 11
+        
+        // Back face (Z = 0) - looking at this face
+        1.0f, 0.0f, 0.0f,  0.0f, 0.0f,  // 12
+        0.0f, 0.0f, 0.0f,  1.0f, 0.0f,  // 13
+        0.0f, 1.0f, 0.0f,  1.0f, 1.0f,  // 14
+        1.0f, 1.0f, 0.0f,  0.0f, 1.0f,  // 15
+        
+        // Right face (X = 1) - looking at this face
+        1.0f, 0.0f, 1.0f,  0.0f, 0.0f,  // 16
+        1.0f, 0.0f, 0.0f,  1.0f, 0.0f,  // 17
+        1.0f, 1.0f, 0.0f,  1.0f, 1.0f,  // 18
+        1.0f, 1.0f, 1.0f,  0.0f, 1.0f,  // 19
+        
+        // Left face (X = 0) - looking at this face
+        0.0f, 0.0f, 0.0f,  0.0f, 0.0f,  // 20
+        0.0f, 0.0f, 1.0f,  1.0f, 0.0f,  // 21
+        0.0f, 1.0f, 1.0f,  1.0f, 1.0f,  // 22
+        0.0f, 1.0f, 0.0f,  0.0f, 1.0f,  // 23
     };
 
     // Indices for solid cube (36 indices for 6 faces * 2 triangles per face)
@@ -315,14 +340,14 @@ void BlockOutlineRenderer::createBlockPreviewMesh() {
         0, 1, 2,  0, 2, 3,
         // Top face
         4, 6, 5,  4, 7, 6,
-        // Front face (Z = 1)
-        3, 2, 6,  3, 6, 7,
-        // Back face (Z = 0)
-        0, 4, 5,  0, 5, 1,
-        // Right face (X = 1)
-        1, 5, 6,  1, 6, 2,
-        // Left face (X = 0)
-        0, 3, 7,  0, 7, 4
+        // Front face
+        8, 10, 9,  8, 11, 10,
+        // Back face
+        12, 14, 13,  12, 15, 14,
+        // Right face
+        16, 18, 17,  16, 19, 18,
+        // Left face
+        20, 22, 21,  20, 23, 22
     };
 
     // Generate and bind vertex array object for preview
@@ -340,40 +365,64 @@ void BlockOutlineRenderer::createBlockPreviewMesh() {
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
 
     // Set vertex attributes
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
+    // Position attribute (location = 0)
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)0);
     glEnableVertexAttribArray(0);
+    
+    // Texture coordinate attribute (location = 1)
+    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(3 * sizeof(float)));
+    glEnableVertexAttribArray(1);
 
     // Unbind
     glBindVertexArray(0);
 }
 
 bool BlockOutlineRenderer::loadPreviewShaders() {
-    // Vertex shader for transparent block preview
+    // Vertex shader for transparent block preview with texture support
     static const char* previewVertexShaderSource = R"(
 #version 330 core
 layout (location = 0) in vec3 aPos;
+layout (location = 1) in vec2 aTexCoord;
 
 uniform mat4 model;
 uniform mat4 view;
 uniform mat4 projection;
 
+out vec2 TexCoord;
+
 void main()
 {
     gl_Position = projection * view * model * vec4(aPos, 1.0);
+    TexCoord = aTexCoord;
 }
 )";
 
-    // Fragment shader for transparent block preview
+    // Fragment shader for transparent block preview with texture support
     static const char* previewFragmentShaderSource = R"(
 #version 330 core
 out vec4 FragColor;
 
-uniform vec3 blockColor;
+in vec2 TexCoord;
+
+uniform sampler2D uTextureSampler;
+uniform vec2 u_atlas_tile_origin_uv;
+uniform vec2 u_tile_uv_span;
 uniform float alpha;
 
 void main()
 {
-    FragColor = vec4(blockColor, alpha);
+    // Map the texture coordinates to the correct tile in the atlas
+    vec2 final_atlas_uv = u_atlas_tile_origin_uv + TexCoord * u_tile_uv_span;
+    
+    vec4 texColor = texture(uTextureSampler, final_atlas_uv);
+    
+    // Discard fragment if alpha is below a threshold
+    if(texColor.a < 0.1) {
+        discard;
+    }
+    
+    // Apply transparency to the texture
+    FragColor = vec4(texColor.rgb, texColor.a * alpha);
 }
 )";
 
@@ -468,7 +517,9 @@ GLuint BlockOutlineRenderer::loadShader(const char* source, GLenum type) {
 void BlockOutlineRenderer::renderBlockPreview(const glm::ivec3& blockPosition,
                                             const glm::mat4& view, 
                                             const glm::mat4& projection,
-                                            const glm::vec3& color,
+                                            GLuint textureAtlas,
+                                            const glm::vec2& atlasOriginUV,
+                                            const glm::vec2& tileUVSpan,
                                             float alpha) {
     if (!ready_) return;
 
@@ -489,6 +540,11 @@ void BlockOutlineRenderer::renderBlockPreview(const glm::ivec3& blockPosition,
     // Use our preview shader program
     glUseProgram(previewShaderProgram_);
 
+    // Bind texture atlas
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, textureAtlas);
+    glUniform1i(glGetUniformLocation(previewShaderProgram_, "uTextureSampler"), 0);
+
     // Create model matrix - translate to block position
     glm::mat4 model = glm::translate(glm::mat4(1.0f), glm::vec3(blockPosition));
 
@@ -496,7 +552,8 @@ void BlockOutlineRenderer::renderBlockPreview(const glm::ivec3& blockPosition,
     glUniformMatrix4fv(glGetUniformLocation(previewShaderProgram_, "model"), 1, GL_FALSE, glm::value_ptr(model));
     glUniformMatrix4fv(glGetUniformLocation(previewShaderProgram_, "view"), 1, GL_FALSE, glm::value_ptr(view));
     glUniformMatrix4fv(glGetUniformLocation(previewShaderProgram_, "projection"), 1, GL_FALSE, glm::value_ptr(projection));
-    glUniform3fv(glGetUniformLocation(previewShaderProgram_, "blockColor"), 1, glm::value_ptr(color));
+    glUniform2fv(glGetUniformLocation(previewShaderProgram_, "u_atlas_tile_origin_uv"), 1, glm::value_ptr(atlasOriginUV));
+    glUniform2fv(glGetUniformLocation(previewShaderProgram_, "u_tile_uv_span"), 1, glm::value_ptr(tileUVSpan));
     glUniform1f(glGetUniformLocation(previewShaderProgram_, "alpha"), alpha);
 
     // Render the preview block

@@ -54,13 +54,17 @@ public:
      * @param blockPosition Position where the block would be placed (world coordinates)
      * @param view View matrix from camera
      * @param projection Projection matrix from camera
-     * @param color Color of the preview block (defaults to white with transparency)
+     * @param textureAtlas Texture atlas for block textures
+     * @param atlasOriginUV UV coordinates for the block texture in the atlas
+     * @param tileUVSpan Size of each tile in UV coordinates
      * @param alpha Transparency level (0.0 = fully transparent, 1.0 = fully opaque)
      */
     void renderBlockPreview(const glm::ivec3& blockPosition,
                           const glm::mat4& view, 
                           const glm::mat4& projection,
-                          const glm::vec3& color = glm::vec3(1.0f, 1.0f, 1.0f),
+                          GLuint textureAtlas,
+                          const glm::vec2& atlasOriginUV,
+                          const glm::vec2& tileUVSpan,
                           float alpha = 0.3f);
 
     /**
