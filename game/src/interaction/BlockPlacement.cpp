@@ -73,15 +73,31 @@ RaycastResult BlockPlacement::raycast(const SpectatorCamera* camera,
             for (const auto& face : faces) {
                 float dist = std::abs(localHitPos[face.axis] - face.planePos);
                 if (dist < minDist) {
-                    minDist = dist;
-                    bestNormal = face.normal;
-                    bestAdjacent = voxelPos + face.offset;
+                    // Check if this face is actually visible (not hidden by adjacent solid blocks)
+                    glm::ivec3 adjacentVoxelPos = voxelPos + face.offset;
+                    VoxelEngine::World::Voxel adjacentVoxel = worldManager->getVoxel(
+                        adjacentVoxelPos.x, adjacentVoxelPos.y, adjacentVoxelPos.z);
+                    
+                    // Only allow selection of faces that are exposed (adjacent voxel is air)
+                    bool isFaceVisible = (adjacentVoxel.id == static_cast<uint8_t>(VoxelEngine::World::VoxelType::AIR));
+                    
+                    if (isFaceVisible) {
+                        minDist = dist;
+                        bestNormal = face.normal;
+                        bestAdjacent = voxelPos + face.offset;
+                    }
                 }
             }
             
-            result.normal = bestNormal;
-            result.adjacentPosition = bestAdjacent;
-            break;
+            // Only proceed if we found a visible face
+            if (minDist < std::numeric_limits<float>::max()) {
+                result.normal = bestNormal;
+                result.adjacentPosition = bestAdjacent;
+                break;
+            } else {
+                // No visible faces found, continue ray casting
+                // This happens when all faces are hidden by adjacent solid blocks
+            }
         }
         
         currentDistance += stepSize;

@@ -48,7 +48,7 @@ Implement interactive block placement and removal system with real-time mesh upd
 - [x] **2.3: Visual Feedback** ✅ COMPLETE
   - [x] Add block outline/highlight for block being pointed at ✅ COMPLETE (Face highlighting implemented)
   - [x] Show placement preview (where new block will be placed) ✅ COMPLETE (Textured block preview implemented)
-  - [ ] Add visual confirmation when blocks are placed/removed
+  - ~~Add visual confirmation when blocks are placed/removed~~ (NOT NEEDED - preview and visual changes sufficient)
   - ~~Consider adding sound effects for placement/removal actions~~ (NOT NEEDED)
 
 ### Phase 3: Dynamic Mesh Updates ✅ COMPLETE (CRITICAL BUG RESOLVED)
@@ -88,7 +88,8 @@ Implement interactive block placement and removal system with real-time mesh upd
 ### Phase 4: Advanced Features & Polish ⏳ PENDING
 **Goal:** Add sophisticated features and optimize the system.
 
-- [ ] **4.1: Collision Detection** (SELECTED)
+- [ ] **4.1: Collision Detection** (SELECTED) 🔄 IN PROGRESS
+  - [x] Fix face selection for hidden/internal faces (only allow selection of visible faces) ✅ COMPLETE
   - [ ] Implement placement validation (can't place blocks inside player)
   - [ ] Add support for different block properties (solid vs. non-solid)
   - [ ] Handle special placement rules for different block types
