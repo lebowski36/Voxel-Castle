@@ -7,6 +7,7 @@
 #include "core/GameRenderer.h" // Added for rendering logic
 #include "core/GameLoop.h" // Game loop management
 #include "core/GameRenderCoordinator.h" // Game render coordination
+#include "core/SaveManager.h" // Save/load management
 #include "utils/debug_logger.h" // For DEBUG_LOG
 
 // UI System includes
@@ -100,6 +101,7 @@ Game::Game()
       mouseCaptureManager_(nullptr),
       gameLoop_(std::make_unique<GameLoop>()),
       renderCoordinator_(std::make_unique<VoxelCastle::Core::GameRenderCoordinator>()),
+      saveManager_(nullptr), // Will be initialized in initialize() method
       isRunning_(false),
       lastFrameTime_(),
       mouseCaptured_(true),
@@ -311,6 +313,19 @@ bool Game::initialize() {
         DEBUG_LOG("Game", "Crosshair system initialized and centered on screen");
         
         std::cout << "[Game] UI system initialized successfully with HUD and Crosshair" << std::endl;
+    }
+    
+    // Initialize SaveManager
+    if (isRunning_) {
+        saveManager_ = std::make_unique<VoxelCastle::Core::SaveManager>(this);
+        std::string saveDir = projectRoot_ + "/saves";
+        if (!saveManager_->initialize(saveDir)) {
+            std::cerr << "[Game] Warning: Failed to initialize SaveManager" << std::endl;
+        } else {
+            // Set the WorldManager reference now that both are initialized
+            saveManager_->setWorldManager(worldManager_.get());
+            std::cout << "[Game] SaveManager initialized successfully" << std::endl;
+        }
     }
     
     // Add clean startup message
@@ -713,4 +728,45 @@ RaycastResult Game::getTargetedBlock() const {
     }
     
     return BlockPlacement::raycast(camera_.get(), worldManager_.get());
+}
+
+// Save/Load implementations
+bool Game::saveGame(const std::string& saveName) {
+    if (!saveManager_) {
+        std::cerr << "[Game] SaveManager not initialized" << std::endl;
+        return false;
+    }
+    
+    std::cout << "[Game] Saving game: " << saveName << std::endl;
+    return saveManager_->saveGame(saveName);
+}
+
+bool Game::loadGame(const std::string& saveName) {
+    if (!saveManager_) {
+        std::cerr << "[Game] SaveManager not initialized" << std::endl;
+        return false;
+    }
+    
+    std::cout << "[Game] Loading game: " << saveName << std::endl;
+    return saveManager_->loadGame(saveName);
+}
+
+bool Game::quickSave() {
+    if (!saveManager_) {
+        std::cerr << "[Game] SaveManager not initialized" << std::endl;
+        return false;
+    }
+    
+    std::cout << "[Game] Quick save requested" << std::endl;
+    return saveManager_->quickSave();
+}
+
+bool Game::quickLoad() {
+    if (!saveManager_) {
+        std::cerr << "[Game] SaveManager not initialized" << std::endl;
+        return false;
+    }
+    
+    std::cout << "[Game] Quick load requested" << std::endl;
+    return saveManager_->quickLoad();
 }

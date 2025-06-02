@@ -11,9 +11,10 @@
 #include <glm/vec3.hpp>
 
 // Forward declarations
+class Game; // Game class is in global scope, not in VoxelCastle::Core
 namespace VoxelCastle {
 namespace Core {
-class Game; // Will be included in cpp file to avoid circular dependencies
+// Forward declarations for VoxelCastle::Core classes
 }
 namespace World {
 class WorldManager;

@@ -46,6 +46,7 @@ namespace flecs { class world; }
 namespace VoxelCastle { namespace World { class WorldManager; } }
 namespace VoxelCastle { namespace World { class WorldGenerator; } }
 namespace VoxelCastle { namespace Core { class GameRenderCoordinator; } } // Render coordination
+namespace VoxelCastle { namespace Core { class SaveManager; } } // Save/load management
 namespace VoxelEngine { 
     namespace Rendering { 
         class TextureAtlas; 
@@ -108,6 +109,9 @@ public:
 
     VoxelCastle::World::WorldManager* getWorldManager() { return worldManager_.get(); }
     const VoxelCastle::World::WorldManager* getWorldManager() const { return worldManager_.get(); }
+
+    VoxelCastle::Core::SaveManager* getSaveManager() { return saveManager_.get(); }
+    const VoxelCastle::Core::SaveManager* getSaveManager() const { return saveManager_.get(); }
 
     VoxelEngine::Rendering::TextureAtlas* getTextureAtlas() { return textureAtlas_.get(); }
     const VoxelEngine::Rendering::TextureAtlas* getTextureAtlas() const { return textureAtlas_.get(); }
@@ -211,6 +215,33 @@ public:
      */
     void requestExit();
 
+    // Save/Load operations
+    /**
+     * @brief Save the current game state with the given name
+     * @param saveName The name for the save file
+     * @return True if save was successful
+     */
+    bool saveGame(const std::string& saveName);
+
+    /**
+     * @brief Load a game state from the given save name
+     * @param saveName The name of the save file to load
+     * @return True if load was successful
+     */
+    bool loadGame(const std::string& saveName);
+
+    /**
+     * @brief Perform a quick save operation
+     * @return True if quick save was successful
+     */
+    bool quickSave();
+
+    /**
+     * @brief Perform a quick load operation  
+     * @return True if quick load was successful
+     */
+    bool quickLoad();
+
     // Testing functions
     void runSerializationTest();
     void runSaveManagerTest(); // T key is always replaced with the current test
@@ -243,6 +274,7 @@ private:
     std::unique_ptr<VoxelEngine::Input::MouseCaptureManager> mouseCaptureManager_; // Mouse capture management
     std::unique_ptr<GameLoop> gameLoop_; // Game loop management
     std::unique_ptr<VoxelCastle::Core::GameRenderCoordinator> renderCoordinator_; // Render coordination
+    std::unique_ptr<VoxelCastle::Core::SaveManager> saveManager_; // Save/load management
     
     // Game loop state
     bool isRunning_ = false;
