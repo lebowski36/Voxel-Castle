@@ -65,21 +65,21 @@ void update(Game& game, float deltaTime) {
 
     // Handle pending block placement/removal actions (from mouse clicks)
     if (game.hasPendingBlockAction()) {
-        std::cout << "[" << getTimestampGL() << "] [GameLogic] CRITICAL: Processing pending block action: " 
-                  << (game.isBlockPlacement() ? "PLACEMENT" : "REMOVAL") << std::endl;
+        DEBUG_LOG("GameLogic", "Processing pending block action: " + 
+                  std::string(game.isBlockPlacement() ? "PLACEMENT" : "REMOVAL"));
         try {
-            std::cout << "[" << getTimestampGL() << "] [GameLogic] Calling BlockPlacement::handleMouseClick..." << std::endl;
+            DEBUG_LOG("GameLogic", "Calling BlockPlacement::handleMouseClick...");
             BlockPlacement::handleMouseClick(game, game.isBlockPlacement());
-            std::cout << "[" << getTimestampGL() << "] [GameLogic] Block action completed successfully" << std::endl;
+            DEBUG_LOG("GameLogic", "Block action completed successfully");
         }
         catch (const std::exception& e) {
-            std::cerr << "[" << getTimestampGL() << "] [GameLogic] EXCEPTION during block action: " << e.what() << std::endl;
+            std::cerr << "[ERROR] Block action failed: " << e.what() << std::endl;
         }
         catch (...) {
-            std::cerr << "[" << getTimestampGL() << "] [GameLogic] UNKNOWN EXCEPTION during block action!" << std::endl;
+            std::cerr << "[ERROR] Unknown exception during block action!" << std::endl;
         }
         game.clearPendingBlockAction(); // Reset flag after handling
-        std::cout << "[" << getTimestampGL() << "] [GameLogic] Block action processing completed" << std::endl;
+        DEBUG_LOG("GameLogic", "Block action processing completed");
     }
 
     // Progress ECS systems

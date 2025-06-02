@@ -7,6 +7,7 @@
 #include "core/GameRenderer.h" // Added for rendering logic
 #include "core/GameLoop.h" // Game loop management
 #include "core/GameRenderCoordinator.h" // Game render coordination
+#include "utils/debug_logger.h" // For DEBUG_LOG
 
 // UI System includes
 #include "ui/UISystem.h"
@@ -328,17 +329,14 @@ void Game::toggleCameraMode() {
 // --- UI Input Handling ---
 void Game::handleMenuInput(float mouseX, float mouseY, bool clicked) {
     if (menuSystem_ && isMenuOpen()) {
-        // Debug: Log incoming mouse coordinates and click state
-        std::cout << "[Game] handleMenuInput: mouseX=" << mouseX << ", mouseY=" << mouseY << ", clicked=" << clicked << std::endl;
-        
         // Pass input to the menu system
         bool inputHandled = menuSystem_->handleInput(mouseX, mouseY, clicked);
         
-        // Debug: Log whether the menu system handled the input
-        if (inputHandled) {
-            std::cout << "[Game] MenuSystem handled the input." << std::endl;
-        } else {
-            std::cout << "[Game] MenuSystem did NOT handle the input." << std::endl;
+        // Only log significant menu interactions (clicks)
+        if (clicked) {
+            DEBUG_LOG("Game", "Menu interaction at (" + std::to_string(static_cast<int>(mouseX)) + 
+                     ", " + std::to_string(static_cast<int>(mouseY)) + ") - " + 
+                     (inputHandled ? "handled" : "not handled"));
         }
     }
 }

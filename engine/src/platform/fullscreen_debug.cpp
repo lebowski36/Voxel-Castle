@@ -30,8 +30,7 @@ namespace FullscreenDebug {
         if (logOpened && debugLogFile.is_open()) {
             debugLogFile << message << std::endl;
         }
-        // Also print to console for immediate visibility during debugging
-        std::cout << message << std::endl;
+        // Console output removed for clean logging - all window init details now file-only
     }
 
 } // namespace FullscreenDebug

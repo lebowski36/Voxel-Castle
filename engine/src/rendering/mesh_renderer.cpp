@@ -95,7 +95,7 @@ MeshRenderer::MeshRenderer() : vao(0), vbo(0), ebo(0), shaderProgram(0), texture
     if (shaderProgram == 0) {
         std::cerr << "FATAL: [MeshRenderer] shaderProgram is 0. Shaders failed to load." << std::endl;
     } else {
-        // std::cout << "[MeshRenderer] Shader program created successfully. ID: " << shaderProgram << std::endl;
+        // std::cout << "[MeshRendaerer] Shader program created successfully. ID: " << shaderProgram << std::endl;
     }
 
     if (!loadTexture(texturePath)) {
