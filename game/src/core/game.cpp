@@ -1,7 +1,7 @@
 #include <cmath> // For std::floor
 #include "../../include/core/game.h"       // Defines Game, forward declares SpectatorCamera
 #include "../../include/SpectatorCamera.h" // Full definition of SpectatorCamera
-#include "../../include/core/GameInitializer.h"    // Initialization and shutdown helper
+#include "../../include/core/GameInitializer.h" // Initialization and shutdown helper
 #include "core/WorldSetup.h" // Added for world setup
 #include "core/WorldSetupGlobals.h"
 #include "core/GameRenderer.h" // Added for rendering logic
@@ -13,6 +13,7 @@
 #include "ui/UISystem.h"
 #include "ui/MenuSystem.h"
 #include "ui/elements/HUD.h"
+#include "ui/elements/Crosshair.h"
 #include "ui/elements/UIPanel.h"
 
 // Include headers that will be needed for the actual implementations later
@@ -90,6 +91,7 @@ Game::Game()
       camera_(nullptr),
       menuSystem_(nullptr),
       hudSystem_(nullptr),
+      crosshairSystem_(nullptr),
       mouseCaptureManager_(nullptr),
       gameLoop_(std::make_unique<GameLoop>()),
       renderCoordinator_(std::make_unique<VoxelCastle::Core::GameRenderCoordinator>()),
@@ -249,7 +251,21 @@ bool Game::initialize() {
         // Add to UI system
         menuSystem_->addElement(hudSystem_);
         
-        std::cout << "[Game] UI system initialized successfully with HUD" << std::endl;
+        // Create crosshair system for targeting/aiming
+        crosshairSystem_ = std::make_shared<VoxelEngine::UI::Crosshair>(
+            &menuSystem_->getRenderer()
+        );
+        
+        // Center crosshair on screen
+        crosshairSystem_->centerOnScreen(screenWidth_, screenHeight_);
+        crosshairSystem_->setVisible(true); // Visible by default in gameplay mode
+        
+        // Add crosshair to UI system
+        menuSystem_->addElement(crosshairSystem_);
+        
+        DEBUG_LOG("Game", "Crosshair system initialized and centered on screen");
+        
+        std::cout << "[Game] UI system initialized successfully with HUD and Crosshair" << std::endl;
     }
     
     // Add clean startup message
@@ -289,6 +305,9 @@ void Game::shutdown() {
     // Clean up UI system first
     if (hudSystem_) {
         hudSystem_.reset();
+    }
+    if (crosshairSystem_) {
+        crosshairSystem_.reset();
     }
     if (menuSystem_) {
         menuSystem_->shutdown();
@@ -364,6 +383,9 @@ void Game::toggleMenu() {
         if (hudSystem_) {
             hudSystem_->setVisible(false);
         }
+        if (crosshairSystem_) {
+            crosshairSystem_->setVisible(false);
+        }
         
         // Show menu
         if (menuSystem_) {
@@ -378,6 +400,9 @@ void Game::toggleMenu() {
         // Show game UI elements when menu is closed
         if (hudSystem_) {
             hudSystem_->setVisible(true);
+        }
+        if (crosshairSystem_) {
+            crosshairSystem_->setVisible(true);
         }
         
         // Hide menu
@@ -426,16 +451,22 @@ bool Game::toggleFullscreen() {
             // Double-check menu sizes were preserved properly
             DEBUG_LOG("Game", "Menu system updated for new screen size: " + std::to_string(width) + "x" + std::to_string(height));
         }
-        
-        // Update HUD position for new screen size
+         // Update HUD position for new screen size
         if (hudSystem_) {
             float uiSize = 120.0f; // Same size as in initialization
             float centerX = (width - uiSize) / 2.0f;
             float bottomY = height - uiSize - 50.0f; // 50px margin from bottom
-            
+
             hudSystem_->setPosition(centerX, bottomY);
             DEBUG_LOG("Game", "HUD repositioned to (" + std::to_string(static_cast<int>(centerX)) + 
                       ", " + std::to_string(static_cast<int>(bottomY)) + ") for screen size: " + 
+                      std::to_string(width) + "x" + std::to_string(height));
+        }
+
+        // Update crosshair position for new screen size
+        if (crosshairSystem_) {
+            crosshairSystem_->centerOnScreen(width, height);
+            DEBUG_LOG("Game", "Crosshair repositioned for screen size: " + 
                       std::to_string(width) + "x" + std::to_string(height));
         }
         

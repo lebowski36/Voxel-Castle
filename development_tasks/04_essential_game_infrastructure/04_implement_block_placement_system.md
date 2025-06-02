@@ -91,8 +91,8 @@ Implement interactive block placement and removal system with real-time mesh upd
 - [x] **4.1: Collision Detection** ✅ COMPLETE
   - [x] Fix face selection for hidden/internal faces (only allow selection of visible faces) ✅ COMPLETE
   - [x] Implement placement validation (can't place blocks inside player) ✅ COMPLETE
-  - [ ] Add support for different block properties (solid vs. non-solid)
-  - [ ] Handle special placement rules for different block types
+  - ~~Add support for different block properties (solid vs. non-solid)~~ (NOT NEEDED FOR NOW)
+  - ~~Handle special placement rules for different block types~~ (NOT NEEDED FOR NOW)
   - ~~Add undo/redo functionality for block operations~~ (NOT NEEDED)
 
 - ~~**4.2: Performance Optimization**~~ (NOT NEEDED)
@@ -101,11 +101,17 @@ Implement interactive block placement and removal system with real-time mesh upd
   - ~~Implement LOD considerations for distant chunks~~
   - ~~Profile and optimize bottlenecks in the placement system~~
 
-- [ ] **4.3: Enhanced User Experience** (SELECTED)
+- [ ] **4.3: Enhanced User Experience** (SELECTED) 🔄 IN PROGRESS
   - [ ] Add crosshair/targeting reticle in center of screen
+    - [ ] Integrate with existing HUD/UI system (follow same visibility rules as BlockSelectionUI)
+    - [ ] Crosshair should disappear when menus are open (same logic as block selection UI)
+    - [ ] Implement as simple center-screen crosshair graphic (+ or ⊕ symbol)
+    - [ ] Position crosshair at exact screen center for precise aiming feedback
+    - [ ] Ensure crosshair renders above world but below menu UI (proper z-order)
+    - [ ] Use consistent UI rendering pipeline with other HUD elements
   - ~~Implement distance limits for block placement/removal~~ (NOT NEEDED)
   - ~~Add keyboard shortcuts for common block types~~ (NOT NEEDED)
-  - [ ] Consider adding creative mode vs. survival mode logic
+  - ~~Consider adding creative mode vs. survival mode logic~~ (NOT NEEDED FOR NOW)
 
 ## Technical Considerations
 

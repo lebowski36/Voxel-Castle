@@ -36,6 +36,7 @@ add_library(VoxelEngine STATIC
     src/ui/elements/UITexture.cpp # Basic texture UI element
     src/ui/elements/UIPanel.cpp # Basic solid color UI element
     src/ui/elements/HUD.cpp # Game HUD element
+    src/ui/elements/Crosshair.cpp # Crosshair targeting reticle
     src/ui/MenuSystem.cpp # Menu system manager
     src/ui/elements/UIButton.cpp # Button UI element
     src/ui/elements/UICheckbox.cpp # Checkbox UI element
