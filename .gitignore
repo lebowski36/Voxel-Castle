@@ -55,3 +55,6 @@ debug_logs/
 *.bak
 debug_log.txt
 gamelog.txt
+
+# Save files - user specific game saves should not be in version control
+saves/
