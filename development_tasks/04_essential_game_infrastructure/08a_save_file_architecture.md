@@ -667,11 +667,12 @@ namespace JsonUtils {
 4. ✅ Add modification tracking to WorldManager
 
 ### Phase 2: Basic Save/Load Functionality
-1. Create SaveManager class
-2. Implement single-chunk serialization
-3. Add save/load functions to Game class
-4. Create basic save/load menu UI
-5. Test manual saving and loading
+1. Implement JSON utility functions
+2. Create SaveManager class
+3. Implement single-chunk serialization
+4. Add save/load functions to Game class
+5. Create basic save/load menu UI
+6. Test manual saving and loading
 
 ### Phase 3: Incremental and Auto-Save
 1. Implement chunk manifest tracking
