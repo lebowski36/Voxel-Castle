@@ -84,7 +84,11 @@ void VoxelCastle::Core::GameRenderCoordinator::renderWorldScene(
     if (targetedBlock.hit && outlineRenderer && outlineRenderer->isReady()) {
         glm::mat4 view = camera.getViewMatrix();
         glm::mat4 projection = camera.getProjectionMatrix();
-        outlineRenderer->renderOutline(targetedBlock.blockPosition, view, projection);
+        // Render only the face being looked at instead of the whole block
+        outlineRenderer->renderFaceHighlight(targetedBlock.blockPosition, 
+                                            targetedBlock.normal, 
+                                            view, 
+                                            projection);
     }
 }
 

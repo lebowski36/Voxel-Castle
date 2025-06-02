@@ -45,9 +45,9 @@ Implement interactive block placement and removal system with real-time mesh upd
   - ✅ Error logging and rendering pipeline working correctly
   - ✅ OpenGL state management functioning properly
 
-- [ ] **2.3: Visual Feedback** 🔄 NEXT FOCUS
-  - [ ] Add block outline/highlight for block being pointed at 🔄 CURRENT SUBTASK
-  - [ ] Show placement preview (where new block will be placed)
+- [ ] **2.3: Visual Feedback** 🔄 IN PROGRESS
+  - [x] Add block outline/highlight for block being pointed at ✅ COMPLETE (Face highlighting implemented)
+  - [ ] Show placement preview (where new block will be placed) 🔄 NEXT SUBTASK
   - [ ] Add visual confirmation when blocks are placed/removed
   - ~~Consider adding sound effects for placement/removal actions~~ (NOT NEEDED)
 

@@ -34,6 +34,22 @@ public:
                       float lineWidth = 2.0f);
 
     /**
+     * Render a face highlight on a specific face of a block
+     * @param blockPosition Position of the block (world coordinates)
+     * @param faceNormal Normal vector of the face to highlight
+     * @param view View matrix from camera
+     * @param projection Projection matrix from camera
+     * @param color Color of the highlight (defaults to white)
+     * @param lineWidth Width of the outline lines (defaults to 2.0f)
+     */
+    void renderFaceHighlight(const glm::ivec3& blockPosition,
+                           const glm::vec3& faceNormal,
+                           const glm::mat4& view, 
+                           const glm::mat4& projection,
+                           const glm::vec3& color = glm::vec3(1.0f, 1.0f, 1.0f),
+                           float lineWidth = 2.0f);
+
+    /**
      * Check if the renderer is ready to use
      * @return True if initialized properly
      */
@@ -43,6 +59,9 @@ private:
     GLuint vao_;
     GLuint vbo_;
     GLuint ebo_;
+    GLuint faceVao_;  // VAO for face highlighting
+    GLuint faceVbo_;  // VBO for face highlighting
+    GLuint faceEbo_;  // EBO for face highlighting
     GLuint shaderProgram_;
     bool ready_;
 
@@ -50,6 +69,11 @@ private:
      * Create the wireframe cube mesh
      */
     void createWireframeCube();
+
+    /**
+     * Create the face highlight mesh
+     */
+    void createFaceHighlightMesh();
 
     /**
      * Load and compile shaders for the outline
