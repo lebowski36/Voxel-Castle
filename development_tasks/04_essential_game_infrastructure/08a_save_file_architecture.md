@@ -1,7 +1,7 @@
 # Save File Architecture Implementation Plan
 
 ## Overview
-This document details the implementation plan for the save file architecture in the Voxel Castle game. The save system will provide persistence for voxel modifications, player state, and game settings, with support for auto-saving, incremental saving, and crash recovery.
+Implementation plan for the save file architecture in Voxel Castle. The save system provides persistence for voxel modifications, player state, and game settings, with support for auto-saving, incremental saving, and crash recovery.
 
 ## Design Goals
 
@@ -10,63 +10,83 @@ This document details the implementation plan for the save file architecture in 
 3. **Extensibility**: Support future game features through versioned saves
 4. **Usability**: Provide intuitive save/load functionality for users
 
-## Save File Format
+## Current Implementation Status
 
-### Directory Structure
-```
-saves/
-  └── [save_name]/
-      ├── metadata.json       # Save metadata (version, timestamp, etc.)
-      ├── player.json         # Player state (position, inventory, etc.)
-      ├── settings.json       # Game settings specific to this save
-      ├── screenshot.png      # Screenshot thumbnail for save selection UI
-      ├── chunks/             # Directory containing chunk data
-      │   ├── manifest.json   # List of all saved chunks with timestamps
-      │   ├── chunk_X_Z.bin   # Binary chunk data files (compressed)
-      │   └── ...
-      └── entities/           # Directory for entity data
-          ├── manifest.json   # List of all saved entities
-          └── entities.bin    # Binary entity data
-```
+### ✅ COMPLETED
+- **F5/F9 Key Bindings**: Quick save/load hotkeys implemented
+- **Camera Position & Mode Saving/Loading**: Real player position and camera mode persistence
+- **Basic File Structure**: Directory structure and metadata files
+- **Chunk Modification Tracking**: WorldManager tracks modified chunks
+- **Chunk Serialization**: Basic binary chunk save/load with compression support
+- **Save Directory Protection**: saves/ folder in .gitignore
 
-### File Formats
+### 🔄 IN PROGRESS
+- **Hybrid Chunk Management System**: Implementation of temporary caching for unloaded chunks
 
-1. **metadata.json**
-```json
-{
-  "version": "1.0.0",
-  "saveDate": "2025-06-02T15:30:45Z",
-  "playTime": 3600,
-  "worldSeed": 12345,
-  "worldName": "My Voxel World",
-  "playerPosition": {"x": 123.45, "y": 64.0, "z": -78.9},
-  "cameraMode": "STRATEGIC_MODE"
-}
-```
+### 📋 PENDING
+- **Menu System Integration**: Wire up save/load to game menu UI
+- **Auto-save System**: Scheduled auto-saving functionality
+- **Save Thumbnails**: Screenshot capture for save preview
 
-2. **chunk_X_Z.bin** (Binary Format)
-- Header (16 bytes):
-  - Magic number (4 bytes): "VCWC" (Voxel Castle World Chunk)
-  - Version (4 bytes): e.g., 0x00000001
-  - Chunk coordinates (8 bytes): X (4 bytes) and Z (4 bytes)
-- Segment Bitmap (2 bytes): Indicates which segments are stored
-- Per-segment Data:
-  - Compression type (1 byte): 0=none, 1=zlib, 2=LZ4
-  - Compressed size (4 bytes)
-  - Segment data (compressed binary voxel data)
+## Implementation Status
 
-3. **chunks/manifest.json**
-```json
-{
-  "chunksVersion": 1,
-  "lastSaved": "2025-06-02T15:30:45Z",
-  "chunks": [
-    {"x": 0, "z": 0, "lastModified": "2025-06-02T15:28:30Z"},
-    {"x": 1, "z": 0, "lastModified": "2025-06-02T15:30:00Z"},
-    {"x": 0, "z": 1, "lastModified": "2025-06-02T15:29:15Z"}
-  ]
-}
-```
+✅ **COMPLETED:**
+- F5/F9 Key Bindings for quick save/load
+- Camera Position & Mode Saving/Loading
+- Basic file structure and metadata handling
+- Console output cleanup
+- Save directory protection (.gitignore)
+- Chunk modification tracking in WorldManager
+- Basic chunk serialization (binary format with VCWC header)
+- SaveManager class with core save/load functionality
+
+🔄 **IN PROGRESS:**
+- Hybrid chunk management system (detailed below)
+- Menu system integration
+
+⏳ **PENDING:**
+- Auto-save system
+- Save thumbnails/screenshots
+- Compression optimization
+- Error recovery mechanisms
+
+## Hybrid Chunk Management System
+
+### Core Concept
+The hybrid system ensures that all player modifications are preserved, even for chunks that get unloaded when the player moves away from them.
+
+### System Components
+
+#### 1. Chunk Tracking System
+- When a chunk is modified, it's marked as "dirty" in memory (✅ implemented)
+- When a chunk is about to be unloaded (player moves away):
+  - The chunk's data is serialized to a temporary cache (RAM or disk)
+  - The chunk coordinates remain in the "modified chunks" list
+  - The chunk can be safely unloaded from active memory
+
+#### 2. Chunk Retrieval
+- If the player returns to the area during the same gameplay session:
+  - Engine checks if the chunk exists in the temporary cache
+  - If found, loaded from cache instead of regenerated
+  - This preserves player modifications and is faster than regeneration
+
+#### 3. Save System Integration
+- When player performs explicit save (F5/quick save):
+  - All currently loaded modified chunks are saved
+  - Plus all previously unloaded-but-modified chunks from temporary cache
+  - After saving, temporary cache can be cleared (memory optimization)
+
+#### 4. Cache Management
+- When a save completes, the "modified chunks" list is cleared
+- Temporary cache is only cleared after saving, not when chunks unload
+- This prevents data loss and ensures all modifications are captured
+
+### Benefits
+- Fast re-loading of chunks during same gameplay session
+- Ability to save all modified chunks, even those not currently loaded
+- No data loss when chunks are unloaded due to distance
+- Memory efficiency with optional cache clearing
+- Seamless experience for players exploring large areas
 
 ## Core Components
 
@@ -666,84 +686,154 @@ namespace JsonUtils {
 3. ✅ Implement JSON utility functions (deferred to Phase 2)
 4. ✅ Add modification tracking to WorldManager
 
-### Phase 2: Basic Save/Load Functionality
-1. Implement JSON utility functions
-2. Create SaveManager class
-3. Implement single-chunk serialization
-4. Add save/load functions to Game class
-5. Create basic save/load menu UI
-6. Test manual saving and loading
+### Phase 2: Basic Save/Load Functionality ✅ IN PROGRESS
+1. ✅ Implement JSON utility functions
+2. ✅ Create SaveManager class
+3. ✅ Implement single-chunk serialization
+4. ✅ Add save/load functions to Game class
+5. ✅ Implement F5/F9 quick save/load hotkeys
+6. ⏳ Create basic save/load menu UI
+7. ✅ Test manual saving and loading
 
 ### Phase 3: Incremental and Auto-Save
-1. Implement chunk manifest tracking
-2. Add auto-save background thread
-3. Create auto-save configuration options
-4. Implement quick save/load hotkeys
+1. ⏳ Implement chunk manifest tracking
+2. ⏳ Add auto-save background thread
+3. ⏳ Create auto-save configuration options
+4. ✅ Implement quick save/load hotkeys
 
 ### Phase 4: Reliability and Polish
-1. Add atomic save operations
-2. Implement save backup system
-3. Add save thumbnails
-4. Create save browser UI
-5. Add error recovery mechanisms
+1. ⏳ Add atomic save operations
+2. ⏳ Implement save backup system
+3. ⏳ Add save thumbnails
+4. ⏳ Create save browser UI
+5. ⏳ Add error recovery mechanisms
 
-## Integration with Game State Management
+## Hybrid Chunk Management System
 
-The save system will integrate with the Game State Management in these ways:
+The save system will use a hybrid approach to manage chunk modifications across play sessions and when chunks are unloaded from memory. This system ensures no player modifications are lost while maintaining memory efficiency.
 
-1. **State Transitions**:
-   - Add SAVING and LOADING states
-   - Ensure proper transitions between states
+### 1. Chunk Tracking System
 
-2. **Menu Integration**:
-   - Add Save/Load options to pause menu
-   - Create dedicated save management UI
+- **In-Memory Tracking**: 
+  - When a chunk is modified, it's marked as "dirty" in memory (already implemented)
+  - The chunk's coordinates are added to the `m_modifiedChunks` set in WorldManager
+  - A timestamp is recorded in `m_chunkModificationTimes` map
 
-3. **Auto-Save Triggers**:
-   - Auto-save when entering menu
-   - Auto-save at regular intervals during gameplay
-   - Auto-save before potentially dangerous operations
+- **Unloading Behavior**: 
+  - When a chunk is about to be unloaded (player moves away), two actions occur:
+    1. The chunk's data is serialized to a temporary cache either in RAM or on disk
+    2. The chunk coordinates remain in the "modified chunks" list
 
-4. **Game Start Flow**:
-   - Add option to load last save on startup
-   - Show save selection screen in main menu
+### 2. Temporary Cache Implementation
 
-## Technical Considerations
+```cpp
+// Add to WorldManager class
+struct CachedChunkData {
+    std::vector<uint8_t> serializedData;
+    std::chrono::system_clock::time_point modificationTime;
+    bool isDirty;
+};
 
-### Compression Strategy
-- Use LZ4 for faster compression/decompression
-- Only compress segments with significant data
-- Test compression ratio vs. performance
+// Cache for unloaded-but-modified chunks
+std::unordered_map<WorldCoordXZ, CachedChunkData, WorldCoordXZHash> m_unloadedModifiedChunks;
 
-### Threading Model
-- Save operations in background thread
-- Use thread pool for multiple chunk operations
-- Ensure thread safety for concurrent access
+// Method to serialize a chunk to the temporary cache
+void cacheChunkBeforeUnloading(const WorldCoordXZ& coord, ChunkColumn* column) {
+    // Skip if this chunk hasn't been modified
+    if (m_modifiedChunks.find(coord) == m_modifiedChunks.end()) {
+        return;
+    }
+    
+    // Serialize the chunk to the cache
+    CachedChunkData cacheData;
+    cacheData.modificationTime = m_chunkModificationTimes[coord];
+    cacheData.isDirty = true;
+    
+    // Serialize chunk data to memory buffer
+    std::vector<uint8_t> buffer;
+    // ... [Serialization code]
+    
+    cacheData.serializedData = std::move(buffer);
+    m_unloadedModifiedChunks[coord] = std::move(cacheData);
+}
+```
 
-### Error Handling
-- Backup old save before writing new one
-- Validate save data integrity with checksums
-- Implement progressive fallback for corrupted saves
+### 3. Chunk Retrieval Process
 
-## Success Criteria
+- **When player returns to a previously visited area**:
+  - The engine first checks if the chunk exists in the temporary cache
+  - If found in cache, it's deserialized and loaded from the cache instead of being regenerated
+  - This preserves player modifications and is faster than regenerating terrain
 
-- Chunk modifications persist between game sessions
-- Auto-save operates without noticeable performance impact
-- Saved game loads with all voxel modifications intact
-- Crash recovery restores recent changes
-- Save files are reasonably sized and load quickly
+```cpp
+// Method to check cache before generating a new chunk
+ChunkColumn* getOrCreateChunkColumnWithCache(int64_t worldX, int64_t worldZ) {
+    WorldCoordXZ coord = {worldToColumnBaseX(worldX), worldToColumnBaseZ(worldZ)};
+    
+    // Check if in active chunks first
+    ChunkColumn* column = getChunkColumn(worldX, worldZ);
+    if (column) {
+        return column;
+    }
+    
+    // Check if in cache
+    auto cacheIt = m_unloadedModifiedChunks.find(coord);
+    if (cacheIt != m_unloadedModifiedChunks.end()) {
+        // Create new column and deserialize from cache
+        column = getOrCreateChunkColumn(worldX, worldZ);
+        
+        // Deserialize from cached data
+        // ... [Deserialization code]
+        
+        // Remove from cache to free memory
+        m_unloadedModifiedChunks.erase(cacheIt);
+        
+        return column;
+    }
+    
+    // Not in cache, create normally
+    return getOrCreateChunkColumn(worldX, worldZ);
+}
+```
 
-## Future Extensions
+### 4. Save System Integration
 
-1. **Cloud Saves**: Integration with platform cloud save systems
-2. **Save Migration**: Tools for upgrading old save formats
-3. **Save Sharing**: Export/import functionality for sharing worlds
-4. **Save Versioning**: Multiple versions of the same save
-5. **World Regions**: Support for partial world loading/saving
+- **When the player performs a save**:
+  - All currently loaded modified chunks are saved directly
+  - All unloaded-but-modified chunks from the temporary cache are also saved
+  - Both sets of chunks are included in the chunk manifest
 
-## Dependencies
+```cpp
+// Method to get all modified chunks (both loaded and cached)
+std::vector<WorldCoordXZ> getAllModifiedChunks() const {
+    // Start with in-memory modified chunks
+    std::vector<WorldCoordXZ> allModified(m_modifiedChunks.begin(), m_modifiedChunks.end());
+    
+    // Add cached chunks
+    for (const auto& pair : m_unloadedModifiedChunks) {
+        // Only add if not already in the list
+        if (m_modifiedChunks.find(pair.first) == m_modifiedChunks.end()) {
+            allModified.push_back(pair.first);
+        }
+    }
+    
+    return allModified;
+}
+```
 
-- JSON library (e.g., nlohmann/json)
-- Compression library (LZ4 or zlib)
-- Screenshot capture functionality
-- File I/O utilities
+### 5. Cache Management
+
+- **After a successful save**:
+  - The "modified chunks" list is cleared
+  - The temporary cache can optionally be cleared to free memory
+  - Alternatively, frequently accessed chunks can be kept in cache for faster loading
+
+### 6. Benefits of This Approach
+
+1. **Data Persistence**: No modifications are lost when chunks are unloaded
+2. **Performance**: Fast re-loading of chunks during the same gameplay session
+3. **Completeness**: All modified chunks are saved, even those not currently loaded
+4. **Memory Efficiency**: Optional cache clearing to manage memory usage
+5. **Seamless Experience**: Players don't experience loss of modifications when returning to areas
+
+This hybrid approach balances the need for data persistence with memory efficiency and performance, ensuring that player modifications are reliably preserved throughout the game session and across saves.

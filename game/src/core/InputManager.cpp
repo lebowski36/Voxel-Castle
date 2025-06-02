@@ -116,8 +116,9 @@ void processInput(Game& game) {
             game.isRunning_ = false;
         }
         else if (e.type == SDL_EVENT_KEY_DOWN) {
-            // Debug - print scancode of all keys 
-            std::cout << "[DEBUG] Key pressed, scancode: " << e.key.scancode << std::endl;
+            // Debug - print scancode of all keys - commented out as too verbose
+            // Only uncomment for specific debugging sessions when needed
+            // std::cout << "[DEBUG] Key pressed, scancode: " << e.key.scancode << std::endl;
             if (e.key.scancode == SDL_SCANCODE_P) {
                 DebugRenderMode oldMode = g_debugRenderMode;
                 g_debugRenderMode = static_cast<DebugRenderMode>((static_cast<int>(g_debugRenderMode) + 1) % 2);
@@ -269,6 +270,8 @@ void processInput(Game& game) {
             
             // With large/fast movements, also monitor and log the absolute position occasionally
             // This helps us catch if the mouse leaves the window despite relative mode
+            // Commented out as too verbose - only uncomment for debugging mouse containment issues
+            /*
             static int motionCounter = 0;
             if (++motionCounter % 10 == 0) { // Every 10th motion event
                 float absX, absY;
@@ -276,6 +279,7 @@ void processInput(Game& game) {
                 float globalX, globalY;
                 SDL_GetGlobalMouseState(&globalX, &globalY);
             }
+            */
         }
         // Handle mouse button events when mouse is NOT captured (likely for UI)
         else if ((e.type == SDL_EVENT_MOUSE_BUTTON_DOWN || e.type == SDL_EVENT_MOUSE_BUTTON_UP) && !game.isMouseCaptured()) {

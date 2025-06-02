@@ -481,12 +481,77 @@ bool SaveManager::saveChunks(const std::string& savePath, bool incrementalOnly) 
         
         std::cout << "[SaveManager] Saving " << chunksToSave.size() << " chunks" << std::endl;
         
-        // For now, just create the chunk manifest
-        // TODO: Implement actual chunk serialization in the next step
+        // Update the chunk manifest
         if (!updateChunkManifest(savePath, chunksToSave)) {
             return false;
         }
         
+        // Save each modified chunk
+        size_t chunksSaved = 0;
+        for (const auto& chunkCoord : chunksToSave) {
+            // Get the chunk column
+            auto* chunkColumn = worldManager_->getChunkColumn(chunkCoord.x, chunkCoord.z);
+            if (chunkColumn) {
+                // Create a binary file for the chunk
+                std::string chunkFilePath = chunksPath + "/chunk_" + 
+                                           std::to_string(chunkCoord.x) + "_" + 
+                                           std::to_string(chunkCoord.z) + ".bin";
+                
+                // Open a binary file for writing
+                std::ofstream chunkFile(chunkFilePath, std::ios::binary);
+                if (!chunkFile) {
+                    std::cerr << "[SaveManager] Failed to create chunk file: " << chunkFilePath << std::endl;
+                    continue;
+                }
+                
+                // Write a simple header with magic number "VCWC" (Voxel Castle World Chunk)
+                const char* magicNumber = "VCWC";
+                chunkFile.write(magicNumber, 4);
+                
+                // Write version (uint32_t)
+                uint32_t version = 1;
+                chunkFile.write(reinterpret_cast<char*>(&version), sizeof(version));
+                
+                // Write chunk coordinates (2 int64_t)
+                int64_t x = chunkCoord.x;
+                int64_t z = chunkCoord.z;
+                chunkFile.write(reinterpret_cast<char*>(&x), sizeof(x));
+                chunkFile.write(reinterpret_cast<char*>(&z), sizeof(z));
+                
+                // Write segment bitmap - which segments exist
+                uint16_t segmentBitmap = 0;
+                for (int i = 0; i < ::VoxelCastle::World::ChunkColumn::CHUNKS_PER_COLUMN; ++i) {
+                    auto* segment = chunkColumn->getSegmentByIndex(i);
+                    if (segment && segment->isGenerated()) {
+                        segmentBitmap |= (1 << i);
+                    }
+                }
+                chunkFile.write(reinterpret_cast<char*>(&segmentBitmap), sizeof(segmentBitmap));
+                
+                // For each segment that exists, write its data
+                for (int i = 0; i < ::VoxelCastle::World::ChunkColumn::CHUNKS_PER_COLUMN; ++i) {
+                    if (segmentBitmap & (1 << i)) {
+                        auto* segment = chunkColumn->getSegmentByIndex(i);
+                        if (segment) {
+                            // Write segment data directly (uncompressed for this phase)
+                            for (int y = 0; y < ::VoxelCastle::World::ChunkSegment::CHUNK_HEIGHT; ++y) {
+                                for (int z = 0; z < ::VoxelCastle::World::ChunkSegment::CHUNK_DEPTH; ++z) {
+                                    for (int x = 0; x < ::VoxelCastle::World::ChunkSegment::CHUNK_WIDTH; ++x) {
+                                        VoxelEngine::World::Voxel voxel = segment->getVoxel(x, y, z);
+                                        chunkFile.write(reinterpret_cast<char*>(&voxel), sizeof(voxel));
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+                
+                chunkFile.close();
+                chunksSaved++;
+            }
+        }
+        
+        std::cout << "[SaveManager] Successfully saved " << chunksSaved << " of " << chunksToSave.size() << " chunks" << std::endl;
         return true;
     } catch (const std::exception& e) {
         std::cerr << "[SaveManager] Exception saving chunks: " << e.what() << std::endl;
@@ -495,10 +560,177 @@ bool SaveManager::saveChunks(const std::string& savePath, bool incrementalOnly) 
 }
 
 bool SaveManager::loadChunks(const std::string& savePath) {
-    // TODO: Implement chunk loading
-    // For now, just check if chunks directory exists
-    std::string chunksPath = savePath + "/chunks";
-    return std::filesystem::exists(chunksPath);
+    if (!worldManager_) {
+        std::cerr << "[SaveManager] WorldManager not available for chunk loading" << std::endl;
+        return false;
+    }
+    
+    try {
+        std::string chunksPath = savePath + "/chunks";
+        
+        // Check if chunks directory exists
+        if (!std::filesystem::exists(chunksPath)) {
+            std::cerr << "[SaveManager] Chunks directory does not exist: " << chunksPath << std::endl;
+            return false;
+        }
+        
+        // Read chunk manifest to identify which chunks to load
+        std::string manifestPath = chunksPath + "/manifest.json";
+        std::string manifestJson;
+        if (!JsonUtils::readJsonFromFile(manifestPath, manifestJson)) {
+            std::cerr << "[SaveManager] Failed to read chunk manifest: " << manifestPath << std::endl;
+            return false;
+        }
+        
+        // Parse the manifest
+        std::vector<::VoxelCastle::World::WorldCoordXZ> chunksToLoad;
+        std::istringstream manifestStream(manifestJson);
+        std::string line;
+        bool inChunksArray = false;
+        while (std::getline(manifestStream, line)) {
+            if (line.find("\"chunks\":") != std::string::npos) {
+                inChunksArray = true;
+                continue;
+            }
+            
+            if (inChunksArray && line.find("{") != std::string::npos) {
+                // Parse chunk coordinates
+                size_t xPos = line.find("\"x\":");
+                size_t zPos = line.find("\"z\":");
+                
+                if (xPos != std::string::npos && zPos != std::string::npos) {
+                    int64_t x = 0, z = 0;
+                    try {
+                        size_t xValueStart = line.find(':', xPos) + 1;
+                        size_t xValueEnd = line.find(',', xValueStart);
+                        x = std::stoll(line.substr(xValueStart, xValueEnd - xValueStart));
+                        
+                        size_t zValueStart = line.find(':', zPos) + 1;
+                        size_t zValueEnd = line.find(',', zValueStart);
+                        if (zValueEnd == std::string::npos) {
+                            zValueEnd = line.find('}', zValueStart);
+                        }
+                        z = std::stoll(line.substr(zValueStart, zValueEnd - zValueStart));
+                        
+                        ::VoxelCastle::World::WorldCoordXZ coord;
+                        coord.x = x;
+                        coord.z = z;
+                        chunksToLoad.push_back(coord);
+                    } catch (const std::exception& e) {
+                        std::cerr << "[SaveManager] Error parsing chunk coordinates: " << e.what() << std::endl;
+                    }
+                }
+            }
+        }
+        
+        if (chunksToLoad.empty()) {
+            std::cout << "[SaveManager] No chunks to load from manifest" << std::endl;
+            return true; // Not an error, just no chunks
+        }
+        
+        std::cout << "[SaveManager] Loading " << chunksToLoad.size() << " chunks" << std::endl;
+        
+        // Load each chunk
+        size_t chunksLoaded = 0;
+        for (const auto& chunkCoord : chunksToLoad) {
+            std::string chunkFilePath = chunksPath + "/chunk_" + 
+                                       std::to_string(chunkCoord.x) + "_" + 
+                                       std::to_string(chunkCoord.z) + ".bin";
+            
+            // Check if the chunk file exists
+            if (!std::filesystem::exists(chunkFilePath)) {
+                std::cerr << "[SaveManager] Chunk file not found: " << chunkFilePath << std::endl;
+                continue;
+            }
+            
+            // Open the chunk file for reading
+            std::ifstream chunkFile(chunkFilePath, std::ios::binary);
+            if (!chunkFile) {
+                std::cerr << "[SaveManager] Failed to open chunk file: " << chunkFilePath << std::endl;
+                continue;
+            }
+            
+            // Read and verify magic number
+            char magicBuffer[5] = {0};
+            chunkFile.read(magicBuffer, 4);
+            if (std::string(magicBuffer) != "VCWC") {
+                std::cerr << "[SaveManager] Invalid chunk file format (wrong magic number): " << chunkFilePath << std::endl;
+                continue;
+            }
+            
+            // Read version
+            uint32_t version;
+            chunkFile.read(reinterpret_cast<char*>(&version), sizeof(version));
+            if (version != 1) {
+                std::cerr << "[SaveManager] Unsupported chunk version: " << version << std::endl;
+                continue;
+            }
+            
+            // Read chunk coordinates
+            int64_t x, z;
+            chunkFile.read(reinterpret_cast<char*>(&x), sizeof(x));
+            chunkFile.read(reinterpret_cast<char*>(&z), sizeof(z));
+            
+            // Verify coordinates match
+            if (x != chunkCoord.x || z != chunkCoord.z) {
+                std::cerr << "[SaveManager] Chunk file coordinates mismatch: " 
+                      << "expected (" << chunkCoord.x << ", " << chunkCoord.z << "), "
+                      << "found (" << x << ", " << z << ")" << std::endl;
+                continue;
+            }
+            
+            // Read segment bitmap
+            uint16_t segmentBitmap;
+            chunkFile.read(reinterpret_cast<char*>(&segmentBitmap), sizeof(segmentBitmap));
+            
+            // Get or create the chunk column
+            auto* chunkColumn = worldManager_->getOrCreateChunkColumn(chunkCoord.x, chunkCoord.z);
+            if (!chunkColumn) {
+                std::cerr << "[SaveManager] Failed to create chunk column for coordinates: " 
+                      << "(" << chunkCoord.x << ", " << chunkCoord.z << ")" << std::endl;
+                continue;
+            }
+            
+            // Load each segment that exists in the file
+            for (int i = 0; i < ::VoxelCastle::World::ChunkColumn::CHUNKS_PER_COLUMN; ++i) {
+                if (segmentBitmap & (1 << i)) {
+                    auto* segment = chunkColumn->getOrCreateSegment(i);
+                    if (segment) {
+                        // Read segment data
+                        for (int y = 0; y < ::VoxelCastle::World::ChunkSegment::CHUNK_HEIGHT; ++y) {
+                            for (int z = 0; z < ::VoxelCastle::World::ChunkSegment::CHUNK_DEPTH; ++z) {
+                                for (int x = 0; x < ::VoxelCastle::World::ChunkSegment::CHUNK_WIDTH; ++x) {
+                                    VoxelEngine::World::Voxel voxel;
+                                    chunkFile.read(reinterpret_cast<char*>(&voxel), sizeof(voxel));
+                                    
+                                    if (chunkFile.good()) {
+                                        segment->setVoxel(x, y, z, voxel);
+                                    }
+                                }
+                            }
+                        }
+                        
+                        // Mark segment as generated but not dirty
+                        segment->setGenerated(true);
+                        segment->markDirty(false);
+                    }
+                }
+            }
+            
+            chunkFile.close();
+            chunksLoaded++;
+        }
+        
+        std::cout << "[SaveManager] Successfully loaded " << chunksLoaded << " of " << chunksToLoad.size() << " chunks" << std::endl;
+        
+        // Mark world as dirty to regenerate meshes
+        worldManager_->markAllSegmentsDirty();
+        
+        return true;
+    } catch (const std::exception& e) {
+        std::cerr << "[SaveManager] Exception loading chunks: " << e.what() << std::endl;
+        return false;
+    }
 }
 
 bool SaveManager::updateChunkManifest(const std::string& savePath, 
