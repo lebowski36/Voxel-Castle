@@ -18,6 +18,7 @@
 
 // Include headers that will be needed for the actual implementations later
 #include <iostream> 
+#include <sstream> 
 #include <vector> // For potential use in migrated logic
 #include <string> // For potential use in migrated logic
 #include <fstream> // For potential use in migrated logic
@@ -44,6 +45,10 @@
 
 // Mouse capture manager
 #include "input/MouseCaptureManager.h"
+
+// Serialization classes for testing
+#include "core/BinaryReader.h"
+#include "core/BinaryWriter.h"
 
 // Forward declared class implementations (will be needed when unique_ptrs are initialized)
 #include "platform/Window.h" 

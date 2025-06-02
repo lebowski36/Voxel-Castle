@@ -21,6 +21,10 @@ add_executable(VoxelFortressGame
     src/core/GameStateDelegate.cpp # State delegate methods for Game class
     src/core/TimeManager.cpp # Time control system
     src/core/GameTimeControl.cpp # Game time control methods
+    src/core/BinaryReader.cpp # Binary data reader for save files
+    src/core/BinaryWriter.cpp # Binary data writer for save files
+    src/core/SerializationTest.cpp # Serialization testing implementation
+    src/core/GameSerializationTest.cpp # Game class serialization test methods
     # Example:
     # src/gameplay/player.cpp
     # ...

@@ -211,6 +211,9 @@ public:
      */
     void requestExit();
 
+    // Testing functions
+    void runSerializationTest();
+
 private:
     // Helper method for world initialization
     void initializeWorldContent();

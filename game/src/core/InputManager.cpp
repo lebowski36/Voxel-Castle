@@ -177,6 +177,13 @@ void processInput(Game& game) {
                     }
                     break;
                 case SDL_SCANCODE_M: game.manualVoxelChangeRequested_ = true; break;
+                
+                // Testing keys
+                case SDL_SCANCODE_T: // Test serialization
+                    std::cout << "[Input] Running serialization test..." << std::endl;
+                    game.runSerializationTest();
+                    break;
+                
                 // Time control keys
                 case SDL_SCANCODE_PAUSE: // Add pause key
                 case SDL_SCANCODE_P: // Alternative pause key (easier to use than PAUSE)
