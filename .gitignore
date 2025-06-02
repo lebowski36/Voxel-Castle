@@ -48,6 +48,7 @@ Thumbs.db
 # Logs
 # bevy_error.log (Covered by *.log)
 *.log
+debug_logs/
 
 # Misc
 *.tmp
