@@ -32,6 +32,7 @@ namespace VoxelEngine {
         class TextureAtlas; 
         class MeshBuilder; 
         class MeshRenderer;
+        class BlockOutlineRenderer;
         class FontManager; // Added
         class TextRenderer; // Added
         class DebugOverlay; // Forward declare DebugOverlay
@@ -155,6 +156,12 @@ public:
     bool isWorldReadyForBlockOperations() const;
     void markWorldAsFullyLoaded() { isWorldFullyLoaded_ = true; }
 
+    // Block targeting (for outline rendering)
+    struct RaycastResult getTargetedBlock() const;
+    VoxelEngine::Rendering::BlockOutlineRenderer* getBlockOutlineRenderer() const { 
+        return blockOutlineRenderer_.get(); 
+    }
+
     // Game loop methods (public for GameLoop access)
     void processInput();
     void update(float deltaTime);
@@ -184,6 +191,7 @@ private:
     std::unique_ptr<VoxelEngine::Rendering::TextureAtlas> textureAtlas_;
     std::unique_ptr<VoxelEngine::Rendering::MeshBuilder> meshBuilder_;
     std::unique_ptr<VoxelEngine::Rendering::MeshRenderer> meshRenderer_;
+    std::unique_ptr<VoxelEngine::Rendering::BlockOutlineRenderer> blockOutlineRenderer_;
     std::unique_ptr<SpectatorCamera> camera_;
     std::unique_ptr<VoxelEngine::UI::MenuSystem> menuSystem_; // Menu system for game interface
     std::shared_ptr<VoxelEngine::UI::HUD> hudSystem_; // HUD (Heads Up Display) for in-game UI elements

@@ -1,6 +1,9 @@
 #include "../../include/core/GameRenderCoordinator.h"
+#include "../../include/core/game.h"
 #include "../../include/SpectatorCamera.h"
 #include "rendering/mesh_renderer.h"
+#include "rendering/block_outline_renderer.h"
+#include "interaction/BlockPlacement.h"
 #include "ui/UISystem.h"
 #include "world/world_manager.h"
 #include <GL/gl.h>
@@ -8,6 +11,7 @@
 #include "platform/Window.h"
 
 void VoxelCastle::Core::GameRenderCoordinator::render(
+    Game& game,
     SpectatorCamera& camera,
     VoxelEngine::Rendering::MeshRenderer& meshRenderer,
     VoxelEngine::Rendering::TextureAtlas& textureAtlas,
@@ -36,7 +40,7 @@ void VoxelCastle::Core::GameRenderCoordinator::render(
     glViewport(0, 0, screenWidth, screenHeight);
     
     // Render the 3D world scene
-    renderWorldScene(camera, meshRenderer, textureAtlas, gameWindow, worldManager, screenWidth, screenHeight);
+    renderWorldScene(game, camera, meshRenderer, textureAtlas, gameWindow, worldManager, screenWidth, screenHeight);
     
     // If UI system exists, update its dimensions to match current window size before rendering
     if (uiSystem) {
@@ -51,6 +55,7 @@ void VoxelCastle::Core::GameRenderCoordinator::render(
 }
 
 void VoxelCastle::Core::GameRenderCoordinator::renderWorldScene(
+    Game& game,
     SpectatorCamera& camera,
     VoxelEngine::Rendering::MeshRenderer& meshRenderer,
     VoxelEngine::Rendering::TextureAtlas& textureAtlas,
@@ -72,6 +77,15 @@ void VoxelCastle::Core::GameRenderCoordinator::renderWorldScene(
         screenWidth,
         screenHeight
     );
+
+    // Render block outline if we have a targeted block
+    auto targetedBlock = game.getTargetedBlock();
+    auto* outlineRenderer = game.getBlockOutlineRenderer();
+    if (targetedBlock.hit && outlineRenderer && outlineRenderer->isReady()) {
+        glm::mat4 view = camera.getViewMatrix();
+        glm::mat4 projection = camera.getProjectionMatrix();
+        outlineRenderer->renderOutline(targetedBlock.blockPosition, view, projection);
+    }
 }
 
 void VoxelCastle::Core::GameRenderCoordinator::ensureViewportForUI(int screenWidth, int screenHeight) {

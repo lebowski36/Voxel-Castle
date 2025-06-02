@@ -21,6 +21,7 @@ add_library(VoxelEngine STATIC
     src/rendering/meshing/two_phase_greedy_meshing_algorithm.cpp # Two-phase greedy meshing algorithm
     src/rendering/mesh_job_system.cpp # Added MeshJobSystem source
     src/rendering/mesh_renderer.cpp # Added MeshRenderer source
+    src/rendering/block_outline_renderer.cpp # Added BlockOutlineRenderer source
     src/rendering/render_utils.cpp # Added RenderUtils source
     src/rendering/debug_utils.cpp # Added DebugUtils source
     src/external/stb_image_impl.cpp # Added stb_image implementation

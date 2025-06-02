@@ -7,6 +7,7 @@
 // Forward declarations
 class SpectatorCamera; // Global namespace
 class Window; // Global namespace
+class Game; // Global namespace
 
 namespace VoxelEngine::Rendering {
     class MeshRenderer;
@@ -51,6 +52,7 @@ public:
      * @param screenHeight Current screen height
      */
     void render(
+        Game& game,
         SpectatorCamera& camera,
         VoxelEngine::Rendering::MeshRenderer& meshRenderer,
         VoxelEngine::Rendering::TextureAtlas& textureAtlas,
@@ -71,6 +73,7 @@ private:
      * @brief Render the 3D world scene
      */
     void renderWorldScene(
+        Game& game,
         SpectatorCamera& camera,
         VoxelEngine::Rendering::MeshRenderer& meshRenderer,
         VoxelEngine::Rendering::TextureAtlas& textureAtlas,

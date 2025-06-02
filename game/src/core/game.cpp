@@ -52,6 +52,8 @@
 #include "rendering/texture_atlas.h"
 #include "rendering/mesh_builder.h"
 #include "rendering/mesh_renderer.h"
+#include "rendering/block_outline_renderer.h"
+#include "interaction/BlockPlacement.h"
 
 // ECS Components & Systems (if directly used or for registration)
 #include "ecs/components/position_component.h"
@@ -84,6 +86,7 @@ Game::Game()
       textureAtlas_(nullptr),
       meshBuilder_(nullptr),
       meshRenderer_(nullptr),
+      blockOutlineRenderer_(nullptr),
       camera_(nullptr),
       menuSystem_(nullptr),
       hudSystem_(nullptr),
@@ -137,6 +140,15 @@ bool Game::initialize() {
         std::cout << "[Game] Warning: Failed to initialize mouse capture manager" << std::endl;
     } else {
         std::cout << "[Game] Mouse capture manager initialized - cursor should now be hidden" << std::endl;
+    }
+
+    // Initialize block outline renderer
+    blockOutlineRenderer_ = std::make_unique<VoxelEngine::Rendering::BlockOutlineRenderer>();
+    if (!blockOutlineRenderer_->initialize()) {
+        std::cout << "[Game] Warning: Failed to initialize block outline renderer" << std::endl;
+        blockOutlineRenderer_.reset(); // Clear it if initialization failed
+    } else {
+        std::cout << "[Game] Block outline renderer initialized successfully" << std::endl;
     }
 
     // Set the global initial camera position for world setup
@@ -508,6 +520,7 @@ void Game::render() {
 
     // Delegate all rendering to the GameRenderCoordinator
     renderCoordinator_->render(
+        *this,
         *camera_,
         *meshRenderer_,
         *textureAtlas_,
@@ -575,4 +588,12 @@ bool Game::isWindowRunning() const {
 
 bool Game::hasWindow() const {
     return gameWindow_ != nullptr;
+}
+
+RaycastResult Game::getTargetedBlock() const {
+    if (!camera_ || !worldManager_) {
+        return RaycastResult(); // Return empty result
+    }
+    
+    return BlockPlacement::raycast(camera_.get(), worldManager_.get());
 }
