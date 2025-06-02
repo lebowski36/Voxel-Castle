@@ -84,11 +84,24 @@ void VoxelCastle::Core::GameRenderCoordinator::renderWorldScene(
     if (targetedBlock.hit && outlineRenderer && outlineRenderer->isReady()) {
         glm::mat4 view = camera.getViewMatrix();
         glm::mat4 projection = camera.getProjectionMatrix();
+        
         // Render only the face being looked at instead of the whole block
         outlineRenderer->renderFaceHighlight(targetedBlock.blockPosition, 
                                             targetedBlock.normal, 
                                             view, 
                                             projection);
+        
+        // Render placement preview (ghost block) at the adjacent position
+        // Always show preview when targeting a valid block (for better UX)
+        // Use a semi-transparent green color for the placement preview
+        glm::vec3 previewColor(0.0f, 1.0f, 0.0f); // Green
+        float previewAlpha = 0.3f; // Semi-transparent
+        
+        outlineRenderer->renderBlockPreview(targetedBlock.adjacentPosition,
+                                           view,
+                                           projection,
+                                           previewColor,
+                                           previewAlpha);
     }
 }
 

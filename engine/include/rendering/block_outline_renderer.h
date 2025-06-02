@@ -50,6 +50,20 @@ public:
                            float lineWidth = 2.0f);
 
     /**
+     * Render a semi-transparent ghost block preview at the specified position
+     * @param blockPosition Position where the block would be placed (world coordinates)
+     * @param view View matrix from camera
+     * @param projection Projection matrix from camera
+     * @param color Color of the preview block (defaults to white with transparency)
+     * @param alpha Transparency level (0.0 = fully transparent, 1.0 = fully opaque)
+     */
+    void renderBlockPreview(const glm::ivec3& blockPosition,
+                          const glm::mat4& view, 
+                          const glm::mat4& projection,
+                          const glm::vec3& color = glm::vec3(1.0f, 1.0f, 1.0f),
+                          float alpha = 0.3f);
+
+    /**
      * Check if the renderer is ready to use
      * @return True if initialized properly
      */
@@ -62,7 +76,11 @@ private:
     GLuint faceVao_;  // VAO for face highlighting
     GLuint faceVbo_;  // VBO for face highlighting
     GLuint faceEbo_;  // EBO for face highlighting
+    GLuint previewVao_;  // VAO for block preview
+    GLuint previewVbo_;  // VBO for block preview
+    GLuint previewEbo_;  // EBO for block preview
     GLuint shaderProgram_;
+    GLuint previewShaderProgram_;  // Separate shader for transparency
     bool ready_;
 
     /**
@@ -76,10 +94,21 @@ private:
     void createFaceHighlightMesh();
 
     /**
+     * Create the block preview mesh (solid cube)
+     */
+    void createBlockPreviewMesh();
+
+    /**
      * Load and compile shaders for the outline
      * @return True if shaders compiled successfully
      */
     bool loadShaders();
+
+    /**
+     * Load and compile shaders for the block preview
+     * @return True if shaders compiled successfully
+     */
+    bool loadPreviewShaders();
 
     /**
      * Load a shader from source code

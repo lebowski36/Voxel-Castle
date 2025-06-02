@@ -35,7 +35,9 @@ void main()
 )";
 
 BlockOutlineRenderer::BlockOutlineRenderer()
-    : vao_(0), vbo_(0), ebo_(0), faceVao_(0), faceVbo_(0), faceEbo_(0), shaderProgram_(0), ready_(false) {
+    : vao_(0), vbo_(0), ebo_(0), faceVao_(0), faceVbo_(0), faceEbo_(0), 
+      previewVao_(0), previewVbo_(0), previewEbo_(0), 
+      shaderProgram_(0), previewShaderProgram_(0), ready_(false) {
 }
 
 BlockOutlineRenderer::~BlockOutlineRenderer() {
@@ -45,7 +47,11 @@ BlockOutlineRenderer::~BlockOutlineRenderer() {
     if (faceVao_ != 0) glDeleteVertexArrays(1, &faceVao_);
     if (faceVbo_ != 0) glDeleteBuffers(1, &faceVbo_);
     if (faceEbo_ != 0) glDeleteBuffers(1, &faceEbo_);
+    if (previewVao_ != 0) glDeleteVertexArrays(1, &previewVao_);
+    if (previewVbo_ != 0) glDeleteBuffers(1, &previewVbo_);
+    if (previewEbo_ != 0) glDeleteBuffers(1, &previewEbo_);
     if (shaderProgram_ != 0) glDeleteProgram(shaderProgram_);
+    if (previewShaderProgram_ != 0) glDeleteProgram(previewShaderProgram_);
 }
 
 bool BlockOutlineRenderer::initialize() {
@@ -54,8 +60,14 @@ bool BlockOutlineRenderer::initialize() {
         return false;
     }
 
+    if (!loadPreviewShaders()) {
+        std::cerr << "Failed to load preview shaders for block outline renderer" << std::endl;
+        return false;
+    }
+
     createWireframeCube();
     createFaceHighlightMesh();
+    createBlockPreviewMesh();
     ready_ = true;
     return true;
 }
@@ -281,6 +293,124 @@ void BlockOutlineRenderer::createFaceHighlightMesh() {
     glBindVertexArray(0);
 }
 
+void BlockOutlineRenderer::createBlockPreviewMesh() {
+    // Cube vertices (0 to 1 range, will be translated)
+    float vertices[] = {
+        // Bottom face (Y = 0)
+        0.0f, 0.0f, 0.0f,  // 0
+        1.0f, 0.0f, 0.0f,  // 1
+        1.0f, 0.0f, 1.0f,  // 2
+        0.0f, 0.0f, 1.0f,  // 3
+        
+        // Top face (Y = 1)
+        0.0f, 1.0f, 0.0f,  // 4
+        1.0f, 1.0f, 0.0f,  // 5
+        1.0f, 1.0f, 1.0f,  // 6
+        0.0f, 1.0f, 1.0f   // 7
+    };
+
+    // Indices for solid cube (36 indices for 6 faces * 2 triangles per face)
+    unsigned int indices[] = {
+        // Bottom face
+        0, 1, 2,  0, 2, 3,
+        // Top face
+        4, 6, 5,  4, 7, 6,
+        // Front face (Z = 1)
+        3, 2, 6,  3, 6, 7,
+        // Back face (Z = 0)
+        0, 4, 5,  0, 5, 1,
+        // Right face (X = 1)
+        1, 5, 6,  1, 6, 2,
+        // Left face (X = 0)
+        0, 3, 7,  0, 7, 4
+    };
+
+    // Generate and bind vertex array object for preview
+    glGenVertexArrays(1, &previewVao_);
+    glBindVertexArray(previewVao_);
+
+    // Generate and bind vertex buffer object for preview
+    glGenBuffers(1, &previewVbo_);
+    glBindBuffer(GL_ARRAY_BUFFER, previewVbo_);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+
+    // Generate and bind element buffer object for preview
+    glGenBuffers(1, &previewEbo_);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, previewEbo_);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
+
+    // Set vertex attributes
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
+    glEnableVertexAttribArray(0);
+
+    // Unbind
+    glBindVertexArray(0);
+}
+
+bool BlockOutlineRenderer::loadPreviewShaders() {
+    // Vertex shader for transparent block preview
+    static const char* previewVertexShaderSource = R"(
+#version 330 core
+layout (location = 0) in vec3 aPos;
+
+uniform mat4 model;
+uniform mat4 view;
+uniform mat4 projection;
+
+void main()
+{
+    gl_Position = projection * view * model * vec4(aPos, 1.0);
+}
+)";
+
+    // Fragment shader for transparent block preview
+    static const char* previewFragmentShaderSource = R"(
+#version 330 core
+out vec4 FragColor;
+
+uniform vec3 blockColor;
+uniform float alpha;
+
+void main()
+{
+    FragColor = vec4(blockColor, alpha);
+}
+)";
+
+    GLuint vertexShader = loadShader(previewVertexShaderSource, GL_VERTEX_SHADER);
+    if (vertexShader == 0) return false;
+
+    GLuint fragmentShader = loadShader(previewFragmentShaderSource, GL_FRAGMENT_SHADER);
+    if (fragmentShader == 0) {
+        glDeleteShader(vertexShader);
+        return false;
+    }
+
+    // Create shader program for preview
+    previewShaderProgram_ = glCreateProgram();
+    glAttachShader(previewShaderProgram_, vertexShader);
+    glAttachShader(previewShaderProgram_, fragmentShader);
+    glLinkProgram(previewShaderProgram_);
+
+    // Check for linking errors
+    GLint success;
+    glGetProgramiv(previewShaderProgram_, GL_LINK_STATUS, &success);
+    if (!success) {
+        char infoLog[512];
+        glGetProgramInfoLog(previewShaderProgram_, 512, NULL, infoLog);
+        std::cerr << "Preview shader program linking failed: " << infoLog << std::endl;
+        glDeleteShader(vertexShader);
+        glDeleteShader(fragmentShader);
+        return false;
+    }
+
+    // Clean up individual shaders
+    glDeleteShader(vertexShader);
+    glDeleteShader(fragmentShader);
+
+    return true;
+}
+
 bool BlockOutlineRenderer::loadShaders() {
     GLuint vertexShader = loadShader(vertexShaderSource, GL_VERTEX_SHADER);
     if (vertexShader == 0) return false;
@@ -333,6 +463,51 @@ GLuint BlockOutlineRenderer::loadShader(const char* source, GLenum type) {
     }
 
     return shader;
+}
+
+void BlockOutlineRenderer::renderBlockPreview(const glm::ivec3& blockPosition,
+                                            const glm::mat4& view, 
+                                            const glm::mat4& projection,
+                                            const glm::vec3& color,
+                                            float alpha) {
+    if (!ready_) return;
+
+    // Save current OpenGL state
+    GLboolean blendEnabled;
+    glGetBooleanv(GL_BLEND, &blendEnabled);
+    GLboolean depthMask;
+    glGetBooleanv(GL_DEPTH_WRITEMASK, &depthMask);
+    GLboolean cullFaceEnabled;
+    glGetBooleanv(GL_CULL_FACE, &cullFaceEnabled);
+
+    // Set up OpenGL state for transparent rendering
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    glDepthMask(GL_FALSE); // Don't write to depth buffer for transparent objects
+    glDisable(GL_CULL_FACE); // Render both front and back faces
+
+    // Use our preview shader program
+    glUseProgram(previewShaderProgram_);
+
+    // Create model matrix - translate to block position
+    glm::mat4 model = glm::translate(glm::mat4(1.0f), glm::vec3(blockPosition));
+
+    // Set uniforms
+    glUniformMatrix4fv(glGetUniformLocation(previewShaderProgram_, "model"), 1, GL_FALSE, glm::value_ptr(model));
+    glUniformMatrix4fv(glGetUniformLocation(previewShaderProgram_, "view"), 1, GL_FALSE, glm::value_ptr(view));
+    glUniformMatrix4fv(glGetUniformLocation(previewShaderProgram_, "projection"), 1, GL_FALSE, glm::value_ptr(projection));
+    glUniform3fv(glGetUniformLocation(previewShaderProgram_, "blockColor"), 1, glm::value_ptr(color));
+    glUniform1f(glGetUniformLocation(previewShaderProgram_, "alpha"), alpha);
+
+    // Render the preview block
+    glBindVertexArray(previewVao_);
+    glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0); // 6 faces * 2 triangles * 3 vertices = 36
+    glBindVertexArray(0);
+
+    // Restore OpenGL state
+    if (!blendEnabled) glDisable(GL_BLEND);
+    if (depthMask) glDepthMask(GL_TRUE);
+    if (cullFaceEnabled) glEnable(GL_CULL_FACE);
 }
 
 } // namespace Rendering
