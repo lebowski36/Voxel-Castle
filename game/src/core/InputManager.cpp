@@ -179,9 +179,9 @@ void processInput(Game& game) {
                 case SDL_SCANCODE_M: game.manualVoxelChangeRequested_ = true; break;
                 
                 // Testing keys
-                case SDL_SCANCODE_T: // Test serialization
-                    std::cout << "[Input] Running serialization test..." << std::endl;
-                    game.runSerializationTest();
+                case SDL_SCANCODE_T: // Test SaveManager (T key is always replaced with the current test)
+                    std::cout << "[Input] Running SaveManager test..." << std::endl;
+                    game.runSaveManagerTest();
                     break;
                 
                 // Time control keys

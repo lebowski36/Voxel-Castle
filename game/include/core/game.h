@@ -213,6 +213,7 @@ public:
 
     // Testing functions
     void runSerializationTest();
+    void runSaveManagerTest(); // T key is always replaced with the current test
 
 private:
     // Helper method for world initialization

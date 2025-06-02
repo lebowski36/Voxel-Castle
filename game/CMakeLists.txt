@@ -25,6 +25,10 @@ add_executable(VoxelFortressGame
     src/core/BinaryWriter.cpp # Binary data writer for save files
     src/core/SerializationTest.cpp # Serialization testing implementation
     src/core/GameSerializationTest.cpp # Game class serialization test methods
+    src/core/JsonUtils.cpp # JSON utility functions for save metadata
+    src/core/SaveManager.cpp # Save/load manager implementation
+    src/core/SaveManagerTest.cpp # SaveManager testing implementation
+    src/core/GameSaveManagerTest.cpp # Game class SaveManager test methods
     # Example:
     # src/gameplay/player.cpp
     # ...
