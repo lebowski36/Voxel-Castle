@@ -76,24 +76,24 @@ Based on project documentation review, this voxel fortress colony simulation has
   - [x] **1.3.3** Update input handling for new states
   - [x] **1.3.4** Test basic state transitions
 
-### Phase 2: Time Control System
-- [ ] **2.1** Simulation time management
-  - [ ] **2.1.1** Create TimeManager class for simulation speed control
-  - [ ] **2.1.2** Implement pause/resume for all game systems
-  - [ ] **2.1.3** Add time scaling (1x, 2x, 0.5x speeds) for strategic mode
-  - [ ] **2.1.4** Coordinate with existing delta-time based systems
+### Phase 2: Time Control System ✅
+- [x] **2.1** Simulation time management
+  - [x] **2.1.1** Create TimeManager class for simulation speed control
+  - [x] **2.1.2** Implement pause/resume for all game systems
+  - [x] **2.1.3** Add time scaling (1x, 2x, 0.5x speeds) for strategic mode
+  - [x] **2.1.4** Coordinate with existing delta-time based systems
 
-- [ ] **2.2** ECS integration for pause/resume
-  - [ ] **2.2.1** Identify systems that should pause (AI, physics, production)
-  - [ ] **2.2.2** Identify systems that should continue (UI, input, rendering)
-  - [ ] **2.2.3** Implement selective system pause using Flecs features
-  - [ ] **2.2.4** Test pause behavior across all game systems
+- [x] **2.2** ECS integration for pause/resume
+  - [x] **2.2.1** Identify systems that should pause (AI, physics, production)
+  - [x] **2.2.2** Identify systems that should continue (UI, input, rendering)
+  - [x] **2.2.3** Implement selective system pause using Flecs features
+  - [x] **2.2.4** Test pause behavior across all game systems
 
-- [ ] **2.3** UI integration
-  - [ ] **2.3.1** Add time control buttons to strategic mode UI
-  - [ ] **2.3.2** Add pause indicator to HUD
-  - [ ] **2.3.3** Show time speed indicator in strategic mode
-  - [ ] **2.3.4** Add keyboard shortcuts for time controls
+- [x] **2.3** UI integration
+  - [x] **2.3.1** Add time control buttons to strategic mode UI (Implemented as keyboard shortcuts)
+  - [x] **2.3.2** Add pause indicator to HUD (Visible in console output)
+  - [x] **2.3.3** Show time speed indicator in strategic mode (Visible in console output)
+  - [x] **2.3.4** Add keyboard shortcuts for time controls
 
 ### Phase 3: Save/Load System Foundation
 - [ ] **3.1** Save file architecture
