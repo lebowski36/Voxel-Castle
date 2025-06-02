@@ -221,17 +221,18 @@ bool Game::initialize() {
         float centerX = (screenWidth_ - uiSize) / 2.0f;
         float bottomY = screenHeight_ - uiSize - 50.0f; // 50px margin from bottom
         
-        std::cout << "[Game] Positioning HUD at bottom center (" << centerX << ", " << bottomY 
-                  << ") with screen size " << screenWidth_ << "x" << screenHeight_ << std::endl;
+        DEBUG_LOG("Game", "Positioning HUD at bottom center (" + std::to_string(static_cast<int>(centerX)) + 
+                  ", " + std::to_string(static_cast<int>(bottomY)) + ") with screen size " + 
+                  std::to_string(screenWidth_) + "x" + std::to_string(screenHeight_));
         
         hudSystem_->setPosition(centerX, bottomY);
         hudSystem_->setSize(uiSize, uiSize);
         hudSystem_->setVisible(true); // Ensure it's visible by default in gameplay mode
         
         // Debug: Let's verify the position was set correctly
-        std::cout << "[Game] Actual HUD position: (" 
-                  << hudSystem_->getPosition().x << ", " 
-                  << hudSystem_->getPosition().y << ")" << std::endl;
+        DEBUG_LOG("Game", "Actual HUD position: (" + 
+                  std::to_string(static_cast<int>(hudSystem_->getPosition().x)) + ", " + 
+                  std::to_string(static_cast<int>(hudSystem_->getPosition().y)) + ")");
         
         // Add to UI system
         menuSystem_->addElement(hudSystem_);
@@ -420,8 +421,9 @@ bool Game::toggleFullscreen() {
             float bottomY = height - uiSize - 50.0f; // 50px margin from bottom
             
             hudSystem_->setPosition(centerX, bottomY);
-            std::cout << "[Game] HUD repositioned to (" << centerX << ", " << bottomY 
-                      << ") for screen size: " << width << "x" << height << std::endl;
+            DEBUG_LOG("Game", "HUD repositioned to (" + std::to_string(static_cast<int>(centerX)) + 
+                      ", " + std::to_string(static_cast<int>(bottomY)) + ") for screen size: " + 
+                      std::to_string(width) + "x" + std::to_string(height));
         }
         
         // Update render coordinator if needed

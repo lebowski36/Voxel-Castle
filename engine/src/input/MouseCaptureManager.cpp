@@ -1,4 +1,5 @@
 #include "input/MouseCaptureManager.h"
+#include "../../game/include/utils/debug_logger.h"
 #include <iostream>
 
 namespace VoxelEngine {
@@ -6,12 +7,12 @@ namespace Input {
 
 bool MouseCaptureManager::initialize(SDL_Window* window, CaptureMode initialMode) {
     if (initialized_) {
-        std::cout << "[MouseCaptureManager] Already initialized" << std::endl;
+        DEBUG_LOG("MouseCaptureManager", "Already initialized");
         return true;
     }
 
     if (!window) {
-        std::cout << "[MouseCaptureManager] Invalid window parameter" << std::endl;
+        std::cerr << "[ERROR] MouseCaptureManager: Invalid window parameter" << std::endl;
         return false;
     }
 
@@ -26,8 +27,8 @@ bool MouseCaptureManager::initialize(SDL_Window* window, CaptureMode initialMode
         return false;
     }
 
-    std::cout << "[MouseCaptureManager] Initialized successfully with mode: " 
-              << (initialMode == CaptureMode::CAPTURED ? "CAPTURED" : "FREE") << std::endl;
+    DEBUG_LOG("MouseCaptureManager", "Initialized successfully with mode: " + 
+              std::string(initialMode == CaptureMode::CAPTURED ? "CAPTURED" : "FREE"));
     return true;
 }
 
@@ -54,13 +55,12 @@ bool MouseCaptureManager::setCaptureMode(CaptureMode mode) {
 
     if (applySDLSettings(mode)) {
         currentMode_ = mode;
-        std::cout << "[MouseCaptureManager] Capture mode changed to: " 
-                  << (mode == CaptureMode::CAPTURED ? "CAPTURED" : "FREE") << std::endl;
+        DEBUG_LOG("MouseCaptureManager", "Capture mode changed to: " + 
+                  std::string(mode == CaptureMode::CAPTURED ? "CAPTURED" : "FREE"));
         return true;
     }
 
-    std::cout << "[MouseCaptureManager] Failed to apply SDL settings for mode: " 
-              << (mode == CaptureMode::CAPTURED ? "CAPTURED" : "FREE") << std::endl;
+    std::cerr << "[ERROR] Failed to change mouse capture mode" << std::endl;
     return false;
 }
 

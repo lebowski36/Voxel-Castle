@@ -12,10 +12,13 @@ namespace World {
 
 // Simple heightmap world generation using value noise
 void WorldGenerator::generateChunkSegment(ChunkSegment& segment, int worldX, int worldY, int worldZ) {
-    // Added for logging task 3.1
-    if (worldX == 0 && worldY == 0 && worldZ == 0) { // Log only for a specific segment to avoid spam
-        std::cout << "[WorldGenerator] Generating segment at indices: (" << worldX << ", " << worldY << ", " << worldZ << ")" << std::endl;
+    // Show world loading progress only for the first segment
+    if (worldX == 0 && worldY == 0 && worldZ == 0) {
+        std::cout << "[INFO] World generation started" << std::endl;
     }
+    
+    DEBUG_LOG("WorldGenerator", "Generating segment at indices: (" + std::to_string(worldX) + 
+              ", " + std::to_string(worldY) + ", " + std::to_string(worldZ) + ")");
 
     constexpr int width = ChunkSegment::CHUNK_WIDTH;
     constexpr int height = ChunkSegment::CHUNK_HEIGHT; // e.g., 32

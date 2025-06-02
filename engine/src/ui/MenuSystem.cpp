@@ -217,19 +217,20 @@ void MenuSystem::updateScreenSize(int width, int height) {
         glm::vec2 mainSize = mainMenu_->getSize();
         glm::vec2 settingsSize = settingsMenu_->getSize();
         
-        std::cout << "[MenuSystem] Verification - Main menu size: " << mainSize.x << "x" << mainSize.y 
-                  << ", Settings menu size: " << settingsSize.x << "x" << settingsSize.y << std::endl;
+        DEBUG_LOG("MenuSystem", "Verification - Main menu size: " + std::to_string(static_cast<int>(mainSize.x)) + 
+                  "x" + std::to_string(static_cast<int>(mainSize.y)) + ", Settings menu size: " + 
+                  std::to_string(static_cast<int>(settingsSize.x)) + "x" + std::to_string(static_cast<int>(settingsSize.y)));
         
         // Correct sizes if somehow they got changed
         if (std::abs(mainSize.x - MAIN_MENU_WIDTH) > 0.1f || 
             std::abs(mainSize.y - mainMenuHeight) > 0.1f) {
-            std::cout << "[MenuSystem] WARNING: Main menu size incorrect, resetting..." << std::endl;
+            DEBUG_LOG("MenuSystem", "WARNING: Main menu size incorrect, resetting...");
             mainMenu_->setSize(MAIN_MENU_WIDTH, mainMenuHeight);
         }
         
         if (std::abs(settingsSize.x - SETTINGS_MENU_WIDTH) > 0.1f || 
             std::abs(settingsSize.y - settingsMenuHeight) > 0.1f) {
-            std::cout << "[MenuSystem] WARNING: Settings menu size incorrect, resetting..." << std::endl;
+            DEBUG_LOG("MenuSystem", "WARNING: Settings menu size incorrect, resetting...");
             settingsMenu_->setSize(SETTINGS_MENU_WIDTH, settingsMenuHeight);
         }
     }

@@ -1,4 +1,5 @@
 #include "ui/FontManager.h"
+#include "../../game/include/utils/debug_logger.h"
 #include <glad/glad.h>
 #define STB_TRUETYPE_IMPLEMENTATION
 #include <stb_truetype.h>
@@ -59,7 +60,7 @@ bool FontManager::loadFont(const std::string& fontPath, float pixelHeight) {
         info.advance = bc.xadvance;
         glyphs_[c] = info;
     }
-    std::cout << "[FontManager] Loaded font: " << fontPath << " height: " << pixelHeight << std::endl;
+    DEBUG_LOG("FontManager", "Loaded font: " + std::string(fontPath) + " height: " + std::to_string(pixelHeight));
     return true;
 }
 
