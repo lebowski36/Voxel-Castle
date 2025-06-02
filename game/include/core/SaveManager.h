@@ -9,6 +9,7 @@
 #include <atomic>
 #include <chrono>
 #include <glm/vec3.hpp>
+#include "core/CameraMode.h"
 
 // Forward declarations
 class Game; // Game class is in global scope, not in VoxelCastle::Core
@@ -38,6 +39,10 @@ struct SaveInfo {
     std::string lastPlayedDate;
     bool hasQuickSave;
     bool hasAutoSave;
+    
+    // Game state information
+    glm::vec3 playerPosition;
+    CameraMode cameraMode;
 };
 
 /**
@@ -87,29 +92,36 @@ public:
     /**
      * @brief Save the current game state.
      * @param saveName The name of the save.
+     * @param playerPosition Current player/camera position.
+     * @param cameraMode Current camera mode.
      * @param isQuickSave Whether this is a quick save operation.
      * @return True if the save was successful.
      */
-    bool saveGame(const std::string& saveName, bool isQuickSave = false);
+    bool saveGame(const std::string& saveName, const glm::vec3& playerPosition, 
+                  CameraMode cameraMode, bool isQuickSave = false);
 
     /**
      * @brief Load a game from a save file.
      * @param saveName The name of the save to load.
+     * @param saveInfo Output parameter for loaded save information.
      * @return True if the load was successful.
      */
-    bool loadGame(const std::string& saveName);
+    bool loadGame(const std::string& saveName, SaveInfo& saveInfo);
 
     /**
      * @brief Perform a quick save operation.
+     * @param playerPosition Current player/camera position.
+     * @param cameraMode Current camera mode.
      * @return True if the quick save was successful.
      */
-    bool quickSave();
+    bool quickSave(const glm::vec3& playerPosition, CameraMode cameraMode);
 
     /**
      * @brief Perform a quick load operation.
+     * @param saveInfo Output parameter for loaded save information.
      * @return True if the quick load was successful.
      */
-    bool quickLoad();
+    bool quickLoad(SaveInfo& saveInfo);
 
     /**
      * @brief Start auto-save functionality.
@@ -164,9 +176,11 @@ private:
     /**
      * @brief Save metadata for a save file.
      * @param savePath The path to the save directory.
+     * @param playerPosition Current player/camera position.
+     * @param cameraMode Current camera mode.
      * @return True if metadata was saved successfully.
      */
-    bool saveMetadata(const std::string& savePath);
+    bool saveMetadata(const std::string& savePath, const glm::vec3& playerPosition, CameraMode cameraMode);
 
     /**
      * @brief Load metadata from a save file.

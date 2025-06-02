@@ -737,8 +737,17 @@ bool Game::saveGame(const std::string& saveName) {
         return false;
     }
     
+    // Get current player position and camera mode
+    glm::vec3 currentPosition;
+    if (cameraMode_ == CameraMode::FIRST_PERSON) {
+        currentPosition = playerPosition_;
+    } else {
+        // Free flying mode - use camera position
+        currentPosition = camera_ ? camera_->getPosition() : glm::vec3(0.0f, 70.0f, 0.0f);
+    }
+    
     std::cout << "[Game] Saving game: " << saveName << std::endl;
-    return saveManager_->saveGame(saveName);
+    return saveManager_->saveGame(saveName, currentPosition, cameraMode_);
 }
 
 bool Game::loadGame(const std::string& saveName) {
@@ -747,8 +756,39 @@ bool Game::loadGame(const std::string& saveName) {
         return false;
     }
     
+    VoxelCastle::Core::SaveInfo saveInfo;
     std::cout << "[Game] Loading game: " << saveName << std::endl;
-    return saveManager_->loadGame(saveName);
+    bool success = saveManager_->loadGame(saveName, saveInfo);
+    
+    if (success) {
+        // Apply loaded position and camera mode
+        std::cout << "[Game] Applying loaded position: (" 
+                  << saveInfo.playerPosition.x << ", " 
+                  << saveInfo.playerPosition.y << ", " 
+                  << saveInfo.playerPosition.z << ")" << std::endl;
+        std::cout << "[Game] Applying loaded camera mode: " 
+                  << (saveInfo.cameraMode == CameraMode::FREE_FLYING ? "FREE_FLYING" : "FIRST_PERSON") << std::endl;
+        
+        // Set camera mode first
+        cameraMode_ = saveInfo.cameraMode;
+        
+        // Apply position based on camera mode
+        if (cameraMode_ == CameraMode::FIRST_PERSON) {
+            playerPosition_ = saveInfo.playerPosition;
+            if (camera_) {
+                camera_->setPosition(playerPosition_);
+            }
+        } else {
+            // Free flying mode - set camera position directly
+            if (camera_) {
+                camera_->setPosition(saveInfo.playerPosition);
+            }
+        }
+        
+        std::cout << "[Game] Load completed successfully" << std::endl;
+    }
+    
+    return success;
 }
 
 bool Game::quickSave() {
@@ -757,8 +797,17 @@ bool Game::quickSave() {
         return false;
     }
     
+    // Get current player position and camera mode
+    glm::vec3 currentPosition;
+    if (cameraMode_ == CameraMode::FIRST_PERSON) {
+        currentPosition = playerPosition_;
+    } else {
+        // Free flying mode - use camera position
+        currentPosition = camera_ ? camera_->getPosition() : glm::vec3(0.0f, 70.0f, 0.0f);
+    }
+    
     std::cout << "[Game] Quick save requested" << std::endl;
-    return saveManager_->quickSave();
+    return saveManager_->quickSave(currentPosition, cameraMode_);
 }
 
 bool Game::quickLoad() {
@@ -767,6 +816,37 @@ bool Game::quickLoad() {
         return false;
     }
     
+    VoxelCastle::Core::SaveInfo saveInfo;
     std::cout << "[Game] Quick load requested" << std::endl;
-    return saveManager_->quickLoad();
+    bool success = saveManager_->quickLoad(saveInfo);
+    
+    if (success) {
+        // Apply loaded position and camera mode
+        std::cout << "[Game] Applying loaded position: (" 
+                  << saveInfo.playerPosition.x << ", " 
+                  << saveInfo.playerPosition.y << ", " 
+                  << saveInfo.playerPosition.z << ")" << std::endl;
+        std::cout << "[Game] Applying loaded camera mode: " 
+                  << (saveInfo.cameraMode == CameraMode::FREE_FLYING ? "FREE_FLYING" : "FIRST_PERSON") << std::endl;
+        
+        // Set camera mode first
+        cameraMode_ = saveInfo.cameraMode;
+        
+        // Apply position based on camera mode
+        if (cameraMode_ == CameraMode::FIRST_PERSON) {
+            playerPosition_ = saveInfo.playerPosition;
+            if (camera_) {
+                camera_->setPosition(playerPosition_);
+            }
+        } else {
+            // Free flying mode - set camera position directly
+            if (camera_) {
+                camera_->setPosition(saveInfo.playerPosition);
+            }
+        }
+        
+        std::cout << "[Game] Quick load completed successfully" << std::endl;
+    }
+    
+    return success;
 }

@@ -105,7 +105,8 @@ bool SaveManager::createSave(const std::string& saveName, const std::string& dis
     return true;
 }
 
-bool SaveManager::saveGame(const std::string& saveName, bool isQuickSave) {
+bool SaveManager::saveGame(const std::string& saveName, const glm::vec3& playerPosition, 
+                          CameraMode cameraMode, bool isQuickSave) {
     // Acquire mutex for thread safety
     std::lock_guard<std::mutex> lock(saveMutex_);
     
@@ -142,7 +143,7 @@ bool SaveManager::saveGame(const std::string& saveName, bool isQuickSave) {
     }
     
     // Save metadata
-    if (!saveMetadata(tempPath)) {
+    if (!saveMetadata(tempPath, playerPosition, cameraMode)) {
         handleSaveError(saveName, "Failed to save metadata");
         isSaving_ = false;
         return false;
@@ -200,7 +201,7 @@ bool SaveManager::saveGame(const std::string& saveName, bool isQuickSave) {
     return true;
 }
 
-bool SaveManager::loadGame(const std::string& saveName) {
+bool SaveManager::loadGame(const std::string& saveName, SaveInfo& saveInfo) {
     // Acquire mutex for thread safety
     std::lock_guard<std::mutex> lock(saveMutex_);
     
@@ -224,12 +225,14 @@ bool SaveManager::loadGame(const std::string& saveName) {
     }
     
     // Load metadata first to validate save
-    SaveInfo saveInfo;
     if (!loadMetadata(savePath, saveInfo)) {
         handleSaveError(saveName, "Failed to load metadata");
         isLoading_ = false;
         return false;
     }
+    
+    // Store the save name in saveInfo
+    saveInfo.name = saveName;
     
     // Load player data
     if (!loadPlayerData(savePath)) {
@@ -256,12 +259,12 @@ bool SaveManager::loadGame(const std::string& saveName) {
     return true;
 }
 
-bool SaveManager::quickSave() {
-    return saveGame("quicksave", true);
+bool SaveManager::quickSave(const glm::vec3& playerPosition, CameraMode cameraMode) {
+    return saveGame("quicksave", playerPosition, cameraMode, true);
 }
 
-bool SaveManager::quickLoad() {
-    return loadGame("quicksave");
+bool SaveManager::quickLoad(SaveInfo& saveInfo) {
+    return loadGame("quicksave", saveInfo);
 }
 
 void SaveManager::startAutoSave(int intervalMinutes) {
@@ -292,7 +295,10 @@ void SaveManager::stopAutoSave() {
 }
 
 bool SaveManager::performAutoSave() {
-    return saveGame("autosave", false);
+    // TODO: Get real position and camera mode from Game class when autosave is implemented
+    glm::vec3 fallbackPosition(0.0f, 70.0f, 0.0f);
+    CameraMode fallbackMode = CameraMode::FREE_FLYING;
+    return saveGame("autosave", fallbackPosition, fallbackMode, false);
 }
 
 std::vector<SaveInfo> SaveManager::listSaves() {
@@ -356,19 +362,31 @@ std::string SaveManager::getCurrentSaveName() const {
     return currentSaveName_;
 }
 
-bool SaveManager::saveMetadata(const std::string& savePath) {
+bool SaveManager::saveMetadata(const std::string& savePath, const glm::vec3& playerPosition, CameraMode cameraMode) {
     try {
+        // Convert camera mode to string
+        std::string cameraModeStr;
+        switch (cameraMode) {
+            case CameraMode::FREE_FLYING:
+                cameraModeStr = "FREE_FLYING";
+                break;
+            case CameraMode::FIRST_PERSON:
+                cameraModeStr = "FIRST_PERSON";
+                break;
+            default:
+                cameraModeStr = "FREE_FLYING"; // Default fallback
+                break;
+        }
+        
         // Get current game state
-        glm::vec3 playerPosition(0.0f, 70.0f, 0.0f); // TODO: Get from player/camera
-        std::string cameraMode = "STRATEGIC_MODE";     // TODO: Get from game state
-        uint64_t playTime = 0;                         // TODO: Get from game timer
+        uint64_t playTime = 0; // TODO: Get from game timer when implemented
         
         std::string metadataJson = JsonUtils::createMetadataJson(
             "1.0.0",
             currentSaveName_.empty() ? "Voxel World" : currentSaveName_,
             playerPosition,
             playTime,
-            cameraMode
+            cameraModeStr
         );
         
         std::string metadataPath = savePath + "/metadata.json";
@@ -400,6 +418,17 @@ bool SaveManager::loadMetadata(const std::string& savePath, SaveInfo& saveInfo) 
             saveInfo.screenshotPath = savePath + "/screenshot.png";
             saveInfo.timestamp = JsonUtils::getCurrentTimestamp();
             saveInfo.lastPlayedDate = JsonUtils::getCurrentTimestamp();
+            
+            // Store position and camera mode
+            saveInfo.playerPosition = playerPosition;
+            if (cameraMode == "FREE_FLYING") {
+                saveInfo.cameraMode = CameraMode::FREE_FLYING;
+            } else if (cameraMode == "FIRST_PERSON") {
+                saveInfo.cameraMode = CameraMode::FIRST_PERSON;
+            } else {
+                saveInfo.cameraMode = CameraMode::FREE_FLYING; // Default fallback
+            }
+            
             return true;
         }
         

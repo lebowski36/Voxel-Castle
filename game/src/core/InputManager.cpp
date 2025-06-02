@@ -184,6 +184,17 @@ void processInput(Game& game) {
                     game.runSaveManagerTest();
                     break;
                 
+                // Save/Load keys
+                case SDL_SCANCODE_F5: // Quick Save
+                    std::cout << "[Save] Quick save triggered (F5)..." << std::endl;
+                    game.quickSave();
+                    break;
+                    
+                case SDL_SCANCODE_F9: // Quick Load
+                    std::cout << "[Load] Quick load triggered (F9)..." << std::endl;
+                    game.quickLoad();
+                    break;
+                
                 // Time control keys
                 case SDL_SCANCODE_PAUSE: // Add pause key
                 case SDL_SCANCODE_P: // Alternative pause key (easier to use than PAUSE)
