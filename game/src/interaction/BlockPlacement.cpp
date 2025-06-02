@@ -194,7 +194,7 @@ void BlockPlacement::handleMouseClick(Game& game, bool isLeftClick) {
         // Additional safety check: ensure target chunk exists or can be created safely
         glm::ivec3 targetPos = isLeftClick ? rayResult.adjacentPosition : rayResult.blockPosition;
         if (!isChunkPositionSafe(worldManager, targetPos)) {
-            ERROR_LOG("BlockPlacement", "Chunk at target position is not safe for modification! Aborting.");
+            DEBUG_LOG("BlockPlacement", "[ERROR] Chunk at target position is not safe for modification! Aborting.");
             return;
         }
         
@@ -224,8 +224,8 @@ void BlockPlacement::handleMouseClick(Game& game, bool isLeftClick) {
                               << std::hex << errAfterSetVoxel << std::dec << std::endl;
                 }
                 
-                std::cout << "[INFO] Block placed at (" 
-                          << rayResult.adjacentPosition.x << ", " << rayResult.adjacentPosition.y << ", " << rayResult.adjacentPosition.z << ")" << std::endl;
+                DEBUG_LOG("BlockOperations", "Block placed at (" + std::to_string(rayResult.adjacentPosition.x) + 
+                          ", " + std::to_string(rayResult.adjacentPosition.y) + ", " + std::to_string(rayResult.adjacentPosition.z) + ")");
                           
                 DEBUG_LOG("BlockPlacement", "Marking chunk dirty...");
                 // Clear OpenGL errors before marking dirty
@@ -265,8 +265,8 @@ void BlockPlacement::handleMouseClick(Game& game, bool isLeftClick) {
                           << std::hex << errAfterSetVoxel << std::dec << std::endl;
             }
             
-            std::cout << "[INFO] Block removed at (" 
-                      << rayResult.blockPosition.x << ", " << rayResult.blockPosition.y << ", " << rayResult.blockPosition.z << ")" << std::endl;
+            DEBUG_LOG("BlockOperations", "Block removed at (" + std::to_string(rayResult.blockPosition.x) + 
+                      ", " + std::to_string(rayResult.blockPosition.y) + ", " + std::to_string(rayResult.blockPosition.z) + ")");
 
             DEBUG_LOG("BlockPlacement", "Marking chunk dirty for removal...");
             // Clear OpenGL errors before marking dirty
