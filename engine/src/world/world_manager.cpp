@@ -299,6 +299,27 @@ void WorldManager::markAllSegmentsDirty() {
     std::cout << "[WorldManager] Marked all segments dirty for mesh regeneration." << std::endl;
 }
 
+void WorldManager::resetWorld() {
+    std::cout << "[WorldManager] Resetting world - clearing all chunks" << std::endl;
+    
+    // Clear all chunk columns
+    m_chunkColumns.clear();
+    
+    // Clear modified chunks tracking
+    m_modifiedChunks.clear();
+    m_chunkModificationTimes.clear();
+    
+    // Reset the quadtree if it exists
+    if (m_chunkQuadtree) {
+        m_chunkQuadtree.reset();
+        // Create new quadtree with proper AABB2D bounds
+        ::world::AABB2D bounds = {-1024, -1024, 1024, 1024};
+        m_chunkQuadtree = std::make_unique<::world::Quadtree>(bounds);
+    }
+    
+    std::cout << "[WorldManager] World reset complete" << std::endl;
+}
+
 // === Save System Integration Implementation ===
 
 std::vector<WorldCoordXZ> WorldManager::getModifiedChunks() const {

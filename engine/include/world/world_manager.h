@@ -150,6 +150,15 @@ public:
     ::VoxelCastle::World::ChunkColumn* getOrCreateChunkColumn(int_fast64_t worldX, int_fast64_t worldZ);
 
     /**
+     * @brief Retrieves an existing ChunkColumn or creates a new empty one without world generation.
+     * This method is specifically for loading chunks from save files where world generation should be skipped.
+     * @param worldX The global X-coordinate of the ChunkColumn.
+     * @param worldZ The global Z-coordinate of the ChunkColumn.
+     * @return A pointer to the ChunkColumn at the specified coordinates.
+     */
+    ::VoxelCastle::World::ChunkColumn* getOrCreateEmptyChunkColumn(int_fast64_t worldX, int_fast64_t worldZ);
+
+    /**
      * @brief Iterates through all chunk segments and rebuilds their meshes if they are marked dirty.
      * @param atlas The texture atlas to use for mesh generation.
      * @param meshBuilder The mesh builder to use for generating mesh data.
@@ -260,6 +269,12 @@ public:
      * This is useful when a global change (like debug mode switch) requires all meshes to be rebuilt.
      */
     void markAllSegmentsDirty();
+
+    /**
+     * @brief Reset the world by clearing all loaded chunks.
+     * This is used when loading a save file to ensure a clean state.
+     */
+    void resetWorld();
 
     // === Save System Integration ===
     

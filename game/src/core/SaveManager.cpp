@@ -234,6 +234,11 @@ bool SaveManager::loadGame(const std::string& saveName, SaveInfo& saveInfo) {
     // Store the save name in saveInfo
     saveInfo.name = saveName;
     
+    // Reset the world before loading (clear all existing chunks)
+    if (worldManager_) {
+        worldManager_->resetWorld();
+    }
+    
     // Load player data
     if (!loadPlayerData(savePath)) {
         handleSaveError(saveName, "Failed to load player data");
@@ -710,9 +715,9 @@ bool SaveManager::loadChunks(const std::string& savePath) {
                             }
                         }
                         
-                        // Mark segment as generated but not dirty
+                        // Mark segment as generated and dirty to trigger mesh rebuild
                         segment->setGenerated(true);
-                        segment->markDirty(false);
+                        segment->markDirty(true);
                     }
                 }
             }
@@ -723,8 +728,7 @@ bool SaveManager::loadChunks(const std::string& savePath) {
         
         std::cout << "[SaveManager] Successfully loaded " << chunksLoaded << " of " << chunksToLoad.size() << " chunks" << std::endl;
         
-        // Mark world as dirty to regenerate meshes
-        worldManager_->markAllSegmentsDirty();
+        // Note: Segments are automatically marked dirty during setVoxel calls, no need to mark all dirty
         
         return true;
     } catch (const std::exception& e) {
