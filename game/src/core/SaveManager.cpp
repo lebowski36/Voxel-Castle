@@ -571,11 +571,15 @@ bool SaveManager::loadChunks(const std::string& savePath) {
     }
     
     try {
+        // Set the world manager to loading mode to prevent world generation
+        worldManager_->setLoadingState(true);
+        
         std::string chunksPath = savePath + "/chunks";
         
         // Check if chunks directory exists
         if (!std::filesystem::exists(chunksPath)) {
             std::cerr << "[SaveManager] Chunks directory does not exist: " << chunksPath << std::endl;
+            worldManager_->setLoadingState(false);
             return false;
         }
         
@@ -688,8 +692,11 @@ bool SaveManager::loadChunks(const std::string& savePath) {
             uint16_t segmentBitmap;
             chunkFile.read(reinterpret_cast<char*>(&segmentBitmap), sizeof(segmentBitmap));
             
-            // Get or create the chunk column
-            auto* chunkColumn = worldManager_->getOrCreateChunkColumn(chunkCoord.x, chunkCoord.z);
+            // Mark this chunk as loaded to prevent world generation
+            worldManager_->markChunkLoaded(chunkCoord.x, chunkCoord.z);
+            
+            // Get or create the chunk column without world generation
+            auto* chunkColumn = worldManager_->getOrCreateEmptyChunkColumn(chunkCoord.x, chunkCoord.z);
             if (!chunkColumn) {
                 std::cerr << "[SaveManager] Failed to create chunk column for coordinates: " 
                       << "(" << chunkCoord.x << ", " << chunkCoord.z << ")" << std::endl;
@@ -727,6 +734,9 @@ bool SaveManager::loadChunks(const std::string& savePath) {
         }
         
         std::cout << "[SaveManager] Successfully loaded " << chunksLoaded << " of " << chunksToLoad.size() << " chunks" << std::endl;
+        
+        // Reset loading state but keep tracked loaded chunks
+        worldManager_->setLoadingState(false);
         
         // Note: Segments are automatically marked dirty during setVoxel calls, no need to mark all dirty
         

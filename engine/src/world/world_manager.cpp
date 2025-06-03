@@ -95,14 +95,23 @@ ChunkColumn* WorldManager::getOrCreateChunkColumn(int_fast64_t worldX, int_fast6
         auto newColumnUniquePtr = std::make_unique<ChunkColumn>(coord.x, coord.z);
         column = newColumnUniquePtr.get(); // Get raw pointer before moving
 
-        // Procedural world generation for each segment
-        for (uint8_t i = 0; i < VoxelCastle::World::ChunkColumn::CHUNKS_PER_COLUMN; ++i) {
-            VoxelCastle::World::ChunkSegment* segment = column->getSegmentByIndex(i);
-            if (segment) {
-                // Pass world coordinates for this segment
-                VoxelCastle::World::WorldGenerator::generateChunkSegment(*segment, coord.x, i, coord.z);
-                // setVoxel marks the segment dirty, so it will be meshed on the first updateDirtyMeshes call
+        // Skip world generation if this chunk was loaded from a save file
+        // or if we're currently in loading mode (to prevent generating terrain for chunks that will be loaded next)
+        bool skipWorldGen = m_isLoadingFromSave || isChunkLoaded(coord.x, coord.z);
+        
+        if (!skipWorldGen) {
+            // Procedural world generation for each segment
+            for (uint8_t i = 0; i < VoxelCastle::World::ChunkColumn::CHUNKS_PER_COLUMN; ++i) {
+                VoxelCastle::World::ChunkSegment* segment = column->getSegmentByIndex(i);
+                if (segment) {
+                    // Pass world coordinates for this segment
+                    VoxelCastle::World::WorldGenerator::generateChunkSegment(*segment, coord.x, i, coord.z);
+                    // setVoxel marks the segment dirty, so it will be meshed on the first updateDirtyMeshes call
+                }
             }
+        } else {
+            std::cout << "[WorldManager] Skipping world generation for loaded chunk: (" 
+                      << coord.x << ", " << coord.z << ")" << std::endl;
         }
 
         m_chunkColumns[coord] = std::move(newColumnUniquePtr);
@@ -114,6 +123,28 @@ ChunkColumn* WorldManager::getOrCreateChunkColumn(int_fast64_t worldX, int_fast6
     return column;
 }
 
+ChunkColumn* WorldManager::getOrCreateEmptyChunkColumn(int_fast64_t worldX, int_fast64_t worldZ) {
+    WorldCoordXZ coord{worldX, worldZ}; // These are already base coordinates
+    ChunkColumn* column = getChunkColumn(coord.x, coord.z);
+    if (!column) {
+        // Column doesn't exist, create it without world generation
+        auto newColumnUniquePtr = std::make_unique<ChunkColumn>(coord.x, coord.z);
+        column = newColumnUniquePtr.get(); // Get raw pointer before moving
+        
+        // Mark this as a loaded chunk to prevent world generation later
+        markChunkLoaded(coord.x, coord.z);
+        
+        std::cout << "[WorldManager] Created empty chunk column for loading: (" 
+                  << coord.x << ", " << coord.z << ")" << std::endl;
+
+        m_chunkColumns[coord] = std::move(newColumnUniquePtr);
+        // Insert into Quadtree for spatial queries
+        if (m_chunkQuadtree) {
+            m_chunkQuadtree->insert(static_cast<int32_t>(coord.x), static_cast<int32_t>(coord.z), column);
+        }
+    }
+    return column;
+}
 
 void WorldManager::updateDirtyMeshes(VoxelEngine::Rendering::TextureAtlas& atlas, VoxelEngine::Rendering::MeshBuilder& meshBuilder) {
     // For compatibility: call enqueueDirtyMeshJobs and processFinishedMeshJobs
@@ -309,6 +340,10 @@ void WorldManager::resetWorld() {
     m_modifiedChunks.clear();
     m_chunkModificationTimes.clear();
     
+    // Clear loaded chunks tracking
+    m_loadedChunks.clear();
+    m_isLoadingFromSave = false;
+    
     // Reset the quadtree if it exists
     if (m_chunkQuadtree) {
         m_chunkQuadtree.reset();
@@ -341,6 +376,29 @@ std::chrono::system_clock::time_point WorldManager::getChunkModificationTime(con
         return it->second;
     }
     return std::chrono::system_clock::time_point{}; // Return epoch if not found
+}
+
+void WorldManager::markChunkLoaded(int_fast64_t worldX, int_fast64_t worldZ) {
+    WorldCoordXZ coord{worldX, worldZ};
+    m_loadedChunks.insert(coord);
+    std::cout << "[WorldManager] Marked chunk as loaded: (" << worldX << ", " << worldZ << ")" << std::endl;
+}
+
+bool WorldManager::isChunkLoaded(int_fast64_t worldX, int_fast64_t worldZ) const {
+    WorldCoordXZ coord{worldX, worldZ};
+    return m_loadedChunks.find(coord) != m_loadedChunks.end();
+}
+
+void WorldManager::setLoadingState(bool isLoading) {
+    m_isLoadingFromSave = isLoading;
+    if (isLoading) {
+        std::cout << "[WorldManager] Entering load state - world generation will be skipped for loaded chunks" << std::endl;
+    }
+}
+
+void WorldManager::clearLoadedChunks() {
+    m_loadedChunks.clear();
+    m_isLoadingFromSave = false;
 }
 
 } // namespace World

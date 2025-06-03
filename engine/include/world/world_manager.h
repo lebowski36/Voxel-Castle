@@ -192,6 +192,88 @@ public:
     static int_fast64_t worldToColumnBaseZ(int_fast64_t worldZ);
 
     /**
+     * @brief Get modification time for a specific chunk.
+     * @param coord The chunk coordinate to query.
+     * @return The time point when the chunk was last modified, or epoch if not found.
+     */
+    std::chrono::system_clock::time_point getChunkModificationTime(const WorldCoordXZ& coord) const;
+
+    /**
+     * @brief Mark a chunk as loaded from save file, so it skips world generation.
+     * @param worldX The X coordinate of the chunk.
+     * @param worldZ The Z coordinate of the chunk.
+     */
+    void markChunkLoaded(int_fast64_t worldX, int_fast64_t worldZ);
+
+    /**
+     * @brief Check if a chunk was loaded from a save file.
+     * @param worldX The X coordinate of the chunk.
+     * @param worldZ The Z coordinate of the chunk.
+     * @return True if the chunk was loaded from a save file, false otherwise.
+     */
+    bool isChunkLoaded(int_fast64_t worldX, int_fast64_t worldZ) const;
+
+    /**
+     * @brief Sets the loading state flag.
+     * @param isLoading Whether chunks are currently being loaded from a save.
+     */
+    void setLoadingState(bool isLoading);
+
+    /**
+     * @brief Clear the list of loaded chunks.
+     * Should be called when resetting the world.
+     */
+    void clearLoadedChunks();
+
+    /**
+     * @brief Query chunk columns within a specified region.
+     * @param xMin Minimum X coordinate of the region.
+     * @param zMin Minimum Z coordinate of the region.
+     * @param xMax Maximum X coordinate of the region.
+     * @param zMax Maximum Z coordinate of the region.
+     * @return Vector of chunk column pointers within the region.
+     */
+    std::vector<ChunkColumn*> queryChunkColumnsInRegion(int32_t xMin, int32_t zMin, int32_t xMax, int32_t zMax) const;
+
+    /**
+     * @brief Update active chunks based on center position and load radius.
+     * @param centerWorldPosition The center position in world coordinates.
+     * @param loadRadiusInSegments The radius to load chunks within, in segments.
+     * @param generator The world generator to use for creating new chunks.
+     */
+    void updateActiveChunks(const glm::vec3& centerWorldPosition, int loadRadiusInSegments, WorldGenerator& generator);
+
+    /**
+     * @brief Mark all chunk segments as dirty for mesh regeneration.
+     */
+    void markAllSegmentsDirty();
+
+    /**
+     * @brief Reset the world by clearing all chunks and related data.
+     */
+    void resetWorld();
+
+    /**
+     * @brief Get list of all modified chunk coordinates.
+     * @return Vector of WorldCoordXZ coordinates that have been modified.
+     */
+    std::vector<WorldCoordXZ> getModifiedChunks() const;
+
+    /**
+     * @brief Clear the list of modified chunks.
+     */
+    void clearModifiedChunks();
+
+    /**
+     * @brief Get the total number of chunk columns.
+     * @return The number of chunk columns currently loaded.
+     */
+    size_t getChunkCount() const;
+
+private:
+    // Helper to convert world coordinates to ChunkColumn base coordinates
+    
+    /**
      * @brief Map storing all active ChunkColumns, keyed by their XZ world coordinates.
      */
     std::map<::VoxelCastle::World::WorldCoordXZ, std::shared_ptr<::VoxelCastle::World::ChunkColumn>> m_chunkColumns;
@@ -244,67 +326,12 @@ public:
      * Used to track when each chunk was last modified.
      */
     std::unordered_map<WorldCoordXZ, std::chrono::system_clock::time_point, WorldCoordXZHash> m_chunkModificationTimes;
-
-public:
-    /**
-     * @brief Query all ChunkColumns in a given XZ region (inclusive).
-     * @param xMin Minimum X of region.
-     * @param zMin Minimum Z of region.
-     * @param xMax Maximum X of region.
-     * @param zMax Maximum Z of region.
-     * @return Vector of pointers to ChunkColumns in the region.
-     */
-    std::vector<::VoxelCastle::World::ChunkColumn*> queryChunkColumnsInRegion(int32_t xMin, int32_t zMin, int32_t xMax, int32_t zMax) const;
-
-    /**
-     * @brief Updates active chunks based on the center world position and load radius.
-     * @param centerWorldPosition The center position in the world.
-     * @param loadRadiusInSegments The radius in segments to load around the center.
-     * @param generator The world generator to use for creating new chunks.
-     */
-    void updateActiveChunks(const glm::vec3& centerWorldPosition, int loadRadiusInSegments, WorldGenerator& generator);
-
-    /**
-     * @brief Marks all segments in all chunk columns as dirty.
-     * This is useful when a global change (like debug mode switch) requires all meshes to be rebuilt.
-     */
-    void markAllSegmentsDirty();
-
-    /**
-     * @brief Reset the world by clearing all loaded chunks.
-     * This is used when loading a save file to ensure a clean state.
-     */
-    void resetWorld();
-
-    // === Save System Integration ===
     
-    /**
-     * @brief Get list of all modified chunks since last save.
-     * @return Vector of chunk coordinates that have been modified.
-     */
-    std::vector<WorldCoordXZ> getModifiedChunks() const;
-
-    /**
-     * @brief Reset modified chunks tracking after save.
-     * Should be called after a successful save operation.
-     */
-    void clearModifiedChunks();
-
-    /**
-     * @brief Get the total number of loaded chunks.
-     * @return Number of chunks currently loaded in memory.
-     */
-    size_t getChunkCount() const;
-
-    /**
-     * @brief Get modification time for a specific chunk.
-     * @param coord The chunk coordinate to query.
-     * @return The time point when the chunk was last modified, or epoch if not found.
-     */
-    std::chrono::system_clock::time_point getChunkModificationTime(const WorldCoordXZ& coord) const;
-
-private:
-    // Helper to convert world coordinates to ChunkColumn base coordinates
+    // Set of chunks that were loaded from save files - these should skip world generation
+    std::unordered_set<WorldCoordXZ, WorldCoordXZHash> m_loadedChunks;
+    
+    // Flag to indicate if we're currently loading chunks from a save file
+    bool m_isLoadingFromSave = false;
 };
 
 } // namespace World
