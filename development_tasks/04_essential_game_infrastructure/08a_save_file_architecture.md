@@ -363,10 +363,12 @@ Camera orientation (yaw/pitch) is loaded from save data but not applied immediat
 - These methods don't call `updateCameraVectors()` internally
 - Camera orientation changes are only applied when `processMouseMovement()` is called
 - Need to force immediate camera vector update after loading orientation
+- **✅ FIXED:** Modified `setYaw()` and `setPitch()` methods to call `updateCameraVectors()` immediately
+- Camera orientation should now be applied instantly upon loading without requiring mouse movement
 
 **Solution Approach:**
-- Add explicit `updateCameraVectors()` call after setting camera orientation in load operations
-- Verify camera view matrix is updated immediately upon loading
+- ✅ Add explicit `updateCameraVectors()` call after setting camera orientation in load operations
+- ✅ Verify camera view matrix is updated immediately upon loading
 
 ### Issue 2: Block Modification Persistence Failure ⚠️ CRITICAL  
 **Problem Description:**

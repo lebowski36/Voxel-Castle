@@ -189,6 +189,7 @@ bool SaveManager::saveGame(const std::string& saveName, const glm::vec3& playerP
     
     // Clear modified chunks tracking
     if (worldManager_) {
+        std::cout << "[SaveManager] DEBUG: Clearing modified chunks tracking after successful save" << std::endl;
         worldManager_->clearModifiedChunks();
     }
     
@@ -492,6 +493,12 @@ bool SaveManager::saveChunks(const std::string& savePath, bool incrementalOnly) 
             chunksToSave = worldManager_->getModifiedChunks();
         }
         
+        std::cout << "[SaveManager] DEBUG: Getting modified chunks from WorldManager" << std::endl;
+        std::cout << "[SaveManager] DEBUG: Found " << chunksToSave.size() << " modified chunks to save" << std::endl;
+        for (const auto& coord : chunksToSave) {
+            std::cout << "[SaveManager] DEBUG: Modified chunk: (" << coord.x << ", " << coord.z << ")" << std::endl;
+        }
+        
         std::cout << "[SaveManager] Saving " << chunksToSave.size() << " chunks" << std::endl;
         
         // Update the chunk manifest
@@ -646,6 +653,10 @@ bool SaveManager::loadChunks(const std::string& savePath) {
         }
         
         std::cout << "[SaveManager] Loading " << chunksToLoad.size() << " chunks" << std::endl;
+        
+        for (const auto& coord : chunksToLoad) {
+            std::cout << "[SaveManager] DEBUG: Will load chunk: (" << coord.x << ", " << coord.z << ")" << std::endl;
+        }
         
         // Load each chunk
         size_t chunksLoaded = 0;

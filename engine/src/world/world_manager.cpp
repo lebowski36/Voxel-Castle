@@ -54,6 +54,10 @@ void WorldManager::setVoxel(int_fast64_t worldX, int_fast64_t worldY, int_fast64
         WorldCoordXZ coord = {colX, colZ};
         m_modifiedChunks.insert(coord);
         m_chunkModificationTimes[coord] = std::chrono::system_clock::now();
+        
+        std::cout << "[WorldManager] DEBUG: Block modified at (" << worldX << ", " << worldY << ", " << worldZ 
+                  << ") in chunk (" << colX << ", " << colZ << "). Total modified chunks: " 
+                  << m_modifiedChunks.size() << std::endl;
     }
     // Else: Potentially log an error if column creation failed, though getOrCreate should handle it or throw
 }
