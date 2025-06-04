@@ -28,19 +28,110 @@ Implementation plan for the save file architecture in Voxel Castle. The save sys
 - **Auto-save System**: Scheduled auto-saving functionality
 - **Save Thumbnails**: Screenshot capture for save preview
 
-## Implementation Status
+## Current Critical Issues (Requiring Investigation)
 
-✅ **COMPLETED:**
-- F5/F9 Key Bindings for quick save/load
-- Camera Position & Mode Saving/Loading
-- Basic file structure and metadata handling
-- Console output cleanup
-- Save directory protection (.gitignore)
-- Chunk modification tracking in WorldManager
-- Basic chunk serialization (binary format with VCWC header)
-- SaveManager class with core save/load functionality
+### 🔧 ACTIVE DEBUGGING TASKS
 
-🔄 **IN PROGRESS:**
+#### Issue 1: Camera Orientation Update Delay
+**Status**: 🐛 **BUG IDENTIFIED**
+
+**Problem Description**: 
+- Camera yaw and pitch are saved and loaded correctly from save files
+- However, the camera orientation is not immediately applied upon loading
+- The camera appears to remain in its pre-load orientation until the player moves the mouse
+- When mouse movement occurs, the camera "snaps" to the loaded orientation
+
+**Exact Reproduction Steps**:
+1. F5 to save current position and camera orientation
+2. Turn camera right (change yaw/pitch)
+3. F9 to load the saved game
+4. Map reloads and camera position is correct, but camera direction remains as it was before F9
+5. Move mouse - camera suddenly "flips" to the loaded orientation
+
+**Current Investigation Findings**:
+- `camera_->setYaw()` and `camera_->setPitch()` are being called in Game::loadGame() and Game::quickLoad()
+- Camera position restoration works correctly (immediate effect)
+- Camera orientation restoration has delayed effect (only after mouse input)
+
+**Hypothesis**: 
+- The SpectatorCamera class may need additional method calls to force immediate orientation update
+- Possible missing view matrix recalculation or similar internal state update
+
+**Next Steps**: 
+- [ ] Investigate SpectatorCamera implementation for orientation update methods
+- [ ] Check if there's a `updateViewMatrix()` or similar method that needs to be called
+- [ ] Test calling additional camera update methods after setYaw/setPitch
+
+---
+
+#### Issue 2: Block Modifications Lost During Save/Load
+**Status**: 🐛 **CRITICAL BUG**
+
+**Problem Description**:
+- Block placement/destruction works correctly during gameplay
+- Saving appears to complete without errors
+- Loading removes all placed blocks and restores original terrain
+- Post-load behavior shows slow chunk loading and some chunks may not load at all
+
+**Exact Reproduction Steps**:
+1. Place or destroy blocks in the world
+2. F5 to save the game
+3. F9 to load the saved game
+4. All block modifications are gone, world appears as originally generated
+5. Chunks load slowly and some areas remain unloaded
+
+**Current Investigation Findings**:
+- Save system calls saveGame() which should capture modified chunks
+- SaveManager is supposed to save chunk modifications via WorldManager
+- Load system restores player position/orientation but loses block changes
+
+**Suspected Root Causes**:
+1. **Chunk Modification Tracking**: WorldManager may not be properly tracking which chunks have been modified
+2. **Serialization Pipeline**: Modified chunks may not be getting serialized during save
+3. **Deserialization Pipeline**: Chunk data may not be getting properly restored during load
+4. **Manifest System**: The chunk manifest may not be correctly listing modified chunks
+5. **Timing Issues**: Save/load may be happening before chunk modifications are committed
+
+**Investigation Plan**:
+- [ ] **Step 1: Verify Chunk Modification Tracking**
+  - Add debug logging to block placement/destruction to confirm chunks are marked as modified
+  - Check if WorldManager.m_modifiedChunks set contains expected chunk coordinates
+  - Verify that block changes trigger modification flags
+  
+- [ ] **Step 2: Examine Save Pipeline**
+  - Add debug logging to SaveManager.saveGame() to see what chunks are being saved
+  - Verify that modified chunks are being serialized to disk
+  - Check save file contents to confirm chunk data is present
+  
+- [ ] **Step 3: Examine Load Pipeline** 
+  - Add debug logging to SaveManager.loadGame() to see what chunks are being loaded
+  - Verify that chunk data is being deserialized correctly
+  - Check if loaded chunks are replacing generated chunks properly
+  
+- [ ] **Step 4: Check Hybrid Chunk Management**
+  - Verify that unloaded-but-modified chunks are being cached properly
+  - Ensure cache is being checked during load operations
+  - Confirm that all modified chunks (loaded + cached) are included in saves
+
+**Files to Investigate**:
+- `game/src/world/WorldManager.cpp` - Chunk modification tracking
+- `game/src/core/SaveManager.cpp` - Save/load pipeline  
+- `game/src/world/chunk/ChunkColumn.cpp` - Chunk serialization
+- `game/src/core/game.cpp` - Save/load integration
+
+**Debug Logging Locations Needed**:
+- Block placement/destruction operations
+- Chunk modification flag setting
+- Save operation chunk enumeration
+- Load operation chunk restoration
+- Chunk cache operations
+
+**Current Investigation Findings**:
+(Space for recording findings during investigation)
+
+---
+
+### 🔄 IN PROGRESS
 - Hybrid chunk management system (detailed below)
 - Menu system integration
 

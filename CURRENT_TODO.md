@@ -78,6 +78,7 @@ This protocol outlines how the AI agent (GitHub Copilot) operates. Adherence to 
 - [x] Implement Physics System
 - [x] Develop UI Framework
 - [x] Clean Up Console Output and Logging System
+- [ ] **URGENT: Merge Dual Logging Systems** - Fix inconsistency between DEBUG_LOG() (writes to debug_logs/) and VoxelCastle::Utils::logToFile() (writes to debug_log.txt) 
 - [ ] Implement Game State Management
 - [x] Implement Block Placement System
 - [ ] Implement Modular UI System

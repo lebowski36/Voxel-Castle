@@ -43,6 +43,8 @@ struct SaveInfo {
     // Game state information
     glm::vec3 playerPosition;
     CameraMode cameraMode;
+    float cameraYaw = -90.0f;
+    float cameraPitch = 0.0f;
 };
 
 /**
@@ -94,11 +96,13 @@ public:
      * @param saveName The name of the save.
      * @param playerPosition Current player/camera position.
      * @param cameraMode Current camera mode.
+     * @param cameraYaw Current camera yaw angle.
+     * @param cameraPitch Current camera pitch angle.
      * @param isQuickSave Whether this is a quick save operation.
      * @return True if the save was successful.
      */
     bool saveGame(const std::string& saveName, const glm::vec3& playerPosition, 
-                  CameraMode cameraMode, bool isQuickSave = false);
+                  CameraMode cameraMode, float cameraYaw, float cameraPitch, bool isQuickSave = false);
 
     /**
      * @brief Load a game from a save file.
@@ -112,9 +116,11 @@ public:
      * @brief Perform a quick save operation.
      * @param playerPosition Current player/camera position.
      * @param cameraMode Current camera mode.
+     * @param cameraYaw Current camera yaw angle.
+     * @param cameraPitch Current camera pitch angle.
      * @return True if the quick save was successful.
      */
-    bool quickSave(const glm::vec3& playerPosition, CameraMode cameraMode);
+    bool quickSave(const glm::vec3& playerPosition, CameraMode cameraMode, float cameraYaw, float cameraPitch);
 
     /**
      * @brief Perform a quick load operation.
@@ -178,9 +184,11 @@ private:
      * @param savePath The path to the save directory.
      * @param playerPosition Current player/camera position.
      * @param cameraMode Current camera mode.
+     * @param cameraYaw Camera yaw angle.
+     * @param cameraPitch Camera pitch angle.
      * @return True if metadata was saved successfully.
      */
-    bool saveMetadata(const std::string& savePath, const glm::vec3& playerPosition, CameraMode cameraMode);
+    bool saveMetadata(const std::string& savePath, const glm::vec3& playerPosition, CameraMode cameraMode, float cameraYaw, float cameraPitch);
 
     /**
      * @brief Load metadata from a save file.

@@ -38,6 +38,8 @@ public:
      * @param playerPosition The player's current position.
      * @param playTimeSeconds Total play time in seconds.
      * @param cameraMode The current camera mode.
+     * @param cameraYaw Camera yaw angle in degrees.
+     * @param cameraPitch Camera pitch angle in degrees.
      * @return JSON string containing the metadata.
      */
     static std::string createMetadataJson(
@@ -45,7 +47,9 @@ public:
         const std::string& worldName,
         const glm::vec3& playerPosition,
         uint64_t playTimeSeconds,
-        const std::string& cameraMode
+        const std::string& cameraMode,
+        float cameraYaw = 0.0f,
+        float cameraPitch = 0.0f
     );
 
     /**
@@ -56,6 +60,8 @@ public:
      * @param playerPosition Output parameter for the player position.
      * @param playTimeSeconds Output parameter for play time.
      * @param cameraMode Output parameter for camera mode.
+     * @param cameraYaw Output parameter for camera yaw angle.
+     * @param cameraPitch Output parameter for camera pitch angle.
      * @return True if parsing was successful, false otherwise.
      */
     static bool parseMetadataJson(
@@ -64,7 +70,9 @@ public:
         std::string& worldName,
         glm::vec3& playerPosition,
         uint64_t& playTimeSeconds,
-        std::string& cameraMode
+        std::string& cameraMode,
+        float& cameraYaw,
+        float& cameraPitch
     );
 
     /**

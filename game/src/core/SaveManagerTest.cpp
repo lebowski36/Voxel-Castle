@@ -23,8 +23,10 @@ void runSaveManagerTest() {
     glm::vec3 playerPos(123.45f, 64.0f, -78.9f);
     uint64_t playTime = 3600; // 1 hour
     std::string cameraMode = "STRATEGIC_MODE";
+    float cameraYaw = -90.0f;
+    float cameraPitch = 0.0f;
     
-    std::string metadataJson = JsonUtils::createMetadataJson(version, worldName, playerPos, playTime, cameraMode);
+    std::string metadataJson = JsonUtils::createMetadataJson(version, worldName, playerPos, playTime, cameraMode, cameraYaw, cameraPitch);
     std::cout << "Created metadata JSON:" << std::endl;
     std::cout << metadataJson << std::endl;
     
@@ -32,9 +34,10 @@ void runSaveManagerTest() {
     std::string parsedVersion, parsedWorldName, parsedCameraMode;
     glm::vec3 parsedPlayerPos;
     uint64_t parsedPlayTime;
+    float parsedCameraYaw, parsedCameraPitch;
     
     bool parseSuccess = JsonUtils::parseMetadataJson(
-        metadataJson, parsedVersion, parsedWorldName, parsedPlayerPos, parsedPlayTime, parsedCameraMode
+        metadataJson, parsedVersion, parsedWorldName, parsedPlayerPos, parsedPlayTime, parsedCameraMode, parsedCameraYaw, parsedCameraPitch
     );
     
     if (parseSuccess) {
@@ -43,6 +46,9 @@ void runSaveManagerTest() {
         std::cout << "  World Name: " << parsedWorldName << std::endl;
         std::cout << "  Player Position: (" << parsedPlayerPos.x << ", " << parsedPlayerPos.y << ", " << parsedPlayerPos.z << ")" << std::endl;
         std::cout << "  Play Time: " << parsedPlayTime << " seconds" << std::endl;
+        std::cout << "  Camera Mode: " << parsedCameraMode << std::endl;
+        std::cout << "  Camera Yaw: " << parsedCameraYaw << std::endl;
+        std::cout << "  Camera Pitch: " << parsedCameraPitch << std::endl;
         std::cout << "  Camera Mode: " << parsedCameraMode << std::endl;
         
         // Validate parsed values

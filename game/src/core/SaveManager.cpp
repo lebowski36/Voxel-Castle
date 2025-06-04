@@ -6,6 +6,7 @@
 #include <filesystem>
 #include <fstream>
 #include <chrono>
+#include <set>
 
 namespace VoxelCastle {
 namespace Core {
@@ -106,7 +107,7 @@ bool SaveManager::createSave(const std::string& saveName, const std::string& dis
 }
 
 bool SaveManager::saveGame(const std::string& saveName, const glm::vec3& playerPosition, 
-                          CameraMode cameraMode, bool isQuickSave) {
+                          CameraMode cameraMode, float cameraYaw, float cameraPitch, bool isQuickSave) {
     // Acquire mutex for thread safety
     std::lock_guard<std::mutex> lock(saveMutex_);
     
@@ -143,7 +144,7 @@ bool SaveManager::saveGame(const std::string& saveName, const glm::vec3& playerP
     }
     
     // Save metadata
-    if (!saveMetadata(tempPath, playerPosition, cameraMode)) {
+    if (!saveMetadata(tempPath, playerPosition, cameraMode, cameraYaw, cameraPitch)) {
         handleSaveError(saveName, "Failed to save metadata");
         isSaving_ = false;
         return false;
@@ -264,8 +265,8 @@ bool SaveManager::loadGame(const std::string& saveName, SaveInfo& saveInfo) {
     return true;
 }
 
-bool SaveManager::quickSave(const glm::vec3& playerPosition, CameraMode cameraMode) {
-    return saveGame("quicksave", playerPosition, cameraMode, true);
+bool SaveManager::quickSave(const glm::vec3& playerPosition, CameraMode cameraMode, float cameraYaw, float cameraPitch) {
+    return saveGame("quicksave", playerPosition, cameraMode, cameraYaw, cameraPitch, true);
 }
 
 bool SaveManager::quickLoad(SaveInfo& saveInfo) {
@@ -303,7 +304,9 @@ bool SaveManager::performAutoSave() {
     // TODO: Get real position and camera mode from Game class when autosave is implemented
     glm::vec3 fallbackPosition(0.0f, 70.0f, 0.0f);
     CameraMode fallbackMode = CameraMode::FREE_FLYING;
-    return saveGame("autosave", fallbackPosition, fallbackMode, false);
+    float fallbackYaw = -90.0f;
+    float fallbackPitch = 0.0f;
+    return saveGame("autosave", fallbackPosition, fallbackMode, fallbackYaw, fallbackPitch, false);
 }
 
 std::vector<SaveInfo> SaveManager::listSaves() {
@@ -367,7 +370,7 @@ std::string SaveManager::getCurrentSaveName() const {
     return currentSaveName_;
 }
 
-bool SaveManager::saveMetadata(const std::string& savePath, const glm::vec3& playerPosition, CameraMode cameraMode) {
+bool SaveManager::saveMetadata(const std::string& savePath, const glm::vec3& playerPosition, CameraMode cameraMode, float cameraYaw, float cameraPitch) {
     try {
         // Convert camera mode to string
         std::string cameraModeStr;
@@ -391,7 +394,9 @@ bool SaveManager::saveMetadata(const std::string& savePath, const glm::vec3& pla
             currentSaveName_.empty() ? "Voxel World" : currentSaveName_,
             playerPosition,
             playTime,
-            cameraModeStr
+            cameraModeStr,
+            cameraYaw,
+            cameraPitch
         );
         
         std::string metadataPath = savePath + "/metadata.json";
@@ -414,8 +419,9 @@ bool SaveManager::loadMetadata(const std::string& savePath, SaveInfo& saveInfo) 
         std::string version, worldName, cameraMode;
         glm::vec3 playerPosition;
         uint64_t playTime;
+        float cameraYaw, cameraPitch;
         
-        if (JsonUtils::parseMetadataJson(jsonContent, version, worldName, playerPosition, playTime, cameraMode)) {
+        if (JsonUtils::parseMetadataJson(jsonContent, version, worldName, playerPosition, playTime, cameraMode, cameraYaw, cameraPitch)) {
             saveInfo.displayName = worldName;
             saveInfo.playTimeSeconds = playTime;
             saveInfo.hasQuickSave = false; // TODO: Implement
@@ -426,6 +432,8 @@ bool SaveManager::loadMetadata(const std::string& savePath, SaveInfo& saveInfo) 
             
             // Store position and camera mode
             saveInfo.playerPosition = playerPosition;
+            saveInfo.cameraYaw = cameraYaw;
+            saveInfo.cameraPitch = cameraPitch;
             if (cameraMode == "FREE_FLYING") {
                 saveInfo.cameraMode = CameraMode::FREE_FLYING;
             } else if (cameraMode == "FIRST_PERSON") {
@@ -752,25 +760,81 @@ bool SaveManager::updateChunkManifest(const std::string& savePath,
     try {
         std::string manifestPath = savePath + "/chunks/manifest.json";
         
-        // Create simple manifest JSON
+        // Read existing manifest to merge with new chunks
+        std::set<::VoxelCastle::World::WorldCoordXZ> allChunks;
+        
+        // Parse existing manifest if it exists
+        if (std::filesystem::exists(manifestPath)) {
+            std::string existingManifest;
+            if (JsonUtils::readJsonFromFile(manifestPath, existingManifest)) {
+                std::istringstream manifestStream(existingManifest);
+                std::string line;
+                bool inChunksArray = false;
+                while (std::getline(manifestStream, line)) {
+                    if (line.find("\"chunks\":") != std::string::npos) {
+                        inChunksArray = true;
+                        continue;
+                    }
+                    
+                    if (inChunksArray && line.find("{") != std::string::npos) {
+                        // Parse chunk coordinates
+                        size_t xPos = line.find("\"x\":");
+                        size_t zPos = line.find("\"z\":");
+                        
+                        if (xPos != std::string::npos && zPos != std::string::npos) {
+                            try {
+                                size_t xValueStart = line.find(':', xPos) + 1;
+                                size_t xValueEnd = line.find(',', xValueStart);
+                                int64_t x = std::stoll(line.substr(xValueStart, xValueEnd - xValueStart));
+                                
+                                size_t zValueStart = line.find(':', zPos) + 1;
+                                size_t zValueEnd = line.find(',', zValueStart);
+                                if (zValueEnd == std::string::npos) {
+                                    zValueEnd = line.find('}', zValueStart);
+                                }
+                                int64_t z = std::stoll(line.substr(zValueStart, zValueEnd - zValueStart));
+                                
+                                ::VoxelCastle::World::WorldCoordXZ coord;
+                                coord.x = x;
+                                coord.z = z;
+                                allChunks.insert(coord);
+                            } catch (const std::exception& e) {
+                                std::cerr << "[SaveManager] Error parsing existing chunk coordinates: " << e.what() << std::endl;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        
+        // Add new chunks to the set (set automatically handles duplicates)
+        for (const auto& chunk : savedChunks) {
+            allChunks.insert(chunk);
+        }
+        
+        // Create updated manifest JSON with all chunks
         std::ostringstream manifestJson;
         manifestJson << "{\n";
         manifestJson << "  \"chunksVersion\": 1,\n";
         manifestJson << "  \"lastSaved\": \"" << JsonUtils::getCurrentTimestamp() << "\",\n";
         manifestJson << "  \"chunks\": [\n";
         
-        for (size_t i = 0; i < savedChunks.size(); ++i) {
-            const auto& chunk = savedChunks[i];
+        size_t index = 0;
+        for (const auto& chunk : allChunks) {
             manifestJson << "    {\"x\": " << chunk.x << ", \"z\": " << chunk.z 
                         << ", \"lastModified\": \"" << JsonUtils::getCurrentTimestamp() << "\"}";
-            if (i < savedChunks.size() - 1) {
+            if (index < allChunks.size() - 1) {
                 manifestJson << ",";
             }
             manifestJson << "\n";
+            index++;
         }
         
         manifestJson << "  ]\n";
         manifestJson << "}";
+        
+        std::cout << "[SaveManager] Updated manifest with " << allChunks.size() << " total chunks (" 
+                  << savedChunks.size() << " newly saved)" << std::endl;
         
         return JsonUtils::writeJsonToFile(manifestPath, manifestJson.str());
     } catch (const std::exception& e) {

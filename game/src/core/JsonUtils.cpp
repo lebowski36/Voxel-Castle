@@ -50,7 +50,9 @@ std::string JsonUtils::createMetadataJson(
     const std::string& worldName,
     const glm::vec3& playerPosition,
     uint64_t playTimeSeconds,
-    const std::string& cameraMode
+    const std::string& cameraMode,
+    float cameraYaw,
+    float cameraPitch
 ) {
     std::vector<std::pair<std::string, std::string>> pairs;
     
@@ -68,6 +70,10 @@ std::string JsonUtils::createMetadataJson(
     
     pairs.emplace_back("cameraMode", "\"" + escapeJsonString(cameraMode) + "\"");
     
+    // Add camera orientation
+    pairs.emplace_back("cameraYaw", std::to_string(cameraYaw));
+    pairs.emplace_back("cameraPitch", std::to_string(cameraPitch));
+    
     return createJsonObject(pairs);
 }
 
@@ -77,7 +83,9 @@ bool JsonUtils::parseMetadataJson(
     std::string& worldName,
     glm::vec3& playerPosition,
     uint64_t& playTimeSeconds,
-    std::string& cameraMode
+    std::string& cameraMode,
+    float& cameraYaw,
+    float& cameraPitch
 ) {
     // Simple JSON parsing (for a production system, consider using nlohmann/json or similar)
     // This is a basic implementation for the current needs
@@ -154,6 +162,30 @@ bool JsonUtils::parseMetadataJson(
                     playerPosition.z = std::stof(jsonContent.substr(zValueStart, zValueEnd - zValueStart));
                 }
             }
+        }
+        
+        // Extract camera yaw
+        size_t cameraYawPos = jsonContent.find("\"cameraYaw\":");
+        if (cameraYawPos != std::string::npos) {
+            size_t valueStart = jsonContent.find_first_of("-0123456789.", cameraYawPos + 12);
+            size_t valueEnd = jsonContent.find_first_of(",}", valueStart);
+            if (valueStart != std::string::npos && valueEnd != std::string::npos) {
+                cameraYaw = std::stof(jsonContent.substr(valueStart, valueEnd - valueStart));
+            }
+        } else {
+            cameraYaw = -90.0f; // Default yaw
+        }
+        
+        // Extract camera pitch
+        size_t cameraPitchPos = jsonContent.find("\"cameraPitch\":");
+        if (cameraPitchPos != std::string::npos) {
+            size_t valueStart = jsonContent.find_first_of("-0123456789.", cameraPitchPos + 14);
+            size_t valueEnd = jsonContent.find_first_of(",}", valueStart);
+            if (valueStart != std::string::npos && valueEnd != std::string::npos) {
+                cameraPitch = std::stof(jsonContent.substr(valueStart, valueEnd - valueStart));
+            }
+        } else {
+            cameraPitch = 0.0f; // Default pitch
         }
         
         return true;
