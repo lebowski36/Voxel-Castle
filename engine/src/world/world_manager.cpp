@@ -370,6 +370,18 @@ void WorldManager::clearModifiedChunks() {
     m_chunkModificationTimes.clear();
 }
 
+void WorldManager::markChunkAsModified(int_fast64_t worldX, int_fast64_t worldZ) {
+    int_fast64_t colX = worldToColumnBaseX(worldX);
+    int_fast64_t colZ = worldToColumnBaseZ(worldZ);
+    
+    WorldCoordXZ coord = {colX, colZ};
+    m_modifiedChunks.insert(coord);
+    m_chunkModificationTimes[coord] = std::chrono::system_clock::now();
+    
+    std::cout << "[WorldManager] DEBUG: Marked chunk (" << colX << ", " << colZ 
+              << ") as modified. Total modified chunks: " << m_modifiedChunks.size() << std::endl;
+}
+
 size_t WorldManager::getChunkCount() const {
     return m_chunkColumns.size();
 }

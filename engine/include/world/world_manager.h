@@ -265,6 +265,13 @@ public:
     void clearModifiedChunks();
 
     /**
+     * @brief Mark a chunk as modified (for save system integration).
+     * @param worldX The world X coordinate.
+     * @param worldZ The world Z coordinate.
+     */
+    void markChunkAsModified(int_fast64_t worldX, int_fast64_t worldZ);
+
+    /**
      * @brief Get the total number of chunk columns.
      * @return The number of chunk columns currently loaded.
      */

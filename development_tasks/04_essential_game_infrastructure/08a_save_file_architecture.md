@@ -15,10 +15,12 @@ Implementation plan for the save file architecture in Voxel Castle. The save sys
 ### ✅ COMPLETED
 - **F5/F9 Key Bindings**: Quick save/load hotkeys implemented
 - **Camera Position & Mode Saving/Loading**: Real player position and camera mode persistence
+- **✅ Camera Orientation Fix**: Camera yaw/pitch now applied immediately on load (no mouse movement delay)
 - **Basic File Structure**: Directory structure and metadata files
 - **Chunk Modification Tracking**: WorldManager tracks modified chunks
 - **Chunk Serialization**: Basic binary chunk save/load with compression support
 - **Save Directory Protection**: saves/ folder in .gitignore
+- **✅ Multi-Chunk Save/Load Fix**: Fixed issue where multi-chunk modifications weren't preserved across saves
 
 ### 🔄 IN PROGRESS
 - **Hybrid Chunk Management System**: Implementation of temporary caching for unloaded chunks
@@ -391,28 +393,22 @@ Block modifications are not properly saved and restored. After save/load, all pl
 - WorldManager tracks modified chunks in `m_modifiedChunks` set
 - Chunk serialization uses binary format with VCWC header
 - SaveManager calls WorldManager to save/load chunk data
-- Need to verify: chunk modification tracking, serialization pipeline, and deserialization process
-- Slow chunk loading suggests potential issues with chunk recreation or data corruption
+- **🔍 ROOT CAUSE IDENTIFIED:** Modified chunks tracking is cleared after save and NOT restored after load
+- **Issue Flow:** 
+  1. Player modifies blocks in multiple chunks → tracked in `m_modifiedChunks`
+  2. F5 save → chunks saved correctly, then `clearModifiedChunks()` called
+  3. F9 load → `resetWorld()` clears tracking, chunks loaded but not re-marked as modified
+  4. Future saves only track newly placed blocks, losing previously loaded chunks
+- **✅ FIXED:** Added `markChunkAsModified()` method and call it for all loaded chunks during load process
+- Single chunk edits work because they're immediately tracked after loading
+- Multi-chunk edits failed because loaded chunks weren't re-marked as modified
 
 **Investigation Plan:**
-1. **Verify Chunk Modification Tracking:**
-   - Check if modified chunks are properly added to `m_modifiedChunks` set during block placement
-   - Verify chunk coordinates are correctly tracked
-
-2. **Test Serialization Pipeline:**
-   - Add debug logging to chunk save operations
-   - Verify chunk data is being written to files
-   - Check file sizes and content validity
-
-3. **Test Deserialization Pipeline:**
-   - Add debug logging to chunk load operations  
-   - Verify chunk files are being read correctly
-   - Check if deserialized chunks are properly integrated into WorldManager
-
-4. **Analyze Chunk Loading Behavior:**
-   - Investigate why chunks load slowly after loading a save
-   - Determine why some chunks don't load at all
-   - Check if there's interference between saved chunks and procedural generation
+1. **✅ Verify Chunk Modification Tracking:** Confirmed working correctly during block placement
+2. **✅ Test Serialization Pipeline:** Confirmed working - chunks are saved to files properly  
+3. **✅ Test Deserialization Pipeline:** Confirmed working - chunks load from files correctly
+4. **✅ Analyze Chunk Loading Behavior:** **ROOT CAUSE:** Loaded chunks not re-marked as modified for future saves
+5. **✅ SOLUTION:** Implemented `markChunkAsModified()` and call it for all loaded chunks
 
 **Next Steps:**
 1. Add comprehensive debug logging to the chunk modification and save/load pipeline

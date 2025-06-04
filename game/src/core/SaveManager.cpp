@@ -754,6 +754,14 @@ bool SaveManager::loadChunks(const std::string& savePath) {
         
         std::cout << "[SaveManager] Successfully loaded " << chunksLoaded << " of " << chunksToLoad.size() << " chunks" << std::endl;
         
+        // CRITICAL FIX: Mark loaded chunks as modified so they can be saved again in future saves
+        if (chunksLoaded > 0) {
+            std::cout << "[SaveManager] DEBUG: Re-marking " << chunksLoaded << " loaded chunks as modified for future saves" << std::endl;
+            for (const auto& chunkCoord : chunksToLoad) {
+                worldManager_->markChunkAsModified(chunkCoord.x, chunkCoord.z);
+            }
+        }
+        
         // Reset loading state but keep tracked loaded chunks
         worldManager_->setLoadingState(false);
         
