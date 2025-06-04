@@ -338,3 +338,84 @@ std::vector<WorldCoordXZ> getAllModifiedChunks() const {
 5. **Seamless Experience**: Players don't experience loss of modifications when returning to areas
 
 This hybrid approach balances the need for data persistence with memory efficiency and performance, ensuring that player modifications are reliably preserved throughout the game session and across saves.
+
+## Critical Issues Under Investigation
+
+### Issue 1: Camera Orientation Load Delay ⚠️ CRITICAL
+**Problem Description:**
+Camera orientation (yaw/pitch) is loaded from save data but not applied immediately. The orientation only updates after mouse movement, causing a jarring transition.
+
+**Reproduction Steps:**
+1. F5 to save current camera position and orientation
+2. Turn camera to look in a different direction  
+3. F9 to load the saved state
+4. Map reloads and camera position is correct, but orientation remains at the pre-load direction
+5. Moving the mouse causes the camera to "snap" to the saved orientation
+
+**Technical Analysis:**
+- Camera position restoration works correctly
+- Camera orientation values are being loaded and passed to `camera_->setYaw()` and `camera_->setPitch()`
+- Issue appears to be that the camera orientation setters don't immediately update the camera's view matrix
+- Camera likely needs `updateCameraVectors()` call after setting orientation
+
+**Investigation Findings:**
+- SpectatorCamera has `setYaw()` and `setPitch()` methods
+- These methods don't call `updateCameraVectors()` internally
+- Camera orientation changes are only applied when `processMouseMovement()` is called
+- Need to force immediate camera vector update after loading orientation
+
+**Solution Approach:**
+- Add explicit `updateCameraVectors()` call after setting camera orientation in load operations
+- Verify camera view matrix is updated immediately upon loading
+
+### Issue 2: Block Modification Persistence Failure ⚠️ CRITICAL  
+**Problem Description:**
+Block modifications are not properly saved and restored. After save/load, all placed blocks disappear, and chunk loading behavior becomes erratic.
+
+**Reproduction Steps:**
+1. Place blocks in multiple locations across different chunks
+2. F5 to save the game
+3. F9 to load the saved state
+4. All placed blocks have disappeared
+5. Chunks load very slowly and some chunks don't load at all
+
+**Technical Analysis:**
+- Block placement system works correctly during gameplay
+- Block modifications are tracked in WorldManager's `m_modifiedChunks` set
+- Chunk serialization and deserialization exists but may not be working correctly
+- Multiple potential failure points: tracking, serialization, deserialization, or chunk loading
+
+**Investigation Findings:**
+- WorldManager tracks modified chunks in `m_modifiedChunks` set
+- Chunk serialization uses binary format with VCWC header
+- SaveManager calls WorldManager to save/load chunk data
+- Need to verify: chunk modification tracking, serialization pipeline, and deserialization process
+- Slow chunk loading suggests potential issues with chunk recreation or data corruption
+
+**Investigation Plan:**
+1. **Verify Chunk Modification Tracking:**
+   - Check if modified chunks are properly added to `m_modifiedChunks` set during block placement
+   - Verify chunk coordinates are correctly tracked
+
+2. **Test Serialization Pipeline:**
+   - Add debug logging to chunk save operations
+   - Verify chunk data is being written to files
+   - Check file sizes and content validity
+
+3. **Test Deserialization Pipeline:**
+   - Add debug logging to chunk load operations  
+   - Verify chunk files are being read correctly
+   - Check if deserialized chunks are properly integrated into WorldManager
+
+4. **Analyze Chunk Loading Behavior:**
+   - Investigate why chunks load slowly after loading a save
+   - Determine why some chunks don't load at all
+   - Check if there's interference between saved chunks and procedural generation
+
+**Next Steps:**
+1. Add comprehensive debug logging to the chunk modification and save/load pipeline
+2. Test individual components in isolation
+3. Verify chunk file format and data integrity
+4. Check integration between SaveManager and WorldManager
+
+## Implementation Status

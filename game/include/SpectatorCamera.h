@@ -27,8 +27,8 @@ public:
     float getPitch() const { return pitch; }
 
     void setPosition(const glm::vec3& pos) { position = pos; }
-    void setYaw(float y) { yaw = y; }
-    void setPitch(float p) { pitch = p; }
+    void setYaw(float y) { yaw = y; updateCameraVectors(); }
+    void setPitch(float p) { pitch = p; updateCameraVectors(); }
 
     float movementSpeed = 20.0f;
     float mouseSensitivity = 0.1f;
