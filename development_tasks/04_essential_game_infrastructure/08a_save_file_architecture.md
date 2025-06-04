@@ -1,427 +1,624 @@
-# Save File Architecture Implementation Plan
+# World Persistence & Management System
 
 ## Overview
-Implementation plan for the save file architecture in Voxel Castle. The save system provides persistence for voxel modifications, player state, and game settings, with support for auto-saving, incremental saving, and crash recovery.
+Implementation plan for Minecraft-style world persistence in Voxel Castle. The system provides automatic chunk persistence, world creation/loading, and player state management without manual save operations.
 
-## Design Goals
+## Design Philosophy - Minecraft-Style Persistence
 
-1. **Efficiency**: Minimize storage requirements and performance impact
-2. **Reliability**: Ensure data integrity even during crashes or power failures
-3. **Extensibility**: Support future game features through versioned saves
-4. **Usability**: Provide intuitive save/load functionality for users
+### Core Principles
+1. **No Manual Saves**: Block changes persist immediately, eliminating need for F5/F9
+2. **Continuous Persistence**: Every modification is automatically written to disk
+3. **World-Centric**: Games are "worlds" that exist continuously, not "save files"
+4. **Atomic Chunks**: Each chunk is independently persistent and crash-safe
+5. **Immediate Durability**: Changes survive crashes/power failures automatically
 
-## Current Implementation Status
-
-### ✅ COMPLETED
-- **F5/F9 Key Bindings**: Quick save/load hotkeys implemented
-- **Camera Position & Mode Saving/Loading**: Real player position and camera mode persistence
-- **✅ Camera Orientation Fix**: Camera yaw/pitch now applied immediately on load (no mouse movement delay)
-- **Basic File Structure**: Directory structure and metadata files
-- **Chunk Modification Tracking**: WorldManager tracks modified chunks
-- **Chunk Serialization**: Basic binary chunk save/load with compression support
-- **Save Directory Protection**: saves/ folder in .gitignore
-- **✅ Multi-Chunk Save/Load Fix**: Fixed issue where multi-chunk modifications weren't preserved across saves
-
-### 🔄 MAJOR ARCHITECTURE CHANGE IN PROGRESS
-**TRANSITION TO MINECRAFT-STYLE CONTINUOUS AUTO-SAVE SYSTEM**
-
-The current manual save/load system (F5/F9) will be replaced with a continuous auto-save system where:
-- Every block change is immediately written to disk
-- No manual save needed - changes persist automatically
-- World is always in "saved" state
-- Game crashes cannot lose block modifications
-- Player position/settings saved periodically (every few seconds)
-
-### 📋 PENDING REDESIGN TASKS
-- **Implement Continuous Auto-Save System**: Real-time chunk saving on modification
-- **Remove Manual Save/Load System**: Phase out F5/F9 hotkeys
-- **Player State Auto-Save**: Periodic saving of camera position/orientation
-- **Menu System Integration**: Update UI to reflect new save paradigm
-
-## Current Critical Issues (Requiring Investigation)
-
-### 🔧 ACTIVE DEBUGGING TASKS
-
-#### Issue 1: Camera Orientation Update Delay
-**Status**: 🐛 **BUG IDENTIFIED**
-
-**Problem Description**: 
-- Camera yaw and pitch are saved and loaded correctly from save files
-- However, the camera orientation is not immediately applied upon loading
-- The camera appears to remain in its pre-load orientation until the player moves the mouse
-- When mouse movement occurs, the camera "snaps" to the loaded orientation
-
-**Exact Reproduction Steps**:
-1. F5 to save current position and camera orientation
-2. Turn camera right (change yaw/pitch)
-3. F9 to load the saved game
-4. Map reloads and camera position is correct, but camera direction remains as it was before F9
-5. Move mouse - camera suddenly "flips" to the loaded orientation
-
-**Current Investigation Findings**:
-- `camera_->setYaw()` and `camera_->setPitch()` are being called in Game::loadGame() and Game::quickLoad()
-- Camera position restoration works correctly (immediate effect)
-- Camera orientation restoration has delayed effect (only after mouse input)
-
-**Hypothesis**: 
-- The SpectatorCamera class may need additional method calls to force immediate orientation update
-- Possible missing view matrix recalculation or similar internal state update
-
-**Next Steps**: 
-- [ ] Investigate SpectatorCamera implementation for orientation update methods
-- [ ] Check if there's a `updateViewMatrix()` or similar method that needs to be called
-- [ ] Test calling additional camera update methods after setYaw/setPitch
-
----
-
-#### Issue 2: Block Modifications Lost During Save/Load
-**Status**: 🐛 **CRITICAL BUG**
-
-**Problem Description**:
-- Block placement/destruction works correctly during gameplay
-- Saving appears to complete without errors
-- Loading removes all placed blocks and restores original terrain
-- Post-load behavior shows slow chunk loading and some chunks may not load at all
-
-**Exact Reproduction Steps**:
-1. Place or destroy blocks in the world
-2. F5 to save the game
-3. F9 to load the saved game
-4. All block modifications are gone, world appears as originally generated
-5. Chunks load slowly and some areas remain unloaded
-
-**Current Investigation Findings**:
-- Save system calls saveGame() which should capture modified chunks
-- SaveManager is supposed to save chunk modifications via WorldManager
-- Load system restores player position/orientation but loses block changes
-
-**Suspected Root Causes**:
-1. **Chunk Modification Tracking**: WorldManager may not be properly tracking which chunks have been modified
-2. **Serialization Pipeline**: Modified chunks may not be getting serialized during save
-3. **Deserialization Pipeline**: Chunk data may not be getting properly restored during load
-4. **Manifest System**: The chunk manifest may not be correctly listing modified chunks
-5. **Timing Issues**: Save/load may be happening before chunk modifications are committed
-
-**Investigation Plan**:
-- [ ] **Step 1: Verify Chunk Modification Tracking**
-  - Add debug logging to block placement/destruction to confirm chunks are marked as modified
-  - Check if WorldManager.m_modifiedChunks set contains expected chunk coordinates
-  - Verify that block changes trigger modification flags
-  
-- [ ] **Step 2: Examine Save Pipeline**
-  - Add debug logging to SaveManager.saveGame() to see what chunks are being saved
-  - Verify that modified chunks are being serialized to disk
-  - Check save file contents to confirm chunk data is present
-  
-- [ ] **Step 3: Examine Load Pipeline** 
-  - Add debug logging to SaveManager.loadGame() to see what chunks are being loaded
-  - Verify that chunk data is being deserialized correctly
-  - Check if loaded chunks are replacing generated chunks properly
-  
-- [ ] **Step 4: Check Hybrid Chunk Management**
-  - Verify that unloaded-but-modified chunks are being cached properly
-  - Ensure cache is being checked during load operations
-  - Confirm that all modified chunks (loaded + cached) are included in saves
-
-**Files to Investigate**:
-- `game/src/world/WorldManager.cpp` - Chunk modification tracking
-- `game/src/core/SaveManager.cpp` - Save/load pipeline  
-- `game/src/world/chunk/ChunkColumn.cpp` - Chunk serialization
-- `game/src/core/game.cpp` - Save/load integration
-
-**Debug Logging Locations Needed**:
-- Block placement/destruction operations
-- Chunk modification flag setting
-- Save operation chunk enumeration
-- Load operation chunk restoration
-- Chunk cache operations
-
-**Current Investigation Findings**:
-(Space for recording findings during investigation)
-
----
-
-### 🔄 IN PROGRESS
-- Hybrid chunk management system (detailed below)
-- Menu system integration
-
-⏳ **PENDING:**
-- Auto-save system
-- Save thumbnails/screenshots
-- Compression optimization
-- Error recovery mechanisms
-
-## Hybrid Chunk Management System
-
-### Core Concept
-The hybrid system ensures that all player modifications are preserved, even for chunks that get unloaded when the player moves away from them.
-
-### System Components
-
-#### 1. Chunk Tracking System
-- When a chunk is modified, it's marked as "dirty" in memory (✅ implemented)
-- When a chunk is about to be unloaded (player moves away):
-  - The chunk's data is serialized to a temporary cache (RAM or disk)
-  - The chunk coordinates remain in the "modified chunks" list
-  - The chunk can be safely unloaded from active memory
-
-#### 2. Chunk Retrieval
-- If the player returns to the area during the same gameplay session:
-  - Engine checks if the chunk exists in the temporary cache
-  - If found, loaded from cache instead of regenerated
-  - This preserves player modifications and is faster than regeneration
-
-#### 3. Save System Integration
-- When player performs explicit save (F5/quick save):
-  - All currently loaded modified chunks are saved
-  - Plus all previously unloaded-but-modified chunks from temporary cache
-  - After saving, temporary cache can be cleared (memory optimization)
-
-#### 4. Cache Management
-- When a save completes, the "modified chunks" list is cleared
-- Temporary cache is only cleared after saving, not when chunks unload
-- This prevents data loss and ensures all modifications are captured
-
-### Benefits
-- Fast re-loading of chunks during same gameplay session
-- Ability to save all modified chunks, even those not currently loaded
-- No data loss when chunks are unloaded due to distance
-- Memory efficiency with optional cache clearing
-- Seamless experience for players exploring large areas
-
-## Implementation Phases
-
-### Phase 1: Core Serialization Framework ✅ COMPLETED
-1. ✅ Create BinaryReader/Writer classes
-2. ✅ Create Serializable interface
-3. ✅ Implement JSON utility functions (deferred to Phase 2)
-4. ✅ Add modification tracking to WorldManager
-
-### Phase 2: Basic Save/Load Functionality ✅ IN PROGRESS
-1. ✅ Implement JSON utility functions
-2. ✅ Create SaveManager class
-3. ✅ Implement single-chunk serialization
-4. ✅ Add save/load functions to Game class
-5. ✅ Implement F5/F9 quick save/load hotkeys
-6. ⏳ Create basic save/load menu UI
-7. ✅ Test manual saving and loading
-
-### Phase 3: Incremental and Auto-Save
-1. ⏳ Implement chunk manifest tracking
-2. ⏳ Add auto-save background thread
-3. ⏳ Create auto-save configuration options
-4. ✅ Implement quick save/load hotkeys
-
-### Phase 4: Reliability and Polish
-1. ⏳ Add atomic save operations
-2. ⏳ Implement save backup system
-3. ⏳ Add save thumbnails
-4. ⏳ Create save browser UI
-5. ⏳ Add error recovery mechanisms
-
-## Hybrid Chunk Management System
-
-The save system will use a hybrid approach to manage chunk modifications across play sessions and when chunks are unloaded from memory. This system ensures no player modifications are lost while maintaining memory efficiency.
-
-### 1. Chunk Tracking System
-
-- **In-Memory Tracking**: 
-  - When a chunk is modified, it's marked as "dirty" in memory (already implemented)
-  - The chunk's coordinates are added to the `m_modifiedChunks` set in WorldManager
-  - A timestamp is recorded in `m_chunkModificationTimes` map
-
-- **Unloading Behavior**: 
-  - When a chunk is about to be unloaded (player moves away), two actions occur:
-    1. The chunk's data is serialized to a temporary cache either in RAM or on disk
-    2. The chunk coordinates remain in the "modified chunks" list
-
-### 2. Temporary Cache Implementation
-
-```cpp
-// Add to WorldManager class
-struct CachedChunkData {
-    std::vector<uint8_t> serializedData;
-    std::chrono::system_clock::time_point modificationTime;
-    bool isDirty;
-};
-
-// Cache for unloaded-but-modified chunks
-std::unordered_map<WorldCoordXZ, CachedChunkData, WorldCoordXZHash> m_unloadedModifiedChunks;
-
-// Method to serialize a chunk to the temporary cache
-void cacheChunkBeforeUnloading(const WorldCoordXZ& coord, ChunkColumn* column) {
-    // Skip if this chunk hasn't been modified
-    if (m_modifiedChunks.find(coord) == m_modifiedChunks.end()) {
-        return;
-    }
-    
-    // Serialize the chunk to the cache
-    CachedChunkData cacheData;
-    cacheData.modificationTime = m_chunkModificationTimes[coord];
-    cacheData.isDirty = true;
-    
-    // Serialize chunk data to memory buffer
-    std::vector<uint8_t> buffer;
-    // ... [Serialization code]
-    
-    cacheData.serializedData = std::move(buffer);
-    m_unloadedModifiedChunks[coord] = std::move(cacheData);
-}
+### Architecture Overview
 ```
-
-### 3. Chunk Retrieval Process
-
-- **When player returns to a previously visited area**:
-  - The engine first checks if the chunk exists in the temporary cache
-  - If found in cache, it's deserialized and loaded from the cache instead of being regenerated
-  - This preserves player modifications and is faster than regenerating terrain
-
-```cpp
-// Method to check cache before generating a new chunk
-ChunkColumn* getOrCreateChunkColumnWithCache(int64_t worldX, int64_t worldZ) {
-    WorldCoordXZ coord = {worldToColumnBaseX(worldX), worldToColumnBaseZ(worldZ)};
-    
-    // Check if in active chunks first
-    ChunkColumn* column = getChunkColumn(worldX, worldZ);
-    if (column) {
-        return column;
-    }
-    
-    // Check if in cache
-    auto cacheIt = m_unloadedModifiedChunks.find(coord);
-    if (cacheIt != m_unloadedModifiedChunks.end()) {
-        // Create new column and deserialize from cache
-        column = getOrCreateChunkColumn(worldX, worldZ);
-        
-        // Deserialize from cached data
-        // ... [Deserialization code]
-        
-        // Remove from cache to free memory
-        m_unloadedModifiedChunks.erase(cacheIt);
-        
-        return column;
-    }
-    
-    // Not in cache, create normally
-    return getOrCreateChunkColumn(worldX, worldZ);
-}
+/worlds/
+  world_name_1/
+    level.dat           # World metadata, spawn point, settings
+    region/             # Chunk data in region files
+      r.0.0.mca        # 32x32 chunk regions (Minecraft format)
+      r.0.1.mca
+      r.1.0.mca
+    playerdata/         # Individual player states
+      player_uuid.dat
+    data/               # Additional world data
+      villages.dat
+      structures.dat
 ```
-
-### 4. Save System Integration
-
-- **When the player performs a save**:
-  - All currently loaded modified chunks are saved directly
-  - All unloaded-but-modified chunks from the temporary cache are also saved
-  - Both sets of chunks are included in the chunk manifest
-
-```cpp
-// Method to get all modified chunks (both loaded and cached)
-std::vector<WorldCoordXZ> getAllModifiedChunks() const {
-    // Start with in-memory modified chunks
-    std::vector<WorldCoordXZ> allModified(m_modifiedChunks.begin(), m_modifiedChunks.end());
-    
-    // Add cached chunks
-    for (const auto& pair : m_unloadedModifiedChunks) {
-        // Only add if not already in the list
-        if (m_modifiedChunks.find(pair.first) == m_modifiedChunks.end()) {
-            allModified.push_back(pair.first);
-        }
-    }
-    
-    return allModified;
-}
-```
-
-### 5. Cache Management
-
-- **After a successful save**:
-  - The "modified chunks" list is cleared
-  - The temporary cache can optionally be cleared to free memory
-  - Alternatively, frequently accessed chunks can be kept in cache for faster loading
-
-### 6. Benefits of This Approach
-
-1. **Data Persistence**: No modifications are lost when chunks are unloaded
-2. **Performance**: Fast re-loading of chunks during the same gameplay session
-3. **Completeness**: All modified chunks are saved, even those not currently loaded
-4. **Memory Efficiency**: Optional cache clearing to manage memory usage
-5. **Seamless Experience**: Players don't experience loss of modifications when returning to areas
-
-This hybrid approach balances the need for data persistence with memory efficiency and performance, ensuring that player modifications are reliably preserved throughout the game session and across saves.
-
-## Critical Issues Under Investigation
-
-### Issue 1: Camera Orientation Load Delay ⚠️ CRITICAL
-**Problem Description:**
-Camera orientation (yaw/pitch) is loaded from save data but not applied immediately. The orientation only updates after mouse movement, causing a jarring transition.
-
-**Reproduction Steps:**
-1. F5 to save current camera position and orientation
-2. Turn camera to look in a different direction  
-3. F9 to load the saved state
-4. Map reloads and camera position is correct, but orientation remains at the pre-load direction
-5. Moving the mouse causes the camera to "snap" to the saved orientation
-
-**Technical Analysis:**
-- Camera position restoration works correctly
-- Camera orientation values are being loaded and passed to `camera_->setYaw()` and `camera_->setPitch()`
-- Issue appears to be that the camera orientation setters don't immediately update the camera's view matrix
-- Camera likely needs `updateCameraVectors()` call after setting orientation
-
-**Investigation Findings:**
-- SpectatorCamera has `setYaw()` and `setPitch()` methods
-- These methods don't call `updateCameraVectors()` internally
-- Camera orientation changes are only applied when `processMouseMovement()` is called
-- Need to force immediate camera vector update after loading orientation
-- **✅ FIXED:** Modified `setYaw()` and `setPitch()` methods to call `updateCameraVectors()` immediately
-- Camera orientation should now be applied instantly upon loading without requiring mouse movement
-
-**Solution Approach:**
-- ✅ Add explicit `updateCameraVectors()` call after setting camera orientation in load operations
-- ✅ Verify camera view matrix is updated immediately upon loading
-
-### Issue 2: Block Modification Persistence Failure ⚠️ CRITICAL  
-**Problem Description:**
-Block modifications are not properly saved and restored. After save/load, all placed blocks disappear, and chunk loading behavior becomes erratic.
-
-**Reproduction Steps:**
-1. Place blocks in multiple locations across different chunks
-2. F5 to save the game
-3. F9 to load the saved state
-4. All placed blocks have disappeared
-5. Chunks load very slowly and some chunks don't load at all
-
-**Technical Analysis:**
-- Block placement system works correctly during gameplay
-- Block modifications are tracked in WorldManager's `m_modifiedChunks` set
-- Chunk serialization and deserialization exists but may not be working correctly
-- Multiple potential failure points: tracking, serialization, deserialization, or chunk loading
-
-**Investigation Findings:**
-- WorldManager tracks modified chunks in `m_modifiedChunks` set
-- Chunk serialization uses binary format with VCWC header
-- SaveManager calls WorldManager to save/load chunk data
-- **🔍 ROOT CAUSE IDENTIFIED:** Modified chunks tracking is cleared after save and NOT restored after load
-- **Issue Flow:** 
-  1. Player modifies blocks in multiple chunks → tracked in `m_modifiedChunks`
-  2. F5 save → chunks saved correctly, then `clearModifiedChunks()` called
-  3. F9 load → `resetWorld()` clears tracking, chunks loaded but not re-marked as modified
-  4. Future saves only track newly placed blocks, losing previously loaded chunks
-- **✅ FIXED:** Added `markChunkAsModified()` method and call it for all loaded chunks during load process
-- Single chunk edits work because they're immediately tracked after loading
-- Multi-chunk edits failed because loaded chunks weren't re-marked as modified
-
-**Investigation Plan:**
-1. **✅ Verify Chunk Modification Tracking:** Confirmed working correctly during block placement
-2. **✅ Test Serialization Pipeline:** Confirmed working - chunks are saved to files properly  
-3. **✅ Test Deserialization Pipeline:** Confirmed working - chunks load from files correctly
-4. **✅ Analyze Chunk Loading Behavior:** **ROOT CAUSE:** Loaded chunks not re-marked as modified for future saves
-5. **✅ SOLUTION:** Implemented `markChunkAsModified()` and call it for all loaded chunks
-
-**Next Steps:**
-1. Add comprehensive debug logging to the chunk modification and save/load pipeline
-2. Test individual components in isolation
-3. Verify chunk file format and data integrity
-4. Check integration between SaveManager and WorldManager
 
 ## Implementation Status
+
+### 🚧 MAJOR ARCHITECTURE REDESIGN (December 2024)
+**REMOVING LEGACY SAVE/LOAD SYSTEM - IMPLEMENTING MINECRAFT-STYLE PERSISTENCE**
+
+### 📋 CURRENT TASKS
+
+#### Task 1: World Creation & Management Menu System
+**Priority**: HIGH - Foundation for all world persistence
+**Status**: 🔲 NOT STARTED
+
+**Subtasks**:
+- [ ] **Main Menu Integration**: Add world selection to main menu
+- [ ] **Create New World Dialog**: 
+  - World name input
+  - Seed input (numeric or text)
+  - World type selection (flat, normal, amplified)
+  - Game mode selection
+- [ ] **World List Management**:
+  - Display available worlds
+  - Last played timestamp
+  - World size information
+  - Delete world functionality
+- [ ] **World Loading Screen**: Progress indicator during world generation/loading
+- [ ] **F11 Fullscreen Toggle**: Add fullscreen hotkey support
+
+#### Task 2: Direct Chunk Persistence System
+**Priority**: HIGH - Core persistence mechanism
+**Status**: � NOT STARTED
+
+**Subtasks**:
+- [ ] **Remove SaveManager Class**: Eliminate centralized save system
+- [ ] **ChunkColumn Auto-Save**: Add `isDirty` flag and direct file I/O
+- [ ] **Background Save Thread**: Non-blocking chunk writing
+- [ ] **Region File Format**: Implement Minecraft-compatible region files
+- [ ] **Chunk Compression**: LZ4/Zlib compression for chunk data
+
+#### Task 3: Player State Persistence
+**Priority**: MEDIUM - Player experience
+**Status**: 🔲 NOT STARTED
+
+**Subtasks**:
+- [ ] **Periodic Auto-Save**: Save player position every 10-15 seconds
+- [ ] **Event-Based Saves**: Immediate save on critical events
+- [ ] **Player Data Format**: Position, inventory, health, etc.
+- [ ] **Multi-Player Support**: Individual player data files
+
+#### Task 4: Legacy System Removal
+**Priority**: LOW - Cleanup
+**Status**: 🔲 NOT STARTED
+
+**Subtasks**:
+- [ ] **Remove F5/F9 Hotkeys**: No more manual save controls
+- [ ] **Update UI Text**: Remove "save game" references
+- [ ] **Documentation Update**: Reflect new persistence model
+
+#### Task 5: Seed-Based World Generation System
+**Priority**: MEDIUM - World variety and reproducibility
+**Status**: 🔲 NOT STARTED
+
+**Subtasks**:
+- [ ] **Seed System Implementation**: Convert text/numeric seeds to deterministic generation
+- [ ] **World Type Variants**: 
+  - Normal: Standard terrain with caves, ores, structures
+  - Flat: Flat world for creative building
+  - Amplified: Extreme terrain generation with tall mountains
+- [ ] **Terrain Generation**: Enhance noise-based terrain with seed consistency
+- [ ] **Structure Generation**: Villages, dungeons, strongholds based on seed
+- [ ] **Biome System**: Different biomes with seed-based placement
+- [ ] **Cave Generation**: Underground cave systems with consistent seed generation
+- [ ] **Ore Distribution**: Deterministic ore placement based on world seed
+
+## Detailed Implementation Plan
+
+### Task 1: World Creation & Management Menu System
+
+#### 1.1 Main Menu Integration
+**File**: `game/src/ui/MenuSystem.cpp`, `game/include/ui/MenuSystem.h`
+
+**Implementation**:
+- Add "Play" button to main menu (replaces current direct game start)
+- Add "Create New World" button
+- Add "Load World" button  
+- Add "Options" button
+- Add "Quit" button
+
+**UI Layout**:
+```
+╔══════════════════════════════════════╗
+║              VOXEL CASTLE            ║
+║                                      ║
+║         [    Play Game    ]          ║
+║         [ Create New World ]         ║
+║         [   Load World    ]          ║
+║         [    Options     ]           ║
+║         [     Quit       ]           ║
+╚══════════════════════════════════════╝
+```
+
+#### 1.2 Create New World Dialog
+**Files**: `game/src/ui/dialogs/CreateWorldDialog.cpp`, `game/include/ui/dialogs/CreateWorldDialog.h`
+
+**Features**:
+- **World Name**: Text input field (default: "New World")
+- **Seed**: Number/text input (default: random)
+- **World Type**: Dropdown (Normal, Flat, Amplified)
+- **Game Mode**: Dropdown (Creative, Survival, Adventure)
+- **Generate Structures**: Checkbox (villages, dungeons, etc.)
+- **Create World** button
+- **Cancel** button
+
+**Dialog Layout**:
+```
+╔══════════════════════════════════════╗
+║           Create New World           ║
+║                                      ║
+║ World Name: [_______________]        ║
+║ Seed:       [_______________]        ║
+║ World Type: [Normal        ▼]        ║
+║ Game Mode:  [Creative      ▼]        ║
+║ □ Generate Structures                ║
+║                                      ║
+║        [Create World] [Cancel]       ║
+╚══════════════════════════════════════╝
+```
+
+#### 1.3 World Selection List
+**Files**: `game/src/ui/dialogs/WorldListDialog.cpp`, `game/include/ui/dialogs/WorldListDialog.h`
+
+**Features**:
+- Scrollable list of existing worlds
+- For each world show:
+  - World name
+  - Last played date/time
+  - World size (MB)
+  - Game mode
+  - World version
+- **Play Selected World** button
+- **Delete World** button (with confirmation)
+- **Create New World** button
+- **Cancel** button
+
+**World List Layout**:
+```
+╔══════════════════════════════════════╗
+║             Select World             ║
+║                                      ║
+║ ┌──────────────────────────────────┐ ║
+║ │ ► My Castle World                │ ║
+║ │   Last played: 2 hours ago       │ ║
+║ │   Size: 45.2 MB | Creative      │ ║
+║ │                                  │ ║
+║ │   Adventure World                │ ║
+║ │   Last played: 3 days ago        │ ║
+║ │   Size: 23.1 MB | Survival      │ ║
+║ └──────────────────────────────────┘ ║
+║                                      ║
+║ [Play Selected] [Delete] [New] [Cancel] ║
+╚══════════════════════════════════════╝
+```
+
+#### 1.4 F11 Fullscreen Toggle Implementation
+**Files**: `game/src/core/Game.cpp`, `platform/src/Window.cpp`
+
+**Implementation**:
+- Add F11 key binding in input handler
+- Add `Window::toggleFullscreen()` method
+- Support borderless windowed fullscreen
+- Preserve resolution when switching modes
+- Handle multi-monitor setups properly
+
+#### 1.5 World Loading Screen
+**Files**: `game/src/ui/LoadingScreen.cpp`, `game/include/ui/LoadingScreen.h`
+
+**Features**:
+- Progress bar for world generation/loading
+- Status messages ("Generating terrain...", "Loading chunks...", etc.)
+- Cancel button (return to world selection)
+- Estimated time remaining
+
+**Loading Screen Layout**:
+```
+╔══════════════════════════════════════╗
+║           Loading World...           ║
+║                                      ║
+║ Generating terrain chunks...         ║
+║ ████████████░░░░░░░░  60%            ║
+║                                      ║
+║ Estimated time remaining: 30s        ║
+║                                      ║
+║              [Cancel]                ║
+╚══════════════════════════════════════╝
+```
+
+### Task 2: Direct Chunk Persistence System
+
+#### 2.1 Remove SaveManager Architecture
+**Files**: Remove entire SaveManager class system
+
+**Changes**:
+- Delete `game/src/core/SaveManager.cpp` and `game/include/core/SaveManager.h`
+- Remove SaveManager references from Game class
+- Remove F5/F9 hotkey system
+- Remove centralized save/load logic
+
+#### 2.2 ChunkColumn Auto-Persistence
+**Files**: `engine/src/world/chunk_column.cpp`, `engine/include/world/chunk_column.h`
+
+**New Methods**:
+```cpp
+class ChunkColumn {
+private:
+    bool m_isDirty = false;
+    std::chrono::steady_clock::time_point m_lastSaveTime;
+    std::string m_filePath;
+
+public:
+    // Mark chunk as needing save
+    void markDirty() { m_isDirty = true; }
+    
+    // Save chunk to disk (non-blocking)
+    void saveToFile();
+    
+    // Check if chunk needs saving
+    bool needsSave() const;
+    
+    // Load chunk from disk
+    static std::unique_ptr<ChunkColumn> loadFromFile(const std::string& path);
+};
+```
+
+#### 2.3 Background Persistence Thread
+**Files**: `engine/src/world/world_manager.cpp`, `engine/include/world/world_manager.h`
+
+**Implementation**:
+```cpp
+class WorldManager {
+private:
+    std::thread m_saveThread;
+    std::atomic<bool> m_saveThreadRunning{true};
+    std::queue<WorldCoordXZ> m_chunkSaveQueue;
+    std::mutex m_saveQueueMutex;
+
+public:
+    // Background thread that saves dirty chunks
+    void chunkSaveWorker();
+    
+    // Queue chunk for saving
+    void queueChunkSave(const WorldCoordXZ& coord);
+    
+    // Modified setVoxel to trigger auto-save
+    void setVoxel(int64_t x, int64_t y, int64_t z, const Voxel& voxel) override;
+};
+```
+
+#### 2.4 Region File Format Implementation
+**Files**: `engine/src/world/RegionFile.cpp`, `engine/include/world/RegionFile.h`
+
+**Minecraft-Compatible Format**:
+- 32x32 chunk regions stored in `.mca` files
+- Header with chunk timestamps and offsets
+- LZ4/Zlib compression for chunk data
+- Atomic writes to prevent corruption
+
+### Task 3: World Directory Structure
+
+#### 3.1 World Management Class
+**Files**: `game/src/world/WorldManager.cpp`, `game/include/world/WorldManager.h`
+
+**Responsibilities**:
+- Create new world directories
+- Scan for existing worlds
+- Load world metadata
+- Generate initial spawn chunks
+
+#### 3.2 Level.dat Format
+**File**: Each world's `level.dat` file
+
+**JSON Format**:
+```json
+{
+  "version": 1,
+  "worldName": "My Castle World",
+  "seed": 1234567890,
+  "gameMode": "creative",
+  "worldType": "normal",
+  "spawnX": 0,
+  "spawnY": 64,
+  "spawnZ": 0,
+  "generateStructures": true,
+  "createdDate": "2024-12-06T10:30:00Z",
+  "lastPlayed": "2024-12-06T15:45:23Z",
+  "playTime": 7200
+}
+```
+
+#### 3.3 Directory Structure
+```
+/worlds/
+  castle_world_1/
+    level.dat              # World metadata
+    region/                # Chunk data
+      r.0.0.mca           # Region files (32x32 chunks each)
+      r.0.1.mca
+      r.-1.0.mca
+    playerdata/            # Player information
+      player.dat          # Single-player data
+    data/                  # Generated structures, etc.
+      structures.dat
+    screenshots/           # Optional world thumbnails
+      thumbnail.png
+```
+
+## Technical Implementation Details
+
+### World Creation Flow
+1. **Menu Selection**: Player clicks "Create New World"
+2. **Input Dialog**: Player enters name, seed, settings
+3. **Directory Creation**: Create `/worlds/world_name/` structure
+4. **Metadata Generation**: Create `level.dat` with settings
+5. **Initial Generation**: Generate spawn area chunks (3x3 chunk area)
+6. **Player Spawn**: Place player at spawn point
+7. **Continue Generation**: Generate chunks as player explores
+
+### Chunk Persistence Flow
+1. **Block Change**: Player places/destroys block
+2. **Mark Dirty**: ChunkColumn.markDirty() called immediately
+3. **Queue Save**: Add chunk coordinates to save queue
+4. **Background Save**: Worker thread saves chunk to region file
+5. **Atomic Write**: Ensure save completes or fails cleanly
+
+### World Loading Flow
+1. **World Selection**: Player chooses world from list
+2. **Metadata Loading**: Read `level.dat` for world settings
+3. **Player Positioning**: Set player position to last known location
+4. **Chunk Loading**: Load chunks around player from region files
+5. **Dynamic Loading**: Load additional chunks as player moves
+
+## Integration Points
+
+### Game Class Changes
+**File**: `game/src/core/Game.cpp`
+
+**New Flow**:
+```cpp
+// Remove old save/load methods
+// Remove saveManager_ member
+// Add world selection state
+
+enum class GameState {
+    MAIN_MENU,
+    WORLD_SELECTION,
+    CREATE_WORLD,
+    PLAYING,
+    // ...
+};
+```
+
+### Input Handler Changes
+**File**: `game/src/core/Game.cpp`
+
+**Key Binding Updates**:
+```cpp
+// Remove F5/F9 save/load bindings
+// Add F11 fullscreen toggle
+case SDLK_F11:
+    window_->toggleFullscreen();
+    break;
+```
+
+### Menu System Integration
+**Files**: Menu system files
+
+**New Menu Flow**:
+1. Main Menu → World Selection
+2. World Selection → Create World Dialog (optional)
+3. World Selection → World Loading Screen
+4. Loading Screen → In-Game
+
+## Migration Plan
+
+### Phase 1: World Management Foundation
+- [ ] Implement world directory structure
+- [ ] Create world metadata system (level.dat)
+- [ ] Build world creation/selection UI
+- [ ] Add F11 fullscreen toggle
+- [ ] Implement loading screen with progress
+
+### Phase 2: Direct Chunk Persistence  
+- [ ] Remove SaveManager class entirely
+- [ ] Implement ChunkColumn auto-save methods
+- [ ] Add background save thread to WorldManager
+- [ ] Implement region file format
+
+### Phase 3: Seed-Based World Generation
+- [ ] Implement core seed system for deterministic generation
+- [ ] Create world type generators (Normal, Flat, Amplified)
+- [ ] Add biome generation system
+- [ ] Implement structure generation (villages, dungeons, etc.)
+- [ ] Add cave and ore generation systems
+
+### Phase 4: Integration & Testing
+- [ ] Connect menu system to world management
+- [ ] Test world creation/loading flow with different world types
+- [ ] Verify chunk persistence works correctly
+- [ ] Performance testing with auto-save and world generation
+- [ ] Test seed reproducibility across sessions
+
+### Phase 5: Polish & Documentation
+- [ ] Add loading progress indicators for world generation phases
+- [ ] Implement world deletion/backup functionality
+- [ ] Add world thumbnails/screenshots
+- [ ] Update all documentation
+- [ ] Remove legacy save/load references
+
+## Benefits of New Architecture
+
+1. **Simpler Code**: No complex SaveManager, direct chunk persistence
+2. **Better Performance**: No centralized save bottlenecks
+3. **Minecraft-like UX**: Familiar world selection and auto-save behavior
+4. **Crash Safety**: Atomic chunk saves prevent data corruption
+5. **Scalability**: Background saves don't block gameplay
+
+## Files to Update
+
+### Remove (Legacy Save System)
+- `game/src/core/SaveManager.cpp`
+- `game/include/core/SaveManager.h`
+- All F5/F9 hotkey handlers
+- Manual save/load menu options
+
+### Create (New World System)
+- `game/src/ui/dialogs/CreateWorldDialog.cpp`
+- `game/include/ui/dialogs/CreateWorldDialog.h`
+- `game/src/ui/dialogs/WorldListDialog.cpp`
+- `game/include/ui/dialogs/WorldListDialog.h`
+- `game/src/world/WorldManager.cpp`
+- `game/include/world/WorldManager.h`
+- `engine/src/world/RegionFile.cpp`
+- `engine/include/world/RegionFile.h`
+- `game/src/ui/LoadingScreen.cpp`
+- `game/include/ui/LoadingScreen.h`
+
+### Create (World Generation System)
+- `engine/src/world/WorldGenerator.cpp`
+- `engine/include/world/WorldGenerator.h`
+- `engine/src/world/generators/NormalWorldGenerator.cpp`
+- `engine/include/world/generators/NormalWorldGenerator.h`
+- `engine/src/world/generators/FlatWorldGenerator.cpp`
+- `engine/include/world/generators/FlatWorldGenerator.h`
+- `engine/src/world/generators/AmplifiedWorldGenerator.cpp`
+- `engine/include/world/generators/AmplifiedWorldGenerator.h`
+- `engine/src/world/biomes/BiomeGenerator.cpp`
+- `engine/include/world/biomes/BiomeGenerator.h`
+- `engine/src/world/structures/StructureGenerator.cpp`
+- `engine/include/world/structures/StructureGenerator.h`
+- `engine/src/world/generators/CaveGenerator.cpp`
+- `engine/include/world/generators/CaveGenerator.h`
+- `engine/src/world/generators/OreGenerator.cpp`
+- `engine/include/world/generators/OreGenerator.h`
+
+### Modify (Integration)
+- `game/src/core/Game.cpp` - Remove SaveManager, add world states
+- `game/src/ui/MenuSystem.cpp` - Add world selection flow
+- `engine/src/world/world_manager.cpp` - Add auto-save thread
+- `engine/src/world/chunk_column.cpp` - Add persistence methods
+- `platform/src/Window.cpp` - Add fullscreen toggle
+
+### Task 5: Seed-Based World Generation Implementation
+
+#### 5.1 Seed System Architecture
+**Files**: `engine/src/world/WorldGenerator.cpp`, `engine/include/world/WorldGenerator.h`
+
+**Core Seed System**:
+```cpp
+class WorldGenerator {
+private:
+    uint64_t m_worldSeed;
+    std::mt19937_64 m_rng;
+    
+public:
+    // Initialize with seed (string or numeric)
+    void setSeed(const std::string& seedString);
+    void setSeed(uint64_t numericSeed);
+    
+    // Get deterministic random for specific coordinates
+    uint64_t getRegionSeed(int32_t x, int32_t z);
+    uint64_t getChunkSeed(int32_t x, int32_t z);
+    uint64_t getBlockSeed(int64_t x, int64_t y, int64_t z);
+};
+```
+
+#### 5.2 World Type Implementation
+**Files**: `engine/src/world/generators/`, multiple files
+
+**World Type Classes**:
+- `NormalWorldGenerator.cpp` - Standard terrain with caves and structures
+- `FlatWorldGenerator.cpp` - Flat creative world with customizable layers
+- `AmplifiedWorldGenerator.cpp` - Extreme terrain with 2x height variation
+
+**World Type Selection**:
+```cpp
+enum class WorldType {
+    NORMAL,
+    FLAT,
+    AMPLIFIED
+};
+
+class WorldTypeFactory {
+public:
+    static std::unique_ptr<WorldGenerator> createGenerator(WorldType type, uint64_t seed);
+};
+```
+
+#### 5.3 Biome System Implementation
+**Files**: `engine/src/world/biomes/`, multiple files
+
+**Biome Types**:
+- Plains - Flat grassy areas with occasional trees
+- Forest - Dense tree coverage with varied heights
+- Mountains - High altitude terrain with stone exposure
+- Desert - Sandy terrain with cacti and limited vegetation
+- Ocean - Large water bodies with underwater features
+- Caves - Underground biome with special generation rules
+
+**Biome Generation**:
+```cpp
+class BiomeGenerator {
+private:
+    PerlinNoise m_temperatureNoise;
+    PerlinNoise m_humidityNoise;
+    
+public:
+    BiomeType getBiome(int64_t x, int64_t z, uint64_t seed);
+    float getTemperature(int64_t x, int64_t z);
+    float getHumidity(int64_t x, int64_t z);
+};
+```
+
+#### 5.4 Structure Generation System
+**Files**: `engine/src/world/structures/`, multiple files
+
+**Structure Types**:
+- Villages - Groups of buildings with NPCs
+- Dungeons - Underground rooms with spawners and loot
+- Strongholds - Large underground fortresses
+- Mineshafts - Abandoned mining tunnels
+- Caves - Natural cave systems
+
+**Structure Placement**:
+```cpp
+class StructureGenerator {
+public:
+    // Check if structure should generate at location
+    bool shouldGenerateStructure(StructureType type, int32_t chunkX, int32_t chunkZ, uint64_t seed);
+    
+    // Generate structure in chunk
+    void generateStructure(StructureType type, ChunkColumn* chunk, uint64_t seed);
+};
+```
+
+#### 5.5 Cave and Ore Generation
+**Files**: `engine/src/world/generators/CaveGenerator.cpp`, `engine/src/world/generators/OreGenerator.cpp`
+
+**Cave System**:
+```cpp
+class CaveGenerator {
+private:
+    PerlinNoise m_caveNoise;
+    PerlinNoise m_tunnelNoise;
+    
+public:
+    // Generate cave systems using 3D noise
+    bool isCaveBlock(int64_t x, int64_t y, int64_t z, uint64_t seed);
+    
+    // Generate specific cave types (caverns, tunnels, ravines)
+    void generateCaves(ChunkColumn* chunk, uint64_t seed);
+};
+```
+
+**Ore Distribution**:
+```cpp
+class OreGenerator {
+public:
+    // Different ore types with specific y-level distributions
+    void generateCoal(ChunkColumn* chunk, uint64_t seed);    // y: 5-52
+    void generateIron(ChunkColumn* chunk, uint64_t seed);    // y: 5-54
+    void generateGold(ChunkColumn* chunk, uint64_t seed);    // y: 5-29
+    void generateDiamond(ChunkColumn* chunk, uint64_t seed); // y: 5-12
+    
+    // Ore vein generation with realistic clustering
+    void generateOreVein(ChunkColumn* chunk, VoxelType ore, int centerX, int centerY, int centerZ, int size);
+};
+```
