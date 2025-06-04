@@ -22,13 +22,21 @@ Implementation plan for the save file architecture in Voxel Castle. The save sys
 - **Save Directory Protection**: saves/ folder in .gitignore
 - **✅ Multi-Chunk Save/Load Fix**: Fixed issue where multi-chunk modifications weren't preserved across saves
 
-### 🔄 IN PROGRESS
-- **Hybrid Chunk Management System**: Implementation of temporary caching for unloaded chunks
+### 🔄 MAJOR ARCHITECTURE CHANGE IN PROGRESS
+**TRANSITION TO MINECRAFT-STYLE CONTINUOUS AUTO-SAVE SYSTEM**
 
-### 📋 PENDING
-- **Menu System Integration**: Wire up save/load to game menu UI
-- **Auto-save System**: Scheduled auto-saving functionality
-- **Save Thumbnails**: Screenshot capture for save preview
+The current manual save/load system (F5/F9) will be replaced with a continuous auto-save system where:
+- Every block change is immediately written to disk
+- No manual save needed - changes persist automatically
+- World is always in "saved" state
+- Game crashes cannot lose block modifications
+- Player position/settings saved periodically (every few seconds)
+
+### 📋 PENDING REDESIGN TASKS
+- **Implement Continuous Auto-Save System**: Real-time chunk saving on modification
+- **Remove Manual Save/Load System**: Phase out F5/F9 hotkeys
+- **Player State Auto-Save**: Periodic saving of camera position/orientation
+- **Menu System Integration**: Update UI to reflect new save paradigm
 
 ## Current Critical Issues (Requiring Investigation)
 
