@@ -48,6 +48,18 @@ struct SaveInfo {
 };
 
 /**
+ * @struct SaveStats
+ * @brief Statistics about save operations.
+ */
+struct SaveStats {
+    size_t chunksCount = 0;
+    size_t totalChunks = 0;
+    size_t modifiedChunks = 0;
+    size_t totalBytes = 0;
+    double saveTimeMs = 0.0;
+};
+
+/**
  * @class SaveManager
  * @brief Manages save and load operations for the game.
  */
@@ -145,6 +157,38 @@ public:
      * @return True if the auto-save was successful.
      */
     bool performAutoSave();
+
+    // === NEW: CONTINUOUS AUTO-SAVE SYSTEM ===
+    
+    /**
+     * @brief Enable continuous auto-save system (Minecraft-style).
+     * All block changes are immediately saved to disk.
+     * @param worldSavePath The path where world data should be continuously saved.
+     * @param playerStateIntervalSeconds How often to save player position/settings (default: 5 seconds).
+     */
+    void enableContinuousAutoSave(const std::string& worldSavePath, int playerStateIntervalSeconds = 5);
+    
+    /**
+     * @brief Disable continuous auto-save system.
+     */
+    void disableContinuousAutoSave();
+    
+    /**
+     * @brief Save a single chunk immediately to disk (called automatically on block changes).
+     * @param chunkX The chunk X coordinate.
+     * @param chunkZ The chunk Z coordinate.
+     * @return True if the chunk was saved successfully.
+     */
+    bool saveChunkImmediately(int64_t chunkX, int64_t chunkZ);
+    
+    /**
+     * @brief Update player state for continuous auto-save (called periodically).
+     * @param playerPosition Current player/camera position.
+     * @param cameraMode Current camera mode.
+     * @param cameraYaw Current camera yaw angle.
+     * @param cameraPitch Current camera pitch angle.
+     */
+    void updatePlayerState(const glm::vec3& playerPosition, CameraMode cameraMode, float cameraYaw, float cameraPitch);
 
     /**
      * @brief Get a list of available saves.
@@ -270,30 +314,53 @@ private:
      */
     void autoSaveThreadFunction();
 
-    // Member variables
-    Game* game_;                          ///< Pointer to the main game object
-    ::VoxelCastle::World::WorldManager* worldManager_; ///< Pointer to the world manager
-    std::string baseSaveDirectory_;       ///< Base directory for save files
-    std::string currentSaveName_;         ///< Name of the currently loaded save
-    
-    // Operation state
-    std::atomic<bool> isSaving_;          ///< Whether a save operation is in progress
-    std::atomic<bool> isLoading_;         ///< Whether a load operation is in progress
-    
-    // Auto-save
-    bool autoSaveEnabled_;                ///< Whether auto-save is enabled
-    int autoSaveInterval_;                ///< Minutes between auto-saves
-    int autoSaveRotateCount_;             ///< Number of auto-save backups to keep
-    std::thread autoSaveThread_;          ///< Auto-save background thread
-    std::atomic<bool> stopAutoSaveThread_; ///< Flag to stop auto-save thread
-    std::mutex saveMutex_;                ///< Mutex for thread safety
+    /**
+     * @brief Player state auto-save thread function for continuous system.
+     */
+    void playerStateAutoSaveThreadFunction();
 
-    // Save statistics
-    struct SaveStats {
-        size_t totalChunks;
-        size_t modifiedChunks;
-        double saveTimeMs;
-    } lastSaveStats_;                     ///< Statistics from the last save operation
+private:
+    // Core system references
+    Game* game_;
+    ::VoxelCastle::World::WorldManager* worldManager_;
+
+    // Save/Load state
+    std::atomic<bool> isSaving_;
+    std::atomic<bool> isLoading_;
+    std::mutex saveMutex_;
+
+    // Basic auto-save system (legacy)
+    std::atomic<bool> autoSaveEnabled_;
+    int autoSaveInterval_;
+    int autoSaveRotateCount_;
+    std::thread autoSaveThread_;
+    std::atomic<bool> stopAutoSaveThread_;
+
+    // === NEW: CONTINUOUS AUTO-SAVE SYSTEM ===
+    
+    // Continuous auto-save state
+    std::atomic<bool> continuousAutoSaveEnabled_;
+    std::string continuousWorldSavePath_;
+    int playerStateInterval_; // seconds
+    
+    // Player state auto-save thread
+    std::thread playerStateThread_;
+    std::atomic<bool> stopPlayerStateThread_;
+    
+    // Player state cache for auto-save
+    mutable std::mutex playerStateMutex_;
+    glm::vec3 cachedPlayerPosition_;
+    CameraMode cachedCameraMode_;
+    float cachedCameraYaw_;
+    float cachedCameraPitch_;
+    bool playerStateChanged_;
+
+    // Save directory management
+    std::string baseSaveDirectory_;
+    std::string currentSaveName_;
+
+    // Statistics
+    SaveStats lastSaveStats_;
 };
 
 } // namespace Core

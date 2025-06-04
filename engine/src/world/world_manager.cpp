@@ -18,6 +18,13 @@
 #include "utils/logging_utils.h"
 #include "../../game/include/utils/debug_logger.h"
 
+// Forward declaration to avoid circular dependency
+namespace VoxelCastle {
+namespace Core {
+class SaveManager;
+}
+}
+
 namespace VoxelCastle {
 namespace World {
 
@@ -54,6 +61,13 @@ void WorldManager::setVoxel(int_fast64_t worldX, int_fast64_t worldY, int_fast64
         WorldCoordXZ coord = {colX, colZ};
         m_modifiedChunks.insert(coord);
         m_chunkModificationTimes[coord] = std::chrono::system_clock::now();
+        
+        // === CONTINUOUS AUTO-SAVE: Save chunk immediately if enabled ===
+        if (m_continuousAutoSaveEnabled && m_immediateSaveCallback) {
+            std::cout << "[WorldManager] CONTINUOUS AUTO-SAVE: Block modified, triggering immediate chunk save" << std::endl;
+            // Call the registered callback to save the chunk immediately
+            m_immediateSaveCallback(colX, colZ);
+        }
         
         std::cout << "[WorldManager] DEBUG: Block modified at (" << worldX << ", " << worldY << ", " << worldZ 
                   << ") in chunk (" << colX << ", " << colZ << "). Total modified chunks: " 
@@ -415,6 +429,17 @@ void WorldManager::setLoadingState(bool isLoading) {
 void WorldManager::clearLoadedChunks() {
     m_loadedChunks.clear();
     m_isLoadingFromSave = false;
+}
+
+// === CONTINUOUS AUTO-SAVE INTEGRATION ===
+
+void WorldManager::setImmediateSaveCallback(std::function<void(int_fast64_t, int_fast64_t)> callback) {
+    m_immediateSaveCallback = callback;
+}
+
+void WorldManager::enableContinuousAutoSave(bool enabled) {
+    m_continuousAutoSaveEnabled = enabled;
+    std::cout << "[WorldManager] Continuous auto-save " << (enabled ? "enabled" : "disabled") << std::endl;
 }
 
 } // namespace World

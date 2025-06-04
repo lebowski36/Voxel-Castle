@@ -20,7 +20,15 @@ SaveManager::SaveManager(Game* game)
     , autoSaveInterval_(5) // Default 5 minutes
     , autoSaveRotateCount_(3)
     , stopAutoSaveThread_(false)
-    , lastSaveStats_{0, 0, 0.0}
+    , continuousAutoSaveEnabled_(false) // NEW: Continuous auto-save disabled by default
+    , playerStateInterval_(5) // NEW: Default 5 seconds
+    , stopPlayerStateThread_(false) // NEW: Player state thread control
+    , cachedPlayerPosition_(0.0f, 70.0f, 0.0f) // NEW: Default player position
+    , cachedCameraMode_(CameraMode::FREE_FLYING) // NEW: Default camera mode
+    , cachedCameraYaw_(-90.0f) // NEW: Default camera yaw
+    , cachedCameraPitch_(0.0f) // NEW: Default camera pitch
+    , playerStateChanged_(false) // NEW: Player state change flag
+    , lastSaveStats_{0, 0, 0, 0, 0.0}
 {
     // Note: worldManager_ will be set during initialize() to avoid circular dependency
 }
@@ -34,13 +42,22 @@ SaveManager::SaveManager(VoxelCastle::World::WorldManager* worldManager)
     , autoSaveInterval_(5) // Default 5 minutes
     , autoSaveRotateCount_(3)
     , stopAutoSaveThread_(false)
-    , lastSaveStats_{0, 0, 0.0}
+    , continuousAutoSaveEnabled_(false) // NEW: Continuous auto-save disabled by default
+    , playerStateInterval_(5) // NEW: Default 5 seconds
+    , stopPlayerStateThread_(false) // NEW: Player state thread control
+    , cachedPlayerPosition_(0.0f, 70.0f, 0.0f) // NEW: Default player position
+    , cachedCameraMode_(CameraMode::FREE_FLYING) // NEW: Default camera mode
+    , cachedCameraYaw_(-90.0f) // NEW: Default camera yaw
+    , cachedCameraPitch_(0.0f) // NEW: Default camera pitch
+    , playerStateChanged_(false) // NEW: Player state change flag
+    , lastSaveStats_{0, 0, 0, 0, 0.0}
 {
     // WorldManager is directly provided
 }
 
 SaveManager::~SaveManager() {
     stopAutoSave();
+    disableContinuousAutoSave(); // NEW: Stop continuous auto-save system
 }
 
 bool SaveManager::initialize(const std::string& baseSaveDir) {
@@ -922,6 +939,189 @@ void SaveManager::autoSaveThreadFunction() {
             performAutoSave();
         } else {
             std::cout << "[SaveManager] Skipping auto-save - operation in progress" << std::endl;
+        }
+    }
+}
+
+// === CONTINUOUS AUTO-SAVE SYSTEM IMPLEMENTATION ===
+
+void SaveManager::enableContinuousAutoSave(const std::string& worldSavePath, int playerStateIntervalSeconds) {
+    if (continuousAutoSaveEnabled_) {
+        std::cout << "[SaveManager] Continuous auto-save already enabled" << std::endl;
+        return;
+    }
+    
+    continuousWorldSavePath_ = worldSavePath;
+    playerStateInterval_ = playerStateIntervalSeconds;
+    
+    // Ensure save directories exist
+    if (!ensureSaveDirectories(worldSavePath)) {
+        std::cerr << "[SaveManager] Failed to create save directories for continuous auto-save" << std::endl;
+        return;
+    }
+    
+    // Enable continuous auto-save
+    continuousAutoSaveEnabled_ = true;
+    stopPlayerStateThread_ = false;
+    
+    // Start player state auto-save thread
+    playerStateThread_ = std::thread(&SaveManager::playerStateAutoSaveThreadFunction, this);
+    
+    std::cout << "[SaveManager] Continuous auto-save enabled - all block changes will be saved immediately" << std::endl;
+    std::cout << "[SaveManager] Player state will be saved every " << playerStateIntervalSeconds << " seconds" << std::endl;
+}
+
+void SaveManager::disableContinuousAutoSave() {
+    if (!continuousAutoSaveEnabled_) {
+        return;
+    }
+    
+    // Stop threads
+    stopPlayerStateThread_ = true;
+    continuousAutoSaveEnabled_ = false;
+    
+    // Wait for player state thread to finish
+    if (playerStateThread_.joinable()) {
+        playerStateThread_.join();
+    }
+    
+    std::cout << "[SaveManager] Continuous auto-save disabled" << std::endl;
+}
+
+bool SaveManager::saveChunkImmediately(int64_t chunkX, int64_t chunkZ) {
+    if (!continuousAutoSaveEnabled_ || !worldManager_) {
+        return false; // Continuous auto-save not enabled or no world manager
+    }
+    
+    // This method should be called from the main thread when a block is modified
+    // We need to save the specific chunk immediately
+    
+    try {
+        std::string chunksPath = continuousWorldSavePath_ + "/chunks";
+        std::filesystem::create_directories(chunksPath);
+        
+        // Get the chunk column
+        auto* chunkColumn = worldManager_->getChunkColumn(chunkX, chunkZ);
+        if (!chunkColumn) {
+            return false; // Chunk doesn't exist
+        }
+        
+        // Create chunk file path
+        std::string chunkFilePath = chunksPath + "/chunk_" + 
+                                   std::to_string(chunkX) + "_" + 
+                                   std::to_string(chunkZ) + ".bin";
+        
+        // Write chunk data to file
+        std::ofstream chunkFile(chunkFilePath, std::ios::binary);
+        if (!chunkFile) {
+            std::cerr << "[SaveManager] Failed to create chunk file for immediate save: " << chunkFilePath << std::endl;
+            return false;
+        }
+        
+        // Write chunk header (same format as batch save)
+        const char* magicNumber = "VCWC";
+        chunkFile.write(magicNumber, 4);
+        
+        uint32_t version = 1;
+        chunkFile.write(reinterpret_cast<char*>(&version), sizeof(version));
+        
+        int64_t x = chunkX;
+        int64_t z = chunkZ;
+        chunkFile.write(reinterpret_cast<char*>(&x), sizeof(x));
+        chunkFile.write(reinterpret_cast<char*>(&z), sizeof(z));
+        
+        // Write segment bitmap
+        uint16_t segmentBitmap = 0;
+        for (int i = 0; i < ::VoxelCastle::World::ChunkColumn::CHUNKS_PER_COLUMN; ++i) {
+            auto* segment = chunkColumn->getSegmentByIndex(i);
+            if (segment && segment->isGenerated()) {
+                segmentBitmap |= (1 << i);
+            }
+        }
+        chunkFile.write(reinterpret_cast<char*>(&segmentBitmap), sizeof(segmentBitmap));
+        
+        // Write segment data
+        for (int i = 0; i < ::VoxelCastle::World::ChunkColumn::CHUNKS_PER_COLUMN; ++i) {
+            if (segmentBitmap & (1 << i)) {
+                auto* segment = chunkColumn->getSegmentByIndex(i);
+                if (segment) {
+                    for (int y = 0; y < ::VoxelCastle::World::ChunkSegment::CHUNK_HEIGHT; ++y) {
+                        for (int z = 0; z < ::VoxelCastle::World::ChunkSegment::CHUNK_DEPTH; ++z) {
+                            for (int x = 0; x < ::VoxelCastle::World::ChunkSegment::CHUNK_WIDTH; ++x) {
+                                VoxelEngine::World::Voxel voxel = segment->getVoxel(x, y, z);
+                                chunkFile.write(reinterpret_cast<char*>(&voxel), sizeof(voxel));
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        
+        chunkFile.close();
+        
+        // Update manifest (this may need optimization for frequent calls)
+        std::vector<::VoxelCastle::World::WorldCoordXZ> singleChunk = {{chunkX, chunkZ}};
+        updateChunkManifest(continuousWorldSavePath_, singleChunk);
+        
+        return true;
+        
+    } catch (const std::exception& e) {
+        std::cerr << "[SaveManager] Exception during immediate chunk save: " << e.what() << std::endl;
+        return false;
+    }
+}
+
+void SaveManager::updatePlayerState(const glm::vec3& playerPosition, CameraMode cameraMode, float cameraYaw, float cameraPitch) {
+    if (!continuousAutoSaveEnabled_) {
+        return;
+    }
+    
+    // Update cached player state for periodic saving
+    std::lock_guard<std::mutex> lock(playerStateMutex_);
+    cachedPlayerPosition_ = playerPosition;
+    cachedCameraMode_ = cameraMode;
+    cachedCameraYaw_ = cameraYaw;
+    cachedCameraPitch_ = cameraPitch;
+    playerStateChanged_ = true;
+}
+
+void SaveManager::playerStateAutoSaveThreadFunction() {
+    using namespace std::chrono_literals;
+    
+    while (!stopPlayerStateThread_) {
+        // Sleep for the interval
+        for (int i = 0; i < playerStateInterval_ && !stopPlayerStateThread_; ++i) {
+            std::this_thread::sleep_for(1s);
+        }
+        
+        if (stopPlayerStateThread_) {
+            break;
+        }
+        
+        // Save player state if it has changed
+        {
+            std::lock_guard<std::mutex> lock(playerStateMutex_);
+            if (playerStateChanged_) {
+                // Save player state to file
+                std::string playerDataPath = continuousWorldSavePath_ + "/player.json";
+                
+                std::ostringstream playerJson;
+                playerJson << "{\n";
+                playerJson << "  \"position\": {\n";
+                playerJson << "    \"x\": " << cachedPlayerPosition_.x << ",\n";
+                playerJson << "    \"y\": " << cachedPlayerPosition_.y << ",\n";
+                playerJson << "    \"z\": " << cachedPlayerPosition_.z << "\n";
+                playerJson << "  },\n";
+                playerJson << "  \"cameraMode\": " << static_cast<int>(cachedCameraMode_) << ",\n";
+                playerJson << "  \"cameraYaw\": " << cachedCameraYaw_ << ",\n";
+                playerJson << "  \"cameraPitch\": " << cachedCameraPitch_ << ",\n";
+                playerJson << "  \"lastSaved\": \"" << JsonUtils::getCurrentTimestamp() << "\"\n";
+                playerJson << "}";
+                
+                if (JsonUtils::writeJsonToFile(playerDataPath, playerJson.str())) {
+                    playerStateChanged_ = false; // Mark as saved
+                }
+            }
         }
     }
 }

@@ -196,6 +196,11 @@ void processInput(Game& game) {
                     game.quickLoad();
                     break;
                 
+                case SDL_SCANCODE_F11: // Fullscreen Toggle
+                    std::cout << "[Input] Fullscreen toggle triggered (F11)..." << std::endl;
+                    game.toggleFullscreen();
+                    break;
+                
                 // Time control keys
                 case SDL_SCANCODE_PAUSE: // Add pause key
                 case SDL_SCANCODE_P: // Alternative pause key (easier to use than PAUSE)

@@ -43,6 +43,10 @@ This protocol outlines how the AI agent (GitHub Copilot) operates. Adherence to 
 ### III. Key Reminders & Tool Usage
 *   **Direct Tool Usage:** Always execute necessary commands directly using the appropriate tool (e.g., `run_in_terminal`, `insert_edit_into_file`). Do not ask the user to run commands manually.
 *   **File Modifications:** Use `insert_edit_into_file` for all file changes, providing clear explanations.
+*   **Logging Guidelines:** 
+    *   **Log Files Only:** All detailed debugging information, error traces, and verbose output should be written to log files using the existing logging system (DEBUG_LOG(), VoxelCastle::Utils::logToFile(), etc.)
+    *   **Minimal Console Output:** Console output from the game should be kept minimal and show only high-level events (game starting, world loading complete, major state changes, critical errors)
+    *   **Use Existing System:** Leverage the current logging infrastructure rather than std::cout for debugging information
 *   **Build and Run Instructions (Reference):**
     *   Project Root: `/home/system-x1/Projects/Voxel Castle/`
     *   Build: `clear && cmake --build "/home/system-x1/Projects/Voxel Castle/build"`

@@ -14,6 +14,7 @@
 #include <unordered_set>
 #include <unordered_map>
 #include <chrono>
+#include <functional> // For std::function callback
 #include <glm/vec3.hpp> // For glm::vec3
 
 
@@ -26,6 +27,10 @@
 #include "rendering/voxel_mesh.h" // For VoxelEngine::Rendering::VoxelMesh
 #include "rendering/mesh_job_system.h" // For VoxelEngine::Rendering::MeshJobSystem
 
+// Forward declarations
+namespace world {
+class Quadtree;
+}
 
 namespace VoxelCastle {
 namespace World {
@@ -271,6 +276,20 @@ public:
      */
     void markChunkAsModified(int_fast64_t worldX, int_fast64_t worldZ);
 
+    // === CONTINUOUS AUTO-SAVE INTEGRATION ===
+    
+    /**
+     * @brief Set a callback function for immediate chunk saving.
+     * @param callback Function to call when a chunk needs immediate saving (int64_t colX, int64_t colZ).
+     */
+    void setImmediateSaveCallback(std::function<void(int_fast64_t, int_fast64_t)> callback);
+    
+    /**
+     * @brief Enable or disable continuous auto-save for block changes.
+     * @param enabled True to enable immediate saving on block changes.
+     */
+    void enableContinuousAutoSave(bool enabled = true);
+
     /**
      * @brief Get the total number of chunk columns.
      * @return The number of chunk columns currently loaded.
@@ -339,6 +358,14 @@ private:
     
     // Flag to indicate if we're currently loading chunks from a save file
     bool m_isLoadingFromSave = false;
+    
+    // === CONTINUOUS AUTO-SAVE INTEGRATION ===
+    
+    // Callback function for immediate chunk saving
+    std::function<void(int_fast64_t, int_fast64_t)> m_immediateSaveCallback = nullptr;
+    
+    // Flag to enable/disable continuous auto-save
+    bool m_continuousAutoSaveEnabled = false;
 };
 
 } // namespace World

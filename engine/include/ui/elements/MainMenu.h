@@ -29,10 +29,14 @@ public:
 
 private:
     std::shared_ptr<UIButton> closeButton_;
+    std::shared_ptr<UIButton> worldSelectionButton_;
+    std::shared_ptr<UIButton> createWorldButton_;
     std::shared_ptr<UIButton> settingsButton_;
     std::shared_ptr<UIButton> exitButton_;
 
     void onCloseClicked();
+    void onWorldSelectionClicked();
+    void onCreateWorldClicked();
     void onSettingsClicked();
     void onExitClicked();
 };

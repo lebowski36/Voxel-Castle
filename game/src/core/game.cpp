@@ -324,7 +324,22 @@ bool Game::initialize() {
         } else {
             // Set the WorldManager reference now that both are initialized
             saveManager_->setWorldManager(worldManager_.get());
+            
+            // === CONTINUOUS AUTO-SAVE SETUP ===
+            // Set up callback for immediate chunk saving to avoid circular dependency
+            worldManager_->setImmediateSaveCallback([this](int_fast64_t colX, int_fast64_t colZ) {
+                if (saveManager_) {
+                    saveManager_->saveChunkImmediately(colX, colZ);
+                }
+            });
+            
+            // Enable continuous auto-save (Minecraft-style immediate persistence)
+            std::string defaultWorldPath = projectRoot_ + "saves/default_world/";
+            saveManager_->enableContinuousAutoSave(defaultWorldPath);
+            worldManager_->enableContinuousAutoSave();
+            
             std::cout << "[Game] SaveManager initialized successfully" << std::endl;
+            std::cout << "[Game] Continuous auto-save enabled - all block changes will be saved immediately" << std::endl;
         }
     }
     
@@ -601,6 +616,17 @@ void Game::requestExit() {
 void Game::update(float deltaTime) {
     // Apply time scaling to simulation updates
     float scaledDeltaTime = timeManager_ ? timeManager_->update(deltaTime) : deltaTime;
+    
+    // === CONTINUOUS AUTO-SAVE: Update player state for periodic saving ===
+    if (saveManager_ && camera_) {
+        // Update player position and camera state for auto-save
+        glm::vec3 currentPosition = camera_->getPosition();
+        float currentYaw = camera_->getYaw();
+        float currentPitch = camera_->getPitch();
+        
+        saveManager_->updatePlayerState(currentPosition, cameraMode_, currentYaw, currentPitch);
+    }
+    
     // Check if world is ready for block operations (world loading logic)
     if (!isWorldFullyLoaded_) {
         auto currentTime = std::chrono::steady_clock::now();
