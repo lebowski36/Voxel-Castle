@@ -250,6 +250,14 @@ void MenuSystem::requestExit() {
     }
 }
 
+void MenuSystem::requestWorldInitialization() {
+    if (onWorldInitRequest_) {
+        onWorldInitRequest_();
+    } else {
+        std::cout << "[MenuSystem] No world initialization request callback set" << std::endl;
+    }
+}
+
 void MenuSystem::centerMenus(int screenWidth, int screenHeight) {
     // Center main menu with bounds checks to prevent off-screen menus
     glm::vec2 mainSize = mainMenu_->getSize();

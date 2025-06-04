@@ -37,22 +37,30 @@ Implementation plan for Minecraft-style world persistence in Voxel Castle. The s
 
 #### Task 1: World Creation & Management Menu System
 **Priority**: HIGH - Foundation for all world persistence
-**Status**: 🔲 NOT STARTED
+**Status**: � IN PROGRESS
+
+**CURRENT ISSUES IDENTIFIED:**
+1. Game starts directly into world loading, bypassing menu entirely
+2. Menu buttons for "Load World" and "Create New World" only show placeholder messages
+3. No actual world management system implemented
+4. Need complete startup flow redesign
 
 **Subtasks**:
-- [ ] **Main Menu Integration**: Add world selection to main menu
-- [ ] **Create New World Dialog**: 
-  - World name input
-  - Seed input (numeric or text)
-  - World type selection (flat, normal, amplified)
-  - Game mode selection
-- [ ] **World List Management**:
-  - Display available worlds
-  - Last played timestamp
-  - World size information
-  - Delete world functionality
+- [x] **F11 Fullscreen Toggle**: Add fullscreen hotkey support ✅ COMPLETED
+- [ ] **CRITICAL: Fix Game Startup Flow**:
+  - [x] Add MAIN_MENU state to GameState enum ✅ COMPLETED
+  - [ ] Modify game initialization to start in MAIN_MENU instead of immediate world loading
+  - [ ] Defer world system initialization until world is selected
+  - [ ] Create proper state transition from MAIN_MENU → world loading
+- [ ] **World Selection Dialog Implementation**:
+  - [ ] Create WorldSelectionDialog class with actual world scanning
+  - [ ] Replace placeholder button handlers with real functionality
+  - [ ] Implement world list display and selection
+- [ ] **Create New World Dialog Implementation**:
+  - [ ] Create CreateWorldDialog class with form inputs
+  - [ ] Add world name, seed, and game mode selection
+  - [ ] Implement world creation and initialization logic
 - [ ] **World Loading Screen**: Progress indicator during world generation/loading
-- [ ] **F11 Fullscreen Toggle**: Add fullscreen hotkey support
 
 #### Task 2: Direct Chunk Persistence System
 **Priority**: HIGH - Core persistence mechanism
@@ -86,10 +94,15 @@ Implementation plan for Minecraft-style world persistence in Voxel Castle. The s
 
 #### Task 5: Seed-Based World Generation System
 **Priority**: MEDIUM - World variety and reproducibility
-**Status**: 🔲 NOT STARTED
+**Status**: � IN PROGRESS
 
 **Subtasks**:
-- [ ] **Seed System Implementation**: Convert text/numeric seeds to deterministic generation
+- [x] **Basic Seed System Implementation**: Initial setup for seed-based generation ✅ COMPLETED
+  - Added getBlockSeed method to generate unique seeds for block positions
+  - Basic seed-to-noise integration for terrain variety
+- [ ] **Advanced Seed Systems**: 
+  - Convert text/numeric seeds to reproducible deterministic generation
+  - Full biome and structure seeding
 - [ ] **World Type Variants**: 
   - Normal: Standard terrain with caves, ores, structures
   - Flat: Flat world for creative building
@@ -99,6 +112,16 @@ Implementation plan for Minecraft-style world persistence in Voxel Castle. The s
 - [ ] **Biome System**: Different biomes with seed-based placement
 - [ ] **Cave Generation**: Underground cave systems with consistent seed generation
 - [ ] **Ore Distribution**: Deterministic ore placement based on world seed
+
+#### Task 6: Fix Texture System Architecture
+**Priority**: HIGH - Required for UI functionality
+**Status**: 🔄 IN PROGRESS
+
+**Subtasks**:
+- [ ] **TextureAtlas Methods**: Ensure TextureAtlas properly handles texture loading, storage and ID retrieval
+- [ ] **Ensure MeshRenderer Integration**: Update how MeshRenderer uses TextureAtlas texture IDs
+- [ ] **HUD & UI Integration**: Fix how UI elements like HUD obtain texture IDs from TextureAtlas
+- [ ] **Clean up Legacy Texture Code**: Remove any duplicate texture loading logic
 
 ## Detailed Implementation Plan
 
@@ -622,3 +645,44 @@ public:
     void generateOreVein(ChunkColumn* chunk, VoxelType ore, int centerX, int centerY, int centerZ, int size);
 };
 ```
+
+#### 5.6 Texture ID Handling
+**Files**: `engine/src/render/TextureAtlas.cpp`, `engine/include/render/TextureAtlas.h`
+
+**Texture ID Management**:
+```cpp
+class TextureAtlas {
+private:
+    std::unordered_map<std::string, Texture> m_textures;
+    std::vector<std::string> m_textureIDs;
+
+public:
+    // Load texture from file and assign an ID
+    std::string loadTexture(const std::string& filePath);
+    
+    // Retrieve texture by ID
+    const Texture& getTexture(const std::string& textureID) const;
+    
+    // Clean up textures
+    void clear();
+};
+```
+
+**MeshRenderer Integration**:
+```cpp
+class MeshRenderer {
+private:
+    TextureAtlas& m_textureAtlas;
+
+public:
+    // Constructor
+    MeshRenderer(TextureAtlas& textureAtlas);
+    
+    // Render mesh with texture
+    void render(const Mesh& mesh, const std::string& textureID);
+};
+```
+
+**HUD & UI Integration**:
+- Update HUD and UI element code to obtain texture IDs from TextureAtlas
+- Ensure consistent texture usage across the application

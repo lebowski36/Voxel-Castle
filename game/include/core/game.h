@@ -22,6 +22,9 @@ class GameLoop;
 // Game state enumeration
 enum class GameState {
     // Basic states
+    MAIN_MENU,            // Main menu (world selection/creation)
+    WORLD_SELECT,         // World selection screen
+    CREATE_WORLD,         // Create new world screen
     PLAYING,              // Normal gameplay (general playing state)
     MENU,                 // Menu is open (game paused)
     
@@ -81,6 +84,9 @@ public:
 
     // Initializes all game systems. Returns true on success, false otherwise.
     bool initialize();
+    
+    // Initialize world systems (called when a world is selected/created or game is resumed)
+    bool initializeWorldSystems(const std::string& worldSeed = "");
 
     // Runs the main game loop.
     void run();

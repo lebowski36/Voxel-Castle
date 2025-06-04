@@ -77,6 +77,11 @@ public:
     void requestExit();
 
     /**
+     * @brief Request world initialization when resuming game
+     */
+    void requestWorldInitialization();
+
+    /**
      * @brief Get the current menu state
      * @return The current menu state
      */
@@ -105,6 +110,12 @@ public:
      * @param callback Function to call when exit is requested
      */
     void setOnExitRequest(std::function<void()> callback) { onExitRequest_ = callback; }
+    
+    /**
+     * @brief Set the callback for requesting world initialization
+     * @param callback Function to call when world initialization is requested
+     */
+    void setOnWorldInitRequest(std::function<void()> callback) { onWorldInitRequest_ = callback; }
 
     /**
      * @brief Alias for setOnFullscreenToggle for backward compatibility
@@ -157,6 +168,7 @@ private:
     std::function<void()> onMenuClosed_;
     std::function<bool(bool)> onFullscreenToggle_;
     std::function<void()> onExitRequest_;
+    std::function<void()> onWorldInitRequest_;
 };
 
 } // namespace UI

@@ -93,6 +93,12 @@ public:
      * @brief Default constructor for the WorldManager.
      */
     WorldManager();
+    
+    /**
+     * @brief Check if the WorldManager has been initialized.
+     * @return True if initialized, false otherwise.
+     */
+    bool isInitialized() const { return !m_chunkColumns.empty(); }
 
     /**
      * @brief Gets the voxel at the specified world coordinates.

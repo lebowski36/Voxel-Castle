@@ -127,22 +127,44 @@ Game::~Game() {
 }
 
 bool Game::initialize() {
-    // Delegate to GameInitializer
-    auto result = GameInitializer::initialize(screenWidth_, screenHeight_, projectRoot_.c_str());
-    gameWindow_ = std::move(result.gameWindow);
-    ecs_ = std::move(result.ecs);
-    worldManager_ = std::move(result.worldManager);
-    worldGenerator_ = std::move(result.worldGenerator);
-    textureAtlas_ = std::move(result.textureAtlas);
-    meshBuilder_ = std::move(result.meshBuilder);
-    meshRenderer_ = std::move(result.meshRenderer);
-    camera_ = std::move(result.camera);
-    lastFrameTime_ = result.lastFrameTime;
-    isRunning_ = result.isRunning;
+    // Initialize game window and basic systems, but defer world initialization
+    gameWindow_ = std::make_unique<Window>("Voxel Fortress - Alpha", screenWidth_, screenHeight_);
+    if (!gameWindow_ || !gameWindow_->init()) {
+        std::cerr << "Failed to initialize the game window!" << std::endl;
+        return false;
+    }
+
+    // Set up basic OpenGL state
+    glEnable(GL_DEPTH_TEST);
+    glDepthFunc(GL_LESS);
+    glEnable(GL_CULL_FACE);
+    glCullFace(GL_BACK);
+    glFrontFace(GL_CCW);
+    glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+    glClearColor(0.1f, 0.2f, 0.3f, 1.0f);
+    
+    // Initialize basic systems (ECS, texture atlas, renderer)
+    ecs_ = std::make_unique<flecs::world>();
+    worldManager_ = std::make_unique<VoxelCastle::World::WorldManager>();
+    worldGenerator_ = std::make_unique<VoxelCastle::World::WorldGenerator>();
+    textureAtlas_ = std::make_unique<VoxelEngine::Rendering::TextureAtlas>();
+    meshBuilder_ = std::make_unique<VoxelEngine::Rendering::MeshBuilder>();
+    meshRenderer_ = std::make_unique<VoxelEngine::Rendering::MeshRenderer>();
+    
+    // Initialize camera with a default position
+    camera_ = std::make_unique<SpectatorCamera>(
+        glm::vec3(16.0f, 24.0f, 48.0f), 
+        -90.0f, 0.0f, 70.0f,
+        static_cast<float>(screenWidth_) / static_cast<float>(screenHeight_), 
+        0.1f, 500.0f
+    );
+    
+    lastFrameTime_ = std::chrono::steady_clock::now();
+    isRunning_ = true;
 
     // Initialize state manager
     stateManager_ = std::make_unique<VoxelCastle::Core::GameStateManager>();
-    stateManager_->initialize(GameState::STRATEGIC_MODE);
+    stateManager_->initialize(GameState::MAIN_MENU);  // Start in main menu
     stateManager_->setDebugLogging(true); // Enable debug logging for state transitions
     stateManager_->registerStateChangeCallback([this](GameState from, GameState to) {
         onStateChanged(from, to);
@@ -249,16 +271,21 @@ bool Game::initialize() {
             }
         });
         
-        // Set up fullscreen toggle callback
-        menuSystem_->setOnFullscreenToggled([this](bool enable) -> bool {
-            // If enable is true, we want to enable fullscreen
-            // If enable is false, we want to disable fullscreen
-            // Our toggleFullscreen() just toggles the current state, so we need to check
-            // if the current state already matches what we want
-            if (isFullscreen() != enable) {
-                return toggleFullscreen();
+        // Set up world initialization callback
+        menuSystem_->setOnWorldInitRequest([this]() {
+            // Initialize world systems if not already initialized
+            if (!worldManager_ || !worldManager_->isInitialized()) {
+                // Generate a random seed if none provided
+                std::string randomSeed = "voxelcastle" + std::to_string(std::chrono::system_clock::now().time_since_epoch().count());
+                initializeWorldSystems(randomSeed);
+                
+                // Switch to gameplay state once world is initialized
+                if (stateManager_) {
+                    stateManager_->pushState(GameState::STRATEGIC_MODE);
+                }
+                
+                std::cout << "[Game] World initialized via menu callback" << std::endl;
             }
-            return true; // Already in desired state
         });
         
         // Set up exit request callback
@@ -348,6 +375,75 @@ bool Game::initialize() {
     std::cout << "[INFO] Game ready - Press ESC for menu" << std::endl;
     
     return isRunning_;
+}
+
+bool Game::initializeWorldSystems(const std::string& worldSeed) {
+    std::cout << "[Game] Initializing world systems with seed: " << worldSeed << std::endl;
+    
+    // If world is already initialized, return success
+    if (worldManager_ && worldManager_->isInitialized()) {
+        std::cout << "[Game] World systems already initialized" << std::endl;
+        return true;
+    }
+    
+    // Set world seed if provided
+    if (!worldSeed.empty() && worldGenerator_) {
+        std::cout << "[Game] Using world seed: " << worldSeed << std::endl;
+        
+        // Call the newly added setSeedFromString method
+        worldGenerator_->setSeedFromString(worldSeed);
+    }
+    
+    // Initialize world content
+    if (worldManager_ && camera_) {
+        // Get the camera position to determine where to initially load chunks
+        const glm::vec3& cameraPos = camera_->getPosition();
+        
+        // Load initial chunks around camera position
+        const int initialLoadRadius = 5; // In chunk segments
+        std::cout << "[Game] Loading initial chunks around position " 
+                  << cameraPos.x << ", " << cameraPos.y << ", " << cameraPos.z 
+                  << " (radius: " << initialLoadRadius << ")" << std::endl;
+        
+        worldManager_->updateActiveChunks(cameraPos, initialLoadRadius, *worldGenerator_);
+        worldManager_->updateDirtyMeshes(*textureAtlas_, *meshBuilder_);
+        
+        // Mark world as loading - will be set to fully loaded after some time
+        worldInitTime_ = std::chrono::steady_clock::now();
+        isWorldFullyLoaded_ = false;
+    }
+    
+    // Initialize additional in-game UI elements if needed
+    if (menuSystem_) {
+        // Create HUD
+        hudSystem_ = std::make_shared<VoxelEngine::UI::HUD>(
+            &menuSystem_->getRenderer(), textureAtlas_.get(), textureAtlas_->getTextureID()
+        );
+        hudSystem_->setVisible(true);
+        menuSystem_->addElement(hudSystem_);
+        
+        // Create crosshair
+        crosshairSystem_ = std::make_shared<VoxelEngine::UI::Crosshair>(
+            &menuSystem_->getRenderer()
+        );
+        crosshairSystem_->centerOnScreen(screenWidth_, screenHeight_);
+        crosshairSystem_->setVisible(true);
+        menuSystem_->addElement(crosshairSystem_);
+        
+        std::cout << "[Game] Game UI elements (HUD, crosshair) initialized" << std::endl;
+    }
+    
+    // Initialize save manager if needed
+    if (!saveManager_) {
+        saveManager_ = std::make_unique<VoxelCastle::Core::SaveManager>(this);
+        std::string saveDir = projectRoot_ + "/saves";
+        if (saveManager_->initialize(saveDir)) {
+            saveManager_->setWorldManager(worldManager_.get());
+            std::cout << "[Game] SaveManager initialized" << std::endl;
+        }
+    }
+    
+    return true;
 }
 
 void Game::run() {

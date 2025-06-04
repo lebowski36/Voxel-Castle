@@ -6,11 +6,52 @@
 #include "../../game/include/utils/debug_logger.h"
 #include <cmath>
 #include <iostream> // Added for logging
+#include <functional> // For std::hash
 
 namespace VoxelCastle {
 namespace World {
 
-// Simple heightmap world generation using value noise
+// Constructor initializes with a default random seed
+WorldGenerator::WorldGenerator() : worldSeed_(0) {
+    // Set a default random seed
+    std::random_device rd;
+    setSeed(rd());
+}
+
+// Set world seed from a numeric value
+void WorldGenerator::setSeed(uint64_t seed) {
+    worldSeed_ = seed;
+    rng_.seed(seed);
+    DEBUG_LOG("WorldGenerator", "World seed set to: " + std::to_string(seed));
+}
+
+// Set world seed from a string (converts to numeric seed)
+void WorldGenerator::setSeedFromString(const std::string& seedString) {
+    // Convert string to numeric seed using hash
+    std::hash<std::string> hasher;
+    uint64_t seed = hasher(seedString);
+    setSeed(seed);
+    DEBUG_LOG("WorldGenerator", "World seed generated from string: '" + seedString + "' = " + std::to_string(seed));
+}
+
+// Static version of getBlockSeed - uses a default seed for consistent results
+uint64_t WorldGenerator::staticGetBlockSeed(int64_t x, int64_t y, int64_t z) {
+    // Fixed default seed for static contexts - will be used when no instance is available
+    constexpr uint64_t DEFAULT_STATIC_SEED = 12345678901234567890ULL;
+    
+    // Simple but effective position hash combined with default seed
+    uint64_t posHash = (x * 73856093) ^ (y * 19349663) ^ (z * 83492791);
+    return DEFAULT_STATIC_SEED ^ posHash;
+}
+
+// Get unique seed for a specific block position
+uint64_t WorldGenerator::getBlockSeed(int64_t x, int64_t y, int64_t z) const {
+    // Simple but effective position hash combined with world seed
+    uint64_t posHash = (x * 73856093) ^ (y * 19349663) ^ (z * 83492791);
+    return worldSeed_ ^ posHash;
+}
+
+// Generate chunk segment with the current world seed
 void WorldGenerator::generateChunkSegment(ChunkSegment& segment, int worldX, int worldY, int worldZ) {
     // Show world loading progress only for the first segment
     if (worldX == 0 && worldY == 0 && worldZ == 0) {
@@ -35,13 +76,18 @@ void WorldGenerator::generateChunkSegment(ChunkSegment& segment, int worldX, int
 
     for (int x = 0; x < width; ++x) {
         for (int z = 0; z < depth; ++z) {
-            // Use noise to get height
-            // FIX: Use true world coordinates for noise input
-            int globalX = worldX + x;
-            int globalZ = worldZ + z;
+            // Use noise to get height with seed influence
+            int globalX = worldX * width + x;
+            int globalZ = worldZ * depth + z;
             float nx = globalX * noiseInputScale;
             float nz = globalZ * noiseInputScale;
-            float noise_val = VoxelEngine::Util::smoothValueNoise(nx, 0.0f, nz); // Renamed to noise_val to avoid conflict
+            
+            // Get a unique seed for this position based on world seed (using static version)
+            uint64_t blockSeed = staticGetBlockSeed(globalX, 0, globalZ);
+            
+            // Use the seed to influence the noise value
+            float seedInfluence = static_cast<float>(blockSeed % 1000) / 10000.0f; // Small random offset based on seed
+            float noise_val = VoxelEngine::Util::smoothValueNoise(nx + seedInfluence, 0.0f, nz + seedInfluence);
 
             // Assuming noise_val is in [0, 1]. If not, it might need clamping/remapping:
             // noise_val = std::max(0.0f, std::min(1.0f, noise_val));

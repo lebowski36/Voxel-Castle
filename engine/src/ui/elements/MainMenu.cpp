@@ -38,6 +38,8 @@ bool MainMenu::initialize(MenuSystem* menuSystem) {
 
 void MainMenu::onCloseClicked() {
     if (menuSystem_) {
+        // Request world initialization before closing the menu
+        menuSystem_->requestWorldInitialization();
         menuSystem_->closeMenus();
     }
 }

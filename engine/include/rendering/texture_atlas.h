@@ -2,8 +2,10 @@
 #define VOXEL_ENGINE_TEXTURE_ATLAS_H
 
 #include "world/voxel_types.h"
+#include <glad/glad.h>
 #include <glm/vec2.hpp>
 #include <glm/vec4.hpp>
+#include <string>
 #include <unordered_map>
 
 namespace VoxelEngine {
@@ -38,7 +40,7 @@ class TextureAtlas {
 public:
     TextureAtlas() {
         int tiles_per_row = static_cast<int>(ATLAS_WIDTH_PX / TILE_WIDTH_PX);
-
+    
         // Map all voxel types (AIR, STONE, DIRT, GRASS, WOOD, LEAVES, WATER, SAND)
         // Assuming voxel IDs 0 through 7 are used as per VoxelType enum
         for (int voxel_id_int = static_cast<int>(VoxelEngine::World::VoxelType::AIR); voxel_id_int <= static_cast<int>(VoxelEngine::World::VoxelType::SAND); ++voxel_id_int) {
@@ -90,8 +92,16 @@ public:
         return {{u_min_fallback, v_min_fallback_gl}, {u_max_fallback, v_max_fallback_gl}};
     }
 
+    // New methods for texture ID management
+    bool loadTexture(const std::string& texturePath);
+    GLuint getTextureID() const { return m_texture_id; }
+    void setTextureID(GLuint id) { m_texture_id = id; }
+    bool isTextureLoaded() const { return m_texture_id != 0; }
+    void releaseTexture(); // Clean up GPU resources
+
 private:
     std::unordered_map<VoxelEngine::World::VoxelType, TextureCoordinates> m_voxel_texture_coords;
+    GLuint m_texture_id = 0; // Store the OpenGL texture ID
 };
 
 } // namespace Rendering

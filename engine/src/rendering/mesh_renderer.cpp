@@ -79,11 +79,10 @@ MeshRenderer::MeshRenderer() : vao(0), vbo(0), ebo(0), shaderProgram(0), texture
     }
     checkGlError("After getting CWD");
 
-    // Correct paths for shaders and texture
+    // Correct paths for shaders
     const std::string projectRoot = BASE_DIRECTORY;
     const std::string vertexShaderPath = projectRoot + "assets/shaders/voxel.vert";
     const std::string fragmentShaderPath = projectRoot + "assets/shaders/voxel.frag";
-    const std::string texturePath = BASE_DIRECTORY + "assets/textures/atlas.png";
 
     // std::cout << "[MeshRenderer] Creating shader program from:" << std::endl;
     DEBUG_LOG("MeshRenderer", "Vertex shader: " + vertexShaderPath);
@@ -97,13 +96,10 @@ MeshRenderer::MeshRenderer() : vao(0), vbo(0), ebo(0), shaderProgram(0), texture
     } else {
         // std::cout << "[MeshRendaerer] Shader program created successfully. ID: " << shaderProgram << std::endl;
     }
-
-    if (!loadTexture(texturePath)) {
-        std::cerr << "FATAL: [MeshRenderer] Failed to load texture atlas." << std::endl;
-    } else {
-        // std::cout << "[MeshRenderer] Texture atlas loaded successfully. ID: " << textureAtlasID << std::endl;
-    }
-    checkGlError("loadTexture");
+    
+    // Note: Texture is now loaded by TextureAtlas class
+    DEBUG_LOG("MeshRenderer", "Texture atlas loading is now handled by TextureAtlas class");
+    checkGlError("Constructor texture setup");
 
     glGenVertexArrays(1, &vao);
     checkGlError("glGenVertexArrays");

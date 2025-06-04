@@ -64,14 +64,17 @@ void WorldManager::setVoxel(int_fast64_t worldX, int_fast64_t worldY, int_fast64
         
         // === CONTINUOUS AUTO-SAVE: Save chunk immediately if enabled ===
         if (m_continuousAutoSaveEnabled && m_immediateSaveCallback) {
-            std::cout << "[WorldManager] CONTINUOUS AUTO-SAVE: Block modified, triggering immediate chunk save" << std::endl;
+            DEBUG_LOG("WorldManager", "Continuous auto-save: Block modified at (" + 
+                     std::to_string(worldX) + ", " + std::to_string(worldY) + ", " + std::to_string(worldZ) + 
+                     "), triggering immediate chunk save");
             // Call the registered callback to save the chunk immediately
             m_immediateSaveCallback(colX, colZ);
         }
         
-        std::cout << "[WorldManager] DEBUG: Block modified at (" << worldX << ", " << worldY << ", " << worldZ 
-                  << ") in chunk (" << colX << ", " << colZ << "). Total modified chunks: " 
-                  << m_modifiedChunks.size() << std::endl;
+        DEBUG_LOG("WorldManager", "Block modified at (" + std::to_string(worldX) + ", " + 
+                 std::to_string(worldY) + ", " + std::to_string(worldZ) + ") in chunk (" + 
+                 std::to_string(colX) + ", " + std::to_string(colZ) + "). Total modified chunks: " + 
+                 std::to_string(m_modifiedChunks.size()));
     }
     // Else: Potentially log an error if column creation failed, though getOrCreate should handle it or throw
 }
