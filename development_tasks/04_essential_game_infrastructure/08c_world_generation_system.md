@@ -3,7 +3,44 @@
 *Last Updated: 2025-06-05 23:30*
 
 ## Overview
-This document outlines the implementation plan for the Voxel Castle's world generation system. The goal is to transition from the current legacy world generation to a more flexible, feature-rich seed-based generation system while maintaining compatibility with existing functionality.
+This document outlines the implementation plan for Voxel Castle's world generation system. The goal is to transition from the current legacy world generation to a more flexible, feature-rich seed-based generation system that supports both small detailed worlds and massive continent-scale worlds.
+
+## World Generation Philosophy
+
+**Inspired by Dwarf Fortress + Minecraft Hybrid:**
+- **World Creation Phase**: Full world pre-generation with historical simulation (Dwarf Fortress style)
+- **Runtime Phase**: Detailed chunk voxelization on-demand (Minecraft style)
+- **Scale Flexibility**: From 10km² starter worlds to 25,000,000km² epic worlds (quarter Earth-size)
+
+### Two-Tier Generation Strategy
+
+#### Tier 1: World Creation (Pre-Generation)
+- **Scope**: Entire world at region/biome scale (e.g., 1km² regions)
+- **Data**: Climate patterns, geological structure, biome placement, civilization sites, major resource deposits, historical events timeline
+- **Timeline**: Seconds to hours depending on world size and historical simulation depth
+- **Output**: "World Template" - comprehensive region-level database
+- **Storage**: Persistent disk storage for large worlds (streaming from disk)
+
+#### Tier 2: Runtime Voxelization (On-Demand)  
+- **Scope**: Individual 32x32x32 voxel chunks around active player areas
+- **Data**: Detailed terrain heightmaps, structure placement, precise ore veins, cave networks
+- **Timeline**: < 16ms per chunk for smooth 60fps gameplay
+- **Input**: World template data for the chunk's region + deterministic seed algorithms
+- **Caching**: In-memory cache for recently accessed chunks
+
+### Scalable World Sizes
+
+#### Available Options:
+1. **Starter Worlds**: 10km² - 100km² (Immediate availability)
+2. **Regional Worlds**: 1,000km² - 10,000km² (Standard gameplay)
+3. **Continental Worlds**: 100,000km² - 1,000,000km² (Epic campaigns)
+4. **Massive Worlds**: 5,000,000km² - 25,000,000km² (Quarter Earth-size, initially grayed out)
+
+#### Technical Considerations:
+- **RAM Usage**: Adaptive based on world size and active area
+- **Disk Streaming**: Essential for worlds > 1,000km²
+- **Generation Time**: Configurable historical simulation depth
+- **Optimization Gates**: Large worlds unlock after performance optimization
 
 ## Design Requirements Integration
 
@@ -56,6 +93,33 @@ This document outlines the implementation plan for the Voxel Castle's world gene
 - **Faction Generation**: Culture types, relationship networks, territory claims
 - **Artifact Creation**: Legendary items, ancient knowledge, cultural treasures
 - **Archaeological Context**: How and where artifacts are discovered
+
+### Configurable Historical Simulation
+
+#### Simulation Depth Options:
+1. **None**: Pure geological/biome generation only (fastest)
+2. **Basic**: Major geological events, basic climate history  
+3. **Standard**: Add civilization placement, basic territorial history
+4. **Detailed**: Full historical simulation with events, wars, cultural development
+5. **Epic**: Deep simulation with linguistic evolution, technological progression
+
+#### Simulation Duration:
+- **Short**: 100-500 years of simulated history
+- **Medium**: 1,000-2,000 years (standard fantasy timespan)
+- **Long**: 5,000-10,000 years (deep historical layers)
+- **Epic**: 25,000+ years (geological time scales)
+
+#### Parallel Region Processing:
+- **Small Worlds**: Single-threaded regional simulation
+- **Large Worlds**: Parallel simulation of distant regions
+- **Overarching Events**: Climate changes, migrations affecting multiple regions
+- **Regional Independence**: Local events contained to specific areas
+
+#### Performance Considerations:
+- **Time Budget**: User-configurable maximum generation time
+- **Progress Feedback**: Real-time progress bars and stage descriptions
+- **Interruption Support**: Ability to pause/resume generation for large worlds
+- **Quality Fallbacks**: Reduce simulation complexity if time limits exceeded
 
 #### 6. World Customization Requirements
 - **Seed System**: Numeric seeds for world recreation
