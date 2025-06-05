@@ -1,4 +1,6 @@
 # 08b - Chunk Terrain Cycling Troubleshooting
+*Created: 2025-06-03 13:20*
+*Last Updated: 2025-06-05 16:45*
 
 ## Problem Description
 

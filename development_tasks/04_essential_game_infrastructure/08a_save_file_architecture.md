@@ -224,7 +224,7 @@ These insights will be valuable when implementing the World Selection and Creati
 - [x] ✅ FIXED: MeshRenderer initializes successfully 
 - [x] ✅ FIXED: Textures load from correct paths
 - [x] ✅ FIXED: UI positioned correctly at all times (game start, resume, resize, fullscreen)
-- [ ] ESC menu opens/closes without errors
+- [ ] ESC key disabled in main menu when no game is running (should only function when returning from gameplay)
 - [ ] Game state transitions work smoothly
 - [ ] No console errors during normal menu/game flow
 
