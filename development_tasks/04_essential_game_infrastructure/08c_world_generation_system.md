@@ -196,7 +196,11 @@ Each feature must include:
 ## Objectives
 
 1. **Feature Parity**: Ensure the new seed-based generation system provides all functionality of the legacy system
-2. **Dual System Support**: Maintain "Resume Game" with legacy generation while implementing new system for "Load World"/"Create New World"
+2. **Dual System Coexistence**: 
+   - **CRITICAL**: Legacy world generation remains ACTIVE and UNTOUCHED for "Resume Game" functionality 
+   - **NEW**: 08c system is implemented for "Load World" and "Create New World" menu options
+   - **TRANSITION**: Legacy system is only removed/deprecated AFTER 08c achieves full feature parity and stability
+   - **TESTING**: Both systems operate independently during development to ensure no regression
 3. **Extensibility**: Design for future enhancements (biomes, structures, caves, etc.)
 4. **Integration**: Properly integrate with the world persistence system planned in `08a_save_file_architecture.md`
 5. **User Experience**: Provide a seamless experience for users regardless of which system they use
