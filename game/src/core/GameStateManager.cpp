@@ -203,6 +203,14 @@ void GameStateManager::setupTransitionRules() {
     addRule(GameState::AUTO_SAVING, GameState::FIRST_PERSON_MODE);
     addRule(GameState::AUTO_SAVING, GameState::STRATEGIC_MODE);
     addRule(GameState::AUTO_SAVING, GameState::HYBRID_MODE);
+
+    // From MAIN_MENU - can transition to any playing state or other menus
+    addRule(GameState::MAIN_MENU, GameState::FIRST_PERSON_MODE);
+    addRule(GameState::MAIN_MENU, GameState::STRATEGIC_MODE);
+    addRule(GameState::MAIN_MENU, GameState::HYBRID_MODE);
+    addRule(GameState::MAIN_MENU, GameState::PLAYING); // For backwards compatibility
+    addRule(GameState::MAIN_MENU, GameState::MENU);
+    addRule(GameState::MAIN_MENU, GameState::LOADING);
 }
 
 bool GameStateManager::checkTransitionRules(GameState from, GameState to) const {

@@ -432,9 +432,6 @@ bool Game::initializeWorldSystems(const std::string& worldSeed) {
     
     // Initialize world content
     if (worldManager_ && camera_) {
-        // Set loading state to prevent chunk unloading during initialization
-        worldManager_->setLoadingState(true);
-        
         // Get the camera position to determine where to initially load chunks
         const glm::vec3& cameraPos = camera_->getPosition();
         
@@ -446,9 +443,6 @@ bool Game::initializeWorldSystems(const std::string& worldSeed) {
         
         worldManager_->updateActiveChunks(cameraPos, initialLoadRadius, *worldGenerator_);
         worldManager_->updateDirtyMeshes(*textureAtlas_, *meshBuilder_);
-        
-        // Clear loading state after initial chunk loading is complete
-        worldManager_->setLoadingState(false);
         
         // Mark world as loading - will be set to fully loaded after some time
         worldInitTime_ = std::chrono::steady_clock::now();

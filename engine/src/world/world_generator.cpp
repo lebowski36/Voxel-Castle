@@ -76,18 +76,13 @@ void WorldGenerator::generateChunkSegment(ChunkSegment& segment, int worldX, int
 
     for (int x = 0; x < width; ++x) {
         for (int z = 0; z < depth; ++z) {
-            // Use noise to get height with seed influence
-            int globalX = worldX * width + x;
-            int globalZ = worldZ * depth + z;
+            // Use noise to get height
+            // FIX: Use true world coordinates for noise input
+            int globalX = worldX + x;
+            int globalZ = worldZ + z;
             float nx = globalX * noiseInputScale;
             float nz = globalZ * noiseInputScale;
-            
-            // Get a unique seed for this position based on world seed (using static version)
-            uint64_t blockSeed = staticGetBlockSeed(globalX, 0, globalZ);
-            
-            // Use the seed to influence the noise value
-            float seedInfluence = static_cast<float>(blockSeed % 1000) / 10000.0f; // Small random offset based on seed
-            float noise_val = VoxelEngine::Util::smoothValueNoise(nx + seedInfluence, 0.0f, nz + seedInfluence);
+            float noise_val = VoxelEngine::Util::smoothValueNoise(nx, 0.0f, nz); // Renamed to noise_val to avoid conflict
 
             // Assuming noise_val is in [0, 1]. If not, it might need clamping/remapping:
             // noise_val = std::max(0.0f, std::min(1.0f, noise_val));
