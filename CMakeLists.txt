@@ -62,6 +62,11 @@ find_package(Threads REQUIRED)
 add_subdirectory(engine)
 add_subdirectory(game)
 
+# Add seed system test executable
+add_executable(seed_system_test tests/seed_system_test.cpp)
+target_link_libraries(seed_system_test PRIVATE VoxelEngine)
+target_include_directories(seed_system_test PRIVATE engine/include)
+
 # Enable CTest (optional, if you add tests)
 # enable_testing()
 # add_subdirectory(tests) # If you have a tests directory with CMakeLists.txt

@@ -13,6 +13,7 @@ add_library(VoxelEngine STATIC
     src/world/chunk_column.cpp # Added ChunkColumn source
     src/world/world_manager.cpp # Added WorldManager source
     src/world/world_generator.cpp # Added WorldGenerator source
+    src/world/world_seed.cpp # Added WorldSeed source
     src/world/quadtree.cpp      # Added Quadtree source
     # src/world/test_quadtree.cpp # Removed Quadtree test source
     src/world/test_voxel_system.cpp # Added Voxel System test source
@@ -27,6 +28,8 @@ add_library(VoxelEngine STATIC
     src/rendering/texture_atlas.cpp # Added TextureAtlas source
     src/external/stb_image_impl.cpp # Added stb_image implementation
     src/rendering/Shader.cpp # Added Shader source
+    # Enhanced noise system
+    src/util/enhanced_noise.cpp # Added EnhancedNoise source
     # UI System sources
     src/ui/UIElement.cpp # UI base element
     src/ui/UIRenderer.cpp # UI rendering system

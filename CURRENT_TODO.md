@@ -101,6 +101,7 @@ This protocol outlines how the AI agent (GitHub Copilot) operates. Adherence to 
 - [ ] Implement Modular UI System
 - [ ] Implement Menu System
 - [ ] **Add World Seed System** - Basic seed system already implemented in world generator, see `08a_save_file_architecture.md` and `08c_world_generation_system.md` for detailed implementation plan
+- [ ] **Research and Decide on Open Source Licensing** - Analyze project dependencies, research appropriate open source licenses (MIT, GPL, Apache, etc.), and determine what licensing obligations and requirements apply to this project
 - [x] **Fix TextureAtlas Texture ID Management** - ✅ RESOLVED: Added texture_atlas.cpp to CMakeLists.txt, fixed duplicate constant definitions, all TextureAtlas methods now properly linked and functional
 
 ### 5. Advanced Engine Features & Game Systems (C++)
