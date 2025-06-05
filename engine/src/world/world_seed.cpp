@@ -247,5 +247,50 @@ uint64_t WorldSeed::avalancheHash(uint64_t x) {
     return x;
 }
 
+// Convenient helper methods for specific feature generation
+
+// Regional Seed Helpers (Tier 1 - Pre-Generation)
+uint64_t WorldSeed::getRegionSeed(int64_t regionX, int64_t regionZ) const {
+    return getRegionFeatureSeed(regionX, 0, regionZ, FeatureType::TERRAIN);
+}
+
+uint64_t WorldSeed::getClimateSeed(int64_t regionX, int64_t regionZ) const {
+    return getRegionFeatureSeed(regionX, 0, regionZ, FeatureType::WEATHER);
+}
+
+uint64_t WorldSeed::getBiomeSeed(int64_t regionX, int64_t regionZ) const {
+    return getRegionFeatureSeed(regionX, 0, regionZ, FeatureType::BIOMES);
+}
+
+uint64_t WorldSeed::getCivilizationSeed(int64_t regionX, int64_t regionZ) const {
+    return getRegionFeatureSeed(regionX, 0, regionZ, FeatureType::STRUCTURES);
+}
+
+uint64_t WorldSeed::getHistorySeed(int64_t regionX, int64_t regionZ, int32_t year) const {
+    // Use year as the Y coordinate for temporal variation
+    return getRegionFeatureSeed(regionX, year, regionZ, FeatureType::STRUCTURES);
+}
+
+// Chunk Seed Helpers (Tier 2 - Runtime)
+uint64_t WorldSeed::getStructureSeed(int64_t chunkX, int64_t chunkZ) const {
+    return getChunkFeatureSeed(chunkX, 0, chunkZ, FeatureType::STRUCTURES);
+}
+
+uint64_t WorldSeed::getCaveSeed(int64_t chunkX, int64_t chunkY, int64_t chunkZ) const {
+    return getChunkFeatureSeed(chunkX, chunkY, chunkZ, FeatureType::CAVES);
+}
+
+uint64_t WorldSeed::getOreSeed(int64_t chunkX, int64_t chunkY, int64_t chunkZ) const {
+    return getChunkFeatureSeed(chunkX, chunkY, chunkZ, FeatureType::ORES);
+}
+
+uint64_t WorldSeed::getVegetationSeed(int64_t chunkX, int64_t chunkZ) const {
+    return getChunkFeatureSeed(chunkX, 0, chunkZ, FeatureType::VEGETATION);
+}
+
+uint64_t WorldSeed::getWaterSeed(int64_t chunkX, int64_t chunkZ) const {
+    return getChunkFeatureSeed(chunkX, 0, chunkZ, FeatureType::WATER);
+}
+
 } // namespace World
 } // namespace VoxelCastle

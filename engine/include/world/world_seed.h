@@ -68,6 +68,21 @@ public:
     // Get a scale-appropriate seed (automatically chooses block/chunk/region based on scale)
     uint64_t getScaleSeed(int64_t x, int64_t y, int64_t z, ScaleLevel scale, FeatureType feature = FeatureType::TERRAIN) const;
     
+    // Convenient helper methods for specific feature generation
+    // Regional Seed Helpers (Tier 1 - Pre-Generation)
+    uint64_t getRegionSeed(int64_t regionX, int64_t regionZ) const;
+    uint64_t getClimateSeed(int64_t regionX, int64_t regionZ) const;
+    uint64_t getBiomeSeed(int64_t regionX, int64_t regionZ) const;
+    uint64_t getCivilizationSeed(int64_t regionX, int64_t regionZ) const;
+    uint64_t getHistorySeed(int64_t regionX, int64_t regionZ, int32_t year) const;
+    
+    // Chunk Seed Helpers (Tier 2 - Runtime)
+    uint64_t getStructureSeed(int64_t chunkX, int64_t chunkZ) const;
+    uint64_t getCaveSeed(int64_t chunkX, int64_t chunkY, int64_t chunkZ) const;
+    uint64_t getOreSeed(int64_t chunkX, int64_t chunkY, int64_t chunkZ) const;
+    uint64_t getVegetationSeed(int64_t chunkX, int64_t chunkZ) const;
+    uint64_t getWaterSeed(int64_t chunkX, int64_t chunkZ) const;
+    
     // Set new master seed
     void setSeed(uint64_t seed);
     void setSeedFromString(const std::string& seedString);
