@@ -207,6 +207,43 @@ After fixing the chunk terrain cycling bug, we've identified several additional 
    - Fix position to be centered horizontally and aligned to bottom of screen
    - Ensure scaling works correctly regardless of resolution or fullscreen state
 
+## Additional UI Fixes Implemented
+
+After fixing the chunk terrain cycling bug, we also addressed the following UI issues:
+
+1. **Fixed Menu Fullscreen Toggle**:
+   - Added the missing fullscreen toggle callback in Game.cpp:
+   ```cpp
+   menuSystem_->setOnFullscreenToggle([this](bool enable) {
+       std::cout << "[Game] Fullscreen toggle requested from menu: " << (enable ? "ON" : "OFF") << std::endl;
+       return toggleFullscreen();
+   });
+   ```
+   - This connects the UI fullscreen checkbox to the Game's fullscreen toggle functionality
+   - The menu fullscreen toggle now works properly, matching the F11 key functionality
+
+2. **Fixed HUD Positioning**:
+   - Replaced manual positioning code with proper `centerBottomOfScreen` method:
+   ```cpp
+   // Before:
+   float centerX = (width - uiSize) / 2.0f;
+   float bottomY = height - uiSize - 50.0f;
+   hudSystem_->setPosition(centerX, bottomY);
+   
+   // After:
+   hudSystem_->centerBottomOfScreen(width, height, 50);
+   ```
+   - Used the existing, but previously unused, HUD positioning method
+   - This ensures consistent behavior across different screen sizes and fullscreen modes
+   - Block selection display is now properly centered at the bottom of the screen
+
+3. **Improved UI Position Consistency**:
+   - Updated both initialization and screen resize code to use the same positioning methods
+   - Ensured crosshair remains centered on screen when switching display modes
+   - Maintained consistent margins and alignment in both windowed and fullscreen modes
+
+These fixes ensure that the UI elements (menu, HUD, crosshair) are properly positioned and functional in both windowed and fullscreen modes. The game's UI now behaves more like Minecraft's, with the block selection display properly centered at the bottom of the screen and the crosshair correctly centered regardless of screen size or display mode.
+
 ## Lessons Learned
 
 1. **Isolated Rendering Resources:** In GPU graphics programming, ensure each independent object has its own rendering resources when they need to be displayed simultaneously.
@@ -216,3 +253,18 @@ After fixing the chunk terrain cycling bug, we've identified several additional 
 3. **Lifecycle Transitions:** Be especially careful with resource handling during major state transitions (like menu → game world).
 
 4. **Diagnostic Logging:** The diagnostic logging we added was instrumental in confirming the shared buffer hypothesis.
+
+## Next Steps
+
+1. **Comprehensive UI Testing**:
+   - Test UI positioning across different resolutions
+   - Verify UI behavior during multiple fullscreen toggles
+   - Check behavior on multi-monitor setups
+
+2. **UI Scaling Improvements**:
+   - Consider implementing a full UI scaling system based on screen resolution
+   - Add settings for UI size preferences
+
+3. **Explore Percentage-Based UI System**:
+   - Investigate moving from absolute pixel positions to percentage-based positioning
+   - This would make UI more resolution-independent

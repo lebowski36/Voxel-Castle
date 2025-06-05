@@ -330,17 +330,16 @@ bool Game::initialize() {
             atlasTextureId
         );
         
-        // Position it at bottom center of screen
+        // Position it at bottom center of screen using the proper method
         float uiSize = 120.0f; // Reasonable size for UI element
-        float centerX = (screenWidth_ - uiSize) / 2.0f;
-        float bottomY = screenHeight_ - uiSize - 50.0f; // 50px margin from bottom
         
-        DEBUG_LOG("Game", "Positioning HUD at bottom center (" + std::to_string(static_cast<int>(centerX)) + 
-                  ", " + std::to_string(static_cast<int>(bottomY)) + ") with screen size " + 
+        DEBUG_LOG("Game", "Positioning HUD at bottom center of screen " + 
                   std::to_string(screenWidth_) + "x" + std::to_string(screenHeight_));
         
-        hudSystem_->setPosition(centerX, bottomY);
         hudSystem_->setSize(uiSize, uiSize);
+        
+        // Use proper method to position at bottom center
+        hudSystem_->centerBottomOfScreen(screenWidth_, screenHeight_, 50); // 50px margin
         hudSystem_->setVisible(true); // Ensure it's visible by default in gameplay mode
         
         // Debug: Let's verify the position was set correctly
@@ -702,13 +701,10 @@ bool Game::toggleFullscreen() {
         }
          // Update HUD position for new screen size
         if (hudSystem_) {
-            float uiSize = 120.0f; // Same size as in initialization
-            float centerX = (width - uiSize) / 2.0f;
-            float bottomY = height - uiSize - 50.0f; // 50px margin from bottom
-
-            hudSystem_->setPosition(centerX, bottomY);
-            DEBUG_LOG("Game", "HUD repositioned to (" + std::to_string(static_cast<int>(centerX)) + 
-                      ", " + std::to_string(static_cast<int>(bottomY)) + ") for screen size: " + 
+            // Use the proper method to position HUD at bottom center
+            hudSystem_->centerBottomOfScreen(width, height, 50); // 50px margin
+            
+            DEBUG_LOG("Game", "HUD repositioned at bottom center for screen size: " + 
                       std::to_string(width) + "x" + std::to_string(height));
         }
 
