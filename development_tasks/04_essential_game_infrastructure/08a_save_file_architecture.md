@@ -1,6 +1,6 @@
 # World Persistence & Management System
 *Created: 2024-12-10 14:30*
-*Last Updated: 2025-06-05 16:45*
+*Last Updated: 2025-06-05 17:15*
 
 ## Overview
 Implementation plan for Minecraft-style world persistence in Voxel Castle. The system provides automatic chunk persistence, world creation/loading, and player state management without manual save operations.
@@ -42,14 +42,14 @@ Implementation plan for Minecraft-style world persistence in Voxel Castle. The s
 **Status**: 🔄 IN PROGRESS
 
 **CURRENT ISSUES IDENTIFIED:**
-1. Game starts directly into world loading, bypassing menu entirely
-2. Menu buttons for "Load World" and "Create New World" only show placeholder messages
-3. No actual world management system implemented
-4. Need complete startup flow redesign
-5. ✅ **RESOLVED: ~~CRITICAL: Chunk Loading Flickering Bug~~** - Fixed issue where chunks would cycle through different terrain data after resuming from the main menu. Root cause was shared OpenGL buffers (VAO/VBO/EBO) in MeshRenderer. Each VoxelMesh now has its own OpenGL buffers, eliminating the shared buffer bug.
-6. **🚨 CRITICAL: ESC Menu State Bug** - ESC key shows "Cannot pop state: stack is empty" errors repeatedly, indicating GameStateManager state stack corruption
-7. ✅ **RESOLVED: ~~Texture Path Duplication~~** - Fixed path duplication in texture loading
-8. ✅ **RESOLVED: ~~CRITICAL: MeshRenderer Initialization Failure~~** - Fixed renderer initialization and proper shader setup
+- [ ] Game starts directly into world loading, bypassing menu entirely
+- [ ] Menu buttons for "Load World" and "Create New World" only show placeholder messages
+- [ ] No actual world management system implemented
+- [ ] Need complete startup flow redesign
+- [x] ✅ **RESOLVED: ~~CRITICAL: Chunk Loading Flickering Bug~~** - Fixed issue where chunks would cycle through different terrain data after resuming from the main menu. Root cause was shared OpenGL buffers (VAO/VBO/EBO) in MeshRenderer. Each VoxelMesh now has its own OpenGL buffers, eliminating the shared buffer bug.
+- [x] ✅ **RESOLVED: ~~CRITICAL: ESC Menu State Bug~~** - ESC key shows "Cannot pop state: stack is empty" errors repeatedly, indicating GameStateManager state stack corruption
+- [x] ✅ **RESOLVED: ~~Texture Path Duplication~~** - Fixed path duplication in texture loading
+- [x] ✅ **RESOLVED: ~~CRITICAL: MeshRenderer Initialization Failure~~** - Fixed renderer initialization and proper shader setup
 
 **Subtasks**:
 - [x] **F11 Fullscreen Toggle**: Add fullscreen hotkey support ✅ COMPLETED
@@ -57,16 +57,29 @@ Implementation plan for Minecraft-style world persistence in Voxel Castle. The s
   - [x] Implemented proper HUD positioning at bottom center of screen
   - [x] Ensured UI element positions update correctly during state transitions
 - [ ] **CRITICAL: Fix Game Startup Flow**:
-  - [x] Add MAIN_MENU state to GameState enum ✅ COMPLETED
+  - [x] Add MAIN_MENU state to GameState enum
   - [ ] Create proper state transition from MAIN_MENU → world loading
-  - [ ] **Replace Legacy World Generation**: Currently clicking "Resume Game" uses the legacy world generator with a standard world. This needs to be replaced with the new seed-based world selection system
+  - [ ] Replace Legacy World Generation with seed-based world selection system
 - [ ] **World Selection Dialog Implementation**:
   - [ ] Create WorldSelectionDialog class with actual world scanning
   - [ ] Implement world list display and selection
+  - [ ] Add world filtering and sorting options
+  - [ ] Create world deletion functionality with confirmation dialog
+  - [ ] Add world details panel (last played, size, game mode)
 - [ ] **Create New World Dialog Implementation**:
   - [ ] Create CreateWorldDialog class with form inputs
-  - [ ] Implement world creation and initialization logic
-- [ ] **World Loading Screen**: Progress indicator during world generation/loading
+  - [ ] Implement world name text input field
+  - [ ] Add seed input field with random seed generation option
+  - [ ] Add world type selection dropdown
+  - [ ] Add game mode selection dropdown
+  - [ ] Implement structure generation checkbox
+  - [ ] Add create and cancel buttons
+- [ ] **World Loading Screen**:
+  - [ ] Create LoadingScreen class
+  - [ ] Implement progress bar for world generation/loading
+  - [ ] Add status message display
+  - [ ] Add estimated time remaining calculation
+  - [ ] Implement cancel button to return to world selection
 
 #### Task 2: Direct Chunk Persistence System
 **Priority**: HIGH - Core persistence mechanism
@@ -134,14 +147,14 @@ Implementation plan for Minecraft-style world persistence in Voxel Castle. The s
 ### Investigation Steps (Execute in Order)
 
 #### Step 1: GameStateManager Stack Corruption Investigation
-**Issue**: ESC key causing "Cannot pop state: stack is empty" errors when in main menu with no active game
+**Issue**: ✅ RESOLVED: ESC key causing "Cannot pop state: stack is empty" errors when in main menu with no active game
 **Investigation Tasks**:
-- [ ] Examine GameStateManager state stack implementation
-- [ ] Check state push/pop balance in menu transitions
-- [ ] Verify MAIN_MENU → GAMEPLAY → MAIN_MENU state flow
-- [ ] Look for missing state pushes when opening menus
-- [ ] Check if state stack is being cleared incorrectly
-- [ ] **Add condition to ESC key handler**: ESC key should not trigger state pop when in main menu with no active game session
+- [x] Examine GameStateManager state stack implementation ✅ COMPLETED
+- [x] Check state push/pop balance in menu transitions ✅ COMPLETED
+- [x] Verify MAIN_MENU → GAMEPLAY → MAIN_MENU state flow ✅ COMPLETED
+- [x] Look for missing state pushes when opening menus ✅ COMPLETED
+- [x] Check if state stack is being cleared incorrectly ✅ COMPLETED
+- [x] **Add condition to ESC key handler**: ESC key should not trigger state pop when in main menu with no active game session ✅ COMPLETED
 
 #### Step 2: Chunk Loading Flickering Root Cause Analysis
 **Issue**: ✅ RESOLVED: Chunks rapidly switching between different data when "Resume Game" is clicked
@@ -173,10 +186,23 @@ Implementation plan for Minecraft-style world persistence in Voxel Castle. The s
 ### Troubleshooting Action Plan
 
 #### Phase A: State Management Fix (Highest Priority)
-1. **Investigate GameStateManager**: Examine state stack operations
-2. **Fix State Transitions**: Ensure proper push/pop balance
-3. **Test ESC Menu**: Verify menu can open/close properly
-4. **Validate State Flow**: MAIN_MENU ↔ GAMEPLAY transitions work correctly
+✅ COMPLETED
+1. **GameStateManager Investigation**: Examined state stack operations and identified the issue
+2. **ESC Key Handler Fix**: Modified the ESC key handler in InputManager.cpp to check game state before toggling:
+   ```cpp
+   if (game.getGameState() != GameState::MAIN_MENU || 
+       (game.getStateManager() && game.getStateManager()->hasStateInStack())) {
+       // Only toggle menu if we're not in main menu with empty stack
+       game.toggleMenu();
+   } else {
+       std::cout << "[INFO] ESC key ignored in main menu with no previous state" << std::endl;
+   }
+   ```
+3. **Added Helper Method**: Added `hasStateInStack()` method to GameStateManager to check for empty state stack
+4. **Added Accessor**: Added `getStateManager()` method to Game class for state stack checking
+5. **Test Results**: ESC key now properly ignores presses when in main menu with no active game, but still works when returning from gameplay to menu
+
+This fix ensures the ESC key behaves properly in all contexts: it opens/closes the menu during gameplay but does nothing when already at the main menu with no previous game state to return to.
 
 #### Phase B: Chunk Loading Fix (Critical for Gameplay)
 ✅ COMPLETED
@@ -224,7 +250,7 @@ These insights will be valuable when implementing the World Selection and Creati
 - [x] ✅ FIXED: MeshRenderer initializes successfully 
 - [x] ✅ FIXED: Textures load from correct paths
 - [x] ✅ FIXED: UI positioned correctly at all times (game start, resume, resize, fullscreen)
-- [ ] ESC key disabled in main menu when no game is running (should only function when returning from gameplay)
+- [x] ✅ FIXED: ESC key disabled in main menu when no game is running
 - [ ] Game state transitions work smoothly
 - [ ] No console errors during normal menu/game flow
 
@@ -238,11 +264,11 @@ These insights will be valuable when implementing the World Selection and Creati
 **File**: `game/src/ui/MenuSystem.cpp`, `game/include/ui/MenuSystem.h`
 
 **Implementation**:
-- Add "Play" button to main menu (replaces current direct game start)
-- Add "Create New World" button
-- Add "Load World" button  
-- Add "Options" button
-- Add "Quit" button
+- [ ] Add "Play" button to main menu (replaces current direct game start)
+- [ ] Add "Create New World" button
+- [ ] Add "Load World" button  
+- [ ] Add "Options" button
+- [ ] Add "Quit" button
 
 **UI Layout**:
 ```
@@ -307,19 +333,6 @@ These insights will be valuable when implementing the World Selection and Creati
 ║                                      ║
 ║ ┌──────────────────────────────────┐ ║
 ║ │ ► My Castle World                │ ║
-║ │   Last played: 2 hours ago       │ ║
-║ │   Size: 45.2 MB | Creative      │ ║
-║ │                                  │ ║
-║ │   Adventure World                │ ║
-║ │   Last played: 3 days ago        │ ║
-║ │   Size: 23.1 MB | Survival      │ ║
-║ └──────────────────────────────────┘ ║
-║                                      ║
-║ [Play Selected] [Delete] [New] [Cancel] ║
-╚══════════════════════════════════════╝
-```
-
-#### 1.4 F11 Fullscreen Toggle Implementation
 **Files**: `game/src/core/Game.cpp`, `platform/src/Window.cpp`
 
 **Implementation**:
