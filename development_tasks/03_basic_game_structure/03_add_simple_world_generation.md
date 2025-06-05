@@ -1,9 +1,16 @@
 # Task: Add Simple World Generation
 
+> **⚠️ LEGACY/OBSOLETE FILE ⚠️**
+> 
+> This file is part of the legacy world generation system and is being replaced by the new 08c world generation system.
+> **For new development, see:** `04_essential_game_infrastructure/08c_world_generation_system.md`
+> 
+> This file is kept for historical reference and understanding the current legacy implementation.
+
 **Date Created:** 2025-05-12
-**Status:** Complete
+**Status:** Complete (Legacy - Being Replaced)
 **Depends On:** Voxel Data Structures, Chunk Management, Basic Game Loop, Camera System
-**Leads To:** Procedural Content, Initial Game World Visualization
+**Leads To:** ~~Procedural Content~~ → **Superseded by 08c World Generation System**
 
 ## 1. Overview
 This task focuses on implementing and integrating a basic procedural world generation system to populate the game world with voxel terrain, building upon the existing `WorldGenerator` and moving from any static test displays to a dynamic system.

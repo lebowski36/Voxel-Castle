@@ -1,5 +1,12 @@
 # Advanced World Generation System
 
+> **⚠️ LEGACY/OBSOLETE FILE ⚠️**
+> 
+> This file is part of the legacy world generation system and is being replaced by the new 08c world generation system.
+> **For new development, see:** `04_essential_game_infrastructure/08c_world_generation_system.md`
+> 
+> This file is kept for historical reference and contains valuable research and concepts that are being integrated into the new system.
+
 This document outlines the plan for creating a highly detailed and dynamic world generation system for Voxel Fortress, incorporating realistic geological and ecological features, and potentially historical simulation. This builds upon the initial simple world generation (2D heightmap based) and aims to achieve results comparable to advanced procedural generation found in games like Dwarf Fortress or sophisticated Minecraft mods.
 
 ## I. Research & Foundational Concepts (Recap & Expansion)
