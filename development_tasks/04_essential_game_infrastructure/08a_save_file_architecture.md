@@ -287,13 +287,13 @@ These insights will be valuable when implementing the World Selection and Creati
 **Files**: `game/src/ui/dialogs/CreateWorldDialog.cpp`, `game/include/ui/dialogs/CreateWorldDialog.h`
 
 **Features**:
-- **World Name**: Text input field (default: "New World")
-- **Seed**: Number/text input (default: random)
-- **World Type**: Dropdown (Normal, Flat, Amplified)
-- **Game Mode**: Dropdown (Creative, Survival, Adventure)
-- **Generate Structures**: Checkbox (villages, dungeons, etc.)
-- **Create World** button
-- **Cancel** button
+- [ ] **World Name**: Text input field (default: "New World")
+- [ ] **Seed**: Number/text input (default: random)
+- [ ] **World Type**: Dropdown (Normal, Flat, Amplified)
+- [ ] **Game Mode**: Dropdown (Creative, Survival, Adventure)
+- [ ] **Generate Structures**: Checkbox (villages, dungeons, etc.)
+- [ ] **Create World** button
+- [ ] **Cancel** button
 
 **Dialog Layout**:
 ```
@@ -314,17 +314,17 @@ These insights will be valuable when implementing the World Selection and Creati
 **Files**: `game/src/ui/dialogs/WorldListDialog.cpp`, `game/include/ui/dialogs/WorldListDialog.h`
 
 **Features**:
-- Scrollable list of existing worlds
-- For each world show:
-  - World name
-  - Last played date/time
-  - World size (MB)
-  - Game mode
-  - World version
-- **Play Selected World** button
-- **Delete World** button (with confirmation)
-- **Create New World** button
-- **Cancel** button
+- [ ] Scrollable list of existing worlds
+- [ ] For each world show:
+  - [ ] World name
+  - [ ] Last played date/time
+  - [ ] World size (MB)
+  - [ ] Game mode
+  - [ ] World version
+- [ ] **Play Selected World** button
+- [ ] **Delete World** button (with confirmation)
+- [ ] **Create New World** button
+- [ ] **Cancel** button
 
 **World List Layout**:
 ```
@@ -336,20 +336,20 @@ These insights will be valuable when implementing the World Selection and Creati
 **Files**: `game/src/core/Game.cpp`, `platform/src/Window.cpp`
 
 **Implementation**:
-- Add F11 key binding in input handler
-- Add `Window::toggleFullscreen()` method
-- Support borderless windowed fullscreen
-- Preserve resolution when switching modes
-- Handle multi-monitor setups properly
+- [x] Add F11 key binding in input handler ✅ COMPLETED
+- [x] Add `Window::toggleFullscreen()` method ✅ COMPLETED
+- [x] Support borderless windowed fullscreen ✅ COMPLETED
+- [x] Preserve resolution when switching modes ✅ COMPLETED
+- [x] Handle multi-monitor setups properly ✅ COMPLETED
 
 #### 1.5 World Loading Screen
 **Files**: `game/src/ui/LoadingScreen.cpp`, `game/include/ui/LoadingScreen.h`
 
 **Features**:
-- Progress bar for world generation/loading
-- Status messages ("Generating terrain...", "Loading chunks...", etc.)
-- Cancel button (return to world selection)
-- Estimated time remaining
+- [ ] Progress bar for world generation/loading
+- [ ] Status messages ("Generating terrain...", "Loading chunks...", etc.)
+- [ ] Cancel button (return to world selection)
+- [ ] Estimated time remaining
 
 **Loading Screen Layout**:
 ```
@@ -371,10 +371,10 @@ These insights will be valuable when implementing the World Selection and Creati
 **Files**: Remove entire SaveManager class system
 
 **Changes**:
-- Delete `game/src/core/SaveManager.cpp` and `game/include/core/SaveManager.h`
-- Remove SaveManager references from Game class
-- Remove F5/F9 hotkey system
-- Remove centralized save/load logic
+COMPLETED- [ ] Delete `game/src/core/SaveManager.cpp` and `game/include/core/SaveManager.h`
+- [ ] Remove SaveManager references from Game class
+- [ ] Remove F5/F9 hotkey system
+- [ ] Remove centralized save/load logic
 
 #### 2.2 ChunkColumn Auto-Persistence
 **Files**: `engine/src/world/chunk_column.cpp`, `engine/include/world/chunk_column.h`
@@ -430,10 +430,10 @@ public:
 **Files**: `engine/src/world/RegionFile.cpp`, `engine/include/world/RegionFile.h`
 
 **Minecraft-Compatible Format**:
-- 32x32 chunk regions stored in `.mca` files
-- Header with chunk timestamps and offsets
-- LZ4/Zlib compression for chunk data
-- Atomic writes to prevent corruption
+- [ ] 32x32 chunk regions stored in `.mca` files
+- [ ] Header with chunk timestamps and offsets
+- [ ] LZ4/Zlib compression for chunk data
+- [ ] Atomic writes to prevent corruption
 
 ### Task 3: World Directory Structure
 
@@ -441,10 +441,10 @@ public:
 **Files**: `game/src/world/WorldManager.cpp`, `game/include/world/WorldManager.h`
 
 **Responsibilities**:
-- Create new world directories
-- Scan for existing worlds
-- Load world metadata
-- Generate initial spawn chunks
+- [ ] Create new world directories
+- [ ] Scan for existing worlds
+- [ ] Load world metadata
+- [ ] Generate initial spawn chunks
 
 #### 3.2 Level.dat Format
 **File**: Each world's `level.dat` file
@@ -556,7 +556,7 @@ case SDLK_F11:
 - [ ] Implement world directory structure
 - [ ] Create world metadata system (level.dat)
 - [ ] Build world creation/selection UI
-- [ ] Add F11 fullscreen toggle
+- [x] Add F11 fullscreen toggle ✅ COMPLETED
 - [ ] Implement loading screen with progress
 
 ### Phase 2: Direct Chunk Persistence  
