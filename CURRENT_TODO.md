@@ -34,7 +34,9 @@ This protocol outlines how the AI agent (GitHub Copilot) operates. Adherence to 
     *   Document findings, solutions, and design decisions in relevant files (task files, `org/` docs).
     *   **TIMESTAMPS IN TASK FILES:** All Markdown task files in `development_tasks/` should include:
         * `Created: YYYY-MM-DD HH:MM` timestamp at the top of new files
-        * `Last Updated: YYYY-MM-DD HH:MM` timestamp that is updated whenever changes are made to the file
+        * `Last Updated: YYYY-MM-DD HH:MM` timestamp that is updated whenever 
+        changes are made to the file
+        * When a file has no created timestamp and you update it you have to set the created to "UNKNOWN"
         * Always fetch the current date and time before adding or updating timestamps
         * Use the format matching the current date in context (e.g., 2025-06-05 16:45)
         * These timestamps apply only to task documentation files, not code files
