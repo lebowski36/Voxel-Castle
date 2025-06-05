@@ -6,11 +6,25 @@
 #include "world/world_manager.h" // For VoxelCastle::World::WorldManager
 #include <chrono> // For timing
 #include <iostream> // For logging time
+#include <iomanip> // For timestamp formatting
+#include <sstream> // For string streams
 
 namespace VoxelCastle
 {
     namespace World
     {
+        // Helper function to get current timestamp string
+        static std::string getCurrentTimestamp() {
+            auto now = std::chrono::system_clock::now();
+            auto time_t = std::chrono::system_clock::to_time_t(now);
+            auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(
+                now.time_since_epoch()) % 1000;
+            
+            std::stringstream ss;
+            ss << std::put_time(std::localtime(&time_t), "%Y%m%d_%H%M%S");
+            ss << "_" << std::setfill('0') << std::setw(3) << ms.count();
+            return ss.str();
+        }
 
         // Static variables for aggregated logging
         static int g_rebuild_count_since_last_log = 0;
@@ -114,6 +128,38 @@ namespace VoxelCastle
                                        int_fast32_t segmentYIndex,
                                        int_fast64_t columnWorldZ,
                                        const WorldManager* worldManager) {
+            
+            std::string timestamp = getCurrentTimestamp();
+            
+            // [CHUNK_DEBUG] Track chunk data integrity through pipeline
+            std::cout << "[CHUNK_DEBUG:" << timestamp << "] MESH_REBUILD_START for chunk (colX=" 
+                      << columnWorldX << ", segY=" << segmentYIndex << ", colZ=" << columnWorldZ << ")" << std::endl;
+            
+            // Sample voxels at key positions to track data integrity
+            std::cout << "[CHUNK_DEBUG:" << timestamp << "] VOXEL_SAMPLING:" << std::endl;
+            std::cout << "  Corner (0,0,0): type=" << static_cast<int>(getVoxel(0,0,0).id) << std::endl;
+            std::cout << "  Center (16,16,16): type=" << static_cast<int>(getVoxel(16,16,16).id) << std::endl;
+            std::cout << "  Corner (31,31,31): type=" << static_cast<int>(getVoxel(31,31,31).id) << std::endl;
+            
+            // Count non-air voxels
+            int nonAirCount = 0;
+            int stoneCount = 0, grassCount = 0, dirtCount = 0;
+            for (int x = 0; x < CHUNK_WIDTH; x += 8) { // Sample every 8th voxel
+                for (int y = 0; y < CHUNK_HEIGHT; y += 8) {
+                    for (int z = 0; z < CHUNK_DEPTH; z += 8) {
+                        auto voxel = getVoxel(x, y, z);
+                        if (voxel.id != static_cast<uint8_t>(::VoxelEngine::World::VoxelType::AIR)) {
+                            nonAirCount++;
+                            if (voxel.id == static_cast<uint8_t>(::VoxelEngine::World::VoxelType::STONE)) stoneCount++;
+                            else if (voxel.id == static_cast<uint8_t>(::VoxelEngine::World::VoxelType::GRASS)) grassCount++;
+                            else if (voxel.id == static_cast<uint8_t>(::VoxelEngine::World::VoxelType::DIRT)) dirtCount++;
+                        }
+                    }
+                }
+            }
+            std::cout << "  Sampled counts: nonAir=" << nonAirCount << ", stone=" << stoneCount 
+                      << ", grass=" << grassCount << ", dirt=" << dirtCount << std::endl;
+            
             // [DEBUG] Only print summary every N rebuilds (see below)
             mIsRebuildingMesh = true;
             static int logCounter = 0; // Static counter to track logging frequency
@@ -171,19 +217,22 @@ namespace VoxelCastle
                 }
             }, currentChunkCoords); // Pass currentChunkCoords as the last argument
             mMesh->setInitialized(true);
-            std::cout << "[DEBUG] Rebuilt mesh for segment at (colX=" << columnWorldX << ", segY=" << segmentYIndex << ", colZ=" << columnWorldZ << ")\n";
-            std::cout << "        Vertices: " << mMesh->vertices.size() << ", Indices: " << mMesh->indices.size() << std::endl;
+            
+            std::cout << "[CHUNK_DEBUG:" << timestamp << "] MESH_REBUILD_COMPLETE:" << std::endl;
+            std::cout << "  Vertices: " << mMesh->vertices.size() << ", Indices: " << mMesh->indices.size() << std::endl;
             if (mMesh->vertices.size() == 0) {
-                std::cout << "        [WARNING] Mesh has 0 vertices! Segment may be empty or meshing failed." << std::endl;
+                std::cout << "  [WARNING] Mesh has 0 vertices! Segment may be empty or meshing failed." << std::endl;
             }
-
+            
+            // Log world position for verification
             float segmentWorldX = static_cast<float>(columnWorldX * VoxelCastle::World::ChunkSegment::CHUNK_WIDTH);
             float segmentWorldY = static_cast<float>(segmentYIndex * VoxelCastle::World::ChunkSegment::CHUNK_HEIGHT);
             float segmentWorldZ = static_cast<float>(columnWorldZ * VoxelCastle::World::ChunkSegment::CHUNK_DEPTH);
+            std::cout << "  World position: (" << segmentWorldX << ", " << segmentWorldY << ", " << segmentWorldZ << ")" << std::endl;
 
             mMesh->setWorldPosition(glm::vec3(segmentWorldX, segmentWorldY, segmentWorldZ));
             markDirty(false);
-            std::cout << "        [DEBUG] Segment marked clean after mesh rebuild." << std::endl;
+            std::cout << "[CHUNK_DEBUG:" << timestamp << "] Segment marked clean after mesh rebuild." << std::endl;
             mIsRebuildingMesh = false;
 
             auto endTime = std::chrono::high_resolution_clock::now();
