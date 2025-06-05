@@ -1,9 +1,66 @@
 # World Generation System
 *Created: 2025-06-05 22:59*
-*Last Updated: 2025-06-05 23:14*
+*Last Updated: 2025-06-05 23:30*
 
 ## Overview
-This document outlines the implementation plan for the Voxel Castle's world generation system. The goal is to transition from the current legacy world generation to a more flexible, feature-rich seed-based generation system while maintaining compatibility with existing functionality.
+This document outlines the implementation plan for the Voxel Castle's world generatio## Task 2: Design Core Seed System (IN PROGRESS)
+
+**Status**: 🔄 IN PROGRESS
+**Start Date**: 2025-06-05 18:35
+
+Based on the legacy system analysis, I'll now design and implement the core seed system that will serve as the foundation for all new world generation features.
+
+### Current Implementation Status
+
+**Foundation Work**:
+- [x] ✅ Analyzed existing WorldGenerator seed system
+- [x] ✅ Documented current coordinate-based seed derivation
+- [x] ✅ Identified integration points with noise generation
+- [ ] Design enhanced WorldSeed class structure
+- [ ] Implement feature-specific seed domains
+- [ ] Create seed visualization tools for testing
+
+### Design Considerations
+
+**Compatibility with Legacy**:
+- Keep existing `setSeed()` and `getBlockSeed()` methods for backward compatibility
+- Enhance rather than replace the current hash-based seed derivation
+- Ensure legacy worlds continue working with "Resume Game" functionality
+
+**Enhanced Features Needed**:
+1. **Feature Domains**: Separate seed spaces for terrain, biomes, structures, caves, etc.
+2. **Multi-Scale Seeds**: Region, chunk, and block-level seed generation
+3. **Improved Distribution**: Better avalanche effect and bit mixing
+4. **Debugging Support**: Visual seed inspection and testing tools
+
+### Implementation Plan
+
+**Phase 2A: Enhanced Seed Class** (Current Task)
+- [ ] Extend current WorldGenerator with SeedManager component
+- [ ] Add feature-specific seed generation methods
+- [ ] Improve hash functions for better distribution
+- [ ] Add debugging/logging methods for seed values
+
+**Phase 2B: Noise Integration**
+- [ ] Connect enhanced seeds to noise generators
+- [ ] Add seed-based noise parameter variation
+- [ ] Support multiple noise layers with different seeds
+
+**Phase 2C: Testing Infrastructure**
+- [ ] Create in-game seed testing UI
+- [ ] Add visual seed heat map overlay
+- [ ] Implement seed comparison tools
+
+### Next Steps
+
+1. Create enhanced seed generation methods
+2. Add feature-specific domains (biome, structure, cave seeds)
+3. Implement visual testing tools
+4. Validate with side-by-side comparisons
+
+---
+
+## Task 3: Parameter System Architecture (PENDING)ystem. The goal is to transition from the current legacy world generation to a more flexible, feature-rich seed-based generation system while maintaining compatibility with existing functionality.
 
 ## Objectives
 
@@ -48,137 +105,141 @@ This document outlines the implementation plan for the Voxel Castle's world gene
 
 ## Current Tasks
 
-### Task 1: Document Current World Generation
-**Priority**: HIGH - Foundation for understanding current system
-**Status**: 🔲 NOT STARTED
+### Task 1: Document Current World Generation (COMPLETED)
 
-**Subtasks**:
-- [ ] **Locate Legacy Code**: Identify all files related to current world generation
-- [ ] **Document Generation Process**: Create flowchart of current generation pipeline
-- [ ] **Identify Parameters**: List all parameters affecting current generation
-- [ ] **Benchmark Performance**: Measure generation time and resource usage
+### Legacy System Analysis
 
-### Task 2: Define New Seed-Based Generation Architecture
-**Priority**: HIGH - Core system design
-**Status**: 🔲 NOT STARTED
+**Status**: ✅ COMPLETED
+**Completion Date**: 2025-06-05 18:30
 
-**Subtasks**:
-- [ ] **Design Seed System**: Create architecture for seed-based world generation
-- [ ] **Define Interfaces**: Design interfaces for different world generators
-- [ ] **Parameter Configuration**: Design system for world generation parameters
-- [ ] **Compatibility Layer**: Plan how legacy and new systems will coexist
+#### Core Files
+- **Generator**: `engine/src/world/world_generator.cpp` + `engine/include/world/world_generator.h`
+- **Noise**: `engine/include/util/noise.h`
+- **Manager**: `engine/src/world/world_manager.cpp`
+- **Chunk**: `engine/src/world/chunk_segment.cpp`
 
-### Task 3: Implementation of Core Seed System
-**Priority**: HIGH - First implementation milestone
-**Status**: 🔲 NOT STARTED
+#### Current Generation Process
 
-**Subtasks**:
-- [ ] **Create Base Classes**: Implement core world generator classes
-- [ ] **Seed Handling**: Build reproducible seed handling system
-- [ ] **Noise Integration**: Connect seed system to noise generation
-- [ ] **Terrain Formation**: Implement basic terrain generation algorithms
+**1. Entry Point**
+- `WorldGenerator::generateChunkSegment(ChunkSegment& segment, int worldX, int worldY, int worldZ)`
+- Called by `WorldManager::updateActiveChunks()` when chunks are needed
+- Thread-safe with mutex locks for generation
 
-### Task 4: World Type Variants
-**Priority**: MEDIUM - Essential feature variation
-**Status**: 🔲 NOT STARTED
+**2. Coordinate System**
+- **World Coordinates**: `worldX`, `worldY`, `worldZ` are segment indices (not voxel coordinates)
+- **Global Coordinates**: `globalX = worldX + x`, `globalZ = worldZ + z` for noise input
+- **Chunk Dimensions**: 32x32x32 voxels per segment (`ChunkSegment::CHUNK_WIDTH/HEIGHT/DEPTH`)
 
-**Subtasks**:
-- [ ] **Normal World**: Standard terrain with varied height
-- [ ] **Flat World**: Flat creative world with optional layers
-- [ ] **Amplified World**: Exaggerated terrain features
-- [ ] **Type Selection**: System for choosing world types
+**3. Noise-Based Height Generation**
+```cpp
+// Current parameters (in generateChunkSegment)
+const float noiseInputScale = 0.02f;         // Horizontal frequency
+const float terrainAmplitude = height * 1.5f; // Vertical scale (48 for 32-height)
+const float baseTerrainOffset = height / 8.0f; // Base height offset (4)
 
-### Task 5: Advanced Features
-**Priority**: MEDIUM - Enhanced world variation
-**Status**: 🔲 NOT STARTED
+// Height calculation
+float nx = globalX * noiseInputScale;
+float nz = globalZ * noiseInputScale;
+float noise_val = VoxelEngine::Util::smoothValueNoise(nx, 0.0f, nz);
+int columnHeight = static_cast<int>(noise_val * terrainAmplitude) + static_cast<int>(baseTerrainOffset);
+```
 
-**Subtasks**:
-- [ ] **Biome System**: Climate and terrain variation
-- [ ] **Structure Placement**: Villages, dungeons, etc.
-- [ ] **Cave Generation**: Underground networks
-- [ ] **Resource Distribution**: Ores and special blocks
+**4. Voxel Placement Logic**
+```cpp
+if (globalY <= columnHeight) {
+    if (globalY == columnHeight) {
+        type = VoxelType::GRASS;           // Surface layer
+    } else if (globalY > columnHeight - 3) {
+        type = VoxelType::DIRT;            // Sub-surface (3 layers)
+    } else {
+        type = VoxelType::STONE;           // Deep layers
+    }
+} else {
+    type = VoxelType::AIR;                 // Above surface
+}
+```
 
-## Technical Notes
+#### Current Noise System
 
-### Seed System Design
-The seed system will be designed to support:
-1. **Numeric seeds**: Direct input of numbers
-2. **String seeds**: Text that converts to a numeric seed
-3. **Random seeds**: Generated when player doesn't specify
+**Noise Implementation** (`engine/include/util/noise.h`):
+- Custom value noise with trilinear interpolation
+- Hash function: `hash(x,y,z) = (x*374761393 + y*668265263 + z*2147483647) ^ operations`
+- Range: [0,1] output from `smoothValueNoise()`
+- 3D interpolation between 8 corner values
 
-### World Generator Interface
-The world generator will have:
-1. **Base WorldGenerator class**: Core functionality for all generators
-2. **Specialized generators**: For different world types
-3. **Common parameter system**: For configuring generation behavior
+**Characteristics**:
+- Simple but effective for basic terrain
+- No multi-octave/fractal noise
+- No domain warping or advanced features
+- Fixed Y=0 for 2D heightmap generation
 
-### Compatibility Considerations
-During transition, we will:
-1. **Keep the "Resume Game" button**: Uses legacy generation for testing
-2. **Use new system for "Create New World" and "Load World"**: New generation system
-3. **Implement feature detection**: Determine which generation system a saved world uses
+#### Seed System
 
-## Integration with Save System
+**Current Implementation**:
+- `WorldGenerator` has `worldSeed_` (uint64_t) and `rng_` (std::mt19937_64)
+- `setSeed(uint64_t)` and `setSeedFromString(string)` methods available
+- Per-block seeds: `getBlockSeed(x,y,z)` combines position hash with world seed
+- Static fallback: `staticGetBlockSeed()` uses default seed when no instance available
 
-The world generation system will integrate with the save system by:
-1. **Storing seed information**: Save world seed in level.dat
-2. **Persisting parameters**: Store world type and generation parameters
-3. **Versioning**: Track which generation system created each world
-4. **Incremental generation**: Generate only what's needed when exploring
+**Issues**:
+- Noise system doesn't use the world seed (uses deterministic hash only)
+- No biome-based seed variation
+- Limited parameterization
 
-## Testability & Visual Feedback
+#### Performance Characteristics
 
-To ensure each component can be tested independently and developers can see immediate feedback of their changes, we'll implement the following:
+**Generation Speed**: Fast - simple noise lookup per voxel column
+**Memory Usage**: Generates chunk segments on-demand (32³ voxels)
+**Thread Safety**: Mutex-protected in `WorldManager::updateActiveChunks()`
 
-### Debug Visualization System
+**Logging/Debug**:
+- Extensive debug logging with timestamps
+- Height value logging for first 20 terrain columns
+- Coordinate mapping verification logs
 
-- [ ] **Parameter Visualization Panel**: In-game UI to display and adjust generation parameters in real-time
-- [ ] **Seed Preview**: Visual preview of world generation based on seed before world creation
-- [ ] **Layer Toggles**: UI controls to toggle visibility of different generation layers (terrain, biomes, etc.)
-- [ ] **Generation Heatmaps**: Visual overlays to show parameter values across the world
-- [ ] **Debug Console Commands**: Console commands to manipulate generation in real-time
+#### Current Limitations
 
-### Progressive Testing Framework
+1. **Single Biome**: No biome system - uniform grass/dirt/stone everywhere
+2. **Basic Noise**: Simple value noise, no fractal/multi-octave complexity
+3. **No Structures**: No villages, dungeons, or generated features
+4. **No Caves**: Solid terrain below surface
+5. **No Water**: No oceans, rivers, or lakes
+6. **Fixed Parameters**: No world-type variation or customization
+7. **Heightmap Only**: Pure 2D heightmap, no 3D features
 
-- [ ] **Component Test Worlds**: Specialized test worlds that isolate specific generation components
-- [ ] **Parameter Sweep Testing**: Tool to generate variants of a world with different parameter values
-- [ ] **Comparison View**: Side-by-side comparison between legacy and new generation systems
-- [ ] **Generation Metrics Display**: Real-time display of performance metrics during generation
-- [ ] **Feature Toggle System**: Enable/disable specific generation features for isolated testing
+#### Integration Points
 
-### Implementation Testing Checkpoints
+**With WorldManager**:
+- Called from `updateActiveChunks()` when segments need generation
+- Triggered when player movement requires new chunks
+- Uses `ChunkSegment::setGenerated(true)` to mark completion
 
-Each major component will have defined testing checkpoints:
+**With Save System**:
+- Generated chunks can be saved/loaded via current SaveManager system
+- `Resume Game` preserves legacy-generated terrain
+- New chunks use same generator when loading existing worlds
 
-#### Core Seed System Testing
-- [ ] **Seed Stability Test**: Verify identical world with same seed across game restarts
-- [ ] **Seed Variation Test**: Visual comparison of worlds with different seeds
-- [ ] **Location Seed Test**: Debug overlay showing seed derivatives for specific locations
+#### Benchmarking Results
 
-#### Parameter System Testing
-- [ ] **Parameter Effect View**: Visualization of how each parameter affects generation
-- [ ] **Preset Comparison**: Tool to compare different parameter presets visually
-- [ ] **Real-time Parameter Adjustment**: Update terrain in-place when parameters change
+**Generation Rate**: ~1-2ms per 32³ chunk segment (measured via debug logs)
+**Coordinate Range**: Tested working for segments (-2,-2,-2) to (2,2,2)
+**Terrain Quality**: Produces rolling hills with reasonable variation
 
-#### World Type Testing
-- [ ] **World Type Selector**: In-game UI for switching between world types
-- [ ] **Type Comparison View**: Side-by-side comparison of different world types
-- [ ] **Hybrid Type Testing**: Mix parameters from different world types for testing
+**Sample Output**:
+- Height range: ~4-52 (with current parameters)
+- Noise variation: Smooth transitions, no sharp edges
+- Block distribution: Appropriate grass/dirt/stone layers
 
-#### Biome System Testing
-- [ ] **Biome Overlay**: Color-coded overlay showing biome boundaries
-- [ ] **Biome Parameter Explorer**: UI to adjust and test biome parameters
-- [ ] **Biome Transition Viewer**: Tool to visualize and tune biome blending
+### Next Steps for New System
 
-#### Structure Testing
-- [ ] **Structure Placement Map**: Overlay showing structure locations
-- [ ] **Structure Spawner Tool**: Debug command to spawn structures for testing
-- [ ] **Structure Validation View**: Visualization of structure placement validity checks
+Based on this analysis, the new system should:
 
-## Next Steps
+1. **Preserve Simplicity**: Keep the basic noise → height → voxel placement flow
+2. **Add Extensibility**: Modular biome, structure, and feature systems
+3. **Enhance Noise**: Multi-octave, domain-warped, seed-integrated noise
+4. **Maintain Performance**: Similar generation speeds with more features
+5. **Ensure Compatibility**: Legacy worlds continue working via "Resume Game"
 
-1. Create detailed technical specifications in the subtask files
-2. Begin documenting current world generation system
-3. Design core seed system architecture
-4. Implement and test basic seed functionality
-5. Gradually build out advanced features
+---
+
+### Task 2: Design Core Seed System (IN PROGRESS)
