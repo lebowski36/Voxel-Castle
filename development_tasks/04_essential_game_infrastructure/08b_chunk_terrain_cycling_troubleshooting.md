@@ -244,6 +244,67 @@ After fixing the chunk terrain cycling bug, we also addressed the following UI i
 
 These fixes ensure that the UI elements (menu, HUD, crosshair) are properly positioned and functional in both windowed and fullscreen modes. The game's UI now behaves more like Minecraft's, with the block selection display properly centered at the bottom of the screen and the crosshair correctly centered regardless of screen size or display mode.
 
+## Update: HUD Positioning on Game Start/Resume Fixed
+
+After fixing the chunk terrain cycling issue and fullscreen toggle functionality, we identified one remaining UI issue: the block selection HUD was not always correctly positioned at the bottom center of the screen when first starting the game or resuming from the main menu.
+
+### Investigation and Solution:
+
+1. **Problem Analysis**:
+   - The HUD was correctly positioned during window resize events and fullscreen toggles
+   - However, it wasn't consistently positioned when transitioning from menu to gameplay states
+   - The bug only appeared on first game start or resume from menu
+
+2. **Root Cause**:
+   - The `onStateChanged` method in `GameStateDelegate.cpp` needed to be updated to reposition UI elements
+   - State transitions weren't properly updating UI positions, only visibility
+
+3. **Solution Implementation**:
+   - Added proper window header includes to `GameStateDelegate.cpp`
+   - Enhanced state transition code to ensure HUD is properly positioned when entering gameplay states:
+
+```cpp
+// In Game::onStateChanged when entering gameplay state
+if (isPlaying() && !isPaused()) {
+    // Existing code for mouse capture and UI visibility
+    setMouseCaptured(true);
+    
+    // Show game UI elements
+    if (hudSystem_) {
+        hudSystem_->setVisible(true);
+        
+        // Get current window dimensions from the window
+        int width = gameWindow_->getWidth();
+        int height = gameWindow_->getHeight();
+        
+        // Ensure HUD is properly positioned when resuming game
+        hudSystem_->centerBottomOfScreen(width, height, 50); // 50px margin
+        DEBUG_LOG("Game", "HUD repositioned on state change to: " + 
+                 std::to_string(static_cast<int>(hudSystem_->getPosition().x)) + ", " +
+                 std::to_string(static_cast<int>(hudSystem_->getPosition().y)));
+    }
+    
+    // Similar updates for crosshair positioning
+    // ...
+}
+```
+
+### Results:
+- The HUD is now correctly positioned at the bottom center of the screen in all scenarios:
+  - On initial game start
+  - When resuming from the main menu
+  - During window resize events
+  - After toggling fullscreen
+
+### Verification:
+- Confirmed via console logs that the HUD is positioned correctly on state transitions:
+```
+[GameStateManager] State transition: MAIN_MENU -> STRATEGIC_MODE
+[HUD] Positioned at (608, 606) on screen 1280x720
+```
+
+This fix completes the UI positioning improvements, ensuring consistent behavior across all game states and display modes.
+
 ## Lessons Learned
 
 1. **Isolated Rendering Resources:** In GPU graphics programming, ensure each independent object has its own rendering resources when they need to be displayed simultaneously.
@@ -253,6 +314,8 @@ These fixes ensure that the UI elements (menu, HUD, crosshair) are properly posi
 3. **Lifecycle Transitions:** Be especially careful with resource handling during major state transitions (like menu → game world).
 
 4. **Diagnostic Logging:** The diagnostic logging we added was instrumental in confirming the shared buffer hypothesis.
+
+5. **UI State Management:** UI element positions need to be explicitly updated during state transitions, not just when the window size changes.
 
 ## Next Steps
 

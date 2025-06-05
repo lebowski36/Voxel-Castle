@@ -325,10 +325,30 @@ void processInput(Game& game) {
             BlockPlacement::cycleBlockType(game, forward);
         }
         else if (e.type == SDL_EVENT_WINDOW_RESIZED) {
+            int width = e.window.data1;
+            int height = e.window.data2;
+            
+            // Update camera aspect ratio
             if (game.camera_) {
-                game.camera_->updateAspect(static_cast<float>(e.window.data1) / static_cast<float>(e.window.data2));
+                game.camera_->updateAspect(static_cast<float>(width) / static_cast<float>(height));
             }
-            glViewport(0, 0, e.window.data1, e.window.data2);
+            
+            // Update viewport
+            glViewport(0, 0, width, height);
+            
+            // Update HUD position for new screen size
+            if (game.hudSystem_) {
+                game.hudSystem_->centerBottomOfScreen(width, height, 50); // 50px margin
+                DEBUG_LOG("InputManager", "HUD repositioned for window resize: " + 
+                          std::to_string(width) + "x" + std::to_string(height));
+            }
+            
+            // Update crosshair position for new screen size
+            if (game.crosshairSystem_) {
+                game.crosshairSystem_->centerOnScreen(width, height);
+                DEBUG_LOG("InputManager", "Crosshair repositioned for window resize: " + 
+                          std::to_string(width) + "x" + std::to_string(height));
+            }
         }
         else if (e.type == SDL_EVENT_WINDOW_FOCUS_GAINED) {
             // Automatically enable mouse capture when window gains focus (unless menu is open)
