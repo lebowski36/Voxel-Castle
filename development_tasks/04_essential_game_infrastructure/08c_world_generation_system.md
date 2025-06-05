@@ -103,6 +103,11 @@ These design requirements will be distributed across the 08c subtasks as follows
 - **08c.8 (UI Integration)**: Implements world viewer and site selection tools
 - **08c.9 (Performance)**: Implements technical optimization requirements
 - **08c.10 (Legacy Transition)**: Manages transition and world persistence requirements
+- **08c.6 (Cave Generation)**: Implements underground systems and cave networks
+- **08c.7 (Ore Generation)**: Implements resource distribution and geological accuracy
+- **08c.8 (UI Integration)**: Implements world viewer and site selection tools
+- **08c.9 (Performance)**: Implements technical optimization requirements
+- **08c.10 (Legacy Transition)**: Manages transition and world persistence requirements
 
 ### Testability Requirements for Each Feature
 
