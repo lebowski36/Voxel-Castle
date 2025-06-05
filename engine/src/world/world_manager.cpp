@@ -326,18 +326,21 @@ for (int colX = centerColX - forcedRadius; colX <= centerColX + forcedRadius; ++
 }
 
 // Defer unloading: mark columns for removal, but only erase after mesh jobs are done
-std::vector<WorldCoordXZ> columnsToUnload;
-for (auto it = m_chunkColumns.begin(); it != m_chunkColumns.end(); ++it) {
-    const auto& [coord, columnPtr] = *it;
-    if (activeColumns.find({coord.x, coord.z}) == activeColumns.end()) {
-        columnsToUnload.push_back(coord);
+// CRITICAL FIX: Don't unload chunks during initial loading phase to prevent flickering
+if (!m_isLoadingFromSave) {
+    std::vector<WorldCoordXZ> columnsToUnload;
+    for (auto it = m_chunkColumns.begin(); it != m_chunkColumns.end(); ++it) {
+        const auto& [coord, columnPtr] = *it;
+        if (activeColumns.find({coord.x, coord.z}) == activeColumns.end()) {
+            columnsToUnload.push_back(coord);
+        }
     }
-}
-// Only erase columns if there are no running mesh jobs (simple version: after processFinishedMeshJobs)
-// In a real system, you may want to check for jobs referencing these columns
-if (!m_meshJobSystem || m_meshJobSystem->runningJobs() == 0) {
-    for (const auto& coord : columnsToUnload) {
-        m_chunkColumns.erase(coord);
+    // Only erase columns if there are no running mesh jobs (simple version: after processFinishedMeshJobs)
+    // In a real system, you may want to check for jobs referencing these columns
+    if (!m_meshJobSystem || m_meshJobSystem->runningJobs() == 0) {
+        for (const auto& coord : columnsToUnload) {
+            m_chunkColumns.erase(coord);
+        }
     }
 }
 }

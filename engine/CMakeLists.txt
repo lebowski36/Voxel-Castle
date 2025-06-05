@@ -24,6 +24,7 @@ add_library(VoxelEngine STATIC
     src/rendering/block_outline_renderer.cpp # Added BlockOutlineRenderer source
     src/rendering/render_utils.cpp # Added RenderUtils source
     src/rendering/debug_utils.cpp # Added DebugUtils source
+    src/rendering/texture_atlas.cpp # Added TextureAtlas source
     src/external/stb_image_impl.cpp # Added stb_image implementation
     src/rendering/Shader.cpp # Added Shader source
     # UI System sources

@@ -292,9 +292,9 @@ bool Game::initialize() {
                 // Generate a random seed if none provided
                 std::string randomSeed = "voxelcastle" + std::to_string(std::chrono::system_clock::now().time_since_epoch().count());
                 if (initializeWorldSystems(randomSeed)) {
-                    // Switch to gameplay state once world is initialized
+                    // Transition directly from MAIN_MENU to gameplay state (not using stack)
                     if (stateManager_) {
-                        stateManager_->pushState(GameState::STRATEGIC_MODE);
+                        stateManager_->requestStateChange(GameState::STRATEGIC_MODE);
                     }
                     std::cout << "[Game] World initialized and switched to gameplay mode" << std::endl;
                 } else {
@@ -303,7 +303,7 @@ bool Game::initialize() {
             } else {
                 std::cout << "[Game] World already initialized, switching to gameplay" << std::endl;
                 if (stateManager_) {
-                    stateManager_->pushState(GameState::STRATEGIC_MODE);
+                    stateManager_->requestStateChange(GameState::STRATEGIC_MODE);
                 }
             }
         });
@@ -432,6 +432,9 @@ bool Game::initializeWorldSystems(const std::string& worldSeed) {
     
     // Initialize world content
     if (worldManager_ && camera_) {
+        // Set loading state to prevent chunk unloading during initialization
+        worldManager_->setLoadingState(true);
+        
         // Get the camera position to determine where to initially load chunks
         const glm::vec3& cameraPos = camera_->getPosition();
         
@@ -443,6 +446,9 @@ bool Game::initializeWorldSystems(const std::string& worldSeed) {
         
         worldManager_->updateActiveChunks(cameraPos, initialLoadRadius, *worldGenerator_);
         worldManager_->updateDirtyMeshes(*textureAtlas_, *meshBuilder_);
+        
+        // Clear loading state after initial chunk loading is complete
+        worldManager_->setLoadingState(false);
         
         // Mark world as loading - will be set to fully loaded after some time
         worldInitTime_ = std::chrono::steady_clock::now();

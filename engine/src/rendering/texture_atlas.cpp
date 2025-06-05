@@ -4,15 +4,10 @@
 #include <iostream>
 
 // Include STB Image library for texture loading
-#define STB_IMAGE_IMPLEMENTATION
 #include "../../external/stb_image.h"
 
 namespace VoxelEngine {
 namespace Rendering {
-
-// Define the constants declared in the header
-const float TILE_UV_WIDTH = TILE_WIDTH_PX / ATLAS_WIDTH_PX;
-const float TILE_UV_HEIGHT = TILE_HEIGHT_PX / ATLAS_HEIGHT_PX;
 
 // Define a consistent base directory for asset paths
 const std::string BASE_DIRECTORY = "/home/system-x1/Projects/Voxel Castle/";
@@ -52,11 +47,7 @@ TextureAtlas::TextureAtlas() : m_texture_id(0) {
 }
 
 TextureAtlas::~TextureAtlas() {
-    // Clean up the texture if it exists
-    if (m_texture_id != 0) {
-        glDeleteTextures(1, &m_texture_id);
-        m_texture_id = 0;
-    }
+    releaseTexture();
 }
 
 TextureCoordinates TextureAtlas::getTextureCoordinates(VoxelEngine::World::VoxelType type) const {
@@ -82,12 +73,12 @@ TextureCoordinates TextureAtlas::getTextureCoordinates(VoxelEngine::World::Voxel
     return {{u_min_fallback, v_min_fallback_gl}, {u_max_fallback, v_max_fallback_gl}};
 }
 
-bool TextureAtlas::loadTexture(const std::string& path) {
+bool TextureAtlas::loadTexture(const std::string& texturePath) {
     std::string resolvedPath;
-    if (std::filesystem::path(path).is_absolute()) {
-        resolvedPath = path; // Use the provided absolute path
+    if (std::filesystem::path(texturePath).is_absolute()) {
+        resolvedPath = texturePath; // Use the provided absolute path
     } else {
-        resolvedPath = BASE_DIRECTORY + "assets/textures/" + path; // Prepend the base directory
+        resolvedPath = BASE_DIRECTORY + "assets/textures/" + texturePath; // Prepend the base directory
     }
 
     DEBUG_LOG("TextureAtlas", "Loading texture from: " + resolvedPath);
@@ -146,6 +137,13 @@ bool TextureAtlas::loadTexture(const std::string& path) {
     
     DEBUG_LOG("TextureAtlas", "Texture loaded with ID: " + std::to_string(m_texture_id));
     return true;
+}
+
+void TextureAtlas::releaseTexture() {
+    if (m_texture_id != 0) {
+        glDeleteTextures(1, &m_texture_id);
+        m_texture_id = 0;
+    }
 }
 
 } // namespace Rendering

@@ -44,6 +44,10 @@ Implementation plan for Minecraft-style world persistence in Voxel Castle. The s
 2. Menu buttons for "Load World" and "Create New World" only show placeholder messages
 3. No actual world management system implemented
 4. Need complete startup flow redesign
+5. **🚨 CRITICAL: Chunk Loading Flickering Bug** - When clicking "Resume Game" from main menu, chunks flicker rapidly between different chunk data (chunk 1 switches to chunk 2, 3, 4, etc. in milliseconds). This issue appeared in the last 4-5 commits and affects world loading through the menu system but not direct startup.
+6. **🚨 CRITICAL: ESC Menu State Bug** - ESC key shows "Cannot pop state: stack is empty" errors repeatedly, indicating GameStateManager state stack corruption
+7. **⚠️ Texture Path Duplication** - TextureAtlas attempts to load from duplicated path: `/home/system-x1/Projects/Voxel Castle/assets/textures/assets/textures/atlas.png` (should be single assets/textures/)
+8. **🚨 CRITICAL: MeshRenderer Initialization Failure** - "Renderer not ready due to shader, buffer, or texture generation failure" but game continues anyway
 
 **Subtasks**:
 - [x] **F11 Fullscreen Toggle**: Add fullscreen hotkey support ✅ COMPLETED
@@ -122,6 +126,83 @@ Implementation plan for Minecraft-style world persistence in Voxel Castle. The s
 - [ ] **Ensure MeshRenderer Integration**: Update how MeshRenderer uses TextureAtlas texture IDs
 - [ ] **HUD & UI Integration**: Fix how UI elements like HUD obtain texture IDs from TextureAtlas
 - [ ] **Clean up Legacy Texture Code**: Remove any duplicate texture loading logic
+
+## 🔧 IMMEDIATE TROUBLESHOOTING TASKS
+**Priority**: BLOCKING - Must resolve before continuing save system implementation
+
+### Investigation Steps (Execute in Order)
+
+#### Step 1: GameStateManager Stack Corruption Investigation
+**Issue**: ESC key causing "Cannot pop state: stack is empty" errors
+**Investigation Tasks**:
+- [ ] Examine GameStateManager state stack implementation
+- [ ] Check state push/pop balance in menu transitions
+- [ ] Verify MAIN_MENU → GAMEPLAY → MAIN_MENU state flow
+- [ ] Look for missing state pushes when opening menus
+- [ ] Check if state stack is being cleared incorrectly
+
+#### Step 2: Chunk Loading Flickering Root Cause Analysis
+**Issue**: Chunks rapidly switching between different data when "Resume Game" is clicked
+**Investigation Tasks**:
+- [ ] Compare git diff of last 4-5 commits affecting world loading
+- [ ] Check WorldManager chunk loading logic changes
+- [ ] Examine MeshRenderer changes that might affect chunk display
+- [ ] Look for race conditions in mesh generation/display
+- [ ] Check if multiple world initializations are occurring
+- [ ] Verify chunk coordinate calculations haven't changed
+
+#### Step 3: MeshRenderer Initialization Failure Investigation
+**Issue**: "Renderer not ready due to shader, buffer, or texture generation failure"
+**Investigation Tasks**:
+- [ ] Check MeshRenderer constructor requirements
+- [ ] Verify OpenGL context is available when MeshRenderer initializes
+- [ ] Check shader compilation/loading in MeshRenderer
+- [ ] Verify texture atlas loading happens before MeshRenderer init
+- [ ] Look for initialization order dependencies
+
+#### Step 4: Texture Path Duplication Bug Fix
+**Issue**: Path shows `/assets/textures/assets/textures/atlas.png` (duplicated)
+**Investigation Tasks**:
+- [ ] Check TextureAtlas::loadTexture() path resolution logic
+- [ ] Verify BASE_DIRECTORY constant usage
+- [ ] Look for double path concatenation in texture loading
+- [ ] Check if relative vs absolute path handling is correct
+
+### Troubleshooting Action Plan
+
+#### Phase A: State Management Fix (Highest Priority)
+1. **Investigate GameStateManager**: Examine state stack operations
+2. **Fix State Transitions**: Ensure proper push/pop balance
+3. **Test ESC Menu**: Verify menu can open/close properly
+4. **Validate State Flow**: MAIN_MENU ↔ GAMEPLAY transitions work correctly
+
+#### Phase B: Chunk Loading Fix (Critical for Gameplay)
+1. **Git History Analysis**: Review recent commits affecting world/chunk loading
+2. **World Loading Flow**: Trace execution path from "Resume Game" click
+3. **Mesh Generation**: Check if mesh job system changes caused issues
+4. **Race Condition Check**: Look for timing issues in chunk display
+5. **Fix and Test**: Apply fix and verify chunk loading stability
+
+#### Phase C: Renderer Initialization Fix (Important for Visuals)
+1. **Initialization Order**: Ensure OpenGL context before MeshRenderer
+2. **Shader System**: Verify shader loading is working correctly
+3. **Texture Dependencies**: Fix texture atlas loading before renderer init
+4. **Error Handling**: Improve error messages for renderer failures
+
+#### Phase D: Path Resolution Fix (Minor but Important)
+1. **Path Logic Review**: Fix duplicate path concatenation
+2. **Test Texture Loading**: Verify atlas.png loads from correct path
+3. **Validation**: Ensure no other path duplication issues exist
+
+### Expected Outcomes After Fixes
+- [ ] ESC menu opens/closes without errors
+- [ ] "Resume Game" loads world without chunk flickering
+- [ ] MeshRenderer initializes successfully
+- [ ] Textures load from correct paths
+- [ ] Game state transitions work smoothly
+- [ ] No console errors during normal menu/game flow
+
+---
 
 ## Detailed Implementation Plan
 
