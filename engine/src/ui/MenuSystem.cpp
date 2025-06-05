@@ -66,7 +66,7 @@ bool MenuSystem::initialize(int screenWidth, int screenHeight, const std::string
     glm::vec2 worldCreationSize = worldCreationDialog_->getSize();
     mainMenu_->setSize(400.0f, mainSize.y); // Keep auto-calculated height
     settingsMenu_->setSize(450.0f, settingsSize.y); // Keep auto-calculated height
-    worldCreationDialog_->setSize(500.0f, worldCreationSize.y); // Keep auto-calculated height
+    worldCreationDialog_->setSize(600.0f, worldCreationSize.y); // Wider to accommodate longer text
     
     // Position menus after they auto-calculate their heights
     // Note: This will be called again in showMainMenu/showSettingsMenu to ensure proper centering
@@ -303,6 +303,12 @@ void MenuSystem::requestWorldInitialization() {
     }
 }
 
+void MenuSystem::requestMenuRecentering() {
+    // Simply use the current screen dimensions from the renderer
+    // We've removed this call from BaseMenu::autoResizeHeight to avoid crashes during initialization
+    centerMenus(getRenderer().getScreenWidth(), getRenderer().getScreenHeight());
+}
+
 void MenuSystem::centerMenus(int screenWidth, int screenHeight) {
     // Center main menu with bounds checks to prevent off-screen menus
     glm::vec2 mainSize = mainMenu_->getSize();
@@ -341,6 +347,27 @@ void MenuSystem::centerMenus(int screenWidth, int screenHeight) {
     }
     
     settingsMenu_->setPosition(settingsX, settingsY);
+    
+    // Center world creation dialog with similar constraints
+    if (worldCreationDialog_) {
+        glm::vec2 worldCreationSize = worldCreationDialog_->getSize();
+        
+        // Default to centered position
+        float idealWorldCreationX = screenWidth / 2.0f - worldCreationSize.x / 2.0f;
+        float idealWorldCreationY = screenHeight / 2.0f - worldCreationSize.y / 2.0f;
+        
+        // Constrain to visible area with 10px margins
+        float worldCreationX = std::max(10.0f, std::min(idealWorldCreationX, screenWidth - worldCreationSize.x - 10.0f));
+        float worldCreationY = std::max(10.0f, std::min(idealWorldCreationY, screenHeight - worldCreationSize.y - 10.0f));
+        
+        // If screen is too small for the menu, prioritize showing top-left
+        if (screenWidth < worldCreationSize.x + 20.0f || screenHeight < worldCreationSize.y + 20.0f) {
+            worldCreationX = 10.0f; // Pin to left with margin
+            worldCreationY = 10.0f; // Pin to top with margin
+        }
+        
+        worldCreationDialog_->setPosition(worldCreationX, worldCreationY);
+    }
 }
 
 glm::vec2 MenuSystem::getMainMenuSize() const {

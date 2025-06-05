@@ -173,6 +173,8 @@ void BaseMenu::autoResizeHeight() {
         UIPanel::setSize(currentWidth, requiredHeight);
         
         logger.debug("BaseMenu", "Auto-resize completed - New height: " + std::to_string(getSize().y));
+        
+        // NOTE: We've removed the call to requestMenuRecentering() that was causing crashes
     }
 }
 
@@ -190,11 +192,20 @@ std::shared_ptr<UIButton> BaseMenu::createStyledButton(const std::string& text, 
     float maxWidth = getSize().x * 0.75f; // Slightly smaller max to ensure centering
     buttonWidth = std::max(minWidth, std::min(buttonWidth, maxWidth));
     
+    // DEBUG: Add extra logging for button sizing
+    auto& logger = UILogger::getInstance();
+    logger.debug("BaseMenu", "Button '" + text + "' sizing:");
+    logger.debug("BaseMenu", "  Actual text width: " + std::to_string(actualTextWidth));
+    logger.debug("BaseMenu", "  Text padding: " + std::to_string(textPadding));
+    logger.debug("BaseMenu", "  Calculated width: " + std::to_string(actualTextWidth + textPadding));
+    logger.debug("BaseMenu", "  Min width: " + std::to_string(minWidth));
+    logger.debug("BaseMenu", "  Max width: " + std::to_string(maxWidth));
+    logger.debug("BaseMenu", "  Final button width: " + std::to_string(buttonWidth));
+    
     // Center the button horizontally in the menu
     float buttonX = (getSize().x - buttonWidth) / 2.0f;
     
     // DEBUG: Log positioning information to UI log
-    auto& logger = UILogger::getInstance();
     glm::vec2 menuPos = getAbsolutePosition();
     logger.debug("BaseMenu", "Creating button '" + text + "':");
     logger.debug("BaseMenu", "  Menu absolute position: (" + std::to_string(menuPos.x) + ", " + std::to_string(menuPos.y) + ")");

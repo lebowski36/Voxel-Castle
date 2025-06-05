@@ -145,6 +145,11 @@ public:
     void updateScreenSize(int width, int height);
     
     /**
+     * @brief Request that menus be re-centered (called after auto-resize)
+     */
+    void requestMenuRecentering();
+    
+    /**
      * @brief Update fullscreen checkbox state
      * @param isFullscreen Current fullscreen state
      */
