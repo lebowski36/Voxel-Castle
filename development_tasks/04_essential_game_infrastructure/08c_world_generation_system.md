@@ -3,64 +3,126 @@
 *Last Updated: 2025-06-05 23:30*
 
 ## Overview
-This document outlines the implementation plan for the Voxel Castle's world generatio## Task 2: Design Core Seed System (IN PROGRESS)
+This document outlines the implementation plan for the Voxel Castle's world generation system. The goal is to transition from the current legacy world generation to a more flexible, feature-rich seed-based generation system while maintaining compatibility with existing functionality.
 
-**Status**: 🔄 IN PROGRESS
-**Start Date**: 2025-06-05 18:35
+## Design Requirements Integration
 
-Based on the legacy system analysis, I'll now design and implement the core seed system that will serve as the foundation for all new world generation features.
+*This section integrates requirements from `/docs/design_specifications/Game Concept/World Generation.md` into the 08c implementation plan.*
 
-### Current Implementation Status
+### Core Design Goals
 
-**Foundation Work**:
-- [x] ✅ Analyzed existing WorldGenerator seed system
-- [x] ✅ Documented current coordinate-based seed derivation
-- [x] ✅ Identified integration points with noise generation
-- [ ] Design enhanced WorldSeed class structure
-- [ ] Implement feature-specific seed domains
-- [ ] Create seed visualization tools for testing
+**From Design Document:**
+1. **Exploration & Discovery**: Create a sense of wonder and reward player curiosity
+2. **Geological & Ecological Plausibility**: Follow logical patterns that players can learn
+3. **Meaningful Player Choice**: Settlement location decisions should have significant consequences
+4. **Narrative Foundation**: Provide rich foundation for emergent stories
+5. **Performance Balance**: Balance detail with acceptable generation times
 
-### Design Considerations
+### Comprehensive Feature Requirements
 
-**Compatibility with Legacy**:
-- Keep existing `setSeed()` and `getBlockSeed()` methods for backward compatibility
-- Enhance rather than replace the current hash-based seed derivation
-- Ensure legacy worlds continue working with "Resume Game" functionality
+#### 1. Terrain Generation Features
+- **Multi-Scale Height Maps**: Multi-octave noise functions creating varied elevations
+- **Erosion Simulation**: Water and wind-based erosion for realistic landforms
+- **Geological Processes**: Plate tectonics simulation for mountain ranges and rifts
+- **Scale Control**: Parameters for world size, vertical scale, and feature size
+- **Underground Generation**: Cave systems, layer stratification, chasms, ancient structures
+- **Water Systems**: Oceans, rivers, lakes, underground water, wetlands
 
-**Enhanced Features Needed**:
-1. **Feature Domains**: Separate seed spaces for terrain, biomes, structures, caves, etc.
-2. **Multi-Scale Seeds**: Region, chunk, and block-level seed generation
-3. **Improved Distribution**: Better avalanche effect and bit mixing
-4. **Debugging Support**: Visual seed inspection and testing tools
+#### 2. Biome System Requirements
+- **Climate System**: Temperature and precipitation gradients
+- **Biome Types**: Forests, grasslands, deserts, tundra, jungles, swamps
+- **Transition Zones**: Natural blending between adjacent biomes
+- **Altitude Effects**: How elevation affects biome characteristics
+- **Seasonal Changes**: Biome transformation through seasonal cycles
 
-### Implementation Plan
+#### 3. Resource Distribution Requirements
+- **Mineral Deposits**: Ore veins following geological principles
+- **Gem Clusters**: Rare valuable resources in specific geological contexts
+- **Stone Types**: Different stone varieties with unique properties
+- **Surface Resources**: Forest types, plant distribution, natural materials
+- **Geological Accuracy**: Minerals in plausible formations and depths
+- **Scarcity Balance**: Valuable resources challenging but possible to find
 
-**Phase 2A: Enhanced Seed Class** (Current Task)
-- [ ] Extend current WorldGenerator with SeedManager component
-- [ ] Add feature-specific seed generation methods
-- [ ] Improve hash functions for better distribution
-- [ ] Add debugging/logging methods for seed values
+#### 4. World Features Requirements
+- **Landmarks**: Natural wonders, unique geological formations
+- **Ruins & Monuments**: Remnants of previous civilizations
+- **Strategic Locations**: Natural chokepoints, defensible positions
+- **Resource Hotspots**: Areas exceptionally rich in specific resources
+- **Dynamic Features**: Quicksand, unstable ice, lava flows
+- **Weather-Sensitive Areas**: Regions affected by storms, floods
 
-**Phase 2B: Noise Integration**
-- [ ] Connect enhanced seeds to noise generators
-- [ ] Add seed-based noise parameter variation
-- [ ] Support multiple noise layers with different seeds
+#### 5. Historical Generation Requirements
+- **World History Simulation**: Civilizations rise & fall, historical events
+- **Faction Generation**: Culture types, relationship networks, territory claims
+- **Artifact Creation**: Legendary items, ancient knowledge, cultural treasures
+- **Archaeological Context**: How and where artifacts are discovered
 
-**Phase 2C: Testing Infrastructure**
-- [ ] Create in-game seed testing UI
-- [ ] Add visual seed heat map overlay
-- [ ] Implement seed comparison tools
+#### 6. World Customization Requirements
+- **Seed System**: Numeric seeds for world recreation
+- **Customization Options**: Player-adjustable parameters
+- **World Size Options**: From small areas to vast continents
+- **Challenge Factors**: Resource abundance, climate harshness adjustments
 
-### Next Steps
+#### 7. World Viewer Requirements
+- **Initial Survey**: Tools for examining world before settlement
+- **Resource Overlay**: Highlighting known or visible resources
+- **Danger Assessment**: Information about hazardous areas
+- **Settlement Suitability**: Analysis of promising colony locations
+- **Site Selection**: Tools for choosing initial settlement area
 
-1. Create enhanced seed generation methods
-2. Add feature-specific domains (biome, structure, cave seeds)
-3. Implement visual testing tools
-4. Validate with side-by-side comparisons
+#### 8. Advanced Systems Requirements
+- **Climate System**: Weather patterns, seasonal cycles, extreme weather
+- **Ecosystem Simulation**: Flora dynamics, fauna behavior, food chains
+- **Natural Disasters**: Geological events, weather disasters, ecological crises
+- **Procedural Structures**: Ruin layouts, settlement designs, dungeon systems
+- **Cultural Content**: Language creation, art generation, historical documents
+
+#### 9. World Persistence Requirements
+- **Permanent Alterations**: How colony development changes the world
+- **Environmental Response**: Long-term effects of resource extraction
+- **Historical Recording**: Player actions becoming part of world history
+- **World State Tracking**: Modified chunks, dynamic feature updates
+
+#### 10. Technical Implementation Requirements
+- **Noise Functions**: Layered noise, domain warping, feature-based generation
+- **Chunking System**: Generation order, lazy generation, level of detail
+- **Performance Optimization**: Parallel generation, caching, progressive detail
+- **Data Structures**: Spatial organization, chunk storage, multi-layer data
+
+### Integration with 08c Implementation
+
+These design requirements will be distributed across the 08c subtasks as follows:
+
+- **08c.1 (Core Seed System)**: Implements seed system requirements and foundation
+- **08c.2 (Generation Parameters)**: Implements customization and parameter systems
+- **08c.3 (Feature Parity)**: Ensures legacy compatibility while adding basic terrain features
+- **08c.4 (Biome System)**: Implements climate, biome, and ecosystem requirements
+- **08c.5 (Structure Generation)**: Implements ruins, landmarks, and procedural structures
+- **08c.6 (Cave Generation)**: Implements underground systems and cave networks
+- **08c.7 (Ore Generation)**: Implements resource distribution and geological accuracy
+- **08c.8 (UI Integration)**: Implements world viewer and site selection tools
+- **08c.9 (Performance)**: Implements technical optimization requirements
+- **08c.10 (Legacy Transition)**: Manages transition and world persistence requirements
+
+### Testability Requirements for Each Feature
+
+Each feature must include:
+- **Visual Debug Overlays**: Real-time visualization of generation parameters
+- **Parameter Tuning UI**: In-game controls for adjusting generation in real-time
+- **Seed Comparison Tools**: Side-by-side comparison of different seeds
+- **Feature-Specific Viewers**: Specialized tools for each generation component
+- **Performance Monitoring**: Real-time generation performance metrics
+- **User Feedback Systems**: Mechanisms for reporting generation issues with seed data
+
+### Priority Implementation Order
+
+1. **Foundation** (08c.1-08c.3): Core seed system, parameters, and basic terrain
+2. **Environmental** (08c.4): Biome and climate systems
+3. **Features** (08c.5-08c.7): Structures, caves, and resources
+4. **Interface** (08c.8): World viewer and selection tools
+5. **Optimization** (08c.9-08c.10): Performance and transition planning
 
 ---
-
-## Task 3: Parameter System Architecture (PENDING)ystem. The goal is to transition from the current legacy world generation to a more flexible, feature-rich seed-based generation system while maintaining compatibility with existing functionality.
 
 ## Objectives
 
