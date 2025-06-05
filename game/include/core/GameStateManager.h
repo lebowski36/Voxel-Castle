@@ -93,6 +93,12 @@ public:
     bool isInTransition() const;
     bool canAcceptInput() const;
     bool isInMenu() const;
+    
+    /**
+     * @brief Check if there are any states in the stack
+     * @return true if state stack is not empty
+     */
+    bool hasStateInStack() const { return !stateStack_.empty(); }
 
     /**
      * @brief Get human-readable name for a state

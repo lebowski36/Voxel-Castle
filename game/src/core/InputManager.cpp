@@ -144,8 +144,14 @@ void processInput(Game& game) {
             switch (e.key.scancode) {
                 case SDL_SCANCODE_ESCAPE:
                     std::cout << "[INFO] Key pressed: ESC" << std::endl;
-                    // Toggle menu instead of mouse capture
-                    game.toggleMenu();
+                    // Check if we're in the main menu with empty stack before toggling
+                    if (game.getGameState() != GameState::MAIN_MENU || 
+                        (game.getStateManager() && game.getStateManager()->hasStateInStack())) {
+                        // Only toggle menu if we're not in main menu with empty stack
+                        game.toggleMenu();
+                    } else {
+                        std::cout << "[INFO] ESC key ignored in main menu with no previous state" << std::endl;
+                    }
                     break;
                 case SDL_SCANCODE_O:
                     game.toggleCameraMode();

@@ -155,6 +155,9 @@ public:
     bool isMenuOpen() const;
     void toggleMenu();
     
+    // GameStateManager access for special state checks
+    VoxelCastle::Core::GameStateManager* getStateManager() const { return stateManager_.get(); }
+    
     // Enhanced state management helper functions (delegate to GameStateManager)
     bool isPlaying() const;
     bool isPaused() const;
