@@ -68,7 +68,7 @@ static bool textureSamplerWarningLogged = false;
 // Define a consistent base directory for asset paths
 const std::string BASE_DIRECTORY = "/home/system-x1/Projects/Voxel Castle/";
 
-MeshRenderer::MeshRenderer() : vao(0), vbo(0), ebo(0), shaderProgram(0), textureAtlasID(0), ready(false) {
+MeshRenderer::MeshRenderer() : shaderProgram(0), textureAtlasID(0), ready(false) {
     // std::cout << "[" << getTimestampMR() << "] [MeshRenderer] Constructor started." << std::endl;
     checkGlError("Constructor Start");
 
@@ -101,59 +101,10 @@ MeshRenderer::MeshRenderer() : vao(0), vbo(0), ebo(0), shaderProgram(0), texture
     DEBUG_LOG("MeshRenderer", "Texture atlas loading is now handled by TextureAtlas class");
     checkGlError("Constructor texture setup");
 
-    glGenVertexArrays(1, &vao);
-    checkGlError("glGenVertexArrays");
-    glGenBuffers(1, &vbo);
-    checkGlError("glGenBuffers (VBO)");
-    glGenBuffers(1, &ebo);
-    checkGlError("glGenBuffers (EBO)");
-
-    if (vao == 0 || vbo == 0 || ebo == 0) {
-        std::cerr << "FATAL: [MeshRenderer] Failed to generate VAO/VBO/EBO." << std::endl;
-    }
-
-    // Set up VAO with vertex attributes
-    glBindVertexArray(vao);
-    checkGlError("glBindVertexArray (initial setup)");
-    
-    glBindBuffer(GL_ARRAY_BUFFER, vbo);
-    checkGlError("glBindBuffer GL_ARRAY_BUFFER (initial setup)");
-    
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
-    checkGlError("glBindBuffer GL_ELEMENT_ARRAY_BUFFER (initial setup)");
-
-    // Setup vertex attributes
-    glEnableVertexAttribArray(0);
-    checkGlError("glEnableVertexAttribArray(0)");
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(VoxelEngine::Rendering::Vertex), (void*)offsetof(VoxelEngine::Rendering::Vertex, position));
-    checkGlError("glVertexAttribPointer(0)");
-
-    glEnableVertexAttribArray(1);
-    checkGlError("glEnableVertexAttribArray(1)");
-    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(VoxelEngine::Rendering::Vertex), (void*)offsetof(VoxelEngine::Rendering::Vertex, normal));
-    checkGlError("glVertexAttribPointer(1)");
-
-    glEnableVertexAttribArray(2);
-    checkGlError("glEnableVertexAttribArray(2)");
-    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(VoxelEngine::Rendering::Vertex), (void*)offsetof(VoxelEngine::Rendering::Vertex, quad_uv));
-    checkGlError("glVertexAttribPointer(2)");
-
-    glEnableVertexAttribArray(3);
-    checkGlError("glEnableVertexAttribArray(3)");
-    glVertexAttribPointer(3, 2, GL_FLOAT, GL_FALSE, sizeof(VoxelEngine::Rendering::Vertex), (void*)offsetof(VoxelEngine::Rendering::Vertex, atlas_tile_origin_uv));
-    checkGlError("glVertexAttribPointer(3)");
-    
-    glEnableVertexAttribArray(4);
-    checkGlError("glEnableVertexAttribArray(4)");
-    glVertexAttribPointer(4, 1, GL_FLOAT, GL_FALSE, sizeof(VoxelEngine::Rendering::Vertex), (void*)offsetof(VoxelEngine::Rendering::Vertex, light));
-    checkGlError("glVertexAttribPointer(4)");
-
-    glBindVertexArray(0); // Unbind VAO
-    checkGlError("glBindVertexArray(0) (unbind after initial setup)");
-
-    ready = (shaderProgram != 0 && vao != 0 && vbo != 0 && ebo != 0 && textureAtlasID != 0);
+    // No longer creating shared VAO/VBO/EBO - each mesh has its own buffers
+    ready = (shaderProgram != 0);
     if (!ready) {
-        std::cerr << "[MeshRenderer] Constructor: Renderer not ready due to shader, buffer, or texture generation failure." << std::endl;
+        std::cerr << "[MeshRenderer] Constructor: Renderer not ready due to shader generation failure." << std::endl;
     } else {
         // std::cout << "[MeshRenderer] Constructor: Renderer is ready." << std::endl;
     }
@@ -161,12 +112,7 @@ MeshRenderer::MeshRenderer() : vao(0), vbo(0), ebo(0), shaderProgram(0), texture
 
 MeshRenderer::~MeshRenderer() {
     // std::cout << "[MeshRenderer] Destructor called." << std::endl;
-    glDeleteVertexArrays(1, &vao);
-    checkGlError("glDeleteVertexArrays (destructor)");
-    glDeleteBuffers(1, &vbo);
-    checkGlError("glDeleteBuffers VBO (destructor)");
-    glDeleteBuffers(1, &ebo);
-    checkGlError("glDeleteBuffers EBO (destructor)");
+    // No longer need to clean up shared VAO/VBO/EBO - each mesh manages its own
     if (shaderProgram) {
         glDeleteProgram(shaderProgram);
         checkGlError("glDeleteProgram (destructor)");
@@ -177,78 +123,62 @@ MeshRenderer::~MeshRenderer() {
     }
 }
 
+// Upload mesh data to GPU buffers - now uses per-mesh buffers
 void MeshRenderer::uploadMesh(const VoxelMesh& mesh) {
-    // if (shaderProgram == 0 || vao == 0 || vbo == 0 || ebo == 0) {
-    if (shaderProgram == 0 || vao == 0 || vbo == 0 || ebo == 0) {
-        std::cerr << "[MeshRenderer::uploadMesh] Renderer not properly initialized (shader/buffers missing). Cannot upload." << std::endl;
-        std::cout << "  Shader Program ID: " << shaderProgram << ", VAO: " << vao << ", VBO: " << vbo << ", EBO: " << ebo << std::endl;
-        ready = false; 
-        indexCount = 0;
+    // DIAGNOSTIC: Log buffer creation for first few uploads
+    static int uploadCount = 0;
+    uploadCount++;
+    
+    if (uploadCount <= 10) { // Log first 10 uploads
+        DEBUG_LOG("MeshRenderer", "FIXED: Upload #" + std::to_string(uploadCount) + 
+                 " creating unique buffers for mesh at (" + 
+                 std::to_string(mesh.getWorldPosition().x) + ", " + 
+                 std::to_string(mesh.getWorldPosition().z) + ")");
+    }
+
+    if (shaderProgram == 0) {
+        std::cerr << "[MeshRenderer::uploadMesh] Shader program not initialized. Cannot upload." << std::endl;
         return;
     }
 
-    if (mesh.indices.size() > 0 && mesh.vertices.size() == 0) {
-        std::cerr << "[MeshRenderer::uploadMesh] Error: Mesh has " << mesh.indices.size() << " indices but 0 vertices. Marking as not ready to render this mesh." << std::endl;
-        glBindVertexArray(vao);
-        std::cout << "[MeshRenderer::uploadMesh] Clearing VBO and EBO due to inconsistent mesh data." << std::endl;
-        glBindBuffer(GL_ARRAY_BUFFER, vbo);
-        glBufferData(GL_ARRAY_BUFFER, 0, nullptr, GL_STATIC_DRAW);
-        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
-        glBufferData(GL_ELEMENT_ARRAY_BUFFER, 0, nullptr, GL_STATIC_DRAW);
-        indexCount = 0;
-        ready = false; 
-        glBindVertexArray(0);
-        return;
-    }
-    
     if (mesh.vertices.size() == 0) { 
         // std::cout << "[MeshRenderer::uploadMesh] Uploading empty mesh (0 vertices, " << mesh.indices.size() << " indices)." << std::endl;
+        return; // Nothing to upload for empty mesh
     }
 
-    // std::cout << "[MeshRenderer::uploadMesh] Raw vertex buffer (first " << std::min<size_t>(4, mesh.vertices.size()) << " vertices):" << std::endl;
-    // const float* raw = reinterpret_cast<const float*>(mesh.vertices.data());
-    // size_t floatsPerVertex = sizeof(Vertex) / sizeof(float);
-    // for (size_t i = 0; i < std::min<size_t>(4, mesh.vertices.size()); ++i) {
-    //     std::cout << "  [" << i << "] ";
-    //     for (size_t j = 0; j < floatsPerVertex; ++j) {
-    //         std::cout << raw[i * floatsPerVertex + j] << " ";
-    //     }
-    //     std::cout << std::endl;
-    // }
+    // Create OpenGL buffers for this mesh if not already created
+    if (mesh.vao == 0) {
+        glGenVertexArrays(1, &mesh.vao);
+        checkGlError("glGenVertexArrays (per-mesh)");
+        glGenBuffers(1, &mesh.vbo);
+        checkGlError("glGenBuffers VBO (per-mesh)");
+        glGenBuffers(1, &mesh.ebo);
+        checkGlError("glGenBuffers EBO (per-mesh)");
 
-    glBindVertexArray(vao);
-    
-    // Validate VAO state immediately after binding
-    if (vao == 0 || !glIsVertexArray(vao)) {
-        std::cerr << "[MeshRenderer::uploadMesh] ERROR: Invalid VAO (ID: " << vao << ", valid: " << glIsVertexArray(vao) << ")" << std::endl;
-        ready = false;
-        return;
+        if (mesh.vao == 0 || mesh.vbo == 0 || mesh.ebo == 0) {
+            std::cerr << "[MeshRenderer::uploadMesh] Failed to generate buffers for mesh." << std::endl;
+            return;
+        }
     }
-    
-    checkGlError("glBindVertexArray (uploadMesh initial)");
-    
-    // Clear any pre-existing OpenGL errors
-    while (glGetError() != GL_NO_ERROR) {} 
 
-    // Add debugging for the mesh data - only for large meshes or errors
-    size_t expectedVertexSize = sizeof(VoxelEngine::Rendering::Vertex);
-    size_t totalDataSize = mesh.vertices.size() * expectedVertexSize;
+    // Bind and upload mesh data
+    glBindVertexArray(mesh.vao);
+    checkGlError("glBindVertexArray (per-mesh upload)");
     
-    static size_t upload_count = 0;
-    upload_count++;
-
-    glBindBuffer(GL_ARRAY_BUFFER, vbo);
-    checkGlError("glBindBuffer GL_ARRAY_BUFFER (uploadMesh)");
-    
+    // Upload vertex data
+    glBindBuffer(GL_ARRAY_BUFFER, mesh.vbo);
+    checkGlError("glBindBuffer GL_ARRAY_BUFFER (per-mesh upload)");
+    size_t totalDataSize = mesh.vertices.size() * sizeof(VoxelEngine::Rendering::Vertex);
     glBufferData(GL_ARRAY_BUFFER, totalDataSize, mesh.vertices.data(), GL_STATIC_DRAW);
-    checkGlError("glBufferData GL_ARRAY_BUFFER (uploadMesh)");
+    checkGlError("glBufferData GL_ARRAY_BUFFER (per-mesh upload)");
     
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
-    checkGlError("glBindBuffer GL_ELEMENT_ARRAY_BUFFER (uploadMesh)");
-    
+    // Upload index data
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mesh.ebo);
+    checkGlError("glBindBuffer GL_ELEMENT_ARRAY_BUFFER (per-mesh upload)");
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, mesh.indices.size() * sizeof(uint32_t), mesh.indices.data(), GL_STATIC_DRAW);
-    checkGlError("glBufferData GL_ELEMENT_ARRAY_BUFFER (uploadMesh)");
+    checkGlError("glBufferData GL_ELEMENT_ARRAY_BUFFER (per-mesh upload)");
 
+    // Setup vertex attributes for this VAO
     glEnableVertexAttribArray(0); 
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(VoxelEngine::Rendering::Vertex), (void*)offsetof(VoxelEngine::Rendering::Vertex, position));
     glEnableVertexAttribArray(1); 
@@ -259,30 +189,16 @@ void MeshRenderer::uploadMesh(const VoxelMesh& mesh) {
     glVertexAttribPointer(3, 2, GL_FLOAT, GL_FALSE, sizeof(VoxelEngine::Rendering::Vertex), (void*)offsetof(VoxelEngine::Rendering::Vertex, atlas_tile_origin_uv));
     glEnableVertexAttribArray(4); 
     glVertexAttribPointer(4, 1, GL_FLOAT, GL_FALSE, sizeof(VoxelEngine::Rendering::Vertex), (void*)offsetof(VoxelEngine::Rendering::Vertex, light));
-    checkGlError("Vertex attribute setup (uploadMesh)");
+    checkGlError("Vertex attribute setup (per-mesh upload)");
 
-    indexCount = mesh.indices.size();
-    ready = (shaderProgram != 0 && vao != 0 && vbo != 0 && ebo != 0 && textureAtlasID != 0); 
-                                
-    if (!ready) {
-         std::cerr << "[MeshRenderer::uploadMesh] MeshRenderer determined not ready after upload attempt." << std::endl;
-         std::cout << "  Shader Program ID: " << shaderProgram << std::endl;
-         std::cout << "  VAO ID: " << vao << std::endl;
-         std::cout << "  VBO ID: " << vbo << std::endl;
-         std::cout << "  EBO ID: " << ebo << std::endl;
-         std::cout << "  Texture Atlas ID: " << textureAtlasID << std::endl;
-    } else if (indexCount == 0 && mesh.vertices.size() > 0) {
-        std::cout << "[MeshRenderer::uploadMesh] Mesh has " << mesh.vertices.size() << " vertices but 0 indices. Will draw 0 elements." << std::endl;
-    } else {
-        // std::cout << "[MeshRenderer::uploadMesh] Mesh uploaded successfully. Index count: " << indexCount << ". Renderer is ready: " << std::boolalpha << ready << std::noboolalpha << std::endl;
-    }
-
+    mesh.buffersUploaded = true;
+    
     glBindVertexArray(0);
-    checkGlError("glBindVertexArray unbind (uploadMesh)");
+    checkGlError("glBindVertexArray unbind (per-mesh upload)");
 }
 
-// Draw function with improved debugging and logging
-void MeshRenderer::draw(const glm::mat4& model, const glm::mat4& view, const glm::mat4& proj) {
+// Draw function - now uses per-mesh buffers
+void MeshRenderer::draw(const VoxelMesh& mesh, const glm::mat4& model, const glm::mat4& view, const glm::mat4& proj) {
     static int retryCount = 0;
     static bool retriesExhausted = false;
     static int frameCounter = 0;
@@ -298,14 +214,20 @@ void MeshRenderer::draw(const glm::mat4& model, const glm::mat4& view, const glm
         return; // Stop further attempts
     }
 
-    if (!ready) {
+    if (!ready || shaderProgram == 0 || textureAtlasID == 0) {
         if (retryCount < maxRetries) {
-            std::cerr << "[MeshRenderer::draw] Renderer not ready. Attempt " << (retryCount + 1) << " of " << maxRetries << "." << std::endl;
+            std::cerr << "[MeshRenderer::draw] Renderer not ready (shader: " << shaderProgram << ", texture: " << textureAtlasID << "). Attempt " << (retryCount + 1) << " of " << maxRetries << "." << std::endl;
             retryCount++;
         } else {
             std::cerr << "[MeshRenderer::draw] Renderer not ready. Max retries reached. No further attempts will be made." << std::endl;
             retriesExhausted = true;
         }
+        return;
+    }
+
+    // Check if mesh has valid buffers and data
+    if (!mesh.buffersUploaded || mesh.vao == 0 || mesh.indices.size() == 0) {
+        // Silently skip empty meshes - they're common during world generation
         return;
     }
 
@@ -318,12 +240,11 @@ void MeshRenderer::draw(const glm::mat4& model, const glm::mat4& view, const glm
 
     // Only do detailed debug on first successful frame - redirect to file
     if (!initialDebugDone) {
-        DEBUG_LOG("MeshRenderer", "==== MESH RENDERER DETAILED DEBUG ====");
+        DEBUG_LOG("MeshRenderer", "==== MESH RENDERER DETAILED DEBUG (FIXED VERSION) ====");
         DEBUG_LOG("MeshRenderer", "Texture Atlas ID: " + std::to_string(textureAtlasID));
         DEBUG_LOG("MeshRenderer", "Shader Program ID: " + std::to_string(shaderProgram));
-        DEBUG_LOG("MeshRenderer", "VAO: " + std::to_string(vao) + ", VBO: " + std::to_string(vbo) + ", EBO: " + std::to_string(ebo));
-        DEBUG_LOG("MeshRenderer", "Index Count: " + std::to_string(indexCount));
-        DEBUG_LOG("MeshRenderer", "======================================");
+        DEBUG_LOG("MeshRenderer", "Using per-mesh buffers - no more shared VAO/VBO/EBO");
+        DEBUG_LOG("MeshRenderer", "=======================================================");
         
         // Log the sampler warning summary here, only once
         if (textureSamplerWarningLogged) {
@@ -335,7 +256,7 @@ void MeshRenderer::draw(const glm::mat4& model, const glm::mat4& view, const glm
     frameCounter++;
 
     // Use the shader program
-    glUseProgram(shaderProgram); // This is the one we keep
+    glUseProgram(shaderProgram);
     checkGlError("glUseProgram (draw)");
 
     // Set u_tile_uv_span uniform
@@ -368,7 +289,7 @@ void MeshRenderer::draw(const glm::mat4& model, const glm::mat4& view, const glm
         // If uTextureSampler is not found here, texturing will fail.
         if (!textureSamplerWarningLogged) { // Use the existing static flag to log only once.
             std::cerr << "[MeshRenderer::draw] Warning (logged once): uTextureSampler uniform not found after glUseProgram. Shader Program ID: " << shaderProgram << ". Texture rendering will likely fail." << std::endl;
-            textureSamplerWarningLogged = true; // This ensures the summary in initialDebugDone also prints if it hasn't already.
+            textureSamplerWarningLogged = true;
         }
     }
 
@@ -414,14 +335,12 @@ void MeshRenderer::draw(const glm::mat4& model, const glm::mat4& view, const glm
     glUniformMatrix4fv(projLoc, 1, GL_FALSE, glm::value_ptr(proj));
     checkGlError("glUniformMatrix4fv uProjection (draw)");
 
-    // std::cout << "[" << getTimestampMR() << "] [MeshRenderer] About to bind VAO " << vao << " and draw " << indexCount << " indices" << std::endl;
-    glBindVertexArray(vao);
-    checkGlError("glBindVertexArray (draw)");
+    // Bind this mesh's unique VAO and draw
+    glBindVertexArray(mesh.vao);
+    checkGlError("glBindVertexArray mesh-specific (draw)");
 
-    // std::cout << "[" << getTimestampMR() << "] [MeshRenderer] Calling glDrawElements..." << std::endl;
-    glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(indexCount), GL_UNSIGNED_INT, 0);
+    glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(mesh.indices.size()), GL_UNSIGNED_INT, 0);
     checkGlError("glDrawElements (draw)");
-    // std::cout << "[" << getTimestampMR() << "] [MeshRenderer] glDrawElements completed successfully" << std::endl;
 
     glBindVertexArray(0);
     checkGlError("glBindVertexArray unbind (draw)");
@@ -429,7 +348,6 @@ void MeshRenderer::draw(const glm::mat4& model, const glm::mat4& view, const glm
 
     // Disable blending after drawing if it was enabled here
     glDisable(GL_BLEND);
-    // std::cout << "[" << getTimestampMR() << "] [MeshRenderer] Draw function completed successfully" << std::endl;
 }
 
 GLuint MeshRenderer::loadShader(const std::string& path, GLenum type) {

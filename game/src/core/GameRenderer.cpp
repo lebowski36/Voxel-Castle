@@ -81,9 +81,9 @@ void renderGame(
         glUseProgram(meshRenderer.getShaderProgram());
         glUniform1i(debugModeLoc, static_cast<int>(::g_debugRenderMode));
     }
-    // CRITICAL FIX: Don't upload meshes every frame!
-    // This was causing VAO corruption and crashes.
-    // Use a set to track which meshes have been uploaded to avoid re-uploading
+    // CRITICAL FIX: Upload meshes only once and use per-mesh buffers!
+    // This fixes the "chunk terrain cycling" bug where all chunks showed the same terrain.
+    // Each mesh now has its own VAO/VBO/EBO instead of sharing buffers.
     static std::set<const VoxelEngine::Rendering::VoxelMesh*> uploadedMeshes;
     
     for (const auto* vMesh : worldMeshes) {
@@ -95,7 +95,7 @@ void renderGame(
             }
             
             glm::mat4 model = glm::translate(glm::mat4(1.0f), vMesh->getWorldPosition());
-            meshRenderer.draw(model, view, proj);
+            meshRenderer.draw(*vMesh, model, view, proj); // Pass mesh as first parameter
         }
     }
 

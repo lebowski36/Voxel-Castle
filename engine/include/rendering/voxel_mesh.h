@@ -3,6 +3,7 @@
 
 #include <vector>
 #include <cstdint> // For uint32_t
+#include <glad/glad.h> // For OpenGL types
 
 // GLM headers
 #include <glm/glm.hpp>
@@ -39,23 +40,30 @@ namespace VoxelEngine {
          * @brief Holds the geometry data for a renderable voxel mesh.
          *
          * Consists of a list of vertices and a list of indices that define the triangles.
-         * This mesh data is typically generated from a ChunkSegment.
+         * Each mesh now has its own OpenGL buffers to prevent buffer sharing issues.
          */
         struct VoxelMesh {
             std::vector<Vertex> vertices;       ///< List of vertices in the mesh.
             std::vector<uint32_t> indices;      ///< List of indices defining triangles (e.g., for GL_TRIANGLES).
             glm::vec3 worldPosition_ = glm::vec3(0.0f); ///< World position of the mesh's origin.
             bool initialized_ = false;          ///< True if the mesh has been initialized with data.
+            
+            // OpenGL buffer objects - each mesh has its own buffers
+            mutable GLuint vao = 0;             ///< Vertex Array Object (unique per mesh)
+            mutable GLuint vbo = 0;             ///< Vertex Buffer Object (unique per mesh)
+            mutable GLuint ebo = 0;             ///< Element Buffer Object (unique per mesh)
+            mutable bool buffersUploaded = false; ///< True if mesh data has been uploaded to GPU
 
             /**
              * @brief Clears all vertex and index data from the mesh.
-             * Resets the mesh to an empty state.
+             * Resets the mesh to an empty state and cleans up OpenGL buffers.
              */
             void clear() {
                 vertices.clear();
                 indices.clear();
                 worldPosition_ = glm::vec3(0.0f); // Reset world position on clear
                 initialized_ = false;
+                cleanupBuffers(); // Clean up OpenGL buffers
             }
 
             /**
@@ -114,6 +122,72 @@ namespace VoxelEngine {
              */
             size_t getIndexCount() const {
                 return indices.size();
+            }
+            
+            /**
+             * @brief Gets whether mesh buffers have been uploaded to GPU.
+             * @return True if buffers are uploaded, false otherwise.
+             */
+            bool areBuffersUploaded() const {
+                return buffersUploaded;
+            }
+            
+            /**
+             * @brief Destructor - cleans up OpenGL buffers.
+             */
+            ~VoxelMesh() {
+                cleanupBuffers();
+            }
+            
+            /**
+             * @brief Default constructor
+             */
+            VoxelMesh() = default;
+
+            /**
+             * @brief Copy constructor - creates new OpenGL buffers.
+             */
+            VoxelMesh(const VoxelMesh& other) 
+                : vertices(other.vertices), indices(other.indices), 
+                  worldPosition_(other.worldPosition_), initialized_(other.initialized_),
+                  vao(0), vbo(0), ebo(0), buffersUploaded(false) {
+                // Don't copy OpenGL buffers - they will be created when needed
+            }
+            
+            /**
+             * @brief Assignment operator - creates new OpenGL buffers.
+             */
+            VoxelMesh& operator=(const VoxelMesh& other) {
+                if (this != &other) {
+                    cleanupBuffers(); // Clean up existing buffers
+                    vertices = other.vertices;
+                    indices = other.indices;
+                    worldPosition_ = other.worldPosition_;
+                    initialized_ = other.initialized_;
+                    vao = vbo = ebo = 0;
+                    buffersUploaded = false;
+                }
+                return *this;
+            }
+
+        private:
+            /**
+             * @brief Cleans up OpenGL buffers.
+             */
+            void cleanupBuffers() const {
+                if (vao != 0) {
+                    glDeleteVertexArrays(1, &vao);
+                    vao = 0;
+                }
+                if (vbo != 0) {
+                    glDeleteBuffers(1, &vbo);
+                    vbo = 0;
+                }
+                if (ebo != 0) {
+                    glDeleteBuffers(1, &ebo);
+                    ebo = 0;
+                }
+                buffersUploaded = false;
             }
         };
 
