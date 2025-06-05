@@ -14,6 +14,7 @@ public:
     void draw(const glm::mat4& model, const glm::mat4& view, const glm::mat4& proj);
     bool isReady() const { return ready; }
     GLuint getTextureAtlasID() const { return textureAtlasID; } // Added getter
+    void setTextureAtlasID(GLuint textureID) { textureAtlasID = textureID; } // Added setter
     GLuint getShaderProgram() const { return shaderProgram; }
 
 private:

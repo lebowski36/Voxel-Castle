@@ -147,9 +147,23 @@ bool Game::initialize() {
     ecs_ = std::make_unique<flecs::world>();
     worldManager_ = std::make_unique<VoxelCastle::World::WorldManager>();
     worldGenerator_ = std::make_unique<VoxelCastle::World::WorldGenerator>();
+    
+    // Initialize texture atlas first (it loads the texture automatically)
     textureAtlas_ = std::make_unique<VoxelEngine::Rendering::TextureAtlas>();
+    
+    // Initialize mesh systems
     meshBuilder_ = std::make_unique<VoxelEngine::Rendering::MeshBuilder>();
     meshRenderer_ = std::make_unique<VoxelEngine::Rendering::MeshRenderer>();
+    
+    // Connect the texture atlas to the mesh renderer
+    if (textureAtlas_->isTextureLoaded()) {
+        // The MeshRenderer needs to use the texture ID from the TextureAtlas
+        GLuint atlasTextureId = textureAtlas_->getTextureID();
+        meshRenderer_->setTextureAtlasID(atlasTextureId);
+        std::cout << "[Game] Connected TextureAtlas (ID: " << atlasTextureId << ") to MeshRenderer" << std::endl;
+    } else {
+        std::cerr << "[Game] Warning: TextureAtlas failed to load texture" << std::endl;
+    }
     
     // Initialize camera with a default position
     camera_ = std::make_unique<SpectatorCamera>(
@@ -228,17 +242,8 @@ bool Game::initialize() {
     worldInitTime_ = std::chrono::steady_clock::now();
     isWorldFullyLoaded_ = false; // Will be set to true after initial chunk loading
 
-    // World content initialization delegated to WorldSetup module
-
-    // [Dynamic Chunk Loading] Static world initialization removed. Chunks will be loaded dynamically as the camera moves.
-
-    // Initial mesh build after world content is set up
-    if (isRunning_ && worldManager_ && textureAtlas_ && meshBuilder_) {
-        worldManager_->updateDirtyMeshes(*textureAtlas_, *meshBuilder_);
-        
-        // Mark world as ready after initial mesh building - but add a delay for safety
-        // We'll actually set this flag in the game loop after some time has passed
-    }
+    // NOTE: World content initialization is now deferred until user selects/creates a world
+    // This aligns with the 08a document's world selection architecture
     
     // Initialize UI system
     if (isRunning_ && meshRenderer_ && textureAtlas_) {
@@ -271,20 +276,28 @@ bool Game::initialize() {
             }
         });
         
-        // Set up world initialization callback
+        // Set up world initialization callback - only for explicit user action
         menuSystem_->setOnWorldInitRequest([this]() {
+            std::cout << "[Game] World initialization requested by user" << std::endl;
+            
             // Initialize world systems if not already initialized
             if (!worldManager_ || !worldManager_->isInitialized()) {
                 // Generate a random seed if none provided
                 std::string randomSeed = "voxelcastle" + std::to_string(std::chrono::system_clock::now().time_since_epoch().count());
-                initializeWorldSystems(randomSeed);
-                
-                // Switch to gameplay state once world is initialized
+                if (initializeWorldSystems(randomSeed)) {
+                    // Switch to gameplay state once world is initialized
+                    if (stateManager_) {
+                        stateManager_->pushState(GameState::STRATEGIC_MODE);
+                    }
+                    std::cout << "[Game] World initialized and switched to gameplay mode" << std::endl;
+                } else {
+                    std::cerr << "[Game] Failed to initialize world systems" << std::endl;
+                }
+            } else {
+                std::cout << "[Game] World already initialized, switching to gameplay" << std::endl;
                 if (stateManager_) {
                     stateManager_->pushState(GameState::STRATEGIC_MODE);
                 }
-                
-                std::cout << "[Game] World initialized via menu callback" << std::endl;
             }
         });
         
@@ -340,6 +353,22 @@ bool Game::initialize() {
         DEBUG_LOG("Game", "Crosshair system initialized and centered on screen");
         
         std::cout << "[Game] UI system initialized successfully with HUD and Crosshair" << std::endl;
+        
+        // Since we start in MAIN_MENU state, show the main menu
+        if (stateManager_ && stateManager_->getCurrentState() == GameState::MAIN_MENU) {
+            menuSystem_->showMainMenu();
+            setMouseCaptured(false); // Menu should show cursor
+            
+            // Hide game UI elements while in menu
+            if (hudSystem_) {
+                hudSystem_->setVisible(false);
+            }
+            if (crosshairSystem_) {
+                crosshairSystem_->setVisible(false);
+            }
+            
+            std::cout << "[Game] Starting in main menu - cursor visible, game UI hidden" << std::endl;
+        }
     }
     
     // Initialize SaveManager
@@ -723,8 +752,8 @@ void Game::update(float deltaTime) {
         saveManager_->updatePlayerState(currentPosition, cameraMode_, currentYaw, currentPitch);
     }
     
-    // Check if world is ready for block operations (world loading logic)
-    if (!isWorldFullyLoaded_) {
+    // Check if world is ready for block operations (world loading logic) - only in gameplay mode
+    if (!isWorldFullyLoaded_ && isPlaying()) {
         auto currentTime = std::chrono::steady_clock::now();
         auto timeSinceInit = std::chrono::duration_cast<std::chrono::seconds>(currentTime - worldInitTime_).count();
         if (timeSinceInit >= 5 && worldManager_) { // Wait 5 seconds for chunks to load
@@ -744,7 +773,8 @@ void Game::update(float deltaTime) {
 
     GameLogic::update(*this, scaledDeltaTime);
 
-    if (camera_ && worldManager_ && worldGenerator_) {
+    // Only update world systems if we're in gameplay mode, not in menu
+    if (camera_ && worldManager_ && worldGenerator_ && isPlaying()) {
         glm::vec3 cameraPos = camera_->getPosition();
         int loadRadiusInSegments = 4; // Increased from 3 to extend visibility
         // Always call updateActiveChunks every frame to ensure chunks are loaded even for small camera movements

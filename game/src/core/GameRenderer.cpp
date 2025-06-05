@@ -12,7 +12,7 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 #include <iostream> // For std::cout, std::ostringstream
-#include <set>      // For std::set in frame summary logging
+#include <set>      // For std::set in frame summary logging and mesh tracking
 #include <sstream>  // For std::ostringstream
 
 // Helper for logging, if needed
@@ -83,18 +83,15 @@ void renderGame(
     }
     // CRITICAL FIX: Don't upload meshes every frame!
     // This was causing VAO corruption and crashes.
-    // For now, render only the first valid mesh to prevent crashes.
-    // TODO: Implement proper multi-mesh rendering architecture.
-    
-    // Track which mesh we're currently uploaded to avoid re-uploading
-    static const VoxelEngine::Rendering::VoxelMesh* currentlyUploadedMesh = nullptr;
+    // Use a set to track which meshes have been uploaded to avoid re-uploading
+    static std::set<const VoxelEngine::Rendering::VoxelMesh*> uploadedMeshes;
     
     for (const auto* vMesh : worldMeshes) {
         if (vMesh && vMesh->isInitialized()) {
-            // Only upload if this is a different mesh than the currently uploaded one
-            if (vMesh != currentlyUploadedMesh) {
+            // Only upload if this mesh hasn't been uploaded yet
+            if (uploadedMeshes.find(vMesh) == uploadedMeshes.end()) {
                 meshRenderer.uploadMesh(*vMesh);
-                currentlyUploadedMesh = vMesh;
+                uploadedMeshes.insert(vMesh);
             }
             
             glm::mat4 model = glm::translate(glm::mat4(1.0f), vMesh->getWorldPosition());
