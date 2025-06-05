@@ -32,6 +32,12 @@ bool SettingsMenu::initialize(MenuSystem* menuSystem) {
     // Back button
     backButton_ = createStyledButton("Back", getNextElementY());
     backButton_->setOnClick([this]() { onBackClicked(); });
+    
+    // Request menu centering after all components are initialized
+    // This ensures proper positioning in both windowed and fullscreen modes
+    if (menuSystem_) {
+        menuSystem_->requestMenuRecentering();
+    }
 
     return true;
 }

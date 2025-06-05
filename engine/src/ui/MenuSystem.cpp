@@ -94,13 +94,15 @@ void MenuSystem::render() {
 }
 
 void MenuSystem::showMainMenu() {
-    // Re-center menus in case they were auto-resized
-    centerMenus(getRenderer().getScreenWidth(), getRenderer().getScreenHeight());
-    
+    // First make the menu visible to ensure its size is calculated correctly
     mainMenu_->setVisible(true);
     settingsMenu_->setVisible(false);
     worldCreationDialog_->setVisible(false);
     menuState_ = MenuState::MAIN_MENU;
+    
+    // Now explicitly re-center menus after setting visibility
+    // This ensures dimensions are correct when centering
+    centerMenus(getRenderer().getScreenWidth(), getRenderer().getScreenHeight());
     
     // Ensure the block selection UI stays hidden during menu display
     // Block selection UI is identified by checking if it's not one of our menu elements
@@ -109,16 +111,27 @@ void MenuSystem::showMainMenu() {
             element->setVisible(false);
         }
     }
+    
+    // Double-check the position to ensure it's properly centered
+    float screenWidth = getRenderer().getScreenWidth();
+    float screenHeight = getRenderer().getScreenHeight();
+    glm::vec2 menuSize = mainMenu_->getSize();
+    mainMenu_->setPosition(
+        screenWidth / 2.0f - menuSize.x / 2.0f,
+        screenHeight / 2.0f - menuSize.y / 2.0f
+    );
 }
 
 void MenuSystem::showSettingsMenu() {
-    // Re-center menus in case they were auto-resized
-    centerMenus(getRenderer().getScreenWidth(), getRenderer().getScreenHeight());
-    
+    // First make the menu visible to ensure its size is calculated correctly
     mainMenu_->setVisible(false);
     settingsMenu_->setVisible(true);
     worldCreationDialog_->setVisible(false);
     menuState_ = MenuState::SETTINGS;
+    
+    // Now explicitly re-center menus after setting visibility
+    // This ensures dimensions are correct when centering
+    centerMenus(getRenderer().getScreenWidth(), getRenderer().getScreenHeight());
     
     // Ensure game UI elements stay hidden when switching to settings
     for (const auto& element : elements_) {
@@ -126,16 +139,27 @@ void MenuSystem::showSettingsMenu() {
             element->setVisible(false);
         }
     }
+    
+    // Double-check the position to ensure it's properly centered
+    float screenWidth = getRenderer().getScreenWidth();
+    float screenHeight = getRenderer().getScreenHeight();
+    glm::vec2 menuSize = settingsMenu_->getSize();
+    settingsMenu_->setPosition(
+        screenWidth / 2.0f - menuSize.x / 2.0f,
+        screenHeight / 2.0f - menuSize.y / 2.0f
+    );
 }
 
 void MenuSystem::showWorldCreationDialog() {
-    // Re-center menus in case they were auto-resized
-    centerMenus(getRenderer().getScreenWidth(), getRenderer().getScreenHeight());
-    
+    // First make the dialog visible to ensure its size is calculated correctly
     mainMenu_->setVisible(false);
     settingsMenu_->setVisible(false);
     worldCreationDialog_->setVisible(true);
     menuState_ = MenuState::WORLD_CREATION;
+    
+    // Now explicitly re-center menus after setting visibility
+    // This ensures dimensions are correct when centering
+    centerMenus(getRenderer().getScreenWidth(), getRenderer().getScreenHeight());
     
     // Ensure game UI elements stay hidden when showing world creation dialog
     for (const auto& element : elements_) {
@@ -143,6 +167,15 @@ void MenuSystem::showWorldCreationDialog() {
             element->setVisible(false);
         }
     }
+    
+    // Double-check the position to ensure it's properly centered
+    float screenWidth = getRenderer().getScreenWidth();
+    float screenHeight = getRenderer().getScreenHeight();
+    glm::vec2 dialogSize = worldCreationDialog_->getSize();
+    worldCreationDialog_->setPosition(
+        screenWidth / 2.0f - dialogSize.x / 2.0f,
+        screenHeight / 2.0f - dialogSize.y / 2.0f
+    );
 }
 
 void MenuSystem::closeMenus() {

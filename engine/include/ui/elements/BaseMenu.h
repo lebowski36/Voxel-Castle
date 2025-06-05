@@ -90,6 +90,8 @@ protected:
      */
     void autoResizeHeight();
 
+
+
     // Common styling constants
     static constexpr float TITLE_HEIGHT = 80.0f; // Increased for better title visibility
     static constexpr float BUTTON_HEIGHT = 60.0f; // Increased to accommodate longer text

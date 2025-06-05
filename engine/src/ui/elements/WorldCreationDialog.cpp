@@ -12,7 +12,7 @@ WorldCreationDialog::WorldCreationDialog(UIRenderer* renderer)
     , currentWorldSize_(WorldSize::REGIONAL)
 {
     // Set initial dialog width to accommodate longer button text
-    setSize(650.0f, 100.0f); // Width for long buttons, height will auto-resize
+    setSize(700.0f, 100.0f); // Width for long buttons, height will auto-resize
     
     // Generate an initial random seed
     currentSeed_ = VoxelCastle::World::WorldSeed(); // Default constructor generates random seed

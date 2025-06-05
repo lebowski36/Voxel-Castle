@@ -178,6 +178,8 @@ void BaseMenu::autoResizeHeight() {
     }
 }
 
+
+
 std::shared_ptr<UIButton> BaseMenu::createStyledButton(const std::string& text, float yPosition) {
     auto button = std::make_shared<UIButton>(renderer_);
     
