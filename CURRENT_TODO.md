@@ -55,6 +55,11 @@ This protocol outlines how the AI agent (GitHub Copilot) operates. Adherence to 
     *   **Log Files Only:** All detailed debugging information, error traces, and verbose output should be written to log files using the existing logging system (DEBUG_LOG(), VoxelCastle::Utils::logToFile(), etc.)
     *   **Minimal Console Output:** Console output from the game should be kept minimal and show only high-level events (game starting, world loading complete, major state changes, critical errors)
     *   **Use Existing System:** Leverage the current logging infrastructure rather than std::cout for debugging information
+*   **Visual Testability Principle:** 
+    *   **Immediate Feedback Requirement:** Every feature implementation must include visual feedback mechanisms that allow developers to see the effects of their changes immediately in-game
+    *   **Interactive Testing Tools:** When implementing any system, include debug UI elements (sliders, toggles, overlays, inspectors) that enable real-time experimentation and validation
+    *   **Component Isolation:** Design testing tools that allow individual components to be tested in isolation with clear visual indicators of their behavior
+    *   **Progressive Validation:** Each implementation phase should have specific visual checkpoints that confirm the feature works as expected before proceeding
 *   **Build and Run Instructions (Reference):**
     *   Project Root: `/home/system-x1/Projects/Voxel Castle/`
     *   Build: `clear && cmake --build "/home/system-x1/Projects/Voxel Castle/build"`
