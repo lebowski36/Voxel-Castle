@@ -432,21 +432,18 @@ bool Game::initializeWorldSystems(const std::string& worldSeed) {
     
     // Initialize world content
     if (worldManager_ && camera_) {
-        // Get the camera position to determine where to initially load chunks
-        const glm::vec3& cameraPos = camera_->getPosition();
+        // [Dynamic Chunk Loading] Static world initialization removed. 
+        // Chunks will be loaded dynamically as the camera moves in the game loop.
+        std::cout << "[Game] World systems initialized - chunks will load dynamically" << std::endl;
         
-        // Load initial chunks around camera position
-        const int initialLoadRadius = 4; // In chunk segments - MUST match game loop radius to prevent flickering
-        std::cout << "[Game] Loading initial chunks around position " 
-                  << cameraPos.x << ", " << cameraPos.y << ", " << cameraPos.z 
-                  << " (radius: " << initialLoadRadius << ")" << std::endl;
+        // Initial mesh build preparation (no actual chunks loaded yet)
+        if (textureAtlas_ && meshBuilder_) {
+            worldManager_->updateDirtyMeshes(*textureAtlas_, *meshBuilder_);
+        }
         
-        worldManager_->updateActiveChunks(cameraPos, initialLoadRadius, *worldGenerator_);
-        worldManager_->updateDirtyMeshes(*textureAtlas_, *meshBuilder_);
-        
-        // Mark world as loading - will be set to fully loaded after some time
+        // Mark world as ready for dynamic loading
         worldInitTime_ = std::chrono::steady_clock::now();
-        isWorldFullyLoaded_ = false;
+        isWorldFullyLoaded_ = true; // Allow dynamic chunk loading immediately
     }
     
     // Initialize additional in-game UI elements if needed
@@ -780,8 +777,8 @@ void Game::update(float deltaTime) {
 
     GameLogic::update(*this, scaledDeltaTime);
 
-    // Only update world systems if we're in gameplay mode, not in menu, and world is fully loaded
-    if (camera_ && worldManager_ && worldGenerator_ && isPlaying() && isWorldFullyLoaded_) {
+    // Only update world systems if we're in gameplay mode, not in menu
+    if (camera_ && worldManager_ && worldGenerator_ && isPlaying()) {
         glm::vec3 cameraPos = camera_->getPosition();
         int loadRadiusInSegments = 4; // Increased from 3 to extend visibility
         // Always call updateActiveChunks every frame to ensure chunks are loaded even for small camera movements
