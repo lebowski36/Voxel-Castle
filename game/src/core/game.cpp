@@ -439,7 +439,7 @@ bool Game::initializeWorldSystems(const std::string& worldSeed) {
         const glm::vec3& cameraPos = camera_->getPosition();
         
         // Load initial chunks around camera position
-        const int initialLoadRadius = 5; // In chunk segments
+        const int initialLoadRadius = 4; // In chunk segments - MUST match game loop radius to prevent flickering
         std::cout << "[Game] Loading initial chunks around position " 
                   << cameraPos.x << ", " << cameraPos.y << ", " << cameraPos.z 
                   << " (radius: " << initialLoadRadius << ")" << std::endl;
@@ -786,8 +786,8 @@ void Game::update(float deltaTime) {
 
     GameLogic::update(*this, scaledDeltaTime);
 
-    // Only update world systems if we're in gameplay mode, not in menu
-    if (camera_ && worldManager_ && worldGenerator_ && isPlaying()) {
+    // Only update world systems if we're in gameplay mode, not in menu, and world is fully loaded
+    if (camera_ && worldManager_ && worldGenerator_ && isPlaying() && isWorldFullyLoaded_) {
         glm::vec3 cameraPos = camera_->getPosition();
         int loadRadiusInSegments = 4; // Increased from 3 to extend visibility
         // Always call updateActiveChunks every frame to ensure chunks are loaded even for small camera movements

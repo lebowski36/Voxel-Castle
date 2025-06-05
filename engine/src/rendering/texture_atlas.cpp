@@ -78,7 +78,7 @@ bool TextureAtlas::loadTexture(const std::string& texturePath) {
     if (std::filesystem::path(texturePath).is_absolute()) {
         resolvedPath = texturePath; // Use the provided absolute path
     } else {
-        resolvedPath = BASE_DIRECTORY + "assets/textures/" + texturePath; // Prepend the base directory
+        resolvedPath = BASE_DIRECTORY + texturePath; // Prepend the base directory
     }
 
     DEBUG_LOG("TextureAtlas", "Loading texture from: " + resolvedPath);
