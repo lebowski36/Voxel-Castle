@@ -95,7 +95,7 @@ This protocol outlines how the AI agent (GitHub Copilot) operates. Adherence to 
 - [x] Implement Block Placement System
 - [ ] Implement Modular UI System
 - [ ] Implement Menu System
-- [ ] **Add World Seed System** - Basic seed system already implemented in world generator, see `08a_save_file_architecture.md`
+- [ ] **Add World Seed System** - Basic seed system already implemented in world generator, see `08a_save_file_architecture.md` and `08c_world_generation_system.md` for detailed implementation plan
 - [x] **Fix TextureAtlas Texture ID Management** - ✅ RESOLVED: Added texture_atlas.cpp to CMakeLists.txt, fixed duplicate constant definitions, all TextureAtlas methods now properly linked and functional
 
 ### 5. Advanced Engine Features & Game Systems (C++)
@@ -103,7 +103,7 @@ This protocol outlines how the AI agent (GitHub Copilot) operates. Adherence to 
 - [ ] Implement Level of Detail (LOD) System
 - [ ] Implement Save/Load System
 - [ ] Performance Profiling and Optimization
-- [ ] Implement Advanced World Generation System (see `/home/system-x1/Projects/Voxel Castle/development_tasks/05_advanced_engine_features/05_advanced_world_generation.md`)
+- [ ] Implement Advanced World Generation System (see `/home/system-x1/Projects/Voxel Castle/development_tasks/04_essential_game_infrastructure/08c_world_generation_system.md` and additional details in `/home/system-x1/Projects/Voxel Castle/development_tasks/05_advanced_engine_features/05_advanced_world_generation.md`)
 - [ ] Implement Proper Game Versioning System
 - [ ] (Optional) Implement Advanced Asynchronous Mesh Generation (see `/home/system-x1/Projects/Voxel Castle/development_tasks/05_advanced_engine_features/04_optional_async_mesh_generation.md`)
 
