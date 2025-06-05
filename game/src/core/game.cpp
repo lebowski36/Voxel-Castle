@@ -148,8 +148,15 @@ bool Game::initialize() {
     worldManager_ = std::make_unique<VoxelCastle::World::WorldManager>();
     worldGenerator_ = std::make_unique<VoxelCastle::World::WorldGenerator>();
     
-    // Initialize texture atlas first (it loads the texture automatically)
+    // Initialize texture atlas and load the texture file
     textureAtlas_ = std::make_unique<VoxelEngine::Rendering::TextureAtlas>();
+    
+    // Load the atlas.png texture file
+    if (textureAtlas_->loadTexture("assets/textures/atlas.png")) {
+        std::cout << "[Game] TextureAtlas loaded successfully" << std::endl;
+    } else {
+        std::cerr << "[Game] ERROR: Failed to load TextureAtlas from assets/textures/atlas.png" << std::endl;
+    }
     
     // Initialize mesh systems
     meshBuilder_ = std::make_unique<VoxelEngine::Rendering::MeshBuilder>();

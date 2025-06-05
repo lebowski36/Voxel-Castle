@@ -7,8 +7,8 @@ namespace VoxelCastle {
 namespace Core {
 
 GameStateManager::GameStateManager() 
-    : currentState_(GameState::STRATEGIC_MODE)
-    , previousState_(GameState::STRATEGIC_MODE) {
+    : currentState_(GameState::MAIN_MENU)
+    , previousState_(GameState::MAIN_MENU) {
     setupTransitionRules();
 }
 
@@ -110,13 +110,14 @@ bool GameStateManager::canAcceptInput() const {
 }
 
 bool GameStateManager::isInMenu() const {
-    return currentState_ == GameState::MENU;
+    return currentState_ == GameState::MENU || currentState_ == GameState::MAIN_MENU;
 }
 
 std::string GameStateManager::getStateName(GameState state) {
     switch (state) {
         case GameState::PLAYING:              return "PLAYING";
         case GameState::MENU:                 return "MENU";
+        case GameState::MAIN_MENU:            return "MAIN_MENU";
         case GameState::FIRST_PERSON_MODE:    return "FIRST_PERSON_MODE";
         case GameState::STRATEGIC_MODE:       return "STRATEGIC_MODE";
         case GameState::HYBRID_MODE:          return "HYBRID_MODE";
