@@ -343,6 +343,12 @@ private:
     std::mutex m_meshJobMutex;
 
     /**
+     * @brief Mutex to protect chunk generation and modification.
+     * Prevents race conditions where multiple threads generate the same chunks.
+     */
+    std::mutex m_chunkGenerationMutex;
+
+    /**
      * @brief Thread pool for processing mesh generation jobs.
      */
     std::unique_ptr<::VoxelEngine::Rendering::MeshJobSystem> m_meshJobSystem;

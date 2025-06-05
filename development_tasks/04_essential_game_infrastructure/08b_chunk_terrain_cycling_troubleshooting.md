@@ -2,21 +2,21 @@
 
 ## Problem Description
 
-**Issue**: When resuming the game from the main menu, ALL chunks display identical terrain data that cycles through the available loaded chunks' terrain patterns. This is NOT chunks showing wrong individual terrain - it's all chunks showing the SAME terrain pattern at any given moment, with that pattern cycling through the terrain data of each loaded chunk.
+**Issue**: When resuming the game from the main menu, as each new chunk loads, ALL visible chunks update their appearance to match the most recently loaded chunk. After all chunks finish loading, they all display identical terrain that matches the last chunk that was loaded.
 
 **Detailed Behavior**:
-1. **Initial Load**: First chunk loads and displays correct terrain
-2. **Second Chunk Load**: When second chunk loads, BOTH chunks start displaying the same terrain (cycling begins)  
-3. **Additional Chunks**: As each new chunk loads, the cycling pattern includes that chunk's terrain data
-4. **Cycling Pattern**: All visible chunks simultaneously display the same terrain slice, cycling through each loaded chunk's terrain data
-5. **Synchronization**: All chunks change terrain simultaneously - they're perfectly synchronized
+1. **Initial Load**: First chunk loads and displays correct terrain for its location
+2. **Second Chunk Load**: When second chunk loads, BOTH chunks immediately update to display the second chunk's terrain pattern
+3. **Sequential Overwriting**: As each subsequent chunk loads, ALL visible chunks update to match the new chunk's appearance
+4. **Final State**: After all chunks finish loading, ALL chunks display identical terrain that matches the last loaded chunk
+5. **Not Random**: The behavior is sequential and predictable - not random cycling
 
 **Key Characteristics**:
 - NOT individual chunks showing wrong terrain - ALL chunks show SAME terrain at any moment
-- Terrain changes are synchronized across all visible chunks
-- Each individual terrain pattern IS correct for its original chunk location
-- The issue is data isolation: chunks are sharing/cycling terrain data instead of maintaining their own
-- Cycling appears to happen at the same rate as new chunks are loaded/processed
+- As each new chunk loads, it overwrites the appearance of ALL previously loaded chunks
+- The final result is all chunks looking identical to the last loaded chunk
+- Each individual terrain pattern IS correct for its original chunk location when first generated
+- The issue is that chunk terrain/mesh data is being shared or overwritten instead of isolated
 - Issue appeared after implementing main menu system (commit `2c9b296`)
 - Did NOT occur when game started directly into 3D world
 
@@ -66,6 +66,32 @@
    - This explains why all chunks show same terrain - they're overwriting each other
    - The "cycling" is different threads completing work at different times
    - Last thread to complete overwrites all previous chunk data
+
+### Phase 2: Threading and Race Condition Analysis ✅ COMPLETED
+**Priority**: HIGH - Fixed identified race condition
+**Status**: COMPLETED on 2025-06-05 18:00
+
+#### Step 2.1: Race Condition Fix Applied ✅ COMPLETED
+**Files Modified**: 
+- `engine/include/world/world_manager.h` - Added `m_chunkGenerationMutex`
+- `engine/src/world/world_manager.cpp` - Added thread-safe locking
+
+**IMPLEMENTATION**:
+1. **Added Chunk Generation Mutex**: New `std::mutex m_chunkGenerationMutex` to synchronize chunk generation
+2. **Protected Both Generation Paths**: 
+   - `getOrCreateChunkColumn()` - Line 125-136 now thread-safe
+   - `updateActiveChunks()` - Line 316-325 now thread-safe
+3. **Eliminated Race Condition**: Multiple threads can no longer generate same chunk simultaneously
+
+**CODE CHANGES**:
+```cpp
+// Added to header file
+std::mutex m_chunkGenerationMutex;
+
+// Added locking around both generation calls
+std::lock_guard<std::mutex> lock(m_chunkGenerationMutex);
+// generation logic here...
+```
 
 #### Step 1.2: Track Mesh Generation Identity
 **File**: `engine/src/rendering/mesh_builder.cpp`

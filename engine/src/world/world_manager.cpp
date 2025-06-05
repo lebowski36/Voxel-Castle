@@ -121,10 +121,15 @@ ChunkColumn* WorldManager::getOrCreateChunkColumn(int_fast64_t worldX, int_fast6
         bool skipWorldGen = m_isLoadingFromSave || isChunkLoaded(coord.x, coord.z);
         
         if (!skipWorldGen) {
+            // THREAD SAFETY: Lock chunk generation to prevent race conditions
+            std::lock_guard<std::mutex> lock(m_chunkGenerationMutex);
             // Procedural world generation for each segment
             for (uint8_t i = 0; i < VoxelCastle::World::ChunkColumn::CHUNKS_PER_COLUMN; ++i) {
                 VoxelCastle::World::ChunkSegment* segment = column->getSegmentByIndex(i);
                 if (segment) {
+                    DEBUG_LOG("WorldManager", "Thread-safe generating segment at (" + 
+                        std::to_string(coord.x) + ", " + std::to_string(i) + ", " + 
+                        std::to_string(coord.z) + ")");
                     // Pass world coordinates for this segment
                     m_worldGenerator.generateChunkSegment(*segment, coord.x, i, coord.z);
                     // setVoxel marks the segment dirty, so it will be meshed on the first updateDirtyMeshes call
@@ -317,9 +322,17 @@ for (int colX = centerColX - forcedRadius; colX <= centerColX + forcedRadius; ++
         for (int segY = centerSegY - loadRadiusInSegments; segY <= centerSegY + loadRadiusInSegments; ++segY) {
             ChunkSegment* segment = column->getOrCreateSegment(segY);
             if (segment->isEmpty() && !segment->isGenerated()) {
-                generator.generateChunkSegment(*segment, baseColX, segY, baseColZ);
-                segment->markDirty(true);
-                segment->setGenerated(true); // Mark the segment as generated
+                // THREAD SAFETY: Lock chunk generation to prevent race conditions
+                std::lock_guard<std::mutex> lock(m_chunkGenerationMutex);
+                // Double-check after acquiring lock to avoid duplicate generation
+                if (segment->isEmpty() && !segment->isGenerated()) {
+                    DEBUG_LOG("WorldManager", "Thread-safe generating segment at (" + 
+                        std::to_string(baseColX) + ", " + std::to_string(segY) + ", " + 
+                        std::to_string(baseColZ) + ")");
+                    generator.generateChunkSegment(*segment, baseColX, segY, baseColZ);
+                    segment->markDirty(true);
+                    segment->setGenerated(true); // Mark the segment as generated
+                }
             }
         }
     }
