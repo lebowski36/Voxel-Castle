@@ -62,8 +62,9 @@ void MainMenu::onWorldSelectionClicked() {
 }
 
 void MainMenu::onCreateWorldClicked() {
-    // TODO: Show create world dialog
-    std::cout << "[MainMenu] Create World clicked - TODO: Implement create world dialog" << std::endl;
+    if (menuSystem_) {
+        menuSystem_->showWorldCreationDialog();
+    }
 }
 
 } // namespace UI

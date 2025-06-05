@@ -1,6 +1,8 @@
 #include "ui/MenuSystem.h"
 #include "ui/elements/MainMenu.h"
 #include "ui/elements/SettingsMenu.h"
+#include "ui/elements/WorldCreationDialog.h"
+#include "world/world_seed.h"
 #include <iostream>
 #include <typeinfo>  // For typeid
 #include <algorithm> // For std::max
@@ -39,11 +41,32 @@ bool MenuSystem::initialize(int screenWidth, int screenHeight, const std::string
         return false;
     }
     
+    // Create world creation dialog
+    worldCreationDialog_ = std::make_shared<WorldCreationDialog>(renderer);
+    if (!worldCreationDialog_->initialize(this)) {
+        std::cerr << "[MenuSystem] Failed to initialize world creation dialog" << std::endl;
+        return false;
+    }
+    
+    // Set up world creation dialog callbacks
+    worldCreationDialog_->setOnWorldCreate([this](const VoxelCastle::World::WorldSeed& seed, WorldCreationDialog::WorldSize size) {
+        if (onWorldCreateRequest_) {
+            onWorldCreateRequest_(seed, static_cast<int>(size));
+        }
+        closeMenus(); // Close dialog after world creation
+    });
+    
+    worldCreationDialog_->setOnCancel([this]() {
+        showMainMenu(); // Return to main menu
+    });
+    
     // Set widths only - preserve auto-calculated heights
     glm::vec2 mainSize = mainMenu_->getSize();
     glm::vec2 settingsSize = settingsMenu_->getSize();
+    glm::vec2 worldCreationSize = worldCreationDialog_->getSize();
     mainMenu_->setSize(400.0f, mainSize.y); // Keep auto-calculated height
     settingsMenu_->setSize(450.0f, settingsSize.y); // Keep auto-calculated height
+    worldCreationDialog_->setSize(500.0f, worldCreationSize.y); // Keep auto-calculated height
     
     // Position menus after they auto-calculate their heights
     // Note: This will be called again in showMainMenu/showSettingsMenu to ensure proper centering
@@ -52,10 +75,12 @@ bool MenuSystem::initialize(int screenWidth, int screenHeight, const std::string
     // Hide all menus initially
     mainMenu_->setVisible(false);
     settingsMenu_->setVisible(false);
+    worldCreationDialog_->setVisible(false);
     
     // Add menus to UI system
     addElement(mainMenu_);
     addElement(settingsMenu_);
+    addElement(worldCreationDialog_);
     
     return true;
 }
@@ -74,12 +99,13 @@ void MenuSystem::showMainMenu() {
     
     mainMenu_->setVisible(true);
     settingsMenu_->setVisible(false);
+    worldCreationDialog_->setVisible(false);
     menuState_ = MenuState::MAIN_MENU;
     
     // Ensure the block selection UI stays hidden during menu display
     // Block selection UI is identified by checking if it's not one of our menu elements
     for (const auto& element : elements_) {
-        if (element.get() != mainMenu_.get() && element.get() != settingsMenu_.get()) {
+        if (element.get() != mainMenu_.get() && element.get() != settingsMenu_.get() && element.get() != worldCreationDialog_.get()) {
             element->setVisible(false);
         }
     }
@@ -91,11 +117,29 @@ void MenuSystem::showSettingsMenu() {
     
     mainMenu_->setVisible(false);
     settingsMenu_->setVisible(true);
+    worldCreationDialog_->setVisible(false);
     menuState_ = MenuState::SETTINGS;
     
     // Ensure game UI elements stay hidden when switching to settings
     for (const auto& element : elements_) {
-        if (element.get() != mainMenu_.get() && element.get() != settingsMenu_.get()) {
+        if (element.get() != mainMenu_.get() && element.get() != settingsMenu_.get() && element.get() != worldCreationDialog_.get()) {
+            element->setVisible(false);
+        }
+    }
+}
+
+void MenuSystem::showWorldCreationDialog() {
+    // Re-center menus in case they were auto-resized
+    centerMenus(getRenderer().getScreenWidth(), getRenderer().getScreenHeight());
+    
+    mainMenu_->setVisible(false);
+    settingsMenu_->setVisible(false);
+    worldCreationDialog_->setVisible(true);
+    menuState_ = MenuState::WORLD_CREATION;
+    
+    // Ensure game UI elements stay hidden when showing world creation dialog
+    for (const auto& element : elements_) {
+        if (element.get() != mainMenu_.get() && element.get() != settingsMenu_.get() && element.get() != worldCreationDialog_.get()) {
             element->setVisible(false);
         }
     }
@@ -104,6 +148,7 @@ void MenuSystem::showSettingsMenu() {
 void MenuSystem::closeMenus() {
     mainMenu_->setVisible(false);
     settingsMenu_->setVisible(false);
+    worldCreationDialog_->setVisible(false);
     menuState_ = MenuState::NONE;
     
     // Call the onMenuClosed callback if it exists

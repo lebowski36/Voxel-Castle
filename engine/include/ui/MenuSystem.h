@@ -1,6 +1,7 @@
 #pragma once
 
 #include "ui/UISystem.h"
+#include "world/world_seed.h"
 #include <memory>
 #include <string>
 #include <functional>
@@ -11,6 +12,7 @@ namespace UI {
 // Forward declarations
 class MainMenu;
 class SettingsMenu;
+class WorldCreationDialog;
 
 /**
  * @brief System for managing game menus
@@ -21,9 +23,10 @@ class SettingsMenu;
 class MenuSystem : public UISystem {
 public:
     enum class MenuState {
-        NONE,       // No menu is active
-        MAIN_MENU,  // Main menu is active
-        SETTINGS    // Settings menu is active
+        NONE,              // No menu is active
+        MAIN_MENU,         // Main menu is active
+        SETTINGS,          // Settings menu is active
+        WORLD_CREATION     // World creation dialog is active
     };
 
     MenuSystem();
@@ -58,6 +61,11 @@ public:
      * @brief Show the settings menu
      */
     void showSettingsMenu();
+
+    /**
+     * @brief Show the world creation dialog
+     */
+    void showWorldCreationDialog();
 
     /**
      * @brief Close all menus
@@ -118,6 +126,12 @@ public:
     void setOnWorldInitRequest(std::function<void()> callback) { onWorldInitRequest_ = callback; }
 
     /**
+     * @brief Set the callback for world creation
+     * @param callback Function to call when a new world is created
+     */
+    void setOnWorldCreateRequest(std::function<void(const VoxelCastle::World::WorldSeed&, int)> callback) { onWorldCreateRequest_ = callback; }
+
+    /**
      * @brief Alias for setOnFullscreenToggle for backward compatibility
      * @param callback Function to call when fullscreen is toggled
      */
@@ -165,10 +179,12 @@ private:
     MenuState menuState_ = MenuState::NONE;
     std::shared_ptr<MainMenu> mainMenu_;
     std::shared_ptr<SettingsMenu> settingsMenu_;
+    std::shared_ptr<WorldCreationDialog> worldCreationDialog_;
     std::function<void()> onMenuClosed_;
     std::function<bool(bool)> onFullscreenToggle_;
     std::function<void()> onExitRequest_;
     std::function<void()> onWorldInitRequest_;
+    std::function<void(const VoxelCastle::World::WorldSeed&, int)> onWorldCreateRequest_;
 };
 
 } // namespace UI
