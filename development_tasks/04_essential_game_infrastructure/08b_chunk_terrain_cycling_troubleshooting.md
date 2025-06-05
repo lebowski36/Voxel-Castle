@@ -317,6 +317,45 @@ This fix completes the UI positioning improvements, ensuring consistent behavior
 
 5. **UI State Management:** UI element positions need to be explicitly updated during state transitions, not just when the window size changes.
 
+## UI System Architecture Insights
+
+During the investigation and resolution of the UI positioning issues, we gained several valuable insights about the Voxel Castle UI system architecture:
+
+### 1. UI Positioning System
+
+- **Centralized Methods**: The UI elements have dedicated methods for positioning:
+  - `HUD::centerBottomOfScreen(width, height, margin)` - Positions the HUD at the bottom center of the screen
+  - `Crosshair::centerOnScreen(width, height)` - Centers the crosshair on the screen
+
+- **Position Update Triggers**: UI element positions need to be updated in multiple scenarios:
+  - During initial creation/setup (in Game::initialize())
+  - When window is resized (handled in InputManager SDL_EVENT_WINDOW_RESIZED handler)
+  - When fullscreen is toggled (in Game::toggleFullscreen())
+  - When transitioning between game states (in Game::onStateChanged())
+
+- **UI Stack**: UI elements are managed by the MenuSystem through a stack-based approach, with elements being added via `menuSystem_->addElement(element)` and their visibility controlled independently
+
+### 2. State Management & UI Integration
+
+- **State-Dependent UI**: UI elements' visibility is tied to the game state:
+  - In menu states: Game UI (HUD, crosshair) is hidden, menu UI is shown
+  - In gameplay states: Game UI is shown, menu UI is hidden
+
+- **Position Preservation**: UI positions must be explicitly updated during state transitions to ensure correct placement
+
+### 3. Window & Renderer Integration
+
+- **Resolution Independence**: The UI positioning system is designed to work with any resolution by calculating positions based on current window dimensions
+  
+- **Multi-Context Updates**: When a display mode change occurs (e.g., fullscreen toggle), multiple systems need updating:
+  - Window dimensions
+  - OpenGL viewport
+  - Camera aspect ratio
+  - UI element positions
+  - Render coordinate systems
+
+These insights will be valuable for future UI system enhancements, particularly as we implement more complex UI components like the world selection and creation screens outlined in `08a_save_file_architecture.md`.
+
 ## Next Steps
 
 1. **Comprehensive UI Testing**:
