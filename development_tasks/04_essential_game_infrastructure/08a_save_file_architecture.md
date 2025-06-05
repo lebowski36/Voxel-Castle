@@ -134,13 +134,14 @@ Implementation plan for Minecraft-style world persistence in Voxel Castle. The s
 ### Investigation Steps (Execute in Order)
 
 #### Step 1: GameStateManager Stack Corruption Investigation
-**Issue**: ESC key causing "Cannot pop state: stack is empty" errors
+**Issue**: ESC key causing "Cannot pop state: stack is empty" errors when in main menu with no active game
 **Investigation Tasks**:
 - [ ] Examine GameStateManager state stack implementation
 - [ ] Check state push/pop balance in menu transitions
 - [ ] Verify MAIN_MENU → GAMEPLAY → MAIN_MENU state flow
 - [ ] Look for missing state pushes when opening menus
 - [ ] Check if state stack is being cleared incorrectly
+- [ ] **Add condition to ESC key handler**: ESC key should not trigger state pop when in main menu with no active game session
 
 #### Step 2: Chunk Loading Flickering Root Cause Analysis
 **Issue**: ✅ RESOLVED: Chunks rapidly switching between different data when "Resume Game" is clicked
