@@ -25,7 +25,7 @@ public:
     static uint64_t staticGetBlockSeed(int64_t x, int64_t y, int64_t z);
     
     // Simple heightmap-based terrain using value noise
-    static void generateChunkSegment(ChunkSegment& segment, int worldX, int worldY, int worldZ);
+    void generateChunkSegment(ChunkSegment& segment, int worldX, int worldY, int worldZ);
 
 private:
     uint64_t worldSeed_;

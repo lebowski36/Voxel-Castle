@@ -372,6 +372,9 @@ private:
     
     // Flag to enable/disable continuous auto-save
     bool m_continuousAutoSaveEnabled = false;
+    
+    // World generator instance for chunk generation
+    WorldGenerator m_worldGenerator;
 };
 
 } // namespace World

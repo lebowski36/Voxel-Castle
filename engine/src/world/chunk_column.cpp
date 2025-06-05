@@ -2,6 +2,10 @@
 #include "world/chunk_segment.h" // For dimension constants
 #include <stdexcept> // For std::out_of_range
 #include <cmath>     // For std::floor
+#include <chrono>    // For timestamps
+#include <iomanip>   // For time formatting
+#include <sstream>   // For string streams
+#include "../../game/include/utils/debug_logger.h" // For debugging
 
 namespace VoxelCastle
 {
@@ -15,6 +19,17 @@ namespace VoxelCastle
             for (uint8_t i = 0; i < CHUNKS_PER_COLUMN; ++i) {
                 m_segments[i] = std::make_unique<ChunkSegment>();
             }
+            
+            // Debug: Log chunk column creation with timestamp
+            auto now = std::chrono::system_clock::now();
+            auto time_t = std::chrono::system_clock::to_time_t(now);
+            auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(now.time_since_epoch()) % 1000;
+            std::stringstream ss;
+            ss << std::put_time(std::localtime(&time_t), "%H:%M:%S");
+            ss << '.' << std::setfill('0') << std::setw(3) << ms.count();
+            
+            VoxelCastle::Utils::logToFile("[" + ss.str() + "] [CHUNK_CREATE] ChunkColumn created at coordinates (" + 
+                std::to_string(worldX) + ", " + std::to_string(worldZ) + ")");
         }
 
         ChunkColumnCoord ChunkColumn::getCoordinates() const
@@ -37,7 +52,27 @@ namespace VoxelCastle
                 // Calculate local X and Z coordinates
                 uint8_t localX = static_cast<uint8_t>(worldX - m_coordinates.x); // Changed m_baseX
                 uint8_t localZ = static_cast<uint8_t>(worldZ - m_coordinates.z); // Changed m_baseZ
-                return segment->getVoxel(localX, localY, localZ);
+                auto voxel = segment->getVoxel(localX, localY, localZ);
+                
+                // Debug: Log first few voxel reads per chunk to detect data corruption
+                static int getCount = 0;
+                if (getCount < 10) {
+                    auto now = std::chrono::system_clock::now();
+                    auto time_t = std::chrono::system_clock::to_time_t(now);
+                    auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(now.time_since_epoch()) % 1000;
+                    std::stringstream ss;
+                    ss << std::put_time(std::localtime(&time_t), "%H:%M:%S");
+                    ss << '.' << std::setfill('0') << std::setw(3) << ms.count();
+                    
+                    VoxelCastle::Utils::logToFile("[" + ss.str() + "] [CHUNK_GET] Chunk(" + std::to_string(m_coordinates.x) + "," + 
+                        std::to_string(m_coordinates.z) + ") world(" + std::to_string(worldX) + "," + 
+                        std::to_string(worldY) + "," + std::to_string(worldZ) + ") local(" + 
+                        std::to_string(localX) + "," + std::to_string(localY) + "," + std::to_string(localZ) + 
+                        ") voxel=" + std::to_string(voxel.id));
+                    getCount++;
+                }
+                
+                return voxel;
             }
             // Segment doesn't exist (should not happen if constructor pre-allocates all)
             return ::VoxelEngine::World::Voxel{static_cast<uint8_t>(::VoxelEngine::World::VoxelType::AIR)};
@@ -58,6 +93,24 @@ namespace VoxelCastle
                 // Calculate local X and Z coordinates
                 uint8_t localX = static_cast<uint8_t>(worldX - m_coordinates.x); // Changed m_baseX
                 uint8_t localZ = static_cast<uint8_t>(worldZ - m_coordinates.z); // Changed m_baseZ
+                
+                // Debug: Log voxel setting to track terrain generation
+                static int setCount = 0;
+                if (setCount < 50) {  // Log more sets since this is where terrain is generated
+                    auto now = std::chrono::system_clock::now();
+                    auto time_t = std::chrono::system_clock::to_time_t(now);
+                    auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(now.time_since_epoch()) % 1000;
+                    std::stringstream ss;
+                    ss << std::put_time(std::localtime(&time_t), "%H:%M:%S");
+                    ss << '.' << std::setfill('0') << std::setw(3) << ms.count();
+                    
+                    VoxelCastle::Utils::logToFile("[" + ss.str() + "] [CHUNK_SET] Chunk(" + std::to_string(m_coordinates.x) + "," + 
+                        std::to_string(m_coordinates.z) + ") world(" + std::to_string(worldX) + "," + 
+                        std::to_string(worldY) + "," + std::to_string(worldZ) + ") local(" + 
+                        std::to_string(localX) + "," + std::to_string(localY) + "," + std::to_string(localZ) + 
+                        ") voxel=" + std::to_string(voxel.id));
+                    setCount++;
+                }
                 segment->setVoxel(localX, localY, localZ, voxel);
             }
             // Else: Segment doesn't exist (should not happen if constructor pre-allocates all), do nothing or log error

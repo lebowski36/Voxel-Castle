@@ -126,7 +126,7 @@ ChunkColumn* WorldManager::getOrCreateChunkColumn(int_fast64_t worldX, int_fast6
                 VoxelCastle::World::ChunkSegment* segment = column->getSegmentByIndex(i);
                 if (segment) {
                     // Pass world coordinates for this segment
-                    VoxelCastle::World::WorldGenerator::generateChunkSegment(*segment, coord.x, i, coord.z);
+                    m_worldGenerator.generateChunkSegment(*segment, coord.x, i, coord.z);
                     // setVoxel marks the segment dirty, so it will be meshed on the first updateDirtyMeshes call
                 }
             }

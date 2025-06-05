@@ -7,6 +7,9 @@
 #include <cmath>
 #include <iostream> // Added for logging
 #include <functional> // For std::hash
+#include <chrono>    // For timestamps
+#include <iomanip>   // For time formatting
+#include <sstream>   // For string streams
 
 namespace VoxelCastle {
 namespace World {
@@ -53,6 +56,17 @@ uint64_t WorldGenerator::getBlockSeed(int64_t x, int64_t y, int64_t z) const {
 
 // Generate chunk segment with the current world seed
 void WorldGenerator::generateChunkSegment(ChunkSegment& segment, int worldX, int worldY, int worldZ) {
+    // Add debugging to track which chunks are being generated with timestamp
+    auto now = std::chrono::system_clock::now();
+    auto time_t = std::chrono::system_clock::to_time_t(now);
+    auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(now.time_since_epoch()) % 1000;
+    std::stringstream ss;
+    ss << std::put_time(std::localtime(&time_t), "%H:%M:%S");
+    ss << '.' << std::setfill('0') << std::setw(3) << ms.count();
+    
+    VoxelCastle::Utils::logToFile("[" + ss.str() + "] [WORLD_GEN] Generating chunk segment at world coordinates (" + 
+        std::to_string(worldX) + ", " + std::to_string(worldY) + ", " + std::to_string(worldZ) + ")");
+        
     // Show world loading progress only for the first segment
     if (worldX == 0 && worldY == 0 && worldZ == 0) {
         std::cout << "[INFO] World generation started" << std::endl;
@@ -88,6 +102,24 @@ void WorldGenerator::generateChunkSegment(ChunkSegment& segment, int worldX, int
             // noise_val = std::max(0.0f, std::min(1.0f, noise_val));
 
             int columnHeight = static_cast<int>(noise_val * terrainAmplitude) + static_cast<int>(baseTerrainOffset);
+
+            // Debug: Log first few terrain heights to detect patterns with timestamp
+            static int heightLogCount = 0;
+            if (heightLogCount < 20) {
+                auto now = std::chrono::system_clock::now();
+                auto time_t = std::chrono::system_clock::to_time_t(now);
+                auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(now.time_since_epoch()) % 1000;
+                std::stringstream ss;
+                ss << std::put_time(std::localtime(&time_t), "%H:%M:%S");
+                ss << '.' << std::setfill('0') << std::setw(3) << ms.count();
+                
+                VoxelCastle::Utils::logToFile("[" + ss.str() + "] [TERRAIN] Chunk(" + std::to_string(worldX) + "," + 
+                    std::to_string(worldY) + "," + std::to_string(worldZ) + ") local(" + 
+                    std::to_string(x) + "," + std::to_string(z) + ") global(" + 
+                    std::to_string(globalX) + "," + std::to_string(globalZ) + ") noise=" + 
+                    std::to_string(noise_val) + " height=" + std::to_string(columnHeight));
+                heightLogCount++;
+            }
 
             // Added for logging task 3.1 - log for local (0,0) and (15,15)
             if (worldX == 0 && worldY == 0 && worldZ == 0 && ((x == 0 && z == 0) || (x == 15 && z == 15))) {
