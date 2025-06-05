@@ -164,6 +164,49 @@ for (const auto* vMesh : worldMeshes) {
 
 This fix ensures that each chunk has its own separate OpenGL buffers, preventing the issue where all chunks would display the same terrain. Now, when new chunks are loaded, they create their own buffers and don't affect the rendering of other chunks.
 
+## Results & New Challenges
+
+### Fix Results
+✅ **Chunk Terrain Cycling Bug Fixed**: The fix worked perfectly! Each chunk now correctly retains its own unique terrain regardless of when it loads.
+- All chunks display their correct and unique terrain patterns
+- No more terrain "cycling" as chunks load
+- World state is stable during exploration
+- Menu transitions to gameplay work without terrain visual corruption
+
+### New Challenges Identified
+
+After fixing the chunk terrain cycling bug, we've identified several additional UI-related issues that need attention:
+
+1. **Menu Fullscreen Toggle Not Working**:
+   - Error: `[MenuSystem] No fullscreen toggle callback set` appears when trying to toggle fullscreen from the menu
+   - F11 key works properly, but the menu button has no effect
+   - Root cause appears to be missing callback registration in the MenuSystem
+
+2. **HUD Positioning in Fullscreen Mode**:
+   - The crosshair (targeting reticle) is not centered properly in fullscreen mode
+   - Block selection display appears in top-left corner instead of bottom center
+   - UI elements seem to be anchored to 720p coordinates regardless of actual screen size
+
+3. **Block Selection HUD Position**:
+   - Always appears in top-left corner now
+   - Should be positioned at bottom center of the screen (similar to Minecraft's hotbar)
+   - Needs proper viewport-relative positioning rather than absolute coordinates
+
+### Next Steps for UI Fixes
+
+1. **Menu Fullscreen Toggle**:
+   - Register proper fullscreen toggle callback in MenuSystem
+   - Connect menu button to the same function that F11 uses
+
+2. **HUD Scaling & Positioning**:
+   - Implement proper viewport-relative positioning for UI elements
+   - Update UI component positioning to use percentages of screen size rather than absolute coordinates
+   - Create anchor points system (TOP_LEFT, BOTTOM_CENTER, etc.) for UI components
+
+3. **Block Selection Display**:
+   - Fix position to be centered horizontally and aligned to bottom of screen
+   - Ensure scaling works correctly regardless of resolution or fullscreen state
+
 ## Lessons Learned
 
 1. **Isolated Rendering Resources:** In GPU graphics programming, ensure each independent object has its own rendering resources when they need to be displayed simultaneously.
