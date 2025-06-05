@@ -314,6 +314,12 @@ bool Game::initialize() {
             requestExit();
         });
         
+        // Set up fullscreen toggle callback
+        menuSystem_->setOnFullscreenToggle([this](bool enable) {
+            std::cout << "[Game] Fullscreen toggle requested from menu: " << (enable ? "ON" : "OFF") << std::endl;
+            return toggleFullscreen();
+        });
+        
         // Get the texture atlas OpenGL texture ID from mesh renderer
         GLuint atlasTextureId = meshRenderer_->getTextureAtlasID();
         
