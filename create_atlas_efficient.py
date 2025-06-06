@@ -119,10 +119,11 @@ class EfficientAtlasGenerator:
     Generates efficient face-based atlases using the new slot allocation system.
     """
     
-    def __init__(self, tile_size_px=32):
+    def __init__(self, tile_size_px=32, print_summary=False):
         self.tile_size_px = tile_size_px
         self.allocator = AtlasSlotAllocator()
-        self.allocator.allocate_all_slots()
+        # Use the silent calculation method to avoid repeated output
+        self.allocator._calculate_requirements()
         
         # Get requirements for each atlas type (using our existing allocator)
         self.requirements = {
@@ -131,13 +132,22 @@ class EfficientAtlasGenerator:
             AtlasType.BOTTOM: self.allocator.stats['bottom_slots_used']
         }
         
-        # Calculate grid sizes for each atlas
+        # Print allocation summary only if requested
+        if print_summary:
+            self.allocator._print_allocation_summary()
+            
+            # Calculate and print grid sizes for each atlas
+            for atlas_type, num_slots in self.requirements.items():
+                if num_slots > 0:
+                    grid_w, grid_h = calculate_atlas_grid_size(num_slots)
+                    print(f"  {atlas_type.value:6s} atlas: {num_slots:3d} slots -> {grid_w}x{grid_h} grid ({grid_w*tile_size_px}x{grid_h*tile_size_px}px)")
+        
+        # Calculate grid sizes for each atlas (always needed)
         self.atlas_grids = {}
         for atlas_type, num_slots in self.requirements.items():
             if num_slots > 0:
                 grid_w, grid_h = calculate_atlas_grid_size(num_slots)
                 self.atlas_grids[atlas_type] = (grid_w, grid_h)
-                print(f"  {atlas_type.value:6s} atlas: {num_slots:3d} slots -> {grid_w}x{grid_h} grid ({grid_w*tile_size_px}x{grid_h*tile_size_px}px)")
         
         # Statistics
         self.stats = {
@@ -437,7 +447,7 @@ if __name__ == "__main__":
     print("=" * 50)
     
     # Generate the new efficient atlases
-    generator = EfficientAtlasGenerator(tile_size_px=32)
+    generator = EfficientAtlasGenerator(tile_size_px=32, print_summary=True)
     atlases = generator.generate_all_atlases()
     
     # Also generate legacy compatibility atlas

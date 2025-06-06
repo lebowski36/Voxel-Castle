@@ -249,6 +249,15 @@ class AtlasSlotAllocator:
             pattern = self.get_face_pattern(voxel_id)
             self.stats['blocks_by_pattern'][pattern] += 1
     
+    def _calculate_requirements(self):
+        """Calculate slot requirements silently for get_atlas_requirements()."""
+        for voxel_id in range(256):
+            pattern = self.get_face_pattern(voxel_id)
+            self.allocate_slots_for_block(voxel_id, pattern)
+        
+        self._calculate_stats()
+        # No printing in this method
+
     def _print_allocation_summary(self):
         """Print a summary of slot allocation."""
         print(f"\n📊 Atlas Slot Allocation Summary:")
@@ -275,7 +284,8 @@ class AtlasSlotAllocator:
 def get_atlas_requirements() -> Dict[AtlasType, int]:
     """Get the number of slots required for each atlas type."""
     allocator = AtlasSlotAllocator()
-    allocator.allocate_all_slots()
+    # Use internal calculation without prints
+    allocator._calculate_requirements()
     
     return {
         AtlasType.MAIN: allocator.stats['main_slots_used'],
@@ -299,8 +309,8 @@ def calculate_atlas_grid_size(num_slots: int) -> Tuple[int, int]:
     
     return (grid_size, grid_size)
 
-if __name__ == "__main__":
-    # Test the slot allocation system
+def main():
+    """Test the slot allocation system."""
     print("🧪 Testing Atlas Slot Allocation System")
     
     allocator = AtlasSlotAllocator()
@@ -336,3 +346,6 @@ if __name__ == "__main__":
             print(f"  {atlas_type.value:6s}: {num_slots:3d} slots -> {grid_w}x{grid_h} grid (32x32 tiles = {grid_w*32}x{grid_h*32}px)")
     
     print(f"\n✅ Atlas slot allocation system working correctly!")
+
+if __name__ == "__main__":
+    main()
