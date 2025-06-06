@@ -67,6 +67,11 @@ add_executable(seed_system_test tests/seed_system_test.cpp)
 target_link_libraries(seed_system_test PRIVATE VoxelEngine)
 target_include_directories(seed_system_test PRIVATE engine/include)
 
+# Add world parameters test executable
+add_executable(world_parameters_test tests/world_parameters_test.cpp)
+target_link_libraries(world_parameters_test PRIVATE VoxelEngine)
+target_include_directories(world_parameters_test PRIVATE engine/include)
+
 # Enable CTest (optional, if you add tests)
 # enable_testing()
 # add_subdirectory(tests) # If you have a tests directory with CMakeLists.txt
