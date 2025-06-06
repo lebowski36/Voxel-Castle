@@ -15,7 +15,14 @@ UISystem::~UISystem() {
 }
 
 bool UISystem::initialize(int screenWidth, int screenHeight, const std::string& projectRoot) {
-    return renderer_.initialize(screenWidth, screenHeight, projectRoot);
+    bool success = renderer_.initialize(screenWidth, screenHeight, projectRoot);
+    
+    // Set the static renderer pointer for BlockVisualizationPanel
+    if (success) {
+        BlockVisualizationPanel::setCurrentRenderer(&renderer_);
+    }
+    
+    return success;
 }
 
 void UISystem::shutdown() {
@@ -158,6 +165,10 @@ void UISystem::toggleBlockVisualizationPanel() {
     if (!blockVisualizationPanel_) {
         // Lazy initialization - create the panel if it doesn't exist
         blockVisualizationPanel_ = std::make_shared<BlockVisualizationPanel>();
+        
+        // Set the static renderer pointer so the panel can render
+        BlockVisualizationPanel::setCurrentRenderer(&renderer_);
+        
         blockVisualizationPanel_->setPosition(100.0f, 100.0f);
         blockVisualizationPanel_->setSize(800.0f, 600.0f);
         addElement(blockVisualizationPanel_);
