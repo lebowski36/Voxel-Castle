@@ -541,7 +541,7 @@ def generate_organic_texture_draw(draw: ImageDraw.Draw, x0: int, y0: int, size: 
                 draw.point((blade_x, blade_y), fill=blade_color)
         else:
             # Grass sides - dirt with grass edge at top
-            generate_organic_texture(draw, x0, y0, size, 'dirt', face)
+            generate_organic_texture_draw(draw, x0, y0, size, 'dirt', face)
             if face == 'side':
                 # Add green strip at top
                 grass_color = (76, 175, 80, 255)
