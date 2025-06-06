@@ -1,10 +1,35 @@
 # Comprehensive Block System Design
 *Created: 2025-06-06 19:30*
-*Last Updated: 2025-06-06 20:15*
+*Last Updated: 2025-06-06 21:15*
 *Priority: HIGH - Required before 08c.3 feature parity completion*
 
-## Status: PLANNING 📋
-*Next: Define complete block taxonomy and properties system*
+## Status: ACTIVE IMPLEMENTATION 🔧
+*Next: Fix texture quality and missing generators in atlas generation*
+
+## Current Priority Issues (December 6, 2025)
+
+### 08d.1: Fix Texture Quality Issue ⚠️ URGENT
+**Problem**: Atlas generation is not using the detailed modular textures we've created
+- **Symptom**: create_atlas.py produces flat color textures instead of detailed ones
+- **Evidence**: test_texture_generation.py creates beautiful detailed 32×32 textures in test_textures/ folder
+- **Root Cause**: Import errors in create_atlas.py causing fallback to legacy/flat generation
+- **Error**: `cannot import name 'generate_special_texture' from 'texture_generators.special_textures'`
+- **Status**: 🔴 BLOCKING - Must fix imports and function signatures first
+- **Success Criteria**: Atlas shows detailed textures matching test_textures/ quality
+
+### 08d.2: Fix Missing Generators Issue ⚠️ URGENT  
+**Problem**: Many blocks still show purple placeholder textures
+- **Symptom**: Worldgen-relevant blocks (IDs 0-179) should have proper textures, not placeholders
+- **Evidence**: Atlas generation reports "Placeholder textures: 844" for most blocks
+- **Root Cause**: Missing or incorrectly imported generator functions for many block types
+- **Status**: 🔴 BLOCKING - Must ensure all worldgen blocks have generators
+- **Success Criteria**: Only craft-only blocks (IDs 180-255) should use purple placeholders
+
+### Implementation Plan
+1. **Phase 1**: Fix modular system imports (08d.1) ✅ PRIORITY 1
+2. **Phase 2**: Ensure all worldgen blocks have generators (08d.2) ✅ PRIORITY 2
+3. **Phase 3**: Build and test atlas after each fix
+4. **Phase 4**: Commit changes incrementally
 
 ## Overview
 Before implementing comprehensive world generation and feature parity (08c.3), we need to establish a complete block system that supports the full vision of a voxel fortress/castle building game. Our current 8 block types are insufficient for the rich world generation and building mechanics we want to achieve.
@@ -572,12 +597,57 @@ This comprehensive block system will enable:
 - **Strategic choices**: Material properties affect fortress design
 - **Exploration rewards**: Rare materials found in dangerous/remote areas
 
+## Investigation: Atlas Generation Issues (ACTIVE)
+
+### Problem Analysis
+Atlas generation is producing flat, low-resolution textures instead of the detailed 32x32 test textures:
+
+#### Issues Identified:
+1. **Atlas Size**: Currently 256x256 with 16x16 tiles → Need 1024x1024 with 32x32 tiles
+2. **Hardcoded Tile Size**: `tile_size_px = 16` in `create_atlas.py` → Should be 32
+3. **Test Texture Quality**: `/test_textures/` contains rich, detailed 32x32 textures that should be the target quality
+4. **Legacy Fallback**: May be using simple colored squares instead of modular texture generators
+
+#### Required Changes:
+- [x] Update atlas configuration: 1024x1024 atlas, 32x32 tiles, 32×32 grid = 1024 total slots ✅ COMPLETED
+- [x] Change default `tile_size_px` from 16 to 32 in `generate_texture_atlas()` ✅ COMPLETED
+- [x] Create new atlas file `atlas_32x32.png` to preserve legacy `atlas.png` ✅ COMPLETED
+- [ ] **PRIORITY 1: Fix Texture Quality** - Textures are flat colors, not detailed like test_textures/
+- [ ] **PRIORITY 2: Fix Missing Generators** - Many blocks showing purple (placeholder), ensure all worldgen blocks have generators
+- [ ] Verify worldgen-relevant blocks use detailed textures, not flat colors
+- [ ] Only use placeholder checkerboard for craft-only blocks (180-255)
+
+### Current Atlas Generation Issues (ACTIVE INVESTIGATION)
+Based on latest test run:
+1. **Texture Quality Issue**: Generated textures are flat colors, not detailed like test_textures/
+2. **Import Errors**: Modular system failing with missing function imports (`generate_special_texture`, `generate_organic_texture`)
+3. **Purple Placeholders**: Many blocks (844/1024) showing purple placeholders instead of proper textures
+4. **Fallback to Legacy**: System falling back to legacy generation due to import failures
+
+### Immediate Action Items:
+- [ ] **08d.1: Fix Modular System Imports** - Resolve missing function imports in texture generators
+- [ ] **08d.2: Ensure Detailed Texture Generation** - Make sure modular system produces quality like test_textures/
+- [ ] **08d.3: Verify Worldgen Block Coverage** - Ensure blocks 0-179 have proper generators, not placeholders
+
+### Atlas Configuration Requirements
+```
+Atlas Size: 1024×1024 pixels
+Tile Size: 32×32 pixels  
+Grid: 32×32 = 1024 total slots
+Format: RGBA PNG
+```
+
 ## Next Steps
 
-1. **Update VoxelType enum** with the complete 256-block taxonomy
-2. **Implement BlockProperties system** with all required properties
-3. **Update texture atlas** to handle the expanded block set
-4. **Test basic functionality** with a few representative new blocks
-5. **Gradually implement blocks by category** (natural → processed → functional → advanced)
+### Phase 1: Fix Atlas Generation Quality (08d.1-08d.3)
+1. **08d.1: Fix Modular System Imports** - Resolve missing function imports in texture generators
+2. **08d.2: Ensure Detailed Texture Generation** - Make sure modular system produces quality like test_textures/
+3. **08d.3: Verify Worldgen Block Coverage** - Ensure blocks 0-179 have proper generators, not placeholders
+
+### Phase 2: System Integration (Future)
+4. **Update VoxelType enum** with the complete 256-block taxonomy
+5. **Implement BlockProperties system** with all required properties
+6. **Test basic functionality** with a few representative new blocks
+7. **Gradually implement blocks by category** (natural → processed → functional → advanced)
 
 This comprehensive block system will provide the foundation for rich world generation, complex building mechanics, and engaging resource management gameplay.

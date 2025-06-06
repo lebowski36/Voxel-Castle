@@ -176,7 +176,7 @@ BLOCK_MAPPING = {
 }
 
 
-def generate_modular_texture(block_id, size=16, face='all', seed=None):
+def generate_modular_texture(block_id, size=32, face='all', seed=None):
     """
     Generate a texture using the modular system for a specific block ID.
     
@@ -279,7 +279,7 @@ def should_use_per_face_textures(block_id):
     return False
 
 
-def get_texture_for_face(block_id, face='all', size=16, seed=None):
+def get_texture_for_face(block_id, face='all', size=32, seed=None):
     """
     Get the appropriate texture for a specific face of a block.
     
@@ -299,7 +299,7 @@ def get_texture_for_face(block_id, face='all', size=16, seed=None):
         return generate_legacy_texture(block_id, size)
 
 
-def generate_legacy_texture(block_id, size=16):
+def generate_legacy_texture(block_id, size=32):
     """
     Generate textures using the legacy system for backwards compatibility.
     """
@@ -374,7 +374,7 @@ def generate_legacy_texture(block_id, size=16):
     return img
 
 
-def generate_texture_atlas(output_path="assets/textures/atlas.png", use_per_face=False):
+def generate_texture_atlas(output_path="assets/textures/atlas_32x32.png", use_per_face=False):
     """
     Generate a comprehensive texture atlas for all 256 block types.
     
@@ -382,11 +382,12 @@ def generate_texture_atlas(output_path="assets/textures/atlas.png", use_per_face
         output_path: Where to save the atlas
         use_per_face: If True, generate separate atlases for different faces
     """
-    atlas_size_px = 256
-    tile_size_px = 16
-    tiles_per_row = atlas_size_px // tile_size_px  # 16x16 grid = 256 total tiles
+    atlas_size_px = 1024  # 1024x1024 atlas for 32x32 tiles
+    tile_size_px = 32     # 32x32 pixel tiles for high detail
+    tiles_per_row = atlas_size_px // tile_size_px  # 32x32 grid = 1024 total tiles
     
     print(f"Generating texture atlas with {tiles_per_row}x{tiles_per_row} = {tiles_per_row * tiles_per_row} tiles")
+    print(f"Atlas size: {atlas_size_px}x{atlas_size_px}, Tile size: {tile_size_px}x{tile_size_px}")
     print(f"Using {'modular' if MODULAR_SYSTEM_AVAILABLE else 'legacy'} texture generation system")
     
     if use_per_face and MODULAR_SYSTEM_AVAILABLE:
@@ -517,13 +518,15 @@ def draw_simple_digit(draw, x, y, digit, color):
 if __name__ == "__main__":
     # Assuming the script is run from the project root
     project_root = "/home/system-x1/Projects/Voxel Castle/"
-    output_file_path = os.path.join(project_root, "assets/textures/atlas.png")
+    output_file_path = os.path.join(project_root, "assets/textures/atlas_32x32.png")
     
-    # Generate both single and per-face atlases
-    print("=== Generating single unified atlas ===")
+    # Generate both single and per-face atlases with new 32x32 format
+    print("=== Generating single unified atlas (32x32 tiles) ===")
     generate_texture_atlas(output_path=output_file_path, use_per_face=False)
     
-    print("\n=== Generating per-face atlases ===")
+    print("\n=== Generating per-face atlases (32x32 tiles) ===")
     generate_texture_atlas(output_path=output_file_path, use_per_face=True)
     
     print("\n✅ Atlas generation complete!")
+    print(f"Legacy atlas preserved at: assets/textures/atlas.png")
+    print(f"New 32x32 atlas created at: assets/textures/atlas_32x32.png")

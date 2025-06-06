@@ -363,3 +363,206 @@ SPECIAL_GENERATORS = {
     178: generate_absorbing_block,      # BLOCK_ABSORBING
     179: generate_amplifying_block,     # BLOCK_AMPLIFYING
 }
+
+def generate_special_texture(subtype: str, size: int = 32) -> 'Image':
+    """
+    Generate special block textures and return as PIL Image.
+    
+    Args:
+        subtype: The special block type (e.g., 'snow', 'ice', 'charcoal_block')
+        size: Texture size in pixels (default 32x32)
+    
+    Returns:
+        PIL Image of the generated texture
+    """
+    from PIL import Image
+    
+    # Create new image
+    img = Image.new("RGBA", (size, size), (0, 0, 0, 0))
+    draw = ImageDraw.Draw(img)
+    
+    # Handle specific special subtypes
+    if subtype == 'snow':
+        # Snow texture - white with slight blue tint
+        palette = {
+            'base': (250, 250, 255, 255),     # Snow white
+            'shadow': (240, 240, 250, 255),   # Light shadow
+            'crystal': (255, 255, 255, 255),  # Pure white crystals
+            'blue': (245, 245, 255, 255)      # Slight blue tint
+        }
+        
+        # Base snow color
+        draw.rectangle([0, 0, size - 1, size - 1], fill=palette['base'])
+        
+        # Add sparkle/crystal effects
+        for _ in range(size // 2):
+            sx = random.randint(0, size - 1)
+            sy = random.randint(0, size - 1)
+            if random.random() < 0.3:
+                draw.point((sx, sy), fill=palette['crystal'])
+            elif random.random() < 0.2:
+                draw.point((sx, sy), fill=palette['blue'])
+        
+        # Add subtle texture
+        for _ in range(size):
+            tx = random.randint(0, size - 1)
+            ty = random.randint(0, size - 1)
+            if random.random() < 0.15:
+                draw.point((tx, ty), fill=palette['shadow'])
+    
+    elif subtype == 'ice':
+        # Ice texture - blue-tinted transparent
+        palette = {
+            'base': (200, 220, 255, 220),     # Ice blue
+            'crystal': (230, 240, 255, 255),  # Ice crystals
+            'crack': (180, 200, 240, 200),    # Ice cracks
+            'clear': (240, 250, 255, 180)     # Clear ice
+        }
+        
+        # Base ice color
+        draw.rectangle([0, 0, size - 1, size - 1], fill=palette['base'])
+        
+        # Add ice crystal patterns
+        for _ in range(size // 3):
+            cx = random.randint(0, size - 1)
+            cy = random.randint(0, size - 1)
+            if random.random() < 0.4:
+                draw.point((cx, cy), fill=palette['crystal'])
+            elif random.random() < 0.2:
+                draw.point((cx, cy), fill=palette['clear'])
+        
+        # Add some ice crack lines
+        for _ in range(size // 8):
+            start_x = random.randint(0, size - 1)
+            start_y = random.randint(0, size - 1)
+            length = random.randint(2, size // 4)
+            direction = random.choice([(1, 0), (0, 1), (1, 1), (-1, 1)])
+            
+            for i in range(length):
+                crack_x = start_x + i * direction[0]
+                crack_y = start_y + i * direction[1]
+                if 0 <= crack_x < size and 0 <= crack_y < size:
+                    draw.point((crack_x, crack_y), fill=palette['crack'])
+    
+    elif subtype == 'packed_ice':
+        # Packed ice - denser, darker blue
+        palette = {
+            'base': (160, 180, 220, 255),     # Darker ice blue
+            'dense': (140, 160, 200, 255),    # Dense spots
+            'crystal': (200, 210, 240, 255),  # Crystal formations
+            'dark': (120, 140, 180, 255)      # Dark compressed areas
+        }
+        
+        # Base packed ice
+        draw.rectangle([0, 0, size - 1, size - 1], fill=palette['base'])
+        
+        # Add density variations
+        for _ in range(size):
+            dx = random.randint(0, size - 1)
+            dy = random.randint(0, size - 1)
+            if random.random() < 0.3:
+                draw.point((dx, dy), fill=palette['dense'])
+            elif random.random() < 0.1:
+                draw.point((dx, dy), fill=palette['dark'])
+        
+        # Add crystal formations
+        for _ in range(size // 4):
+            fx = random.randint(0, size - 1)
+            fy = random.randint(0, size - 1)
+            draw.point((fx, fy), fill=palette['crystal'])
+    
+    elif subtype == 'charcoal_block':
+        # Charcoal block - black with carbon texture
+        palette = {
+            'base': (32, 32, 32, 255),        # Dark charcoal
+            'carbon': (16, 16, 16, 255),      # Carbon black
+            'ash': (64, 64, 64, 255),         # Ash gray
+            'ember': (48, 24, 24, 255)        # Slight ember glow
+        }
+        
+        # Base charcoal color
+        draw.rectangle([0, 0, size - 1, size - 1], fill=palette['base'])
+        
+        # Add carbon texture
+        for _ in range(size * 2):
+            cx = random.randint(0, size - 1)
+            cy = random.randint(0, size - 1)
+            if random.random() < 0.4:
+                draw.point((cx, cy), fill=palette['carbon'])
+            elif random.random() < 0.2:
+                draw.point((cx, cy), fill=palette['ash'])
+            elif random.random() < 0.05:
+                draw.point((cx, cy), fill=palette['ember'])
+    
+    elif subtype == 'magical_mist':
+        # Magical mist - translucent with swirling patterns
+        palette = {
+            'base': (200, 180, 255, 120),     # Purple mist
+            'swirl': (220, 200, 255, 80),     # Lighter swirls
+            'magic': (255, 200, 255, 160),    # Magical sparkles
+            'deep': (160, 140, 200, 140)      # Deeper mist
+        }
+        
+        # Base mist
+        draw.rectangle([0, 0, size - 1, size - 1], fill=palette['base'])
+        
+        # Add swirling patterns
+        for _ in range(size // 2):
+            mx = random.randint(0, size - 1)
+            my = random.randint(0, size - 1)
+            if random.random() < 0.5:
+                draw.point((mx, my), fill=palette['swirl'])
+            elif random.random() < 0.2:
+                draw.point((mx, my), fill=palette['magic'])
+            elif random.random() < 0.3:
+                draw.point((mx, my), fill=palette['deep'])
+    
+    elif subtype in ['functional', 'technology', 'magical']:
+        # Generic special blocks - purple placeholder
+        palette = {
+            'base': (128, 64, 128, 255),      # Purple placeholder
+            'pattern': (160, 32, 160, 255),   # Darker purple
+            'accent': (96, 48, 96, 255)       # Very dark purple
+        }
+        
+        # Checkerboard pattern
+        checker_size = max(1, size // 4)
+        for y in range(0, size, checker_size):
+            for x in range(0, size, checker_size):
+                checker_x = (x // checker_size) % 2
+                checker_y = (y // checker_size) % 2
+                color = palette['base'] if (checker_x + checker_y) % 2 == 0 else palette['pattern']
+                
+                draw.rectangle([
+                    x, y, 
+                    min(x + checker_size - 1, size - 1), 
+                    min(y + checker_size - 1, size - 1)
+                ], fill=color)
+    
+    elif subtype in ['placeholder']:
+        # Pink checkerboard for truly placeholder blocks
+        palette = {
+            'base': (255, 20, 147, 255),      # Deep pink
+            'alt': (255, 105, 180, 255)       # Hot pink
+        }
+        
+        # Checkerboard pattern
+        checker_size = max(1, size // 4)
+        for y in range(0, size, checker_size):
+            for x in range(0, size, checker_size):
+                checker_x = (x // checker_size) % 2
+                checker_y = (y // checker_size) % 2
+                color = palette['base'] if (checker_x + checker_y) % 2 == 0 else palette['alt']
+                
+                draw.rectangle([
+                    x, y, 
+                    min(x + checker_size - 1, size - 1), 
+                    min(y + checker_size - 1, size - 1)
+                ], fill=color)
+    
+    else:
+        # Unknown special type - default purple
+        draw.rectangle([0, 0, size - 1, size - 1], fill=(128, 64, 128, 255))
+        print(f"Warning: Unknown special subtype '{subtype}', using default purple")
+    
+    return img
