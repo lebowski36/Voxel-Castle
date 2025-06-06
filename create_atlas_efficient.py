@@ -90,7 +90,30 @@ BLOCK_MAPPING = {
     38: {'type': 'organic', 'subtype': 'mushroom_brown'},
     39: {'type': 'organic', 'subtype': 'mushroom_red'},
     
-    # Continue with all blocks... (truncated for brevity)
+    # Biome Specific (40-49)
+    40: {'type': 'special', 'subtype': 'snow'},
+    41: {'type': 'special', 'subtype': 'ice'},
+    42: {'type': 'special', 'subtype': 'packed_ice'},
+    43: {'type': 'organic', 'subtype': 'cactus'},
+    44: {'type': 'organic', 'subtype': 'jungle_vine'},
+    45: {'type': 'organic', 'subtype': 'coral_pink'},
+    46: {'type': 'organic', 'subtype': 'coral_blue'},
+    47: {'type': 'organic', 'subtype': 'seaweed'},
+    48: {'type': 'organic', 'subtype': 'tundra_moss'},
+    49: {'type': 'stone', 'subtype': 'desert_rock'},
+    
+    # Fluids & Gases (50-59)
+    50: {'type': 'fluid', 'subtype': 'water'},
+    51: {'type': 'fluid', 'subtype': 'lava'},
+    52: {'type': 'fluid', 'subtype': 'oil'},
+    53: {'type': 'fluid', 'subtype': 'acid'},
+    54: {'type': 'fluid', 'subtype': 'honey'},
+    55: {'type': 'special', 'subtype': 'steam'},
+    56: {'type': 'special', 'subtype': 'toxic_gas'},
+    57: {'type': 'special', 'subtype': 'natural_gas'},
+    58: {'type': 'special', 'subtype': 'magical_mist'},
+    59: {'type': 'special', 'subtype': 'smoke'},
+    
     # Wood Processing (70-79)
     70: {'type': 'wood', 'subtype': 'oak_planks'},
     71: {'type': 'wood', 'subtype': 'pine_planks'},

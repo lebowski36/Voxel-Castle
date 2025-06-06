@@ -168,6 +168,76 @@ def generate_stone_texture(texture_size: int = 16, stone_type: str = 'granite') 
                               min(hy + reflection_size, texture_size-1)], 
                              fill=highlight_color)
     
+    elif stone_type == 'basalt':
+        # Dark volcanic rock with fine-grained texture
+        palette_basalt = {
+            'base': (40, 40, 45, 255),
+            'dark_speckle': (20, 20, 25, 255),
+            'light_speckle': (60, 60, 70, 255)
+        }
+        draw_speckled_pattern(draw, 0, 0, texture_size, palette_basalt, density=12, variation=15)
+        
+    elif stone_type == 'quartzite':
+        # Very hard, crystalline rock with sparkly appearance
+        palette_quartzite = {
+            'base': (220, 220, 240, 255),
+            'edge': (240, 240, 255, 255),
+            'shine': (255, 255, 255, 255)
+        }
+        draw_speckled_pattern(draw, 0, 0, texture_size, palette_quartzite, density=8, variation=15)
+        # Add crystalline sparkles
+        for _ in range(texture_size // 4):
+            sx, sy = random.randint(0, texture_size-1), random.randint(0, texture_size-1)
+            draw.point((sx, sy), fill=(255, 255, 255, 200))
+            
+    elif stone_type == 'pumice':
+        # Lightweight volcanic rock with porous texture
+        palette_pumice = {
+            'base': (160, 160, 160, 255),
+            'dark_speckle': (120, 120, 120, 255),
+            'light_speckle': (200, 200, 200, 255)
+        }
+        draw_speckled_pattern(draw, 0, 0, texture_size, palette_pumice, density=3, variation=30)
+        
+    elif stone_type == 'shale':
+        # Layered sedimentary rock
+        palette_shale = {
+            'base': (100, 90, 80, 255),
+            'dark_speckle': (70, 65, 55, 255),
+            'light_speckle': (130, 120, 105, 255)
+        }
+        # Create layered appearance with horizontal patterns
+        for y in range(0, texture_size, max(1, texture_size // 8)):
+            layer_color = vary_color(palette_shale['base'], 15)
+            draw.line([(0, y), (texture_size-1, y)], fill=layer_color)
+        draw_speckled_pattern(draw, 0, 0, texture_size, palette_shale, density=10, variation=20)
+        
+    elif stone_type in ['gravel', 'desert_rock']:
+        # Gravel - loose stone fragments
+        if stone_type == 'gravel':
+            palette_gravel = {
+                'base': (120, 110, 100, 255),
+                'dark_speckle': (80, 75, 65, 255),
+                'light_speckle': (160, 150, 135, 255)
+            }
+        else:  # desert_rock
+            palette_gravel = {
+                'base': (180, 140, 100, 255),
+                'dark_speckle': (140, 110, 70, 255),
+                'light_speckle': (220, 180, 130, 255)
+            }
+        # Very dense speckles to simulate individual rock fragments
+        draw_speckled_pattern(draw, 0, 0, texture_size, palette_gravel, density=2, variation=40)
+        
+    elif stone_type == 'bedrock':
+        # Indestructible base layer - dark, dense appearance
+        palette_bedrock = {
+            'base': (30, 30, 35, 255),
+            'dark_speckle': (15, 15, 20, 255),
+            'light_speckle': (45, 45, 50, 255)
+        }
+        draw_speckled_pattern(draw, 0, 0, texture_size, palette_bedrock, density=15, variation=10)
+        
     else:
         # Default basic stone texture
         draw_speckled_pattern(draw, 0, 0, texture_size, palette, density=8, variation=20)
