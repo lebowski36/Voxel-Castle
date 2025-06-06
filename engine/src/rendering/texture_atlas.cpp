@@ -16,7 +16,7 @@ TextureAtlas::TextureAtlas() : m_texture_id(0) {
     initializeAllBlockTextures();
     
     // Automatically load the default texture atlas
-    loadTexture("atlas.png");
+    loadTexture("atlas_main_16x16.png");
 }
 
 void TextureAtlas::initializeAllBlockTextures() {

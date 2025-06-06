@@ -1,6 +1,7 @@
 #include "ui/BlockVisualizationPanel.h"
 #include "ui/UIRenderer.h"
 #include "ui/UILogger.h"
+#include "rendering/texture_atlas.h"
 #include "../../game/include/utils/debug_logger.h"
 #include <algorithm>
 #include <sstream>
@@ -12,14 +13,21 @@ namespace UI {
 // Static renderer pointer for accessing the current renderer
 static UIRenderer* g_currentRenderer = nullptr;
 
+// Static texture atlas pointer for accessing block textures
+static VoxelEngine::Rendering::TextureAtlas* g_textureAtlas = nullptr;
+
 void BlockVisualizationPanel::setCurrentRenderer(UIRenderer* renderer) {
     g_currentRenderer = renderer;
 }
 
+void BlockVisualizationPanel::setTextureAtlas(VoxelEngine::Rendering::TextureAtlas* atlas) {
+    g_textureAtlas = atlas;
+}
+
 BlockVisualizationPanel::BlockVisualizationPanel() {
-    // Initialize default position and size
+    // Initialize default position and size - make it even larger for better visibility
     setPosition(50.0f, 50.0f);
-    setSize(800.0f, 600.0f);
+    setSize(1200.0f, 900.0f);
     
     // Initialize categories when first created
     initializeBlockCategories();
@@ -60,12 +68,12 @@ void BlockVisualizationPanel::render() {
         glm::vec4(0.2f, 0.2f, 0.3f, 1.0f)
     );
     
-    // Draw title text
+    // Draw title text - larger scale for better readability
     g_currentRenderer->drawText(
         "Block Visualization Debug Panel",
         getAbsolutePosition().x + 10.0f,
         getAbsolutePosition().y + 10.0f,
-        1.0f,
+        1.8f,
         glm::vec3(1.0f, 1.0f, 1.0f)
     );
     
@@ -233,7 +241,7 @@ void BlockVisualizationPanel::renderBlockList() {
         "Block Types",
         absPos.x + listPos.x + 10.0f,
         absPos.y + listPos.y + 5.0f,
-        0.8f,
+        1.4f,  // Increased from 0.8f to 1.4f
         glm::vec3(1.0f, 1.0f, 1.0f)
     );
     
@@ -257,7 +265,7 @@ void BlockVisualizationPanel::renderBlockList() {
             blockCategories_[i].name,
             absPos.x + listPos.x + 5.0f,
             absPos.y + yOffset + 2.0f,
-            0.7f,
+            1.2f,  // Increased from 0.7f to 1.2f
             glm::vec3(1.0f, 1.0f, 0.8f)
         );
         
@@ -287,7 +295,7 @@ void BlockVisualizationPanel::renderBlockList() {
                 blockText,
                 absPos.x + listPos.x + 15.0f,
                 absPos.y + yOffset + 2.0f,
-                0.7f,
+                1.1f,  // Increased from 0.7f to 1.1f
                 isSelected ? glm::vec3(1.0f, 1.0f, 1.0f) : glm::vec3(0.8f, 0.8f, 0.8f)
             );
             
@@ -302,57 +310,90 @@ void BlockVisualizationPanel::renderBlockPreview() {
     glm::vec2 absPos = getAbsolutePosition();
     glm::vec2 previewPos = getBlockPreviewPosition();
     
-    // Draw preview background
-    float previewAreaSize = blockScale_ * 2.0f;
+    // Draw preview background - make it larger
+    float previewAreaSize = blockScale_ * 3.0f;  // Increased from 2.0f to 3.0f
     g_currentRenderer->renderColoredQuad(
-        absPos.x + previewPos.x - blockScale_ * 0.25f,
-        absPos.y + previewPos.y - blockScale_ * 0.25f,
+        absPos.x + previewPos.x - blockScale_ * 0.5f,  // Increased margin
+        absPos.y + previewPos.y - blockScale_ * 0.5f,  // Increased margin
         previewAreaSize,
         previewAreaSize,
         glm::vec4(0.1f, 0.1f, 0.1f, 1.0f)
     );
     
-    // Draw block using atlas textures
+    // Draw block using atlas textures if available
     uint8_t blockId = static_cast<uint8_t>(currentBlock_);
-    
-    // TODO: Replace with actual 3D block rendering using new texture atlas
-    // For now, just draw a placeholder with the block ID
     float boxSize = blockScale_;
     
-    // Draw a cube with different faces colored differently to simulate 3D
-    glm::vec4 faceColors[6] = {
-        glm::vec4(1.0f, 0.0f, 0.0f, 1.0f), // Front
-        glm::vec4(0.0f, 1.0f, 0.0f, 1.0f), // Back
-        glm::vec4(0.0f, 0.0f, 1.0f, 1.0f), // Top
-        glm::vec4(1.0f, 1.0f, 0.0f, 1.0f), // Bottom
-        glm::vec4(1.0f, 0.0f, 1.0f, 1.0f), // Left
-        glm::vec4(0.0f, 1.0f, 1.0f, 1.0f)  // Right
-    };
+    if (g_textureAtlas && g_textureAtlas->isTextureLoaded()) {
+        // Get texture coordinates for the current block
+        VoxelEngine::Rendering::TextureCoordinates texCoords = 
+            g_textureAtlas->getTextureCoordinates(currentBlock_);
+        
+        // Apply simple rotation by rendering multiple faces
+        float angleX = glm::radians(rotationAngleX_);
+        float angleY = glm::radians(rotationAngleY_);
+        
+        float offsetX = std::sin(angleY) * boxSize * 0.2f;
+        float offsetY = std::sin(angleX) * boxSize * 0.2f;
+        
+        // Render the main face with actual texture
+        glm::vec4 uvRect = texCoords.getUVRect();
+        g_currentRenderer->renderTexturedQuad(
+            absPos.x + previewPos.x + offsetX,
+            absPos.y + previewPos.y + offsetY,
+            boxSize - std::abs(offsetX) * 0.5f,
+            boxSize - std::abs(offsetY) * 0.5f,
+            g_textureAtlas->getTextureID(),
+            uvRect
+        );
+        
+        // Add some depth by rendering slightly offset darker faces
+        if (std::abs(offsetX) > 5.0f || std::abs(offsetY) > 5.0f) {
+            // Render side face with darker texture
+            g_currentRenderer->renderTexturedQuad(
+                absPos.x + previewPos.x + offsetX * 0.5f,
+                absPos.y + previewPos.y + offsetY * 0.5f,
+                boxSize * 0.9f,
+                boxSize * 0.9f,
+                g_textureAtlas->getTextureID(),
+                uvRect
+            );
+        }
+    } else {
+        // Fallback to colored quads if texture atlas is not available
+        glm::vec4 faceColors[6] = {
+            glm::vec4(1.0f, 0.0f, 0.0f, 1.0f), // Front - Red
+            glm::vec4(0.8f, 0.0f, 0.0f, 1.0f), // Back - Dark Red
+            glm::vec4(0.0f, 0.0f, 1.0f, 1.0f), // Top - Blue
+            glm::vec4(0.0f, 0.0f, 0.8f, 1.0f), // Bottom - Dark Blue
+            glm::vec4(1.0f, 0.0f, 1.0f, 1.0f), // Left - Magenta
+            glm::vec4(0.0f, 1.0f, 1.0f, 1.0f)  // Right - Cyan
+        };
+        
+        // Apply rotation
+        float angleX = glm::radians(rotationAngleX_);
+        float angleY = glm::radians(rotationAngleY_);
+        
+        float offsetX = std::sin(angleY) * boxSize * 0.3f;
+        float offsetY = std::sin(angleX) * boxSize * 0.3f;
+        
+        // Draw a simple box with different colored sides
+        g_currentRenderer->renderColoredQuad(
+            absPos.x + previewPos.x + offsetX,
+            absPos.y + previewPos.y + offsetY,
+            boxSize - std::abs(offsetX) * 0.5f,
+            boxSize - std::abs(offsetY) * 0.5f,
+            faceColors[(static_cast<int>(rotationAngleX_ / 90) + static_cast<int>(rotationAngleY_ / 90)) % 6]
+        );
+    }
     
-    // Apply rotation
-    // This is a very simplified simulation of 3D rotation
-    float angleX = glm::radians(rotationAngleX_);
-    float angleY = glm::radians(rotationAngleY_);
-    
-    float offsetX = std::sin(angleY) * boxSize * 0.3f;
-    float offsetY = std::sin(angleX) * boxSize * 0.3f;
-    
-    // Draw a simple box with different colored sides
-    g_currentRenderer->renderColoredQuad(
-        absPos.x + previewPos.x + offsetX,
-        absPos.y + previewPos.y + offsetY,
-        boxSize - std::abs(offsetX) * 0.5f,
-        boxSize - std::abs(offsetY) * 0.5f,
-        faceColors[(static_cast<int>(rotationAngleX_ / 90) + static_cast<int>(rotationAngleY_ / 90)) % 6]
-    );
-    
-    // Draw block ID in the center
+    // Draw block ID in the center - larger text
     std::string blockIdText = std::to_string(blockId);
     g_currentRenderer->drawText(
         blockIdText,
-        absPos.x + previewPos.x + boxSize * 0.5f - blockIdText.length() * 4,
-        absPos.y + previewPos.y + boxSize * 0.5f - 10,
-        1.0f,
+        absPos.x + previewPos.x + boxSize * 0.5f - blockIdText.length() * 6,  // Adjusted offset for larger text
+        absPos.y + previewPos.y + boxSize * 0.5f - 12,  // Adjusted offset for larger text
+        1.6f,  // Increased from 1.0f to 1.6f
         glm::vec3(1.0f, 1.0f, 1.0f)
     );
     
@@ -545,62 +586,73 @@ void BlockVisualizationPanel::updateBlockRotation(float deltaTime) {
 
 std::string BlockVisualizationPanel::getBlockName(VoxelType blockType) const {
     // Get block name based on VoxelType enum
-    // This should be expanded when the Block Properties system is implemented
-    switch (blockType) {
-        case VoxelType::AIR: return "Air";
-        case VoxelType::STONE: return "Stone";
-        case VoxelType::DIRT: return "Dirt";
-        case VoxelType::GRASS: return "Grass";
-        case VoxelType::WOOD: return "Wood";
-        case VoxelType::LEAVES: return "Leaves";
-        case VoxelType::WATER: return "Water";
-        case VoxelType::SAND: return "Sand";
-        default: {
-            // For new extended block types
-            uint8_t blockId = static_cast<uint8_t>(blockType);
-            if (blockId >= 8 && blockId < 256) {
-                // Try to find a matching block in categories
-                for (const auto& category : blockCategories_) {
-                    for (VoxelType block : category.blocks) {
-                        if (block == blockType) {
-                            // Extract name from category
-                            std::string blockName;
-                            uint8_t id = static_cast<uint8_t>(block);
-                            
-                            // Check different block type ranges
-                            if (id <= 9) {
-                                const char* basicNames[] = {"Air", "Stone", "Dirt", "Grass", "Sand", 
-                                                          "Gravel", "Clay", "Bedrock", "Topsoil", "Subsoil"};
-                                blockName = basicNames[id];
-                            } else if (id >= 10 && id <= 19) {
-                                const char* stoneNames[] = {"Granite", "Limestone", "Marble", "Sandstone", 
-                                                          "Slate", "Basalt", "Quartzite", "Obsidian", "Pumice", "Shale"};
-                                blockName = stoneNames[id - 10];
-                            } else if (id >= 20 && id <= 29) {
-                                if (id <= 25) {
-                                    const char* oreNames[] = {"Coal Ore", "Iron Ore", "Copper Ore", 
-                                                           "Tin Ore", "Silver Ore", "Gold Ore"};
-                                    blockName = oreNames[id - 20];
-                                } else {
-                                    const char* gemNames[] = {"Ruby", "Sapphire", "Emerald", "Diamond"};
-                                    blockName = gemNames[id - 26];
-                                }
-                            } else {
-                                // Default name for other blocks
-                                blockName = "Block";
-                            }
-                            
-                            return blockName;
+    uint8_t blockId = static_cast<uint8_t>(blockType);
+    
+    // Handle all blocks using the categorized system
+    if (blockId < 256) {
+        // Try to find a matching block in categories
+        for (const auto& category : blockCategories_) {
+            for (VoxelType block : category.blocks) {
+                if (block == blockType) {
+                    // Extract name from category
+                    std::string blockName;
+                    uint8_t id = static_cast<uint8_t>(block);
+                    
+                    // Check different block type ranges
+                    if (id <= 9) {
+                        const char* basicNames[] = {"Air", "Stone", "Dirt", "Grass", "Sand", 
+                                                  "Gravel", "Clay", "Bedrock", "Topsoil", "Subsoil"};
+                        blockName = basicNames[id];
+                    } else if (id >= 10 && id <= 19) {
+                        const char* stoneNames[] = {"Granite", "Limestone", "Marble", "Sandstone", 
+                                                  "Slate", "Basalt", "Quartzite", "Obsidian", "Pumice", "Shale"};
+                        blockName = stoneNames[id - 10];
+                    } else if (id >= 20 && id <= 29) {
+                        if (id <= 25) {
+                            const char* oreNames[] = {"Coal Ore", "Iron Ore", "Copper Ore", 
+                                                   "Tin Ore", "Silver Ore", "Gold Ore"};
+                            blockName = oreNames[id - 20];
+                        } else {
+                            const char* gemNames[] = {"Ruby", "Sapphire", "Emerald", "Diamond"};
+                            blockName = gemNames[id - 26];
                         }
+                    } else if (id >= 30 && id <= 39) {
+                        if (id <= 33) {
+                            const char* woodNames[] = {"Oak Wood", "Pine Wood", "Birch Wood", "Mahogany Wood"};
+                            blockName = woodNames[id - 30];
+                        } else if (id <= 37) {
+                            const char* leafNames[] = {"Oak Leaves", "Pine Needles", "Birch Leaves", "Palm Fronds"};
+                            blockName = leafNames[id - 34];
+                        } else {
+                            const char* mushroomNames[] = {"Brown Mushroom", "Red Mushroom"};
+                            blockName = mushroomNames[id - 38];
+                        }
+                    } else if (id >= 40 && id <= 49) {
+                        const char* biomeNames[] = {"Snow", "Ice", "Packed Ice", "Cactus", "Jungle Vine",
+                                                  "Pink Coral", "Blue Coral", "Seaweed", "Tundra Moss", "Desert Rock"};
+                        blockName = biomeNames[id - 40];
+                    } else if (id >= 50 && id <= 59) {
+                        if (id <= 54) {
+                            const char* fluidNames[] = {"Water", "Lava", "Oil", "Acid", "Honey"};
+                            blockName = fluidNames[id - 50];
+                        } else {
+                            const char* gasNames[] = {"Steam", "Toxic Gas", "Natural Gas", "Magical Mist", "Smoke"};
+                            blockName = gasNames[id - 55];
+                        }
+                    } else {
+                        // Default name for other blocks
+                        blockName = "Block " + std::to_string(id);
                     }
+                    
+                    return blockName;
                 }
-                
-                // If not found in categories
-                return "Extended Block";
             }
-            return "Unknown";
         }
+        
+        // If not found in categories, return default name
+        return "Block " + std::to_string(blockId);
     }
+    return "Unknown";
 }
 
 std::string BlockVisualizationPanel::getFacePatternName(VoxelType blockType) const {

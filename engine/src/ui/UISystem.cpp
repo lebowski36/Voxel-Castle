@@ -170,7 +170,7 @@ void UISystem::toggleBlockVisualizationPanel() {
         BlockVisualizationPanel::setCurrentRenderer(&renderer_);
         
         blockVisualizationPanel_->setPosition(100.0f, 100.0f);
-        blockVisualizationPanel_->setSize(800.0f, 600.0f);
+        blockVisualizationPanel_->setSize(1200.0f, 900.0f);  // Even larger size for better visibility
         addElement(blockVisualizationPanel_);
         blockVisualizationPanel_->setVisible(true);
     }

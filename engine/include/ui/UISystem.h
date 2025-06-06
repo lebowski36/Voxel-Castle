@@ -29,6 +29,13 @@ public:
     // Input handling
     bool handleInput(float mouseX, float mouseY, bool clicked);
     
+    // Add method to handle scroll wheel events for UI elements
+    void handleScrollWheel(float x, float y, float scrollDelta) {
+        if (blockVisualizationPanel_ && blockVisualizationPanel_->isVisible()) {
+            blockVisualizationPanel_->handleScroll(x, y, scrollDelta);
+        }
+    }
+    
     // Access to renderer for custom UI elements
     UIRenderer& getRenderer() { return renderer_; }
     

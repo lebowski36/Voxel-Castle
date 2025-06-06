@@ -16,6 +16,7 @@
 #include "ui/elements/HUD.h"
 #include "ui/elements/Crosshair.h"
 #include "ui/elements/UIPanel.h"
+#include "ui/BlockVisualizationPanel.h"
 
 // Include headers that will be needed for the actual implementations later
 #include <iostream> 
@@ -151,11 +152,15 @@ bool Game::initialize() {
     // Initialize texture atlas and load the texture file
     textureAtlas_ = std::make_unique<VoxelEngine::Rendering::TextureAtlas>();
     
-    // Load the atlas.png texture file
-    if (textureAtlas_->loadTexture("assets/textures/atlas.png")) {
-        std::cout << "[Game] TextureAtlas loaded successfully" << std::endl;
+    // Load the new 16x16 atlas texture file
+    if (textureAtlas_->loadTexture("assets/textures/atlas_main_16x16.png")) {
+        std::cout << "[Game] TextureAtlas loaded successfully (16x16)" << std::endl;
+        
+        // Set the texture atlas for the BlockVisualizationPanel
+        VoxelEngine::UI::BlockVisualizationPanel::setTextureAtlas(textureAtlas_.get());
+        std::cout << "[Game] TextureAtlas set for BlockVisualizationPanel" << std::endl;
     } else {
-        std::cerr << "[Game] ERROR: Failed to load TextureAtlas from assets/textures/atlas.png" << std::endl;
+        std::cerr << "[Game] ERROR: Failed to load TextureAtlas from assets/textures/atlas_main_16x16.png" << std::endl;
     }
     
     // Initialize mesh systems
