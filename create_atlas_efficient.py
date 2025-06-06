@@ -256,6 +256,11 @@ class EfficientAtlasGenerator:
         # Determine which face type to generate
         face_type = self.get_face_type_for_atlas(atlas_type, voxel_id)
         
+        # Debug wood textures
+        block_info = BLOCK_MAPPING.get(voxel_id, {'type': 'special', 'subtype': 'placeholder'})
+        if block_info['type'] == 'wood' and 'planks' not in block_info['subtype'] and 'beam' not in block_info['subtype']:
+            print(f"Debug wood texture: voxel_id={voxel_id}, atlas={atlas_type}, face_type={face_type}, subtype={block_info['subtype']}")
+        
         try:
             # Use consistent seed based on voxel ID and face type for reproducibility
             texture_seed = voxel_id * 12345 + hash(face_type) % 1000

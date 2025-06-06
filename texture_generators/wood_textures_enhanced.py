@@ -39,7 +39,7 @@ def generate_wood_texture(texture_size: int = 16, wood_type: str = 'oak', face_t
     return image
 
 def generate_end_grain_pattern(draw: ImageDraw.Draw, texture_size: int, palette: dict, wood_type: str) -> None:
-    """Generate end grain (top/bottom face) showing tree rings."""
+    """Generate end grain (top/bottom face) showing tree rings like Minecraft."""
     base_color = palette['base']
     ring_color = palette['grain_dark']
     
@@ -50,30 +50,35 @@ def generate_end_grain_pattern(draw: ImageDraw.Draw, texture_size: int, palette:
     center_x = texture_size // 2
     center_y = texture_size // 2
     
-    # Number of rings visible in 25cm cross-section
-    max_rings = max(3, texture_size // 3)
+    # Number of rings visible in cross-section (more rings for larger textures)
+    max_rings = max(4, texture_size // 4)
+    max_radius = min(center_x, center_y) - 1
     
     for ring in range(1, max_rings + 1):
-        ring_radius = (ring * texture_size) // (max_rings * 2)
-        ring_thickness = random.randint(1, 2)
+        ring_radius = (ring * max_radius) // max_rings
+        ring_thickness = 1 if texture_size <= 16 else 2
         
-        # Draw ring as circle approximation
-        for angle in range(0, 360, 10):  # Sample points around circle
-            # Convert angle to radians (simplified)
-            x = center_x + int(ring_radius * (angle / 180.0 - 1.0))  # Simplified trig
-            y = center_y + int(ring_radius * ((angle + 90) / 180.0 - 1.0))
-            
-            # Clamp to texture bounds
-            if 0 <= x < texture_size and 0 <= y < texture_size:
-                ring_draw_color = vary_color(ring_color, 15)
-                draw.point((x, y), fill=ring_draw_color)
+        # Draw circular ring by scanning all pixels
+        for y in range(texture_size):
+            for x in range(texture_size):
+                # Calculate distance from center
+                dx = x - center_x
+                dy = y - center_y
+                distance = int((dx * dx + dy * dy) ** 0.5)
                 
-                # Make rings slightly thicker
-                for offset in [(0,1), (1,0), (0,-1), (-1,0)]:
-                    nx, ny = x + offset[0], y + offset[1]
-                    if 0 <= nx < texture_size and 0 <= ny < texture_size:
-                        if random.random() < 0.5:
-                            draw.point((nx, ny), fill=ring_draw_color)
+                # Check if this pixel is part of the ring
+                if abs(distance - ring_radius) <= ring_thickness:
+                    # Add some randomness for organic look
+                    if random.random() < 0.7:  # Not every pixel for natural variation
+                        ring_draw_color = vary_color(ring_color, 20)
+                        draw.point((x, y), fill=ring_draw_color)
+    
+    # Add wood grain imperfections for realism
+    for _ in range(texture_size // 4):
+        grain_x = random.randint(0, texture_size - 1)
+        grain_y = random.randint(0, texture_size - 1)
+        grain_color = vary_color(palette['grain_light'], 10)
+        draw.point((grain_x, grain_y), fill=grain_color)
 
 def generate_bark_pattern(draw: ImageDraw.Draw, texture_size: int, palette: dict, wood_type: str) -> None:
     """Generate species-specific bark patterns - COMPLETELY DIFFERENT per species."""
