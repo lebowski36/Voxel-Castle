@@ -1,6 +1,7 @@
 #pragma once
 #include "ui/UIRenderer.h"
 #include "ui/UIElement.h"
+#include "ui/BlockVisualizationPanel.h"
 #include <memory>
 #include <vector>
 
@@ -30,12 +31,18 @@ public:
     
     // Access to renderer for custom UI elements
     UIRenderer& getRenderer() { return renderer_; }
+    
+    // Debug UI panels
+    void toggleBlockVisualizationPanel();
+    bool isBlockVisualizationPanelVisible() const;
+    std::shared_ptr<BlockVisualizationPanel> getBlockVisualizationPanel() { return blockVisualizationPanel_; }
 
 protected:
     std::vector<std::shared_ptr<UIElement>> elements_;
 
 private:
     UIRenderer renderer_;
+    std::shared_ptr<BlockVisualizationPanel> blockVisualizationPanel_;
     
     void renderElement(UIElement* element);
 };

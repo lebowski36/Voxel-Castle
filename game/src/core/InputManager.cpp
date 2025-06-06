@@ -206,6 +206,13 @@ void processInput(Game& game) {
                     std::cout << "[Input] Fullscreen toggle triggered (F11)..." << std::endl;
                     game.toggleFullscreen();
                     break;
+                    
+                case SDL_SCANCODE_F3: // Block Visualization Panel Toggle
+                    if (game.getUISystem()) {
+                        std::cout << "[Debug] Block Visualization Panel toggled (F3)" << std::endl;
+                        game.getUISystem()->toggleBlockVisualizationPanel();
+                    }
+                    break;
                 
                 // Time control keys
                 case SDL_SCANCODE_PAUSE: // Add pause key

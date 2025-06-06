@@ -7,7 +7,8 @@
 namespace VoxelEngine {
 namespace UI {
 
-UISystem::UISystem() = default;
+UISystem::UISystem() : blockVisualizationPanel_(nullptr) {
+}
 
 UISystem::~UISystem() {
     shutdown();
@@ -151,6 +152,25 @@ void UISystem::renderElement(UIElement* element) {
             renderElement(child.get());
         }
     }
+}
+
+void UISystem::toggleBlockVisualizationPanel() {
+    if (!blockVisualizationPanel_) {
+        // Lazy initialization - create the panel if it doesn't exist
+        blockVisualizationPanel_ = std::make_shared<BlockVisualizationPanel>();
+        blockVisualizationPanel_->setPosition(100.0f, 100.0f);
+        blockVisualizationPanel_->setSize(800.0f, 600.0f);
+        addElement(blockVisualizationPanel_);
+        blockVisualizationPanel_->setVisible(true);
+    }
+    else {
+        // Toggle visibility
+        blockVisualizationPanel_->setVisible(!blockVisualizationPanel_->isVisible());
+    }
+}
+
+bool UISystem::isBlockVisualizationPanelVisible() const {
+    return blockVisualizationPanel_ && blockVisualizationPanel_->isVisible();
 }
 
 } // namespace UI

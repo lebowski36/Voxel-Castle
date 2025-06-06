@@ -123,7 +123,12 @@ public:
     const VoxelEngine::Rendering::TextureAtlas* getTextureAtlas() const { return textureAtlas_.get(); }
 
     VoxelEngine::Rendering::MeshBuilder* getMeshBuilder() { return meshBuilder_.get(); }
-    const VoxelEngine::Rendering::MeshBuilder* getMeshBuilder() const { return meshBuilder_.get(); }    SpectatorCamera* getCamera() { return camera_.get(); }
+    const VoxelEngine::Rendering::MeshBuilder* getMeshBuilder() const { return meshBuilder_.get(); }
+    
+    VoxelEngine::UI::UISystem* getUISystem() { return uiSystem_.get(); }
+    const VoxelEngine::UI::UISystem* getUISystem() const { return uiSystem_.get(); }
+    
+    SpectatorCamera* getCamera() { return camera_.get(); }
     const SpectatorCamera* getCamera() const { return camera_.get(); }
 
     bool isMouseCaptured() const;

@@ -52,6 +52,7 @@ add_library(VoxelEngine STATIC
     src/ui/elements/MainMenu.cpp # Main menu UI
     src/ui/elements/SettingsMenu.cpp # Settings menu UI
     src/ui/elements/WorldCreationDialog.cpp # World creation dialog UI
+    src/ui/BlockVisualizationPanel.cpp # Block visualization debug panel
     # Input system sources
     src/input/MouseCaptureManager.cpp # Mouse capture management
     # Add GLAD source file if compiling it directly
