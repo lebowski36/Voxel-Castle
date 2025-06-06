@@ -1,5 +1,6 @@
 # Comprehensive Block System Design
 *Created: 2025-06-06 19:30*
+*Last Updated: 2025-06-06 20:15*
 *Priority: HIGH - Required before 08c.3 feature parity completion*
 
 ## Status: PLANNING 📋
@@ -345,13 +346,116 @@ enum class MaterialCategory {
 };
 ```
 
+## Modular Texture Generation System
+
+### Confirmed Design Philosophy ✅
+Based on requirements analysis and stakeholder feedback, the texture generation system will implement the following confirmed design:
+
+1. **Separate Generator Modules**: Each texture category (stone, wood, ore, etc.) gets its own Python module for organization and maintainability
+2. **Reusable Base Patterns**: Common patterns (speckled, striped, crystalline, grain) can be applied with different color palettes for maximum code reuse
+3. **Color Palette System**: Material-specific color schemes that can be mixed and matched for visual consistency
+4. **Pattern Layering**: Ability to combine multiple patterns (e.g., stone base + ore veins + weathering effects)
+5. **Per-Face Support**: Built-in support for different textures on block faces (top/bottom/sides) for realistic appearance
+6. **Visual Authenticity**: Each block should look like what it represents (granite looks like granite, oak looks like oak, etc.)
+7. **Extensibility**: Easy to add new patterns and materials without restructuring the system
+
+### Implemented Directory Structure ✅
+```
+texture_generators/
+├── __init__.py                 # Main module interface ✅ CREATED
+├── base_patterns.py           # Core reusable patterns ✅ CREATED  
+├── color_palettes.py          # Material color definitions ✅ CREATED
+├── stone_textures.py          # All stone variants ✅ CREATED
+├── ore_textures.py            # Ores using stone base + mineral colors ✅ CREATED
+├── wood_textures.py           # Wood types with different grain patterns ✅ CREATED
+├── organic_textures.py        # Leaves, mushrooms, plants ✅ CREATED
+├── fluid_textures.py          # Water, lava, etc. (pending implementation)
+├── metal_textures.py          # Processed metal blocks (pending implementation)
+├── ceramic_textures.py        # Clay, brick, tile variants (pending implementation)
+├── crystal_textures.py        # Magical and gem materials (pending implementation)
+└── special_textures.py        # Unique/functional blocks (pending implementation)
+```
+
+### Multi-Face Texture System (Confirmed Design) ✅
+Per-face texture support is confirmed as a core requirement for visual authenticity:
+
+#### Face Types (Confirmed)
+- **TOP**: Top surface (e.g., grass top, wood end grain)
+- **BOTTOM**: Bottom surface (e.g., dirt under grass, wood end grain)  
+- **SIDES**: Side faces (e.g., grass sides, wood bark)
+- **ALL**: Same texture for all faces (default for uniform blocks)
+
+#### Implementation Strategy (Confirmed)
+1. **Atlas Layout**: Reserve atlas space for multi-face textures
+2. **Block Configuration**: Each block can specify which faces use which textures
+3. **Generator Integration**: Texture generators will create face-specific variants when needed
+4. **Future Extensibility**: System designed to easily add per-face customization later
+
+#### Priority Blocks for Multi-Face Support (Confirmed)
+- **Grass**: Green top, dirt sides, dirt bottom ✅ HIGH PRIORITY
+- **Wood Logs**: End grain on top/bottom, bark on sides ✅ HIGH PRIORITY  
+- **Stone Bricks**: Different patterns for structural vs decorative use
+- **Advanced Blocks**: Doors, windows, mechanisms with directional faces
+
+### Texture Design Philosophy (Confirmed Requirements) ✅
+Each texture must be designed with visual authenticity and material realism:
+
+#### Natural Materials (Confirmed Approach)
+- **Stone Variants**: Realistic geological patterns, appropriate colors for rock types
+- **Wood Types**: **COMPLETELY DIFFERENT** bark textures - oak bark ≠ pine bark ≠ birch bark etc.
+- **Leaf Types**: **COMPLETELY DIFFERENT** leaf patterns - oak leaves ≠ pine needles ≠ birch leaves etc.
+- **Ores**: Stone base with realistic mineral veins/crystals in appropriate colors
+
+#### Material Authenticity Requirements (Confirmed)
+- **Visual Sense**: Each block should look like what it represents in reality
+- **Species Differentiation**: Different tree species require unique bark ("rinde") and leaf ("blätter") appearances
+- **Geological Accuracy**: Stone types should reflect real-world geological properties
+- **Color Authenticity**: Materials should use realistic color ranges for their types
+
+#### Processed Materials (Confirmed)
+- **Bricks**: Clean, uniform patterns showing construction quality
+- **Planks**: Processed wood with visible sawing marks and grain
+- **Metals**: Smooth, reflective surfaces with appropriate metallic colors
+
+#### Texture Generation Approach (Confirmed)
+- **No Preservation Required**: Existing textures will be regenerated using new logic for consistency
+- **Pattern-Based Generation**: All textures generated through modular pattern system
+- **Quality Focus**: Each texture designed to make visual sense for its material type
+
+### Pattern Reuse Examples (Confirmed Strategy) ✅
+- **Speckled Pattern**: Stone, dirt, sand, ores (different color palettes)
+- **Grain Pattern**: All wood types (different colors, directions, and bark styles)
+- **Crystalline Pattern**: All gems and magical crystals (different crystal shapes and colors)
+- **Mottled Pattern**: Leaves, organic materials (completely different base colors and shapes)
+- **Layered Pattern**: Ores on stone base, weathering effects, mineral veins
+
+### Generation Principles (Confirmed Requirements) ✅
+1. **Material Authenticity**: Each block should look like what it represents ✅ CONFIRMED
+2. **Species Differentiation**: Wood and leaves completely different per species ✅ CONFIRMED  
+3. **Pattern Modularity**: Reusable patterns with different parameters ✅ CONFIRMED
+4. **Per-Face Support**: Top/bottom/sides texture differentiation ✅ CONFIRMED
+5. **Scalability**: Easy to add new blocks without rewriting core systems ✅ CONFIRMED
+6. **Performance**: Efficient generation for 256+ block types ✅ CONFIRMED
+7. **Regeneration Approach**: All textures generated with new logic (no preservation) ✅ CONFIRMED
+
 ## Implementation Strategy
 
-### Phase 1: Core System Extension (Immediate)
-- [ ] Expand VoxelType enum to accommodate 256 block types
-- [ ] Create BlockProperties system and data structures
-- [ ] Update texture atlas to handle new block count
-- [ ] Update mesh generation to handle new block properties
+### Phase 1: Core System Extension (Immediate) ✅ UPDATED
+- [x] Expand VoxelType enum to accommodate 256 block types ✅ COMPLETED
+- [ ] Create BlockProperties system with per-face texture support
+- [ ] Update texture atlas to handle new block count with multi-face support
+- [ ] **Implement modular texture generation system**: ✅ STRUCTURE CREATED
+  - [x] Create base pattern library ✅ COMPLETED
+  - [x] Create color palette system ✅ COMPLETED  
+  - [x] Create specialized generators (stone, ore, wood, organic) ✅ COMPLETED
+  - [ ] Implement pattern layering and combination logic
+  - [ ] Add per-face texture generation support
+- [ ] Update mesh generation to handle face-specific textures
+- [ ] **Implement comprehensive texture generation**: 
+  - [ ] Generate realistic stone textures for geological accuracy
+  - [ ] Generate completely different wood bark patterns per species
+  - [ ] Generate completely different leaf patterns per species  
+  - [ ] Regenerate all existing textures with new modular system
 
 ### Phase 2: Essential Blocks (High Priority)
 - [ ] Implement basic natural stone varieties (granite, limestone, etc.)
