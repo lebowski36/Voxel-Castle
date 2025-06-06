@@ -7,8 +7,8 @@ Generators for ore blocks using stone base with mineral overlays.
 
 from PIL import ImageDraw
 import random
-from .base_patterns import draw_speckled_pattern, draw_crystalline_pattern, draw_vein_pattern
-from .color_palettes import get_palette
+from texture_generators.base_patterns import draw_speckled_pattern, draw_crystalline_pattern, draw_vein_pattern
+from texture_generators.color_palettes import get_palette
 
 def generate_coal_ore(draw: ImageDraw.Draw, x0: int, y0: int, size: int) -> None:
     """Coal ore with dark coal chunks in stone."""

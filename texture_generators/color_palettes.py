@@ -175,6 +175,44 @@ SAND = {
     'dark': (200, 180, 120, 255)
 }
 
+# ========== TERRAIN COLOR PALETTES ==========
+
+DIRT_BROWN = {
+    'base': (101, 67, 33, 255),
+    'dark_speckle': (70, 45, 20, 255),
+    'light_speckle': (120, 80, 45, 255)
+}
+
+GRASS_GREEN = {
+    'base': (34, 139, 34, 255),      # Forest green
+    'light': (50, 205, 50, 255),     # Lime green
+    'dark': (0, 100, 0, 255)         # Dark green
+}
+
+SAND_YELLOW = {
+    'base': (238, 203, 173, 255),
+    'dark_speckle': (210, 180, 150, 255),
+    'light_speckle': (255, 228, 196, 255)
+}
+
+BEDROCK_DARK = {
+    'base': (64, 64, 64, 255),
+    'dark_speckle': (40, 40, 40, 255),
+    'light_speckle': (90, 90, 90, 255)
+}
+
+TOPSOIL_RICH = {
+    'base': (139, 69, 19, 255),      # Saddle brown
+    'dark_speckle': (101, 50, 10, 255),
+    'light_speckle': (160, 85, 30, 255)
+}
+
+SUBSOIL_PALE = {
+    'base': (205, 133, 63, 255),     # Peru color
+    'dark_speckle': (180, 110, 45, 255),
+    'light_speckle': (222, 184, 135, 255)
+}
+
 # ========== SPECIAL EFFECT PALETTES ==========
 
 CRYSTAL_CLEAR = {
@@ -218,7 +256,13 @@ def get_palette(material_name: str) -> ColorPalette:
         'grass': GRASS,
         'sand': SAND,
         'crystal_clear': CRYSTAL_CLEAR,
-        'magical_energy': MAGICAL_ENERGY
+        'magical_energy': MAGICAL_ENERGY,
+        'dirt_brown': DIRT_BROWN,
+        'grass_green': GRASS_GREEN,
+        'sand_yellow': SAND_YELLOW,
+        'bedrock_dark': BEDROCK_DARK,
+        'topsoil_rich': TOPSOIL_RICH,
+        'subsoil_pale': SUBSOIL_PALE
     }
     return palettes.get(material_name, STONE_BASIC)
 
@@ -234,9 +278,14 @@ def blend_colors(color1: Color, color2: Color, ratio: float = 0.5) -> Color:
 
 def vary_color(color: Color, variation: int = 20) -> Color:
     """Add random variation to a color within specified range."""
+    # Ensure variation is positive
+    abs_variation = abs(variation)
+    if abs_variation == 0:
+        return color
+    
     return (
-        max(0, min(255, color[0] + random.randint(-variation, variation))),
-        max(0, min(255, color[1] + random.randint(-variation, variation))),
-        max(0, min(255, color[2] + random.randint(-variation, variation))),
+        max(0, min(255, color[0] + random.randint(-abs_variation, abs_variation))),
+        max(0, min(255, color[1] + random.randint(-abs_variation, abs_variation))),
+        max(0, min(255, color[2] + random.randint(-abs_variation, abs_variation))),
         color[3]  # Keep alpha unchanged
     )

@@ -6,8 +6,8 @@ Generators for all stone variants using base patterns with stone-specific palett
 """
 
 from PIL import ImageDraw
-from .base_patterns import draw_speckled_pattern, draw_vein_pattern, draw_crystalline_pattern
-from .color_palettes import get_palette
+from texture_generators.base_patterns import draw_speckled_pattern, draw_vein_pattern, draw_crystalline_pattern
+from texture_generators.color_palettes import get_palette
 
 def generate_basic_stone(draw: ImageDraw.Draw, x0: int, y0: int, size: int) -> None:
     """Basic grey stone with speckles."""

@@ -7,8 +7,8 @@ Each wood type has unique characteristics for bark and grain.
 """
 
 from PIL import ImageDraw
-from .base_patterns import draw_grain_pattern
-from .color_palettes import get_palette
+from texture_generators.base_patterns import draw_grain_pattern
+from texture_generators.color_palettes import get_palette
 
 def generate_oak_wood(draw: ImageDraw.Draw, x0: int, y0: int, size: int) -> None:
     """Oak wood with classic brown grain pattern."""

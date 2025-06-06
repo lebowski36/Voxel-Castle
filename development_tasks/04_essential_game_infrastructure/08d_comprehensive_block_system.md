@@ -398,13 +398,19 @@ Per-face texture support is confirmed as a core requirement for visual authentic
 - **Advanced Blocks**: Doors, windows, mechanisms with directional faces
 
 ### Texture Design Philosophy (Confirmed Requirements) ✅
-Each texture must be designed with visual authenticity and material realism:
+Each texture must be designed with visual authenticity and material realism, taking advantage of our **25cm×25cm voxel scale** for enhanced detail:
+
+#### Scale Advantage (25cm vs 1m voxels) ✅ CONFIRMED
+- **Higher Detail Density**: 25cm×25cm voxels allow 4× more detail than typical 1m×1m voxel games
+- **Architectural Precision**: Fine details like mortar lines, wood grain, stone texture patterns can be clearly visible
+- **Material Authenticity**: Realistic scaling of patterns (brick courses, wood planks, stone blocks fit naturally)
+- **Construction Details**: Individual bricks, planks, and stones can be represented at proper scale
 
 #### Natural Materials (Confirmed Approach)
-- **Stone Variants**: Realistic geological patterns, appropriate colors for rock types
-- **Wood Types**: **COMPLETELY DIFFERENT** bark textures - oak bark ≠ pine bark ≠ birch bark etc.
-- **Leaf Types**: **COMPLETELY DIFFERENT** leaf patterns - oak leaves ≠ pine needles ≠ birch leaves etc.
-- **Ores**: Stone base with realistic mineral veins/crystals in appropriate colors
+- **Stone Variants**: Realistic geological patterns at 25cm scale - individual crystals, weathering, stratification visible
+- **Wood Types**: **COMPLETELY DIFFERENT** bark textures with fine detail - oak bark ≠ pine bark ≠ birch bark etc.
+- **Leaf Types**: **COMPLETELY DIFFERENT** leaf patterns with individual leaf detail - oak leaves ≠ pine needles ≠ birch leaves etc.
+- **Ores**: Stone base with realistic mineral veins/crystals at proper 25cm scale
 
 #### Material Authenticity Requirements (Confirmed)
 - **Visual Sense**: Each block should look like what it represents in reality
@@ -412,10 +418,17 @@ Each texture must be designed with visual authenticity and material realism:
 - **Geological Accuracy**: Stone types should reflect real-world geological properties
 - **Color Authenticity**: Materials should use realistic color ranges for their types
 
-#### Processed Materials (Confirmed)
-- **Bricks**: Clean, uniform patterns showing construction quality
-- **Planks**: Processed wood with visible sawing marks and grain
-- **Metals**: Smooth, reflective surfaces with appropriate metallic colors
+#### Processed Materials (Confirmed - Enhanced for 25cm Scale)
+- **Bricks**: Individual brick detail with mortar lines, realistic proportions at 25cm scale
+- **Planks**: Individual wood planks with visible sawing marks, grain detail, proper plank width scaling
+- **Metals**: Smooth, reflective surfaces with micro-detail appropriate for 25cm blocks
+- **Tiles**: Individual tile patterns, grout lines, realistic tile sizes for 25cm blocks
+
+#### Construction Scale Advantages (25cm Voxels)
+- **Realistic Proportions**: Building elements scale correctly (standard brick ~20cm fits naturally)
+- **Fine Architectural Detail**: Window frames, door panels, decorative elements can show proper detail
+- **Material Patterns**: Stone courses, brick bonds, plank arrangements appear at correct scale
+- **Surface Textures**: Individual surface features (scratches, wear, patina) visible and meaningful
 
 #### Texture Generation Approach (Confirmed)
 - **No Preservation Required**: Existing textures will be regenerated using new logic for consistency

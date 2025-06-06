@@ -10,8 +10,8 @@ __version__ = "1.0.0"
 __author__ = "Voxel Castle Development Team"
 
 # Import core modules for easy access
-from .base_patterns import *
-from .color_palettes import *
+from texture_generators.base_patterns import *
+from texture_generators.color_palettes import *
 
 # Generator categories
 from . import stone_textures

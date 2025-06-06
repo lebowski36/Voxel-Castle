@@ -9,7 +9,7 @@ These patterns form the foundation for creating various block textures.
 import random
 from PIL import ImageDraw
 from typing import Tuple, Callable, List
-from .color_palettes import Color, ColorPalette, vary_color, blend_colors
+from texture_generators.color_palettes import Color, ColorPalette, vary_color, blend_colors
 
 # ========== CORE PATTERN FUNCTIONS ==========
 
@@ -268,6 +268,57 @@ def draw_fluid_pattern(draw: ImageDraw.Draw, x0: int, y0: int, size: int,
             
             draw.point((x, wy), fill=wave_color)
 
+def draw_brick_pattern(draw: ImageDraw.Draw, x0: int, y0: int, size: int,
+                      palette: ColorPalette, brick_width: int = 8, brick_height: int = 4,
+                      mortar_width: int = 1) -> Tuple[any, any]:
+    """
+    Draws a brick pattern with mortar lines.
+    Perfect for: Ceramic blocks, brick walls, cobblestone.
+    
+    Args:
+        brick_width: Width of individual bricks
+        brick_height: Height of individual bricks  
+        mortar_width: Width of mortar lines between bricks
+    
+    Returns:
+        Tuple of (brick_mask, mortar_mask) for further processing
+    """
+    brick_color = palette.get('brick', (160, 100, 80, 255))
+    mortar_color = palette.get('mortar', (120, 120, 100, 255))
+    
+    # Fill with mortar color as base
+    draw.rectangle([x0, y0, x0 + size - 1, y0 + size - 1], fill=mortar_color)
+    
+    # Draw brick pattern
+    y = y0
+    row = 0
+    brick_mask = []
+    mortar_mask = []
+    
+    while y < y0 + size:
+        # Stagger every other row
+        x_offset = (brick_width // 2) if row % 2 == 1 else 0
+        x = x0 + x_offset
+        
+        while x < x0 + size:
+            # Draw brick rectangle
+            x1 = min(x, x0 + size - 1)
+            y1 = min(y, y0 + size - 1)
+            x2 = min(x + brick_width - mortar_width, x0 + size - 1)
+            y2 = min(y + brick_height - mortar_width, y0 + size - 1)
+            
+            if x2 > x1 and y2 > y1:
+                varied_brick_color = vary_color(brick_color, 15)
+                draw.rectangle([x1, y1, x2, y2], fill=varied_brick_color)
+                brick_mask.append((x1, y1, x2, y2))
+            
+            x += brick_width
+        
+        row += 1
+        y += brick_height
+    
+    return brick_mask, mortar_mask
+
 # ========== PATTERN COMBINATION UTILITIES ==========
 
 def apply_overlay_pattern(draw: ImageDraw.Draw, x0: int, y0: int, size: int,
@@ -285,6 +336,7 @@ def get_pattern_function(pattern_name: str) -> Callable:
         'crystalline': draw_crystalline_pattern,
         'mottled': draw_mottled_pattern,
         'vein': draw_vein_pattern,
-        'fluid': draw_fluid_pattern
+        'fluid': draw_fluid_pattern,
+        'brick': draw_brick_pattern
     }
     return patterns.get(pattern_name, draw_speckled_pattern)
