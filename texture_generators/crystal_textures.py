@@ -341,3 +341,26 @@ CRYSTAL_GENERATORS = {
     158: generate_celestial_marble, # CELESTIAL_MARBLE
     159: generate_shadow_glass,     # SHADOW_GLASS
 }
+
+def generate_crystal_texture(crystal_type: str, size: int = 32):
+    """Generate crystal texture and return PIL Image."""
+    from PIL import Image, ImageDraw
+    
+    # Create RGBA image for transparency support
+    image = Image.new('RGBA', (size, size), (0, 0, 0, 0))
+    draw = ImageDraw.Draw(image)
+    
+    # Generate based on crystal type
+    if crystal_type == 'clear':
+        generate_crystal_clear(draw, 0, 0, size)
+    elif crystal_type == 'blue':
+        generate_crystal_blue(draw, 0, 0, size)
+    elif crystal_type == 'red':
+        generate_crystal_red(draw, 0, 0, size)
+    elif crystal_type == 'green':
+        generate_crystal_green(draw, 0, 0, size)
+    else:
+        # Default to clear crystal
+        generate_crystal_clear(draw, 0, 0, size)
+    
+    return image

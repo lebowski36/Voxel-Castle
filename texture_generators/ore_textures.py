@@ -200,6 +200,38 @@ def generate_diamond_gem(draw: ImageDraw.Draw, x0: int, y0: int, size: int) -> N
     }
     draw_crystalline_pattern(draw, x0, y0, size, diamond_palette, crystal_count=1)
 
+# PIL Image-returning wrapper function for create_atlas.py compatibility
+def generate_ore_texture(ore_type: str, size: int = 32):
+    """Generate ore texture and return as PIL Image."""
+    from PIL import Image
+    
+    # Create image and draw object
+    image = Image.new('RGBA', (size, size), (0, 0, 0, 0))
+    draw = ImageDraw.Draw(image)
+    
+    # Map ore types to generator functions
+    ore_mapping = {
+        'coal_ore': generate_coal_ore,
+        'iron_ore': generate_iron_ore,
+        'copper_ore': generate_copper_ore,
+        'tin_ore': generate_tin_ore,
+        'silver_ore': generate_silver_ore,
+        'gold_ore': generate_gold_ore,
+        'ruby': generate_ruby_gem,
+        'sapphire': generate_sapphire_gem,
+        'emerald': generate_emerald_gem,
+        'diamond': generate_diamond_gem,
+    }
+    
+    # Generate the texture
+    if ore_type in ore_mapping:
+        ore_mapping[ore_type](draw, 0, 0, size)
+    else:
+        # Fallback to coal ore for unknown types
+        generate_coal_ore(draw, 0, 0, size)
+    
+    return image
+
 # Lookup table for ore generators
 ORE_GENERATORS = {
     20: generate_coal_ore,        # COAL_ORE

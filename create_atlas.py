@@ -203,24 +203,24 @@ def generate_modular_texture(block_id, size=32, face='all', seed=None):
     try:
         if block_type == 'stone':
             if 'brick' in subtype or 'tile' in subtype or 'polished' in subtype or 'smooth' in subtype:
-                return generate_processed_stone_texture(subtype, size)
+                return generate_processed_stone_texture(size, subtype)
             else:
-                return generate_stone_texture(subtype, size)
+                return generate_stone_texture(size, subtype)
         
         elif block_type == 'wood':
             if 'planks' in subtype or 'beam' in subtype:
                 wood_species = subtype.split('_')[0]  # oak, pine, etc.
-                return generate_plank_texture(wood_species, size)
+                return generate_plank_texture(size, wood_species)
             else:
-                return generate_wood_texture(subtype, size)
+                return generate_wood_texture(size, subtype)
         
         elif block_type == 'organic':
             # Handle leaves with per-face logic
             if 'leaves' in subtype:
                 species = subtype.split('_')[0]  # oak, pine, etc.
-                return generate_organic_texture('leaves', species, size, face=face)
+                return generate_organic_texture('leaves_' + species, size, face)
             else:
-                return generate_organic_texture(subtype, size=size, face=face)
+                return generate_organic_texture(subtype, size, face)
         
         elif block_type == 'ore':
             return generate_ore_texture(subtype, size)

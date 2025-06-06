@@ -510,7 +510,7 @@ ORGANIC_GENERATORS = {
     43: generate_cactus,          # CACTUS
 }
 
-def generate_organic_texture(draw: ImageDraw.Draw, x0: int, y0: int, size: int, subtype: str, face: str = 'all') -> None:
+def generate_organic_texture_draw(draw: ImageDraw.Draw, x0: int, y0: int, size: int, subtype: str, face: str = 'all') -> None:
     """Main dispatcher for organic texture generation."""
     
     # Map subtypes to specific generator functions
@@ -606,9 +606,9 @@ def generate_organic_texture(draw: ImageDraw.Draw, x0: int, y0: int, size: int, 
         generate_cactus(draw, x0, y0, size, face)
     elif subtype == 'jungle_vine':
         generate_jungle_vine(draw, x0, y0, size, face)
-    elif subtype == 'pink_coral':
+    elif subtype in ['pink_coral', 'coral_pink']:
         generate_pink_coral(draw, x0, y0, size, face)
-    elif subtype == 'blue_coral':
+    elif subtype in ['blue_coral', 'coral_blue']:
         generate_blue_coral(draw, x0, y0, size, face)
     elif subtype == 'seaweed':
         generate_seaweed(draw, x0, y0, size, face)
@@ -619,3 +619,28 @@ def generate_organic_texture(draw: ImageDraw.Draw, x0: int, y0: int, size: int, 
         base_color = (101, 67, 33, 255)  # Default to dirt-like
         draw.rectangle([x0, y0, x0 + size - 1, y0 + size - 1], fill=base_color)
         print(f"Warning: Unknown organic subtype '{subtype}', using default dirt texture")
+
+
+
+def generate_organic_texture(subtype: str, size: int = 32, face: str = 'all'):
+    """
+    Generate organic block texture and return as PIL Image.
+    
+    Args:
+        subtype: The organic block type (e.g., 'dirt', 'grass', 'sand')
+        size: Texture size in pixels (default 32x32)
+        face: Face type ('all', 'top', 'bottom', 'sides')
+    
+    Returns:
+        PIL Image of the generated texture
+    """
+    from PIL import Image
+    
+    # Create new image
+    image = Image.new('RGBA', (size, size), (0, 0, 0, 0))
+    draw = ImageDraw.Draw(image)
+    
+    # Use the original function
+    generate_organic_texture_draw(draw, 0, 0, size, subtype, face)
+    
+    return image

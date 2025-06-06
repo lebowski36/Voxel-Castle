@@ -283,3 +283,30 @@ METAL_GENERATORS = {
     88: generate_mithril_block,     # MITHRIL_BLOCK
     89: generate_adamantine_block,  # ADAMANTINE_BLOCK
 }
+
+def generate_metal_texture(metal_type: str, size: int = 32):
+    """Generate metal texture and return PIL Image."""
+    from PIL import Image, ImageDraw
+    
+    # Create RGB image
+    image = Image.new('RGB', (size, size), (0, 0, 0))
+    draw = ImageDraw.Draw(image)
+    
+    # Generate based on metal type
+    if metal_type == 'iron':
+        generate_iron_block(draw, 0, 0, size)
+    elif metal_type == 'copper':
+        generate_copper_block(draw, 0, 0, size)
+    elif metal_type == 'bronze':
+        generate_bronze_block(draw, 0, 0, size)
+    elif metal_type == 'steel':
+        generate_steel_block(draw, 0, 0, size)
+    elif metal_type == 'silver':
+        generate_silver_block(draw, 0, 0, size)
+    elif metal_type == 'gold':
+        generate_gold_block(draw, 0, 0, size)
+    else:
+        # Default to iron
+        generate_iron_block(draw, 0, 0, size)
+    
+    return image

@@ -241,3 +241,28 @@ FLUID_GENERATORS = {
     # 58: magical_mist - similar to steam but with magical colors
     # 59: smoke - similar to steam but darker
 }
+
+def generate_fluid_texture(fluid_type: str, size: int = 32):
+    """Generate fluid texture and return PIL Image."""
+    from PIL import Image, ImageDraw
+    
+    # Create RGBA image for transparency support
+    image = Image.new('RGBA', (size, size), (0, 0, 0, 0))
+    draw = ImageDraw.Draw(image)
+    
+    # Generate based on fluid type
+    if fluid_type == 'water':
+        generate_water(draw, 0, 0, size)
+    elif fluid_type == 'lava':
+        generate_lava(draw, 0, 0, size)
+    elif fluid_type == 'oil':
+        generate_oil(draw, 0, 0, size)
+    elif fluid_type == 'acid':
+        generate_acid(draw, 0, 0, size)
+    elif fluid_type == 'honey':
+        generate_honey(draw, 0, 0, size)
+    else:
+        # Default to water
+        generate_water(draw, 0, 0, size)
+    
+    return image

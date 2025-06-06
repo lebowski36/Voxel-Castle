@@ -88,6 +88,13 @@ MAHOGANY_WOOD = {
     'rich_tone': (140, 70, 50, 255)
 }
 
+HARDWOOD_WOOD = {
+    'base': (100, 50, 30, 255),
+    'grain_dark': (60, 30, 15, 255),
+    'grain_light': (130, 70, 50, 255),
+    'rich_tone': (110, 60, 40, 255)
+}
+
 # ========== ORE & MINERAL PALETTES ==========
 
 COAL_ORE = {
@@ -243,6 +250,7 @@ def get_palette(material_name: str) -> ColorPalette:
         'pine_wood': PINE_WOOD,
         'birch_wood': BIRCH_WOOD,
         'mahogany_wood': MAHOGANY_WOOD,
+        'hardwood_wood': HARDWOOD_WOOD,
         'coal_ore': COAL_ORE,
         'iron_ore': IRON_ORE,
         'copper_ore': COPPER_ORE,

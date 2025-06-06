@@ -1,29 +1,29 @@
 # Comprehensive Block System Design
 *Created: 2025-06-06 19:30*
-*Last Updated: 2025-06-06 21:15*
+*Last Updated: 2025-06-06 21:30*
 *Priority: HIGH - Required before 08c.3 feature parity completion*
 
 ## Status: ACTIVE IMPLEMENTATION 🔧
-*Next: Fix texture quality and missing generators in atlas generation*
+*Next: Fix modular system imports and ensure detailed texture generation*
 
 ## Current Priority Issues (December 6, 2025)
 
-### 08d.1: Fix Texture Quality Issue ⚠️ URGENT
-**Problem**: Atlas generation is not using the detailed modular textures we've created
-- **Symptom**: create_atlas.py produces flat color textures instead of detailed ones
-- **Evidence**: test_texture_generation.py creates beautiful detailed 32×32 textures in test_textures/ folder
-- **Root Cause**: Import errors in create_atlas.py causing fallback to legacy/flat generation
-- **Error**: `cannot import name 'generate_special_texture' from 'texture_generators.special_textures'`
-- **Status**: 🔴 BLOCKING - Must fix imports and function signatures first
-- **Success Criteria**: Atlas shows detailed textures matching test_textures/ quality
+### 08d.1: Fix Modular System Import Errors ⚠️ URGENT
+**Problem**: create_atlas.py cannot import required texture generation functions
+- **Symptom**: `cannot import name 'generate_crystal_texture' from 'texture_generators.crystal_textures'`
+- **Root Cause**: Missing PIL Image-returning wrapper functions in texture generator modules
+- **Missing Functions**: generate_crystal_texture, generate_ceramic_texture, generate_metal_texture, generate_fluid_texture
+- **Evidence**: test_texture_generation.py works (creates beautiful textures), but create_atlas.py fails imports
+- **Status**: 🔴 BLOCKING - Must add wrapper functions to all generator modules
+- **Success Criteria**: create_atlas.py loads modular system without import errors
 
-### 08d.2: Fix Missing Generators Issue ⚠️ URGENT  
-**Problem**: Many blocks still show purple placeholder textures
-- **Symptom**: Worldgen-relevant blocks (IDs 0-179) should have proper textures, not placeholders
-- **Evidence**: Atlas generation reports "Placeholder textures: 844" for most blocks
-- **Root Cause**: Missing or incorrectly imported generator functions for many block types
-- **Status**: 🔴 BLOCKING - Must ensure all worldgen blocks have generators
-- **Success Criteria**: Only craft-only blocks (IDs 180-255) should use purple placeholders
+### 08d.2: Ensure Detailed Texture Quality ⚠️ URGENT
+**Problem**: Atlas generation falls back to legacy/flat textures instead of detailed modular ones
+- **Symptom**: Atlas textures are flat colors, not detailed like test_textures/ examples
+- **Evidence**: test_textures/ contains beautiful granite, oak, etc. textures that should be used
+- **Root Cause**: Import failures cause fallback to legacy generation system
+- **Status**: � DEPENDENT - Will be fixed after 08d.1 resolves import errors
+- **Success Criteria**: Atlas textures match test_textures/ quality and detail level
 
 ### Implementation Plan
 1. **Phase 1**: Fix modular system imports (08d.1) ✅ PRIORITY 1
