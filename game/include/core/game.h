@@ -125,8 +125,8 @@ public:
     VoxelEngine::Rendering::MeshBuilder* getMeshBuilder() { return meshBuilder_.get(); }
     const VoxelEngine::Rendering::MeshBuilder* getMeshBuilder() const { return meshBuilder_.get(); }
     
-    VoxelEngine::UI::UISystem* getUISystem() { return uiSystem_.get(); }
-    const VoxelEngine::UI::UISystem* getUISystem() const { return uiSystem_.get(); }
+    VoxelEngine::UI::MenuSystem* getMenuSystem() { return menuSystem_.get(); }
+    const VoxelEngine::UI::MenuSystem* getMenuSystem() const { return menuSystem_.get(); }
     
     SpectatorCamera* getCamera() { return camera_.get(); }
     const SpectatorCamera* getCamera() const { return camera_.get(); }

@@ -37,11 +37,13 @@ void BlockVisualizationPanel::update(float deltaTime) {
 void BlockVisualizationPanel::render() {
     if (!isVisible()) return;
     
-    // Get the renderer from the UISystem
-    auto& renderer = UIRenderer::getInstance();
+    // Check if renderer is available
+    if (!g_currentRenderer) {
+        return; // Cannot render without renderer
+    }
     
     // Draw panel background
-    renderer.drawRect(
+    g_currentRenderer->renderColoredQuad(
         getAbsolutePosition().x, 
         getAbsolutePosition().y, 
         getSize().x, 
@@ -50,7 +52,7 @@ void BlockVisualizationPanel::render() {
     );
     
     // Draw title bar
-    renderer.drawRect(
+    g_currentRenderer->renderColoredQuad(
         getAbsolutePosition().x, 
         getAbsolutePosition().y, 
         getSize().x, 
@@ -58,8 +60,8 @@ void BlockVisualizationPanel::render() {
         glm::vec4(0.2f, 0.2f, 0.3f, 1.0f)
     );
     
-    // Draw title text using TextRenderer directly since we don't have FontManager as a singleton
-    TextRenderer::getInstance().renderText(
+    // Draw title text
+    g_currentRenderer->drawText(
         "Block Visualization Debug Panel",
         getAbsolutePosition().x + 10.0f,
         getAbsolutePosition().y + 10.0f,
@@ -204,14 +206,13 @@ void BlockVisualizationPanel::selectBlockByCategory(int categoryIndex) {
 }
 
 void BlockVisualizationPanel::renderBlockList() {
-    auto& renderer = UIRenderer::getInstance();
-    auto& fontManager = FontManager::getInstance();
+    if (!g_currentRenderer) return;
     
     glm::vec2 absPos = getAbsolutePosition();
     glm::vec2 listPos = getBlockListPosition();
     
     // Draw list background
-    renderer.drawRect(
+    g_currentRenderer->renderColoredQuad(
         absPos.x + listPos.x,
         absPos.y + listPos.y,
         blockListWidth_,
@@ -220,7 +221,7 @@ void BlockVisualizationPanel::renderBlockList() {
     );
     
     // Draw list title
-    renderer.drawRect(
+    g_currentRenderer->renderColoredQuad(
         absPos.x + listPos.x,
         absPos.y + listPos.y,
         blockListWidth_,
@@ -228,7 +229,7 @@ void BlockVisualizationPanel::renderBlockList() {
         glm::vec4(0.2f, 0.3f, 0.4f, 1.0f)
     );
     
-    fontManager.renderText(
+    g_currentRenderer->drawText(
         "Block Types",
         absPos.x + listPos.x + 10.0f,
         absPos.y + listPos.y + 5.0f,
@@ -244,15 +245,15 @@ void BlockVisualizationPanel::renderBlockList() {
         bool isCategoryFiltered = (categoryFilter_ >= 0 && categoryFilter_ != static_cast<int>(i));
         
         // Draw category header
-        renderer.drawRect(
+        g_currentRenderer->renderColoredQuad(
             absPos.x + listPos.x,
             absPos.y + yOffset,
             blockListWidth_,
-            itemHeight,
+            static_cast<float>(itemHeight),
             glm::vec4(0.25f, 0.25f, 0.3f, 1.0f)
         );
         
-        fontManager.renderText(
+        g_currentRenderer->drawText(
             blockCategories_[i].name,
             absPos.x + listPos.x + 5.0f,
             absPos.y + yOffset + 2.0f,
@@ -271,18 +272,18 @@ void BlockVisualizationPanel::renderBlockList() {
         for (VoxelType block : blockCategories_[i].blocks) {
             bool isSelected = (block == currentBlock_);
             
-            renderer.drawRect(
+            g_currentRenderer->renderColoredQuad(
                 absPos.x + listPos.x,
                 absPos.y + yOffset,
                 blockListWidth_,
-                itemHeight,
+                static_cast<float>(itemHeight),
                 isSelected ? glm::vec4(0.3f, 0.5f, 0.7f, 1.0f) : glm::vec4(0.2f, 0.2f, 0.2f, 1.0f)
             );
             
             uint8_t blockId = static_cast<uint8_t>(block);
             std::string blockText = std::to_string(blockId) + ": " + getBlockName(block);
             
-            fontManager.renderText(
+            g_currentRenderer->drawText(
                 blockText,
                 absPos.x + listPos.x + 15.0f,
                 absPos.y + yOffset + 2.0f,
@@ -296,15 +297,14 @@ void BlockVisualizationPanel::renderBlockList() {
 }
 
 void BlockVisualizationPanel::renderBlockPreview() {
-    auto& renderer = UIRenderer::getInstance();
-    auto& fontManager = FontManager::getInstance();
+    if (!g_currentRenderer) return;
     
     glm::vec2 absPos = getAbsolutePosition();
     glm::vec2 previewPos = getBlockPreviewPosition();
     
     // Draw preview background
     float previewAreaSize = blockScale_ * 2.0f;
-    renderer.drawRect(
+    g_currentRenderer->renderColoredQuad(
         absPos.x + previewPos.x - blockScale_ * 0.25f,
         absPos.y + previewPos.y - blockScale_ * 0.25f,
         previewAreaSize,
@@ -315,7 +315,7 @@ void BlockVisualizationPanel::renderBlockPreview() {
     // Draw block using atlas textures
     uint8_t blockId = static_cast<uint8_t>(currentBlock_);
     
-    // TODO: Replace with actual 3D block rendering
+    // TODO: Replace with actual 3D block rendering using new texture atlas
     // For now, just draw a placeholder with the block ID
     float boxSize = blockScale_;
     
@@ -338,7 +338,7 @@ void BlockVisualizationPanel::renderBlockPreview() {
     float offsetY = std::sin(angleX) * boxSize * 0.3f;
     
     // Draw a simple box with different colored sides
-    renderer.drawRect(
+    g_currentRenderer->renderColoredQuad(
         absPos.x + previewPos.x + offsetX,
         absPos.y + previewPos.y + offsetY,
         boxSize - std::abs(offsetX) * 0.5f,
@@ -348,7 +348,7 @@ void BlockVisualizationPanel::renderBlockPreview() {
     
     // Draw block ID in the center
     std::string blockIdText = std::to_string(blockId);
-    fontManager.renderText(
+    g_currentRenderer->drawText(
         blockIdText,
         absPos.x + previewPos.x + boxSize * 0.5f - blockIdText.length() * 4,
         absPos.y + previewPos.y + boxSize * 0.5f - 10,
@@ -357,7 +357,7 @@ void BlockVisualizationPanel::renderBlockPreview() {
     );
     
     // Draw rotation guidance
-    fontManager.renderText(
+    g_currentRenderer->drawText(
         "Drag to rotate",
         absPos.x + previewPos.x,
         absPos.y + previewPos.y + boxSize + 20,
@@ -367,7 +367,7 @@ void BlockVisualizationPanel::renderBlockPreview() {
     
     // Draw auto-rotate status
     std::string rotateStatus = autoRotate_ ? "Auto-rotate: ON" : "Auto-rotate: OFF";
-    fontManager.renderText(
+    g_currentRenderer->drawText(
         rotateStatus,
         absPos.x + previewPos.x,
         absPos.y + previewPos.y + boxSize + 40,
@@ -377,14 +377,13 @@ void BlockVisualizationPanel::renderBlockPreview() {
 }
 
 void BlockVisualizationPanel::renderBlockInfo() {
-    auto& renderer = UIRenderer::getInstance();
-    auto& fontManager = FontManager::getInstance();
+    if (!g_currentRenderer) return;
     
     glm::vec2 absPos = getAbsolutePosition();
     glm::vec2 infoPos = getBlockInfoPosition();
     
     // Draw info panel background
-    renderer.drawRect(
+    g_currentRenderer->renderColoredQuad(
         absPos.x + infoPos.x,
         absPos.y + infoPos.y,
         getSize().x - infoPos.x - 10.0f,
@@ -401,7 +400,7 @@ void BlockVisualizationPanel::renderBlockInfo() {
     float yPos = absPos.y + infoPos.y + 10.0f;
     float lineHeight = 25.0f;
     
-    fontManager.renderText(
+    g_currentRenderer->drawText(
         "Block ID: " + std::to_string(blockId),
         absPos.x + infoPos.x + 10.0f,
         yPos,
@@ -410,7 +409,7 @@ void BlockVisualizationPanel::renderBlockInfo() {
     );
     yPos += lineHeight;
     
-    fontManager.renderText(
+    g_currentRenderer->drawText(
         "Name: " + blockName,
         absPos.x + infoPos.x + 10.0f,
         yPos,
@@ -420,7 +419,7 @@ void BlockVisualizationPanel::renderBlockInfo() {
     yPos += lineHeight;
     
     if (showFacePatternInfo_) {
-        fontManager.renderText(
+        g_currentRenderer->drawText(
             "Face Pattern: " + patternName,
             absPos.x + infoPos.x + 10.0f,
             yPos,
@@ -434,8 +433,7 @@ void BlockVisualizationPanel::renderBlockInfo() {
 }
 
 void BlockVisualizationPanel::renderBlockGrid() {
-    auto& renderer = UIRenderer::getInstance();
-    auto& fontManager = FontManager::getInstance();
+    if (!g_currentRenderer) return;
     
     glm::vec2 absPos = getAbsolutePosition();
     float gridAreaWidth = getSize().x - 20.0f;
@@ -443,16 +441,16 @@ void BlockVisualizationPanel::renderBlockGrid() {
     
     // Calculate cell size and spacing
     float cellSize = std::min(
-        (gridAreaWidth - (gridColumns_ - 1) * 10.0f) / gridColumns_,
-        (gridAreaHeight - (gridRows_ - 1) * 10.0f) / gridRows_
+        (gridAreaWidth - (static_cast<float>(gridColumns_) - 1) * 10.0f) / static_cast<float>(gridColumns_),
+        (gridAreaHeight - (static_cast<float>(gridRows_) - 1) * 10.0f) / static_cast<float>(gridRows_)
     );
     
     // Calculate start position to center the grid
-    float startX = absPos.x + (getSize().x - (cellSize * gridColumns_ + 10.0f * (gridColumns_ - 1))) / 2.0f;
+    float startX = absPos.x + (getSize().x - (cellSize * static_cast<float>(gridColumns_) + 10.0f * (static_cast<float>(gridColumns_) - 1))) / 2.0f;
     float startY = absPos.y + 50.0f;
     
     // Draw grid title
-    fontManager.renderText(
+    g_currentRenderer->drawText(
         "Block Grid View",
         absPos.x + 10.0f,
         absPos.y + 45.0f,
@@ -489,11 +487,11 @@ void BlockVisualizationPanel::renderBlockGrid() {
             uint8_t blockId = static_cast<uint8_t>(blockType);
             
             // Calculate cell position
-            float cellX = startX + col * (cellSize + 10.0f);
-            float cellY = startY + row * (cellSize + 10.0f);
+            float cellX = startX + static_cast<float>(col) * (cellSize + 10.0f);
+            float cellY = startY + static_cast<float>(row) * (cellSize + 10.0f);
             
             // Draw cell background
-            renderer.drawRect(
+            g_currentRenderer->renderColoredQuad(
                 cellX,
                 cellY,
                 cellSize,
@@ -504,7 +502,7 @@ void BlockVisualizationPanel::renderBlockGrid() {
             );
             
             // Draw block ID
-            fontManager.renderText(
+            g_currentRenderer->drawText(
                 std::to_string(blockId),
                 cellX + 5.0f,
                 cellY + 5.0f,
@@ -522,7 +520,7 @@ void BlockVisualizationPanel::renderBlockGrid() {
             uint8_t g = (blockId * 97) % 255;
             uint8_t b = (blockId * 157) % 255;
             
-            renderer.drawRect(
+            g_currentRenderer->renderColoredQuad(
                 blockX,
                 blockY,
                 blockSize,

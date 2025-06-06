@@ -5,6 +5,7 @@
 #include "world/world_manager.h" // Required for markAllSegmentsDirty
 #include "interaction/BlockPlacement.h" // For block placement handling
 #include "utils/debug_logger.h"
+#include "ui/MenuSystem.h" // Required for MenuSystem methods
 #include <SDL3/SDL.h>
 #include <glad/glad.h>
 #include <iostream>
@@ -208,9 +209,9 @@ void processInput(Game& game) {
                     break;
                     
                 case SDL_SCANCODE_F3: // Block Visualization Panel Toggle
-                    if (game.getUISystem()) {
+                    if (game.getMenuSystem()) {
                         std::cout << "[Debug] Block Visualization Panel toggled (F3)" << std::endl;
-                        game.getUISystem()->toggleBlockVisualizationPanel();
+                        game.getMenuSystem()->toggleBlockVisualizationPanel();
                     }
                     break;
                 
