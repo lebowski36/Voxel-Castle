@@ -13,37 +13,35 @@ namespace Rendering {
 const std::string BASE_DIRECTORY = "/home/system-x1/Projects/Voxel Castle/";
 
 TextureAtlas::TextureAtlas() : m_texture_id(0) {
-    int tiles_per_row = static_cast<int>(ATLAS_WIDTH_PX / TILE_WIDTH_PX);
-
-    // Map all voxel types (AIR, STONE, DIRT, GRASS, WOOD, LEAVES, WATER, SAND)
-    // Assuming voxel IDs 0 through 7 are used as per VoxelType enum
-    for (int voxel_id_int = static_cast<int>(VoxelEngine::World::VoxelType::AIR); voxel_id_int <= static_cast<int>(VoxelEngine::World::VoxelType::SAND); ++voxel_id_int) {
-        VoxelEngine::World::VoxelType type = static_cast<VoxelEngine::World::VoxelType>(voxel_id_int);
-        
-        // tile_idx_x is the column index of the tile in the atlas (0-indexed from left)
-        int tile_idx_x = voxel_id_int % tiles_per_row;
-        // tile_idx_y is the row index of the tile in the atlas (0-indexed from top)
-        int tile_idx_y = voxel_id_int / tiles_per_row; 
-
-        float u_min = static_cast<float>(tile_idx_x) * TILE_UV_WIDTH;
-        float u_max = static_cast<float>(tile_idx_x + 1) * TILE_UV_WIDTH;
-
-        // Assuming OpenGL UV origin (0,0) is bottom-left, 
-        // and the atlas image file has its origin (0,0) at the top-left (typical for PNGs loaded by stb_image by default).
-        // We need to convert the V coordinate from image space (top-down) to OpenGL UV space (bottom-up).
-        // The V coordinate for the bottom edge of the tile in GL UV space:
-        float v_gl_min = 1.0f - (static_cast<float>(tile_idx_y + 1) * TILE_UV_HEIGHT);
-        // The V coordinate for the top edge of the tile in GL UV space:
-        float v_gl_max = 1.0f - (static_cast<float>(tile_idx_y) * TILE_UV_HEIGHT);
-
-        m_voxel_texture_coords[type] = {
-            {u_min, v_gl_min}, // uv_min (bottom-left of the tile in OpenGL UV space)
-            {u_max, v_gl_max}  // uv_max (top-right of the tile in OpenGL UV space)
-        };
-    }
+    initializeAllBlockTextures();
     
     // Automatically load the default texture atlas
     loadTexture("atlas.png");
+}
+
+void TextureAtlas::initializeAllBlockTextures() {
+    // Initialize UV coordinates for all 256 possible block types
+    for (int block_id = 0; block_id < MAX_BLOCK_TYPES; ++block_id) {
+        VoxelEngine::World::VoxelType type = static_cast<VoxelEngine::World::VoxelType>(block_id);
+        m_voxel_texture_coords[type] = calculateTextureCoordinates(static_cast<uint8_t>(block_id));
+    }
+    
+    std::cout << "[TextureAtlas] Initialized UV coordinates for " << MAX_BLOCK_TYPES << " block types." << std::endl;
+}
+
+TextureCoordinates TextureAtlas::calculateTextureCoordinates(uint8_t block_id) const {
+    // Calculate tile position in the 16x16 grid
+    int tile_idx_x = block_id % TILES_PER_ROW;
+    int tile_idx_y = block_id / TILES_PER_ROW;
+
+    float u_min = static_cast<float>(tile_idx_x) * TILE_UV_WIDTH;
+    float u_max = static_cast<float>(tile_idx_x + 1) * TILE_UV_WIDTH;
+
+    // Convert from image space (top-down) to OpenGL UV space (bottom-up)
+    float v_gl_min = 1.0f - (static_cast<float>(tile_idx_y + 1) * TILE_UV_HEIGHT);
+    float v_gl_max = 1.0f - (static_cast<float>(tile_idx_y) * TILE_UV_HEIGHT);
+
+    return {{u_min, v_gl_min}, {u_max, v_gl_max}};
 }
 
 TextureAtlas::~TextureAtlas() {
@@ -55,22 +53,9 @@ TextureCoordinates TextureAtlas::getTextureCoordinates(VoxelEngine::World::Voxel
     if (it != m_voxel_texture_coords.end()) {
         return it->second;
     }
-    // Fallback to AIR tile (ID 0) if type not found.
-    // This should also follow the corrected V coordinate logic.
-    // Assuming VoxelType::AIR is 0.
-    int fallback_voxel_id = static_cast<int>(VoxelEngine::World::VoxelType::AIR);
-    int tiles_per_row = static_cast<int>(ATLAS_WIDTH_PX / TILE_WIDTH_PX);
-
-    int fallback_tile_idx_x = fallback_voxel_id % tiles_per_row;
-    int fallback_tile_idx_y = fallback_voxel_id / tiles_per_row;
-
-    float u_min_fallback = static_cast<float>(fallback_tile_idx_x) * TILE_UV_WIDTH;
-    float u_max_fallback = static_cast<float>(fallback_tile_idx_x + 1) * TILE_UV_WIDTH;
     
-    float v_min_fallback_gl = 1.0f - (static_cast<float>(fallback_tile_idx_y + 1) * TILE_UV_HEIGHT);
-    float v_max_fallback_gl = 1.0f - (static_cast<float>(fallback_tile_idx_y) * TILE_UV_HEIGHT);
-
-    return {{u_min_fallback, v_min_fallback_gl}, {u_max_fallback, v_max_fallback_gl}};
+    // Fallback to AIR tile if type not found
+    return calculateTextureCoordinates(static_cast<uint8_t>(VoxelEngine::World::VoxelType::AIR));
 }
 
 bool TextureAtlas::loadTexture(const std::string& texturePath) {
@@ -144,6 +129,17 @@ void TextureAtlas::releaseTexture() {
         glDeleteTextures(1, &m_texture_id);
         m_texture_id = 0;
     }
+}
+
+void TextureAtlas::rebuildTextureMapping() {
+    // Clear existing mapping and rebuild for all 256 block types
+    m_voxel_texture_coords.clear();
+    initializeAllBlockTextures();
+    std::cout << "[TextureAtlas] Rebuilt texture mapping for all block types." << std::endl;
+}
+
+bool TextureAtlas::hasTexture(VoxelEngine::World::VoxelType type) const {
+    return m_voxel_texture_coords.find(type) != m_voxel_texture_coords.end();
 }
 
 } // namespace Rendering
