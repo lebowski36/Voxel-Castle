@@ -348,6 +348,42 @@ enum class MaterialCategory {
 
 ## Modular Texture Generation System
 
+### Atlas Configuration (Current State) ✅
+The texture atlas is already configured as **32×32 (256 slots)**, perfectly matching our comprehensive block taxonomy:
+- **Atlas Size**: 1024×1024 pixels (32×32 blocks of 32×32 pixels each)
+- **Block Capacity**: 256 unique block types (matching our expanded VoxelType enum)
+- **Current Usage**: ~8 slots used by legacy blocks, 248 slots available for expansion
+- **No Resize Required**: Existing atlas size already supports full block taxonomy
+
+### Per-Face Texture Logic (Clarified Design) ✅
+**Efficiency-First Approach**: Only blocks that genuinely need unique faces will get multiple textures:
+
+#### Single-Texture Blocks (Majority)
+Most blocks use **one texture for all faces**:
+- **Uniform Materials**: Stone variants, metal blocks, gems, most processed materials
+- **Atlas Efficiency**: Single slot per block type (e.g., granite uses 1 slot, iron block uses 1 slot)
+- **Implementation**: Default behavior - one texture ID maps to all 6 faces
+
+#### Multi-Face Blocks (Strategic Selection)
+Only blocks where **different faces make visual sense**:
+- **Grass Block**: Green top, dirt sides/bottom (uses 2-3 atlas slots)
+- **Wood Logs**: Bark on sides, end grain on top/bottom (uses 2 atlas slots)
+- **Directional Blocks**: Doors, windows, mechanisms with front/back differences
+- **Layered Materials**: Some bricks or stone with top/bottom variation
+
+#### Atlas Slot Allocation Strategy
+- **Priority 1**: Single-texture blocks (1 slot each) = ~200+ blocks
+- **Priority 2**: Essential multi-face blocks (2-3 slots each) = ~20-30 blocks  
+- **Remaining Slots**: Advanced multi-face blocks and future expansion
+
+### Legacy Compatibility (Preservation Strategy) ✅
+**Full Backward Compatibility**: Existing legacy worldgen will continue to work unchanged:
+- **Legacy Slot Preservation**: First 8 atlas slots (0-7) reserved for existing block types
+- **ID Mapping**: Legacy block IDs remain exactly the same (AIR=0, STONE=1, etc.)
+- **Texture Preservation**: Legacy blocks keep their current texture locations in the atlas
+- **Dual System Support**: Legacy worldgen uses legacy blocks, new worldgen uses expanded taxonomy
+- **Transition Safety**: No breaking changes to existing save files or legacy generation code
+
 ### Confirmed Design Philosophy ✅
 Based on requirements analysis and stakeholder feedback, the texture generation system will implement the following confirmed design:
 

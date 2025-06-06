@@ -509,3 +509,113 @@ ORGANIC_GENERATORS = {
     39: generate_red_mushroom,    # MUSHROOM_RED
     43: generate_cactus,          # CACTUS
 }
+
+def generate_organic_texture(draw: ImageDraw.Draw, x0: int, y0: int, size: int, subtype: str, face: str = 'all') -> None:
+    """Main dispatcher for organic texture generation."""
+    
+    # Map subtypes to specific generator functions
+    if subtype == 'dirt':
+        # Generate dirt texture
+        base_color = (101, 67, 33, 255)  # Brown dirt
+        draw.rectangle([x0, y0, x0 + size - 1, y0 + size - 1], fill=base_color)
+        
+        # Add some texture variation
+        for _ in range(size * 2):  # Add some spots
+            spot_x = random.randint(x0, x0 + size - 1)
+            spot_y = random.randint(y0, y0 + size - 1)
+            if random.random() < 0.3:
+                spot_color = (85, 55, 25, 255)  # Darker brown
+                draw.point((spot_x, spot_y), fill=spot_color)
+    
+    elif subtype == 'grass':
+        if face == 'top':
+            # Grass top - green with texture
+            base_color = (76, 175, 80, 255)  # Green
+            draw.rectangle([x0, y0, x0 + size - 1, y0 + size - 1], fill=base_color)
+            
+            # Add grass blades
+            for _ in range(size // 2):
+                blade_x = random.randint(x0, x0 + size - 1)
+                blade_y = random.randint(y0, y0 + size - 1)
+                blade_color = (139, 195, 74, 255)  # Light green
+                draw.point((blade_x, blade_y), fill=blade_color)
+        else:
+            # Grass sides - dirt with grass edge at top
+            generate_organic_texture(draw, x0, y0, size, 'dirt', face)
+            if face == 'side':
+                # Add green strip at top
+                grass_color = (76, 175, 80, 255)
+                for x in range(x0, x0 + size):
+                    for y in range(y0, min(y0 + 3, y0 + size)):
+                        draw.point((x, y), fill=grass_color)
+    
+    elif subtype == 'sand':
+        # Generate sand texture
+        base_color = (255, 228, 181, 255)  # Sandy beige
+        draw.rectangle([x0, y0, x0 + size - 1, y0 + size - 1], fill=base_color)
+        
+        # Add sand grain texture
+        for _ in range(size * 3):
+            grain_x = random.randint(x0, x0 + size - 1)
+            grain_y = random.randint(y0, y0 + size - 1)
+            if random.random() < 0.2:
+                grain_color = (255, 248, 220, 255)  # Lighter sand
+                draw.point((grain_x, grain_y), fill=grain_color)
+            elif random.random() < 0.1:
+                grain_color = (238, 203, 173, 255)  # Darker sand
+                draw.point((grain_x, grain_y), fill=grain_color)
+    
+    elif subtype == 'topsoil':
+        # Rich topsoil - darker than regular dirt
+        base_color = (62, 39, 35, 255)  # Dark brown
+        draw.rectangle([x0, y0, x0 + size - 1, y0 + size - 1], fill=base_color)
+        
+        # Add organic matter spots
+        for _ in range(size):
+            spot_x = random.randint(x0, x0 + size - 1)
+            spot_y = random.randint(y0, y0 + size - 1)
+            if random.random() < 0.4:
+                spot_color = (33, 33, 33, 255)  # Very dark organic matter
+                draw.point((spot_x, spot_y), fill=spot_color)
+    
+    elif subtype == 'subsoil':
+        # Clay-rich subsoil
+        base_color = (139, 90, 43, 255)  # Clayey brown
+        draw.rectangle([x0, y0, x0 + size - 1, y0 + size - 1], fill=base_color)
+        
+        # Add clay texture
+        for _ in range(size // 2):
+            clay_x = random.randint(x0, x0 + size - 1)
+            clay_y = random.randint(y0, y0 + size - 1)
+            clay_color = (160, 82, 45, 255)  # Saddle brown
+            draw.point((clay_x, clay_y), fill=clay_color)
+    
+    elif subtype in ['oak_leaves', 'leaves_oak']:
+        generate_oak_leaves(draw, x0, y0, size, face)
+    elif subtype in ['pine_leaves', 'leaves_pine']:
+        generate_pine_leaves(draw, x0, y0, size)
+    elif subtype in ['birch_leaves', 'leaves_birch']:
+        generate_birch_leaves(draw, x0, y0, size, face)
+    elif subtype in ['palm_leaves', 'leaves_palm']:
+        generate_palm_leaves(draw, x0, y0, size)
+    elif subtype in ['brown_mushroom', 'mushroom_brown']:
+        generate_brown_mushroom(draw, x0, y0, size, face)
+    elif subtype in ['red_mushroom', 'mushroom_red']:
+        generate_red_mushroom(draw, x0, y0, size, face)
+    elif subtype == 'cactus':
+        generate_cactus(draw, x0, y0, size, face)
+    elif subtype == 'jungle_vine':
+        generate_jungle_vine(draw, x0, y0, size, face)
+    elif subtype == 'pink_coral':
+        generate_pink_coral(draw, x0, y0, size, face)
+    elif subtype == 'blue_coral':
+        generate_blue_coral(draw, x0, y0, size, face)
+    elif subtype == 'seaweed':
+        generate_seaweed(draw, x0, y0, size, face)
+    elif subtype == 'tundra_moss':
+        generate_tundra_moss(draw, x0, y0, size, face)
+    else:
+        # Default fallback for unknown organic types
+        base_color = (101, 67, 33, 255)  # Default to dirt-like
+        draw.rectangle([x0, y0, x0 + size - 1, y0 + size - 1], fill=base_color)
+        print(f"Warning: Unknown organic subtype '{subtype}', using default dirt texture")
