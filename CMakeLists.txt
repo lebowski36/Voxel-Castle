@@ -72,6 +72,23 @@ add_executable(world_parameters_test tests/world_parameters_test.cpp)
 target_link_libraries(world_parameters_test PRIVATE VoxelEngine)
 target_include_directories(world_parameters_test PRIVATE engine/include)
 
+# Add simple feature parity test executable
+add_executable(feature_parity_test 
+    tests/simple_feature_parity_test.cpp
+    game/src/utils/debug_logger.cpp  # Include debug utilities
+)
+target_link_libraries(feature_parity_test PRIVATE VoxelEngine)
+target_include_directories(feature_parity_test PRIVATE 
+    engine/include
+    game/include  # Include game headers for debug utilities
+)
+
+# Add feature parity test executable (requires GoogleTest)
+# TODO: Add GoogleTest dependency for this test
+# add_executable(feature_parity_test tests/feature_parity_test.cpp)
+# target_link_libraries(feature_parity_test PRIVATE VoxelEngine gtest gtest_main)
+# target_include_directories(feature_parity_test PRIVATE engine/include)
+
 # Enable CTest (optional, if you add tests)
 # enable_testing()
 # add_subdirectory(tests) # If you have a tests directory with CMakeLists.txt
