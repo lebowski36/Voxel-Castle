@@ -7,7 +7,7 @@ These include invisible blocks, mechanisms, and advanced technology.
 Designed for 25cm×25cm voxel scale for enhanced detail.
 """
 
-from PIL import ImageDraw
+from PIL import Image, ImageDraw
 import random
 from texture_generators.base_patterns import draw_speckled_pattern, draw_grain_pattern
 from texture_generators.color_palettes import get_palette, vary_color
@@ -516,6 +516,50 @@ def generate_special_texture(subtype: str, size: int = 32) -> 'Image':
                 draw.point((mx, my), fill=palette['magic'])
             elif random.random() < 0.3:
                 draw.point((mx, my), fill=palette['deep'])
+    
+    elif subtype == 'steam':
+        # Steam - light wispy texture
+        palette = {
+            'base': (240, 245, 255, 180),
+            'wisp': (255, 255, 255, 120),
+            'edge': (220, 230, 245, 200)
+        }
+        # Wispy cloud-like pattern
+        for _ in range(size // 2):
+            wx = random.randint(0, size - 2)
+            wy = random.randint(0, size - 2)
+            wisp_size = random.randint(1, size // 3)
+            draw.ellipse([wx, wy, wx + wisp_size, wy + wisp_size], 
+                        fill=palette['wisp'], outline=None)
+                        
+    elif subtype in ['toxic_gas', 'natural_gas', 'smoke']:
+        # Gas textures - semi-transparent with different colors
+        if subtype == 'toxic_gas':
+            palette = {
+                'base': (50, 150, 50, 150),   # Green toxic
+                'wisp': (80, 200, 80, 100),
+                'edge': (30, 120, 30, 180)
+            }
+        elif subtype == 'natural_gas':
+            palette = {
+                'base': (200, 200, 150, 120), # Yellowish gas
+                'wisp': (255, 255, 200, 80),
+                'edge': (180, 180, 120, 160)
+            }
+        else:  # smoke
+            palette = {
+                'base': (80, 80, 80, 180),    # Dark smoke
+                'wisp': (120, 120, 120, 120),
+                'edge': (50, 50, 50, 200)
+            }
+        
+        # Wispy gas pattern
+        for _ in range(size // 3):
+            gx = random.randint(0, size - 2)
+            gy = random.randint(0, size - 2)
+            gas_size = random.randint(1, size // 2)
+            draw.ellipse([gx, gy, gx + gas_size, gy + gas_size], 
+                        fill=palette['wisp'], outline=None)
     
     elif subtype in ['functional', 'technology', 'magical']:
         # Generic special blocks - purple placeholder
