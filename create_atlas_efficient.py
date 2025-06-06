@@ -124,8 +124,12 @@ class EfficientAtlasGenerator:
         self.allocator = AtlasSlotAllocator()
         self.allocator.allocate_all_slots()
         
-        # Get requirements for each atlas type
-        self.requirements = get_atlas_requirements()
+        # Get requirements for each atlas type (using our existing allocator)
+        self.requirements = {
+            AtlasType.MAIN: self.allocator.stats['main_slots_used'],
+            AtlasType.SIDE: self.allocator.stats['side_slots_used'],
+            AtlasType.BOTTOM: self.allocator.stats['bottom_slots_used']
+        }
         
         # Calculate grid sizes for each atlas
         self.atlas_grids = {}
