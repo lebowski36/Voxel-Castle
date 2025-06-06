@@ -52,6 +52,17 @@ add_subdirectory(external/glad)
 add_subdirectory(external/flecs)
 # --- End Flecs Configuration ---
 
+# --- GoogleTest Configuration ---
+include(FetchContent)
+FetchContent_Declare(
+  googletest
+  URL https://github.com/google/googletest/archive/v1.14.0.zip
+)
+# For Windows: Prevent overriding the parent project's compiler/linker settings
+set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
+FetchContent_MakeAvailable(googletest)
+# --- End GoogleTest Configuration ---
+
 # Find OpenGL
 find_package(OpenGL REQUIRED)
 
@@ -89,8 +100,13 @@ target_include_directories(feature_parity_test PRIVATE
 # target_link_libraries(feature_parity_test PRIVATE VoxelEngine gtest gtest_main)
 # target_include_directories(feature_parity_test PRIVATE engine/include)
 
+# Add voxel face patterns test executable
+add_executable(test_voxel_face_patterns tests/world/test_voxel_face_patterns.cpp)
+target_link_libraries(test_voxel_face_patterns PRIVATE VoxelEngine gtest gtest_main)
+target_include_directories(test_voxel_face_patterns PRIVATE engine/include)
+
 # Enable CTest (optional, if you add tests)
-# enable_testing()
+enable_testing()
 # add_subdirectory(tests) # If you have a tests directory with CMakeLists.txt
 
 message(STATUS "Project VoxelFortress configured. Build with 'cmake --build .'")
