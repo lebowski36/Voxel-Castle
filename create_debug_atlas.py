@@ -118,10 +118,17 @@ def create_debug_atlas(atlas_path, output_path, atlas_type, tile_size=32, scale_
             
             # Get face pattern name
             try:
-                pattern = generator.atlas_face_system.get_block_face_pattern(block_id)
-                pattern_names = ["UNIFORM", "SIDES_DIFFERENT", "TOP_BOTTOM_DIFFERENT", "ALL_DIFFERENT", "DIRECTIONAL"]
-                pattern_name = pattern_names[pattern] if 0 <= pattern < len(pattern_names) else "UNKNOWN"
-            except:
+                pattern_value = generator.atlas_face_system.get_block_face_pattern(block_id)
+                # Map numeric pattern values to readable abbreviated names
+                pattern_names = {
+                    0: "UNIFORM",
+                    1: "SIDES_DIFF",
+                    2: "TOP_BOT_DIFF", 
+                    3: "ALL_DIFF",
+                    4: "DIRECT"
+                }
+                pattern_name = pattern_names.get(pattern_value, f"UNK:{pattern_value}")
+            except Exception as e:
                 pattern_name = "UNKNOWN"
             
             # Store the block info at this position
@@ -142,34 +149,35 @@ def create_debug_atlas(atlas_path, output_path, atlas_type, tile_size=32, scale_
         px = x * debug_tile_size
         py = y * debug_tile_size
         
-        # Draw semi-transparent background for text that covers the top 40% of the tile
-        overlay_height = int(debug_tile_size * 0.4)
-        overlay_color = (0, 0, 0, 180)  # Darker background for better text visibility
-        draw.rectangle([px, py, px + debug_tile_size - 1, py + overlay_height], 
-                      fill=overlay_color)
+        # No overlay background or indicators, just text with a subtle outline for visibility
         
-        # Add a small colored indicator in the corner to show atlas type
-        atlas_indicators = {
-            AtlasType.MAIN: (0, 200, 0, 255),    # Green for main
-            AtlasType.SIDE: (200, 0, 0, 255),    # Red for side
-            AtlasType.BOTTOM: (0, 0, 200, 255)   # Blue for bottom
-        }
-        indicator_size = debug_tile_size // 8
-        draw.rectangle([px, py, px + indicator_size, py + indicator_size], 
-                      fill=atlas_indicators.get(atlas_type, (255, 255, 0, 255)))
-        
-        # Draw text with bright color
-        text_color = (255, 255, 255, 255)
+        # Draw text with shadow outline effect for better readability without backgrounds
         if font:
             # Draw block ID and coordinates
             id_text = f"ID:{block_id}"
             coord_text = f"({x},{y})"
             
-            draw.text((px + 5, py + 2), id_text, fill=text_color, font=font)
-            draw.text((px + 5, py + font_size + 2), coord_text, fill=text_color, font=font)
+            # Function to draw text with outline/shadow for better visibility on any background
+            def draw_outlined_text(x, y, text, fill_color=(255, 255, 255, 255)):
+                # Draw shadow/outline first
+                shadow_color = (0, 0, 0, 200)
+                offset = 1
+                draw.text((x+offset, y+offset), text, fill=shadow_color, font=font)
+                # Draw main text
+                draw.text((x, y), text, fill=fill_color, font=font)
             
-            # Draw block name and pattern
-            draw.text((px + 5, py + font_size*2 + 2), block_name[:15], fill=text_color, font=font)
+            # Draw all text with outlines
+            draw_outlined_text(px + 5, py + 2, id_text)
+            draw_outlined_text(px + 5, py + font_size + 2, coord_text)
+            draw_outlined_text(px + 5, py + font_size*2 + 2, block_name[:15])
+            
+            # Add atlas type prefix to differentiate between atlas types
+            atlas_prefixes = {
+                AtlasType.MAIN: "M",
+                AtlasType.SIDE: "S",
+                AtlasType.BOTTOM: "B"
+            }
+            atlas_prefix = atlas_prefixes.get(atlas_type, "?")
             
             # Add pattern type in bottom right with smaller font
             pattern_font_size = max(8, font_size // 2)
@@ -182,7 +190,13 @@ def create_debug_atlas(atlas_path, output_path, atlas_type, tile_size=32, scale_
             if pattern_font:
                 # Add pattern info at the bottom of the tile
                 pattern_y = py + debug_tile_size - pattern_font_size - 5
-                draw.text((px + 5, pattern_y), pattern_name, fill=(255, 255, 0, 255), font=pattern_font)
+                pattern_text = f"{atlas_prefix}:{pattern_name}"
+                
+                # Draw with outline for visibility
+                shadow_color = (0, 0, 0, 200)
+                offset = 1
+                draw.text((px + 5 + offset, pattern_y + offset), pattern_text, fill=shadow_color, font=pattern_font)
+                draw.text((px + 5, pattern_y), pattern_text, fill=(255, 255, 0, 255), font=pattern_font)
     
     # Save the debug atlas
     debug_atlas.save(output_path)
