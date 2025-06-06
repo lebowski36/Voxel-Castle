@@ -9,6 +9,7 @@ Designed for 25cm×25cm voxel scale for enhanced detail.
 
 from PIL import ImageDraw
 import random
+import math
 from texture_generators.base_patterns import draw_crystalline_pattern, draw_speckled_pattern
 from texture_generators.color_palettes import get_palette, vary_color
 
@@ -350,17 +351,29 @@ def generate_crystal_texture(crystal_type: str, size: int = 32):
     image = Image.new('RGBA', (size, size), (0, 0, 0, 0))
     draw = ImageDraw.Draw(image)
     
+    # Debug info
+    print(f"Debug: Generating crystal texture for type '{crystal_type}', size={size}")
+    
     # Generate based on crystal type
-    if crystal_type == 'clear':
-        generate_crystal_clear(draw, 0, 0, size)
-    elif crystal_type == 'blue':
-        generate_crystal_blue(draw, 0, 0, size)
-    elif crystal_type == 'red':
-        generate_crystal_red(draw, 0, 0, size)
-    elif crystal_type == 'green':
-        generate_crystal_green(draw, 0, 0, size)
+    crystal_mapping = {
+        # Gem types coming from create_atlas_efficient.py
+        'ruby': generate_crystal_red,
+        'sapphire': generate_crystal_blue,
+        'emerald': generate_crystal_green,
+        'diamond': generate_crystal_clear,
+        
+        # Original crystal types
+        'clear': generate_crystal_clear,
+        'blue': generate_crystal_blue,
+        'red': generate_crystal_red,
+        'green': generate_crystal_green
+    }
+    
+    if crystal_type in crystal_mapping:
+        crystal_mapping[crystal_type](draw, 0, 0, size)
     else:
         # Default to clear crystal
+        print(f"Warning: Unknown crystal_type '{crystal_type}', falling back to clear crystal")
         generate_crystal_clear(draw, 0, 0, size)
     
     return image
