@@ -168,6 +168,12 @@ public:
     glm::vec2 getSettingsMenuSize() const;
 
     /**
+     * @brief Get the size of the world creation dialog
+     * @return Size of the world creation dialog as a glm::vec2
+     */
+    glm::vec2 getWorldCreationDialogSize() const;
+
+    /**
      * @brief Debug dump of menu state - to verify in console
      * Logs the current state of menu and visibility of elements
      */

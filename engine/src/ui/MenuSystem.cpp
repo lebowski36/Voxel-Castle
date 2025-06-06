@@ -240,10 +240,12 @@ void MenuSystem::updateScreenSize(int width, int height) {
     // Cache the fixed menu dimensions before any updates
     static const float MAIN_MENU_WIDTH = 400.0f;
     static const float SETTINGS_MENU_WIDTH = 450.0f;
+    static const float WORLD_CREATION_WIDTH = 700.0f;
     
     // Store the heights the first time this is called
     static float mainMenuHeight = 0.0f;
     static float settingsMenuHeight = 0.0f;
+    static float worldCreationHeight = 0.0f;
     
     // Store the heights the first time this is called
     if (mainMenuHeight == 0.0f && mainMenu_) {
@@ -252,17 +254,21 @@ void MenuSystem::updateScreenSize(int width, int height) {
     if (settingsMenuHeight == 0.0f && settingsMenu_) {
         settingsMenuHeight = settingsMenu_->getSize().y;
     }
+    if (worldCreationHeight == 0.0f && worldCreationDialog_) {
+        worldCreationHeight = worldCreationDialog_->getSize().y;
+    }
     
     // Suppressed repetitive logging for menu system operations.
     
     // IMPORTANT: Store references to the menus before updating renderer to avoid brief size flashes
     std::shared_ptr<BaseMenu> mainMenuRef = mainMenu_;
     std::shared_ptr<BaseMenu> settingsMenuRef = settingsMenu_;
+    std::shared_ptr<BaseMenu> worldCreationRef = worldCreationDialog_;
     
     // Temporarily remove menus from the UI system's element list to avoid rendering at wrong size
     std::vector<std::shared_ptr<UIElement>> tempMenus;
     for (auto it = elements_.begin(); it != elements_.end();) {
-        if ((*it).get() == mainMenu_.get() || (*it).get() == settingsMenu_.get()) {
+        if ((*it).get() == mainMenu_.get() || (*it).get() == settingsMenu_.get() || (*it).get() == worldCreationDialog_.get()) {
             tempMenus.push_back(*it);
             it = elements_.erase(it);
         } else {
@@ -282,6 +288,10 @@ void MenuSystem::updateScreenSize(int width, int height) {
         settingsMenuRef->setSize(SETTINGS_MENU_WIDTH, settingsMenuHeight);
     }
     
+    if (worldCreationRef) {
+        worldCreationRef->setSize(WORLD_CREATION_WIDTH, worldCreationHeight);
+    }
+    
     // Re-add the menus to the element list
     for (auto& menu : tempMenus) {
         elements_.push_back(menu);
@@ -291,13 +301,17 @@ void MenuSystem::updateScreenSize(int width, int height) {
     centerMenus(width, height);
     
     // Verify menu sizes are preserved
-    if (mainMenu_ && settingsMenu_) {
+    if (mainMenu_ && settingsMenu_ && worldCreationDialog_) {
         glm::vec2 mainSize = mainMenu_->getSize();
         glm::vec2 settingsSize = settingsMenu_->getSize();
+        glm::vec2 worldCreationSize = worldCreationDialog_->getSize();
         
         DEBUG_LOG("MenuSystem", "Verification - Main menu size: " + std::to_string(static_cast<int>(mainSize.x)) + 
-                  "x" + std::to_string(static_cast<int>(mainSize.y)) + ", Settings menu size: " + 
-                  std::to_string(static_cast<int>(settingsSize.x)) + "x" + std::to_string(static_cast<int>(settingsSize.y)));
+                  "x" + std::to_string(static_cast<int>(mainSize.y)) + 
+                  ", Settings menu size: " + std::to_string(static_cast<int>(settingsSize.x)) + 
+                  "x" + std::to_string(static_cast<int>(settingsSize.y)) +
+                  ", World Creation dialog size: " + std::to_string(static_cast<int>(worldCreationSize.x)) +
+                  "x" + std::to_string(static_cast<int>(worldCreationSize.y)));
         
         // Correct sizes if somehow they got changed
         if (std::abs(mainSize.x - MAIN_MENU_WIDTH) > 0.1f || 
@@ -310,6 +324,12 @@ void MenuSystem::updateScreenSize(int width, int height) {
             std::abs(settingsSize.y - settingsMenuHeight) > 0.1f) {
             DEBUG_LOG("MenuSystem", "WARNING: Settings menu size incorrect, resetting...");
             settingsMenu_->setSize(SETTINGS_MENU_WIDTH, settingsMenuHeight);
+        }
+        
+        if (std::abs(worldCreationSize.x - WORLD_CREATION_WIDTH) > 0.1f ||
+            std::abs(worldCreationSize.y - worldCreationHeight) > 0.1f) {
+            DEBUG_LOG("MenuSystem", "WARNING: World Creation dialog size incorrect, resetting...");
+            worldCreationDialog_->setSize(WORLD_CREATION_WIDTH, worldCreationHeight);
         }
     }
 }
@@ -413,6 +433,13 @@ glm::vec2 MenuSystem::getMainMenuSize() const {
 glm::vec2 MenuSystem::getSettingsMenuSize() const {
     if (settingsMenu_) {
         return settingsMenu_->getSize();
+    }
+    return glm::vec2(0.0f, 0.0f);
+}
+
+glm::vec2 MenuSystem::getWorldCreationDialogSize() const {
+    if (worldCreationDialog_) {
+        return worldCreationDialog_->getSize();
     }
     return glm::vec2(0.0f, 0.0f);
 }
