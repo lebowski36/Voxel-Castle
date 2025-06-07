@@ -189,6 +189,8 @@ void MeshRenderer::uploadMesh(const VoxelMesh& mesh) {
     glVertexAttribPointer(3, 2, GL_FLOAT, GL_FALSE, sizeof(VoxelEngine::Rendering::Vertex), (void*)offsetof(VoxelEngine::Rendering::Vertex, atlas_tile_origin_uv));
     glEnableVertexAttribArray(4); 
     glVertexAttribPointer(4, 1, GL_FLOAT, GL_FALSE, sizeof(VoxelEngine::Rendering::Vertex), (void*)offsetof(VoxelEngine::Rendering::Vertex, light));
+    glEnableVertexAttribArray(5); 
+    glVertexAttribPointer(5, 1, GL_INT, GL_FALSE, sizeof(VoxelEngine::Rendering::Vertex), (void*)offsetof(VoxelEngine::Rendering::Vertex, atlas_id));
     checkGlError("Vertex attribute setup (per-mesh upload)");
 
     mesh.buffersUploaded = true;
@@ -273,17 +275,60 @@ void MeshRenderer::draw(const VoxelMesh& mesh, const glm::mat4& model, const glm
         }
     }
 
-    // Activate texture unit 0 and bind our texture
+    // Activate texture units and bind all three atlases
+    // Debug: Log atlas binding information
+    static int atlas_debug_count = 0;
+    if (atlas_debug_count < 3) {
+        printf("ATLAS_DEBUG: Binding atlases - Main: %u, Side: %u, Bottom: %u\n", 
+               mainAtlasID ? mainAtlasID : textureAtlasID, sideAtlasID, bottomAtlasID);
+        atlas_debug_count++;
+    }
+    
+    // Texture unit 0: Main atlas
     glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D, textureAtlasID);
-    checkGlError("glBindTexture (draw)");
+    glBindTexture(GL_TEXTURE_2D, mainAtlasID ? mainAtlasID : textureAtlasID);
+    checkGlError("glBindTexture main atlas (draw)");
+    
+    // Texture unit 1: Side atlas
+    glActiveTexture(GL_TEXTURE1);
+    glBindTexture(GL_TEXTURE_2D, sideAtlasID);
+    checkGlError("glBindTexture side atlas (draw)");
+    
+    // Texture unit 2: Bottom atlas
+    glActiveTexture(GL_TEXTURE2);
+    glBindTexture(GL_TEXTURE_2D, bottomAtlasID);
+    checkGlError("glBindTexture bottom atlas (draw)");
 
-    // Set the sampler uniform
+    // Set the sampler uniforms for each atlas
+    GLint mainAtlasSamplerLoc = glGetUniformLocation(shaderProgram, "uMainAtlasSampler");
+    GLint sideAtlasSamplerLoc = glGetUniformLocation(shaderProgram, "uSideAtlasSampler");
+    GLint bottomAtlasSamplerLoc = glGetUniformLocation(shaderProgram, "uBottomAtlasSampler");
+    
+    // Debug: Log uniform locations
+    if (atlas_debug_count <= 3) {
+        printf("ATLAS_DEBUG: Uniform locations - Main: %d, Side: %d, Bottom: %d\n", 
+               mainAtlasSamplerLoc, sideAtlasSamplerLoc, bottomAtlasSamplerLoc);
+    }
+    
+    if (mainAtlasSamplerLoc != -1) {
+        glUniform1i(mainAtlasSamplerLoc, 0); // Texture unit 0
+        checkGlError("glUniform1i uMainAtlasSampler (draw)");
+    }
+    if (sideAtlasSamplerLoc != -1) {
+        glUniform1i(sideAtlasSamplerLoc, 1); // Texture unit 1
+        checkGlError("glUniform1i uSideAtlasSampler (draw)");
+    }
+    if (bottomAtlasSamplerLoc != -1) {
+        glUniform1i(bottomAtlasSamplerLoc, 2); // Texture unit 2
+        checkGlError("glUniform1i uBottomAtlasSampler (draw)");
+    }
+
+    // Legacy texture sampler (fallback for old shaders)
     GLint texSamplerLoc = glGetUniformLocation(shaderProgram, "uTextureSampler");
     checkGlError("glGetUniformLocation uTextureSampler (draw)");
 
     if (texSamplerLoc != -1) {
-        glUniform1i(texSamplerLoc, 0);
+        glUniform1i(texSamplerLoc, 0); // Use main atlas as default
         checkGlError("glUniform1i uTextureSampler (draw)");
     } else {
         // If uTextureSampler is not found here, texturing will fail.
@@ -348,6 +393,19 @@ void MeshRenderer::draw(const VoxelMesh& mesh, const glm::mat4& model, const glm
 
     // Disable blending after drawing if it was enabled here
     glDisable(GL_BLEND);
+}
+
+// Multi-atlas support
+void MeshRenderer::setAtlasTextures(GLuint mainAtlas, GLuint sideAtlas, GLuint bottomAtlas) {
+    mainAtlasID = mainAtlas;
+    sideAtlasID = sideAtlas;
+    bottomAtlasID = bottomAtlas;
+    
+    // For backward compatibility, set the main atlas as the legacy textureAtlasID
+    textureAtlasID = mainAtlas;
+    
+    DEBUG_LOG("MeshRenderer", "Multi-atlas textures set - Main: " + std::to_string(mainAtlas) + 
+             ", Side: " + std::to_string(sideAtlas) + ", Bottom: " + std::to_string(bottomAtlas));
 }
 
 GLuint MeshRenderer::loadShader(const std::string& path, GLenum type) {

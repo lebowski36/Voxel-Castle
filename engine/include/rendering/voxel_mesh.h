@@ -25,14 +25,16 @@ namespace VoxelEngine {
             glm::vec2 quad_uv;     ///< UV coordinates for tiling across the quad (0 to W, 0 to H).
             glm::vec2 atlas_tile_origin_uv; ///< UV coordinates of the tile's origin in the atlas.
             float light = 1.0f;    ///< Per-vertex light (0.0 = dark, 1.0 = max brightness)
+            int atlas_id = 0;      ///< Atlas ID (0=main, 1=side, 2=bottom) for multi-atlas support
 
             Vertex() = default;
             Vertex(const glm::vec3& pos,
                    const glm::vec3& norm,
                    const glm::vec2& q_uv = glm::vec2(0.0f),
                    const glm::vec2& atlas_origin = glm::vec2(0.0f),
-                   float l = 1.0f)
-                : position(pos), normal(norm), quad_uv(q_uv), atlas_tile_origin_uv(atlas_origin), light(l) {}
+                   float l = 1.0f,
+                   int atlas = 0)
+                : position(pos), normal(norm), quad_uv(q_uv), atlas_tile_origin_uv(atlas_origin), light(l), atlas_id(atlas) {}
         };
 
         /**

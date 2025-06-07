@@ -152,15 +152,15 @@ bool Game::initialize() {
     // Initialize texture atlas and load the texture file
     textureAtlas_ = std::make_unique<VoxelEngine::Rendering::TextureAtlas>();
     
-    // Load the new 16x16 atlas texture file
-    if (textureAtlas_->loadTexture("assets/textures/atlas_main_16x16.png")) {
-        std::cout << "[Game] TextureAtlas loaded successfully (16x16)" << std::endl;
+    // TextureAtlas constructor automatically loads multi-atlas system
+    if (textureAtlas_->isTextureLoaded()) {
+        std::cout << "[Game] Multi-atlas TextureAtlas loaded successfully" << std::endl;
         
         // Set the texture atlas for the BlockVisualizationPanel
         VoxelEngine::UI::BlockVisualizationPanel::setTextureAtlas(textureAtlas_.get());
         std::cout << "[Game] TextureAtlas set for BlockVisualizationPanel" << std::endl;
     } else {
-        std::cerr << "[Game] ERROR: Failed to load TextureAtlas from assets/textures/atlas_main_16x16.png" << std::endl;
+        std::cerr << "[Game] ERROR: Failed to load multi-atlas TextureAtlas system" << std::endl;
     }
     
     // Initialize mesh systems
@@ -169,10 +169,14 @@ bool Game::initialize() {
     
     // Connect the texture atlas to the mesh renderer
     if (textureAtlas_->isTextureLoaded()) {
-        // The MeshRenderer needs to use the texture ID from the TextureAtlas
-        GLuint atlasTextureId = textureAtlas_->getTextureID();
-        meshRenderer_->setTextureAtlasID(atlasTextureId);
-        std::cout << "[Game] Connected TextureAtlas (ID: " << atlasTextureId << ") to MeshRenderer" << std::endl;
+        // Set all three atlas textures for the multi-atlas system
+        GLuint mainAtlasId = textureAtlas_->getTextureID(VoxelEngine::Rendering::AtlasType::MAIN);
+        GLuint sideAtlasId = textureAtlas_->getTextureID(VoxelEngine::Rendering::AtlasType::SIDE);
+        GLuint bottomAtlasId = textureAtlas_->getTextureID(VoxelEngine::Rendering::AtlasType::BOTTOM);
+        
+        meshRenderer_->setAtlasTextures(mainAtlasId, sideAtlasId, bottomAtlasId);
+        std::cout << "[Game] Connected Multi-atlas TextureAtlas to MeshRenderer - Main: " << mainAtlasId 
+                  << ", Side: " << sideAtlasId << ", Bottom: " << bottomAtlasId << std::endl;
     } else {
         std::cerr << "[Game] Warning: TextureAtlas failed to load texture" << std::endl;
     }

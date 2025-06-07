@@ -2,6 +2,7 @@
 #define VOXEL_ENGINE_TEXTURE_ATLAS_H
 
 #include "world/voxel_types.h"
+#include "world/voxel_face_patterns.h"
 #include <glad/glad.h>
 #include <glm/vec2.hpp>
 #include <glm/vec4.hpp>
@@ -38,18 +39,34 @@ struct TextureCoordinates {
     glm::vec2 getTopLeft() const { return glm::vec2(uv_min.x, uv_max.y); }
 };
 
+enum class AtlasType {
+    MAIN = 0,    // Top faces and uniform blocks
+    SIDE = 1,    // Side faces
+    BOTTOM = 2   // Bottom faces
+};
+
 class TextureAtlas {
 public:
     TextureAtlas();
     ~TextureAtlas();
 
     TextureCoordinates getTextureCoordinates(VoxelEngine::World::VoxelType type) const;
-
-    // New methods for texture ID management
-    bool loadTexture(const std::string& texturePath);
-    GLuint getTextureID() const { return m_texture_id; }
-    void setTextureID(GLuint id) { m_texture_id = id; }
-    bool isTextureLoaded() const { return m_texture_id != 0; }
+    
+    // Face-specific texture coordinate retrieval
+    TextureCoordinates getTextureCoordinates(VoxelEngine::World::VoxelType type, AtlasType atlasType) const;
+    
+    // Face-based atlas selection
+    AtlasType getAtlasForFace(VoxelEngine::World::VoxelType type, VoxelEngine::World::Face face) const;
+    
+    // Multi-atlas texture ID management
+    bool loadTexture(const std::string& texturePath); // Loads main atlas (backward compatibility)
+    bool loadMultiAtlas(const std::string& mainPath, const std::string& sidePath, const std::string& bottomPath);
+    GLuint getTextureID() const { return m_texture_ids[0]; } // Main atlas (backward compatibility)
+    GLuint getTextureID(AtlasType atlasType) const { return m_texture_ids[static_cast<int>(atlasType)]; }
+    void setTextureID(GLuint id) { m_texture_ids[0] = id; } // Main atlas (backward compatibility)
+    void setTextureID(AtlasType atlasType, GLuint id) { m_texture_ids[static_cast<int>(atlasType)] = id; }
+    bool isTextureLoaded() const { return m_texture_ids[0] != 0; } // Main atlas (backward compatibility)
+    bool isTextureLoaded(AtlasType atlasType) const { return m_texture_ids[static_cast<int>(atlasType)] != 0; }
     void releaseTexture(); // Clean up GPU resources
     
     // Atlas management
@@ -58,10 +75,18 @@ public:
 
 private:
     std::unordered_map<VoxelEngine::World::VoxelType, TextureCoordinates> m_voxel_texture_coords;
-    GLuint m_texture_id = 0; // Store the OpenGL texture ID
+    GLuint m_texture_ids[3] = {0, 0, 0}; // [MAIN, SIDE, BOTTOM] atlas texture IDs
     
     void initializeAllBlockTextures(); // Initialize UV coordinates for all 256 blocks
     TextureCoordinates calculateTextureCoordinates(uint8_t block_id) const;
+    
+    // Helper functions for multi-atlas support
+    bool loadSingleTexture(const std::string& texturePath, AtlasType atlasType);
+    std::string getAtlasTypeName(AtlasType atlasType) const;
+    
+    // Atlas-specific coordinate calculation helpers
+    TextureCoordinates calculateSideAtlasCoordinates(VoxelEngine::World::VoxelType type) const;
+    TextureCoordinates calculateBottomAtlasCoordinates(VoxelEngine::World::VoxelType type) const;
 };
 
 } // namespace Rendering

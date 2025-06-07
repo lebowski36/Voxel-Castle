@@ -266,20 +266,35 @@ void VoxelEngine::Rendering::Meshing::TwoPhaseGreedyMeshingAlgorithm::addQuad(Vo
     float light = debugLight;
     
     // Determine which face we're rendering based on normal vector
-    VoxelEngine::World::VoxelType textureVoxelType = voxelType;
-    if (voxelType == VoxelEngine::World::VoxelType::GRASS) {
-        // Grass blocks: green on top, dirt on sides/bottom
-        if (normal.y > 0.5f) {
-            // Top face - use grass texture
-            textureVoxelType = VoxelEngine::World::VoxelType::GRASS;
-        } else {
-            // Side/bottom faces - use dirt texture
-            textureVoxelType = VoxelEngine::World::VoxelType::DIRT;
-        }
+    VoxelEngine::World::Face face;
+    if (normal.y > 0.5f) {
+        face = VoxelEngine::World::Face::TOP;
+    } else if (normal.y < -0.5f) {
+        face = VoxelEngine::World::Face::BOTTOM;
+    } else {
+        // For X and Z faces, use FRONT as the representative side face
+        face = VoxelEngine::World::Face::FRONT;
     }
     
-    TextureCoordinates texCoords = atlas.getTextureCoordinates(textureVoxelType);
+    // Get the appropriate atlas and texture coordinates for this face
+    VoxelEngine::Rendering::AtlasType atlasType = atlas.getAtlasForFace(voxelType, face);
+    TextureCoordinates texCoords = atlas.getTextureCoordinates(voxelType, atlasType);
     glm::vec2 atlas_origin_uv = texCoords.getBottomLeft();
+
+    // Debug logging for face-based texture selection (limited to first 5 occurrences)
+    if (voxelType == VoxelEngine::World::VoxelType::GRASS) {
+        static int grass_debug_count = 0;
+        if (grass_debug_count < 5) {
+            const char* faceNames[] = {"FRONT", "BACK", "LEFT", "RIGHT", "TOP", "BOTTOM"};
+            const char* atlasNames[] = {"MAIN", "SIDE", "BOTTOM"};
+            printf("Face-based atlas selection: Block GRASS, Face %s -> Atlas %s, UV (%.3f, %.3f), AtlasID: %d\n",
+                   faceNames[static_cast<int>(face)], 
+                   atlasNames[static_cast<int>(atlasType)],
+                   texCoords.uv_min.x, texCoords.uv_min.y,
+                   static_cast<int>(atlasType));
+            grass_debug_count++;
+        }
+    }
 
     // Map UV coordinates based on world axis orientation for consistent texture orientation
     // Vertex order: p1, p2, p3, p4 where p1 is the base corner
@@ -372,10 +387,19 @@ void VoxelEngine::Rendering::Meshing::TwoPhaseGreedyMeshingAlgorithm::addQuad(Vo
         quad_uvs[3] = glm::vec2(1.0f, 0.0f);  // p4
     }
 
-    mesh.vertices.emplace_back(p1, normal, quad_uvs[0], atlas_origin_uv, light);
-    mesh.vertices.emplace_back(p2, normal, quad_uvs[1], atlas_origin_uv, light);
-    mesh.vertices.emplace_back(p3, normal, quad_uvs[2], atlas_origin_uv, light);
-    mesh.vertices.emplace_back(p4, normal, quad_uvs[3], atlas_origin_uv, light);
+    mesh.vertices.emplace_back(p1, normal, quad_uvs[0], atlas_origin_uv, light, static_cast<int>(atlasType));
+    mesh.vertices.emplace_back(p2, normal, quad_uvs[1], atlas_origin_uv, light, static_cast<int>(atlasType));
+    mesh.vertices.emplace_back(p3, normal, quad_uvs[2], atlas_origin_uv, light, static_cast<int>(atlasType));
+    mesh.vertices.emplace_back(p4, normal, quad_uvs[3], atlas_origin_uv, light, static_cast<int>(atlasType));
+
+    // Debug mesh vertex creation for GRASS (limited logging)
+    if (voxelType == VoxelEngine::World::VoxelType::GRASS) {
+        static int grass_mesh_debug_count = 0;
+        if (grass_mesh_debug_count < 3) {
+            printf("MESH_DEBUG: Created vertices with AtlasID: %d for GRASS quad\n", static_cast<int>(atlasType));
+            grass_mesh_debug_count++;
+        }
+    }
 
     // Standard quad triangulation
     mesh.indices.push_back(base_index);
