@@ -33,8 +33,8 @@ void main()
     // Determine the correct tile UV span based on atlas type
     vec2 tile_uv_span;
     if (v_atlas_id == 0) {
-        // Main atlas: 1024x1024 pixels, 32x32 tiles -> tile span (1/32, 1/32)
-        tile_uv_span = vec2(1.0/32.0, 1.0/32.0);
+        // Main atlas: 512x512 pixels, 16x16 tiles -> tile span (1/16, 1/16)
+        tile_uv_span = vec2(1.0/16.0, 1.0/16.0);
     } else if (v_atlas_id == 1) {
         // Side atlas: 96x96 pixels, 32x32 tiles -> tile span (32/96, 32/96) = (1/3, 1/3)
         tile_uv_span = vec2(1.0/3.0, 1.0/3.0);
