@@ -9,6 +9,9 @@
 namespace VoxelEngine {
 namespace World {
 
+// Forward declaration for friend class
+class BlockPropertiesGenerator;
+
 /**
  * @struct BlockProperties
  * @brief Defines the properties and behavior characteristics of each block type.
@@ -86,6 +89,8 @@ struct BlockProperties {
  * ensuring consistent behavior across the game systems.
  */
 class BlockPropertiesManager {
+    friend class BlockPropertiesGenerator;  // Allow the generator to access private methods
+    
 public:
     static BlockPropertiesManager& getInstance();
     

@@ -209,7 +209,7 @@ void BlockPropertiesGenerator::registerAllBlocks(BlockPropertiesManager& manager
             impl += block_code
             impl += "\n"
     
-    impl += """}}
+    impl += """}
 
 } // namespace World
 } // namespace VoxelEngine
