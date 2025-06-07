@@ -51,8 +51,40 @@ def map_tool_type(tool_str: str) -> str:
     }
     return tool_map.get(tool_str.lower(), "BlockProperties::ToolType::NONE")
 
+def get_valid_voxel_types() -> set:
+    """Get all valid VoxelType enum values from the C++ header."""
+    # Define the known VoxelTypes based on the current enum
+    # This should match the VoxelType enum in voxel_types.h
+    valid_types = {
+        'AIR', 'STONE', 'DIRT', 'GRASS', 'SAND', 'GRAVEL', 'CLAY', 'BEDROCK', 'TOPSOIL', 'SUBSOIL',
+        'GRANITE', 'LIMESTONE', 'MARBLE', 'SANDSTONE', 'SLATE', 'BASALT', 'QUARTZITE', 'OBSIDIAN', 'PUMICE', 'SHALE',
+        'COAL_ORE', 'IRON_ORE', 'COPPER_ORE', 'TIN_ORE', 'SILVER_ORE', 'GOLD_ORE', 'GEM_RUBY', 'GEM_SAPPHIRE', 'GEM_EMERALD', 'GEM_DIAMOND',
+        'WOOD_OAK', 'WOOD_PINE', 'WOOD_BIRCH', 'WOOD_MAHOGANY', 'LEAVES_OAK', 'LEAVES_PINE', 'LEAVES_BIRCH', 'LEAVES_PALM', 'MUSHROOM_BROWN', 'MUSHROOM_RED',
+        'SNOW', 'ICE', 'PACKED_ICE', 'CACTUS', 'JUNGLE_VINE', 'CORAL_PINK', 'CORAL_BLUE', 'SEAWEED', 'TUNDRA_MOSS', 'DESERT_ROCK',
+        'WATER', 'LAVA', 'OIL', 'ACID', 'HONEY', 'STEAM', 'TOXIC_GAS', 'NATURAL_GAS', 'MAGICAL_MIST', 'SMOKE',
+        'STONE_BRICK', 'GRANITE_BRICK', 'MARBLE_TILE', 'SANDSTONE_BRICK', 'SLATE_TILE', 'COBBLESTONE', 'SMOOTH_STONE', 'POLISHED_GRANITE', 'POLISHED_MARBLE', 'FLAGSTONE',
+        'OAK_PLANKS', 'PINE_PLANKS', 'BIRCH_PLANKS', 'MAHOGANY_PLANKS', 'OAK_BEAM', 'PINE_BEAM', 'HARDWOOD_BEAM', 'BAMBOO_PLANK', 'CORK', 'CHARCOAL_BLOCK',
+        'IRON_BLOCK', 'COPPER_BLOCK', 'BRONZE_BLOCK', 'STEEL_BLOCK', 'SILVER_BLOCK', 'GOLD_BLOCK', 'BRASS_BLOCK', 'PEWTER_BLOCK', 'MITHRIL_BLOCK', 'ADAMANTINE_BLOCK',
+        'CLAY_BRICK', 'TERRACOTTA', 'GLAZED_TILE_WHITE', 'GLAZED_TILE_RED', 'GLAZED_TILE_BLUE', 'GLAZED_TILE_GREEN', 'PORCELAIN', 'STONEWARE', 'EARTHENWARE', 'CERAMIC_TILE',
+        'DOOR_WOOD', 'DOOR_IRON', 'DOOR_REINFORCED', 'WINDOW_GLASS', 'WINDOW_IRON_BARS', 'PORTCULLIS', 'DRAWBRIDGE', 'GATE_WOOD', 'GATE_IRON', 'HATCH_WOOD',
+        'CHEST_WOOD', 'CHEST_IRON', 'BARREL', 'CRATE', 'BIN_STORAGE', 'SHELF', 'CABINET', 'STRONGBOX', 'VAULT_DOOR', 'SAFE',
+        'LEVER', 'BUTTON', 'PRESSURE_PLATE', 'GEAR_MECHANISM', 'PULLEY', 'ROPE', 'CHAIN', 'AXLE', 'PUMP', 'VALVE',
+        'TORCH', 'LANTERN', 'CANDLE', 'CHANDELIER', 'BRAZIER', 'CAMPFIRE', 'FURNACE', 'FORGE', 'KILN', 'CRYSTAL_LIGHT',
+        'TABLE_WOOD', 'CHAIR_WOOD', 'BED', 'THRONE', 'ALTAR', 'PODIUM', 'BENCH', 'STOOL', 'BOOKSHELF', 'DESK',
+        'CRYSTAL_CLEAR', 'CRYSTAL_BLUE', 'CRYSTAL_RED', 'CRYSTAL_GREEN', 'ENCHANTED_STONE', 'RUNIC_BLOCK', 'ETHER_CRYSTAL', 'VOID_STONE', 'CELESTIAL_MARBLE', 'SHADOW_GLASS',
+        'CONCRETE', 'REINFORCED_CONCRETE', 'STEEL_BEAM', 'GLASS_STEEL', 'COMPOSITE_ARMOR', 'ENERGY_CONDUIT', 'FORCE_FIELD_GEN', 'QUANTUM_BLOCK', 'NANOCARBON', 'PLASMA_CONTAINER',
+        'BLOCK_INVISIBLE', 'BLOCK_INTANGIBLE', 'BLOCK_ANTIGRAV', 'BLOCK_MAGNETIC', 'BLOCK_TEMPORAL', 'BLOCK_DIMENSIONAL', 'BLOCK_REGENERATING', 'BLOCK_EXPLOSIVE', 'BLOCK_ABSORBING', 'BLOCK_AMPLIFYING'
+    }
+    return valid_types
+
 def generate_cpp_props(block_name: str, block_data: Dict[str, Any]) -> str:
     """Generate C++ code for one block's properties."""
+    
+    # Check if this block type exists in the VoxelType enum
+    valid_types = get_valid_voxel_types()
+    if block_name not in valid_types:
+        print(f"⚠️  Skipping {block_name} - not found in VoxelType enum")
+        return ""
     
     # Extract data with defaults
     name = block_data.get("name", block_name.title())
@@ -87,15 +119,15 @@ def generate_cpp_props(block_name: str, block_data: Dict[str, Any]) -> str:
         props.is_transparent = {str(is_transparent).lower()};
         props.is_fluid = {str(is_fluid).lower()};
         props.is_walkable = {str(is_solid and not is_fluid).lower()};
-        props.hardness = {hardness}f;
-        props.blast_resistance = {hardness * 3.0}f;
+        props.hardness = {hardness:.1f}f;
+        props.blast_resistance = {hardness * 3.0:.1f}f;
         props.required_tool = {map_tool_type(required_tool)};
         props.required_tool_level = {tool_level};
         props.is_flammable = {str(is_flammable).lower()};
-        props.fire_spread_chance = {fire_spread_rate}f;
+        props.fire_spread_chance = {fire_spread_rate:.1f}f;
         props.emits_light = {str(emits_light).lower()};
         props.light_level = {light_level};
-        props.friction = {0.1 if is_fluid else 0.6}f;
+        props.friction = {0.1 if is_fluid else 0.6:.1f}f;
         
         // Default drops - set to the block itself for most blocks
         if (VoxelType::{block_name} != VoxelType::AIR) {{
@@ -105,7 +137,7 @@ def generate_cpp_props(block_name: str, block_data: Dict[str, Any]) -> str:
             props.drop_count_max = 1;
         }}
         
-        registerBlockProperties(VoxelType::{block_name}, props);
+        manager.registerBlockProperties(VoxelType::{block_name}, props);
     }}
 """
     return cpp_code
@@ -145,6 +177,12 @@ def generate_implementation_file(blocks: Dict[str, Any]) -> str:
     # Sort blocks by ID to maintain order
     sorted_blocks = sorted(blocks.items(), key=lambda x: x[1].get('id', 999))
     
+    # Filter out blocks that don't exist in VoxelType enum
+    valid_types = get_valid_voxel_types()
+    filtered_blocks = [(name, data) for name, data in sorted_blocks if name in valid_types]
+    
+    print(f"📊 Generating code for {len(filtered_blocks)} blocks (out of {len(blocks)} total)")
+    
     impl = f"""#include "world/block_properties_generated.h"
 #include <iostream>
 
@@ -154,19 +192,22 @@ namespace World {{
 void BlockPropertiesGenerator::initializeFromUnifiedData(BlockPropertiesManager& manager) {{
     std::cout << "[BlockPropertiesGenerator] Initializing properties from unified JSON data..." << std::endl;
     registerAllBlocks(manager);
-    std::cout << "[BlockPropertiesGenerator] Initialized properties for {len(blocks)} block types." << std::endl;
+    std::cout << "[BlockPropertiesGenerator] Initialized properties for {len(filtered_blocks)} block types." << std::endl;
 }}
 
 void BlockPropertiesGenerator::registerAllBlocks(BlockPropertiesManager& manager) {{
     // Auto-generated from unified JSON block data
     // Generated on: {__import__('datetime').datetime.now().isoformat()}
+    // Blocks with matching VoxelType enum entries: {len(filtered_blocks)} of {len(blocks)}
     
 """
     
-    # Generate code for each block
-    for block_name, block_data in sorted_blocks:
-        impl += generate_cpp_props(block_name, block_data)
-        impl += "\n"
+    # Generate code for each valid block
+    for block_name, block_data in filtered_blocks:
+        block_code = generate_cpp_props(block_name, block_data)
+        if block_code:  # Only add if code was generated
+            impl += block_code
+            impl += "\n"
     
     impl += """}}
 

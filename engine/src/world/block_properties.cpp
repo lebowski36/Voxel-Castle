@@ -1,4 +1,5 @@
 #include "world/block_properties.h"
+#include "world/block_properties_generated.h"
 #include <iostream>
 
 namespace VoxelEngine {
@@ -10,7 +11,11 @@ BlockPropertiesManager& BlockPropertiesManager::getInstance() {
 }
 
 BlockPropertiesManager::BlockPropertiesManager() {
-    initializeDefaultProperties();
+    // First, initialize from unified JSON data (new system)
+    BlockPropertiesGenerator::initializeFromUnifiedData(*this);
+    
+    // Then apply legacy overrides if needed (for compatibility during transition)
+    // initializeDefaultProperties();
 }
 
 const BlockProperties& BlockPropertiesManager::getProperties(VoxelType type) const {

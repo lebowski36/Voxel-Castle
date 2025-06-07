@@ -18,6 +18,7 @@ add_library(VoxelEngine STATIC
     src/world/seed_world_generator.cpp # Added SeedWorldGenerator source
     src/world/voxel_face_patterns.cpp # Added VoxelFacePatterns source
     src/world/block_properties.cpp # Added BlockProperties system source
+    src/world/block_properties_generated.cpp # Generated unified block properties from JSON
     src/world/quadtree.cpp      # Added Quadtree source
     # src/world/test_quadtree.cpp # Removed Quadtree test source
     src/world/test_voxel_system.cpp # Added Voxel System test source
