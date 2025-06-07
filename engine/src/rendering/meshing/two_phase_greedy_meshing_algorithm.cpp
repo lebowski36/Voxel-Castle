@@ -2,6 +2,7 @@
 #include "rendering/mesh_builder.h"
 #include "world/voxel_types.h"
 #include "world/chunk_segment.h"
+#include "world/block_properties.h"
 #include "rendering/debug_render_mode.h"
 #include <glm/glm.hpp>
 #include <iostream>
@@ -152,9 +153,51 @@ namespace VoxelEngine {
                 
                 bool is_voxel1_solid = (voxel1.id != static_cast<uint8_t>(VoxelEngine::World::VoxelType::AIR));
                 bool is_voxel2_solid = (voxel2.id != static_cast<uint8_t>(VoxelEngine::World::VoxelType::AIR));
+                
+                // Check transparency for both voxels
+                bool is_voxel1_transparent = false;
+                bool is_voxel2_transparent = false;
+                
+                if (is_voxel1_solid) {
+                    VoxelEngine::World::VoxelType voxel1_type = static_cast<VoxelEngine::World::VoxelType>(voxel1.id);
+                    is_voxel1_transparent = VoxelEngine::World::BlockPropertiesManager::getInstance().isTransparent(voxel1_type);
+                }
+                
+                if (is_voxel2_solid) {
+                    VoxelEngine::World::VoxelType voxel2_type = static_cast<VoxelEngine::World::VoxelType>(voxel2.id);
+                    is_voxel2_transparent = VoxelEngine::World::BlockPropertiesManager::getInstance().isTransparent(voxel2_type);
+                }
 
-                // Face is visible if voxel1 is solid and voxel2 is air
-                return is_voxel1_solid && !is_voxel2_solid;
+                // Face visibility logic:
+                // - Render if voxel1 exists and voxel2 is air
+                // - Render if voxel1 exists and voxel2 is transparent (but different material)
+                // - Don't render between two transparent blocks of the same type
+                // - Don't render if voxel1 is air
+                
+                if (!is_voxel1_solid) {
+                    return false; // Don't render faces from air
+                }
+                
+                if (!is_voxel2_solid) {
+                    return true; // Always render solid-to-air faces
+                }
+                
+                // Both voxels are solid at this point
+                if (is_voxel1_transparent && is_voxel2_transparent) {
+                    // Don't render faces between two transparent blocks
+                    return false;
+                }
+                
+                if (!is_voxel1_transparent && is_voxel2_transparent) {
+                    return true; // Render solid-to-transparent faces
+                }
+                
+                if (is_voxel1_transparent && !is_voxel2_transparent) {
+                    return true; // Render transparent-to-solid faces
+                }
+                
+                // Both are opaque solid blocks - don't render internal faces
+                return false;
             }
 
             void TwoPhaseGreedyMeshingAlgorithm::computeQuadDimensions(
