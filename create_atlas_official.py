@@ -77,13 +77,19 @@ def generate_modular_texture(block_id, block_info, size=32, face='all', seed=Non
     """
     if not MODULAR_SYSTEM_AVAILABLE:
         return generate_legacy_texture(block_id, block_info, size)
-    
+
     if seed is not None:
         random.seed(seed)
-    
+
     # Get block classification from JSON data
-    block_type = block_info.get('type', 'special')
-    subtype = block_info.get('subtype', 'placeholder')
+    # Extract from nested structure: texture_info.generation.type/subtype
+    texture_info = block_info.get('texture_info', {})
+    generation = texture_info.get('generation', {})
+    block_type = generation.get('type', 'special')
+    subtype = generation.get('subtype', 'placeholder')
+    
+    # Debug output
+    print(f"Debug modular: block_id={block_id}, name={block_info.get('name', 'unknown')}, type={block_type}, subtype={subtype}")
     
     try:
         if block_type == 'stone':

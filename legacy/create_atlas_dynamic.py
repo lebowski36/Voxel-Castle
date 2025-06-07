@@ -15,7 +15,8 @@ from enum import Enum
 
 # Import our existing systems
 current_dir = os.path.dirname(os.path.abspath(__file__))
-sys.path.insert(0, current_dir)
+parent_dir = os.path.dirname(current_dir)  # Go up one level from legacy/
+sys.path.insert(0, parent_dir)
 
 from atlas_face_system import (
     AtlasSlotAllocator, AtlasType, FacePattern, 
@@ -24,7 +25,7 @@ from atlas_face_system import (
 from scripts.json_to_block_mapping import load_unified_block_data, convert_to_block_mapping
 
 # Import texture generation
-texture_generators_path = os.path.join(current_dir, 'texture_generators')
+texture_generators_path = os.path.join(parent_dir, 'texture_generators')
 sys.path.insert(0, texture_generators_path)
 
 try:
