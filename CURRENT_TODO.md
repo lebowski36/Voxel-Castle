@@ -101,7 +101,8 @@ This protocol outlines how the AI agent (GitHub Copilot) operates. Adherence to 
 - [ ] Implement Modular UI System
 - [ ] Implement Menu System
 - [x] **Add World Seed System** - Enhanced world generation system (08c) in development with comprehensive design requirements integration. Core seed system (08c.1) officially COMPLETED ✅ 2025-06-06. Generation parameters system (08c.2) officially COMPLETED ✅ 2025-06-06. Feature parity (08c.3) basic implementation COMPLETED ✅ 2025-06-06. See `08c_world_generation_system.md` and subtasks 08c.1-08c.10 for detailed implementation plan
-- [ ] **Comprehensive Block System** - Define and implement complete block taxonomy (256 block types) with properties system before expanding world generation. Implementation broken into modular subtasks: 08d.1 (✅ **PHASE 1&2 COMPLETE** - face-based atlas system), 08d.2 (✅ **COMPLETE** - texture generator fixes), 08d.3 (🔄 IN PROGRESS - coverage analysis), 08d.4 (integration). **Key Achievement**: 65.5% atlas space savings, formal FacePattern system, texture generator bugfixes, Block Visualization UI (F3). **Current**: Implementing Block Visualization UI for debugging and finalizing worldgen block coverage. See `08d_comprehensive_block_system.md` for overview and subtask files for detailed implementation plans (HIGH PRIORITY - Required before 08c.3 detailed expansion)
+- [ ] **🚨 URGENT BUG: Grass Side Texture Atlas Sampling Error** - Critical visual bug where grass side faces display incorrect textures (metal_iron/checkerboard) instead of correct grass side texture from side atlas. All logic correctly selects side atlas but shader/texture binding layer has an error. See `08d.1.1_grass_side_texture_bug.md` for detailed investigation progress. **BLOCKING** - Must be resolved before continuing comprehensive block system work.
+- [ ] **Comprehensive Block System** - Define and implement complete block taxonomy (256 block types) with properties system before expanding world generation. Implementation broken into modular subtasks: 08d.1 (✅ **PHASE 1&2 COMPLETE** - face-based atlas system), 08d.2 (✅ **COMPLETE** - texture generator fixes), 08d.3 (🔄 PAUSED - pending 08d.1.1 bug fix), 08d.4 (integration). **Key Achievement**: 65.5% atlas space savings, formal FacePattern system, texture generator bugfixes, Block Visualization UI (F3). See `08d_comprehensive_block_system.md` for overview and subtask files for detailed implementation plans (HIGH PRIORITY - Required before 08c.3 detailed expansion)
 - [ ] **Research and Decide on Open Source Licensing** - Analyze project dependencies, research appropriate open source licenses (MIT, GPL, Apache, etc.), and determine what licensing obligations and requirements apply to this project
 - [x] **Fix TextureAtlas Texture ID Management** - ✅ RESOLVED: Added texture_atlas.cpp to CMakeLists.txt, fixed duplicate constant definitions, all TextureAtlas methods now properly linked and functional
 
@@ -117,8 +118,8 @@ This protocol outlines how the AI agent (GitHub Copilot) operates. Adherence to 
 ## 📝 Near-Term Priority Tasks
 *This section should be updated regularly with the most immediate goals, typically pointing to the current high-level task from the list above.*
 
-**Current Focus:** Implement Game State Management - Phase 2 (Time Control System)
-**Previous Focus:** ~~Implement Block Placement System~~ (✅ Completed)
+**Current Focus:** 🚨 URGENT BUG: Grass Side Texture Atlas Sampling Error (08d.1.1)
+**Previous Focus:** ~~Implement Game State Management - Phase 2 (Time Control System)~~ (Paused for critical bug fix)
 
 ## 📊 Progress Tracking (C++ Phase)
 - [x] Project structure and build system defined.

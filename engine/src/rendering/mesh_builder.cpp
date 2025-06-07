@@ -4,6 +4,7 @@
 #include "world/voxel_types.h"
 #include "world/chunk_segment.h"
 #include "rendering/texture_atlas.h"
+#include "world/voxel_face_patterns.h"
 #include "../../game/include/utils/debug_logger.h"
 
 #include <glm/glm.hpp>
@@ -103,7 +104,19 @@ namespace VoxelEngine {
             
             uint32_t base_index = static_cast<uint32_t>(mesh.vertices.size());
 
-            TextureCoordinates texCoords = atlas.getTextureCoordinates(voxelType);
+            // Determine which face this is based on the normal vector
+            VoxelEngine::World::Face face;
+            if (normal.y > 0.5f) {
+                face = VoxelEngine::World::Face::TOP;
+            } else if (normal.y < -0.5f) {
+                face = VoxelEngine::World::Face::BOTTOM;
+            } else {
+                face = VoxelEngine::World::Face::FRONT; // Use FRONT as representative side face
+            }
+
+            // Get the appropriate atlas and texture coordinates for this face
+            VoxelEngine::Rendering::AtlasType atlasType = atlas.getAtlasForFace(voxelType, face);
+            TextureCoordinates texCoords = atlas.getTextureCoordinates(voxelType, atlasType);
             glm::vec2 atlas_origin_uv = texCoords.getBottomLeft(); // This is the v_atlas_tile_origin_uv
 
             // quad_uv for a single face (non-greedy) will always be 0-1 range
@@ -116,7 +129,7 @@ namespace VoxelEngine {
             // The 'light' component is set to 1.0f for now.
             // Note: The order of face_vertices (BL, BR, TR, TL) must match the quad_uvs order.
             for (int i = 0; i < 4; ++i) {
-                mesh.vertices.emplace_back(voxel_pos + face_vertices[i], normal, quad_uvs[i], atlas_origin_uv, debugLight);
+                mesh.vertices.emplace_back(voxel_pos + face_vertices[i], normal, quad_uvs[i], atlas_origin_uv, debugLight, static_cast<int>(atlasType));
             }
 
             mesh.indices.push_back(base_index);
@@ -166,7 +179,20 @@ namespace VoxelEngine {
             uint32_t base_index = static_cast<uint32_t>(mesh.vertices.size());
 
             float light = debugLight; // Use debugLight for visualization
-            TextureCoordinates texCoords = atlas.getTextureCoordinates(voxelType);
+
+            // Determine which face this is based on the normal vector
+            VoxelEngine::World::Face face;
+            if (normal.y > 0.5f) {
+                face = VoxelEngine::World::Face::TOP;
+            } else if (normal.y < -0.5f) {
+                face = VoxelEngine::World::Face::BOTTOM;
+            } else {
+                face = VoxelEngine::World::Face::FRONT; // Use FRONT as representative side face
+            }
+
+            // Get the appropriate atlas and texture coordinates for this face
+            VoxelEngine::Rendering::AtlasType atlasType = atlas.getAtlasForFace(voxelType, face);
+            TextureCoordinates texCoords = atlas.getTextureCoordinates(voxelType, atlasType);
             glm::vec2 atlas_origin_uv = texCoords.getBottomLeft(); // This is v_atlas_tile_origin_uv
 
             // quad_uvs are now 0-W and 0-H
@@ -180,10 +206,10 @@ namespace VoxelEngine {
             quad_uvs[2] = glm::vec2(static_cast<float>(quad_width_voxels), static_cast<float>(quad_height_voxels));
             quad_uvs[3] = glm::vec2(0.0f, static_cast<float>(quad_height_voxels));
 
-            mesh.vertices.emplace_back(p1, normal, quad_uvs[0], atlas_origin_uv, light);
-            mesh.vertices.emplace_back(p2, normal, quad_uvs[1], atlas_origin_uv, light);
-            mesh.vertices.emplace_back(p3, normal, quad_uvs[2], atlas_origin_uv, light);
-            mesh.vertices.emplace_back(p4, normal, quad_uvs[3], atlas_origin_uv, light);
+            mesh.vertices.emplace_back(p1, normal, quad_uvs[0], atlas_origin_uv, light, static_cast<int>(atlasType));
+            mesh.vertices.emplace_back(p2, normal, quad_uvs[1], atlas_origin_uv, light, static_cast<int>(atlasType));
+            mesh.vertices.emplace_back(p3, normal, quad_uvs[2], atlas_origin_uv, light, static_cast<int>(atlasType));
+            mesh.vertices.emplace_back(p4, normal, quad_uvs[3], atlas_origin_uv, light, static_cast<int>(atlasType));
 
             // Standard quad triangulation (ensure CCW winding order as seen from the direction of the normal for front faces)
             mesh.indices.push_back(base_index);     // p1

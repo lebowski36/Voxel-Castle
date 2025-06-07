@@ -190,7 +190,7 @@ void MeshRenderer::uploadMesh(const VoxelMesh& mesh) {
     glEnableVertexAttribArray(4); 
     glVertexAttribPointer(4, 1, GL_FLOAT, GL_FALSE, sizeof(VoxelEngine::Rendering::Vertex), (void*)offsetof(VoxelEngine::Rendering::Vertex, light));
     glEnableVertexAttribArray(5); 
-    glVertexAttribPointer(5, 1, GL_INT, GL_FALSE, sizeof(VoxelEngine::Rendering::Vertex), (void*)offsetof(VoxelEngine::Rendering::Vertex, atlas_id));
+    glVertexAttribIPointer(5, 1, GL_INT, sizeof(VoxelEngine::Rendering::Vertex), (void*)offsetof(VoxelEngine::Rendering::Vertex, atlas_id));
     checkGlError("Vertex attribute setup (per-mesh upload)");
 
     mesh.buffersUploaded = true;
@@ -261,19 +261,7 @@ void MeshRenderer::draw(const VoxelMesh& mesh, const glm::mat4& model, const glm
     glUseProgram(shaderProgram);
     checkGlError("glUseProgram (draw)");
 
-    // Set u_tile_uv_span uniform
-    GLint tileUVSpanLoc = glGetUniformLocation(shaderProgram, "u_tile_uv_span");
-    checkGlError("glGetUniformLocation u_tile_uv_span (draw)");
-    if (tileUVSpanLoc != -1) {
-        glUniform2f(tileUVSpanLoc, VoxelEngine::Rendering::TILE_UV_WIDTH, VoxelEngine::Rendering::TILE_UV_HEIGHT);
-        checkGlError("glUniform2f u_tile_uv_span (draw)");
-    } else {
-        static bool tileUVSpanWarningLogged = false;
-        if (!tileUVSpanWarningLogged) {
-            std::cerr << "[MeshRenderer::draw] Warning (logged once): u_tile_uv_span uniform not found. Shader Program ID: " << shaderProgram << ". Tiling will not work correctly." << std::endl;
-            tileUVSpanWarningLogged = true;
-        }
-    }
+    // u_tile_uv_span uniform removed - shader calculates tile span dynamically based on atlas ID
 
     // Activate texture units and bind all three atlases
     
@@ -319,11 +307,8 @@ void MeshRenderer::draw(const VoxelMesh& mesh, const glm::mat4& model, const glm
         glUniform1i(texSamplerLoc, 0); // Use main atlas as default
         checkGlError("glUniform1i uTextureSampler (draw)");
     } else {
-        // If uTextureSampler is not found here, texturing will fail.
-        if (!textureSamplerWarningLogged) { // Use the existing static flag to log only once.
-            std::cerr << "[MeshRenderer::draw] Warning (logged once): uTextureSampler uniform not found after glUseProgram. Shader Program ID: " << shaderProgram << ". Texture rendering will likely fail." << std::endl;
-            textureSamplerWarningLogged = true;
-        }
+        // uTextureSampler is legacy fallback - current shader uses specific atlas samplers
+        // This is expected behavior for the multi-atlas system
     }
 
     GLint modelLoc = glGetUniformLocation(shaderProgram, "uModel");

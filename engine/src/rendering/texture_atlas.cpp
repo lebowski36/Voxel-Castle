@@ -260,11 +260,13 @@ TextureCoordinates TextureAtlas::calculateSideAtlasCoordinates(VoxelEngine::Worl
         float u_min = static_cast<float>(tile_idx_x) * tile_uv_width;
         float u_max = static_cast<float>(tile_idx_x + 1) * tile_uv_width;
         
-        // Convert from image space (top-down) to OpenGL UV space (bottom-up)
-        float v_gl_min = 1.0f - (static_cast<float>(tile_idx_y + 1) * tile_uv_height);
-        float v_gl_max = 1.0f - (static_cast<float>(tile_idx_y) * tile_uv_height);
+        // Fix UV coordinate system: OpenGL UV (0,0) is bottom-left, but we want slot 0 to be top-left
+        // For a 3x3 grid with slot 0 at top-left, slot 0 should map to UV (0,0.667)
+        // But our atlas has slot 0 at the actual bottom-left of the texture
+        float v_min = static_cast<float>(tile_idx_y) * tile_uv_height;
+        float v_max = static_cast<float>(tile_idx_y + 1) * tile_uv_height;
         
-        return {{u_min, v_gl_min}, {u_max, v_gl_max}};
+        return {{u_min, v_min}, {u_max, v_max}};
     }
     
     // Fallback to AIR tile in main atlas if not found
