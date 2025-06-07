@@ -1,3 +1,18 @@
+#!/usr/bin/env python3
+"""
+LEGACY ATLAS GENERATOR - DEPRECATED AS OF 2025-06-08
+====================================================
+
+⚠️  THIS FILE IS DEPRECATED - DO NOT USE ⚠️ 
+
+USE create_atlas_official.py INSTEAD
+
+This was the original atlas generator with hardcoded BLOCK_MAPPING.
+Kept for reference only.
+
+Replaced by: create_atlas_official.py (dynamic multi-file system)
+"""
+
 from PIL import Image, ImageDraw
 import os
 import sys

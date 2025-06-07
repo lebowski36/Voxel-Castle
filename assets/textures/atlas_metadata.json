@@ -1,0 +1,1915 @@
+{
+  "generation_info": {
+    "tile_size_px": 32,
+    "max_grid_size": 16,
+    "total_blocks": 256
+  },
+  "atlases": {
+    "main": {
+      "files": [
+        {
+          "filename": "atlas_main.png",
+          "grid_size": [
+            16,
+            16
+          ],
+          "total_slots": 256,
+          "used_slots": 256,
+          "efficiency": 100.0,
+          "blocks": {
+            "0": {
+              "slot_index": 0,
+              "slot_coords": [
+                0,
+                0
+              ]
+            },
+            "1": {
+              "slot_index": 1,
+              "slot_coords": [
+                1,
+                0
+              ]
+            },
+            "2": {
+              "slot_index": 2,
+              "slot_coords": [
+                2,
+                0
+              ]
+            },
+            "3": {
+              "slot_index": 3,
+              "slot_coords": [
+                3,
+                0
+              ]
+            },
+            "4": {
+              "slot_index": 4,
+              "slot_coords": [
+                4,
+                0
+              ]
+            },
+            "5": {
+              "slot_index": 5,
+              "slot_coords": [
+                5,
+                0
+              ]
+            },
+            "6": {
+              "slot_index": 6,
+              "slot_coords": [
+                6,
+                0
+              ]
+            },
+            "7": {
+              "slot_index": 7,
+              "slot_coords": [
+                7,
+                0
+              ]
+            },
+            "8": {
+              "slot_index": 8,
+              "slot_coords": [
+                8,
+                0
+              ]
+            },
+            "9": {
+              "slot_index": 9,
+              "slot_coords": [
+                9,
+                0
+              ]
+            },
+            "10": {
+              "slot_index": 10,
+              "slot_coords": [
+                10,
+                0
+              ]
+            },
+            "11": {
+              "slot_index": 11,
+              "slot_coords": [
+                11,
+                0
+              ]
+            },
+            "12": {
+              "slot_index": 12,
+              "slot_coords": [
+                12,
+                0
+              ]
+            },
+            "13": {
+              "slot_index": 13,
+              "slot_coords": [
+                13,
+                0
+              ]
+            },
+            "14": {
+              "slot_index": 14,
+              "slot_coords": [
+                14,
+                0
+              ]
+            },
+            "15": {
+              "slot_index": 15,
+              "slot_coords": [
+                15,
+                0
+              ]
+            },
+            "16": {
+              "slot_index": 16,
+              "slot_coords": [
+                0,
+                1
+              ]
+            },
+            "17": {
+              "slot_index": 17,
+              "slot_coords": [
+                1,
+                1
+              ]
+            },
+            "18": {
+              "slot_index": 18,
+              "slot_coords": [
+                2,
+                1
+              ]
+            },
+            "19": {
+              "slot_index": 19,
+              "slot_coords": [
+                3,
+                1
+              ]
+            },
+            "20": {
+              "slot_index": 20,
+              "slot_coords": [
+                4,
+                1
+              ]
+            },
+            "21": {
+              "slot_index": 21,
+              "slot_coords": [
+                5,
+                1
+              ]
+            },
+            "22": {
+              "slot_index": 22,
+              "slot_coords": [
+                6,
+                1
+              ]
+            },
+            "23": {
+              "slot_index": 23,
+              "slot_coords": [
+                7,
+                1
+              ]
+            },
+            "24": {
+              "slot_index": 24,
+              "slot_coords": [
+                8,
+                1
+              ]
+            },
+            "25": {
+              "slot_index": 25,
+              "slot_coords": [
+                9,
+                1
+              ]
+            },
+            "26": {
+              "slot_index": 26,
+              "slot_coords": [
+                10,
+                1
+              ]
+            },
+            "27": {
+              "slot_index": 27,
+              "slot_coords": [
+                11,
+                1
+              ]
+            },
+            "28": {
+              "slot_index": 28,
+              "slot_coords": [
+                12,
+                1
+              ]
+            },
+            "29": {
+              "slot_index": 29,
+              "slot_coords": [
+                13,
+                1
+              ]
+            },
+            "30": {
+              "slot_index": 30,
+              "slot_coords": [
+                14,
+                1
+              ]
+            },
+            "31": {
+              "slot_index": 31,
+              "slot_coords": [
+                15,
+                1
+              ]
+            },
+            "32": {
+              "slot_index": 32,
+              "slot_coords": [
+                0,
+                2
+              ]
+            },
+            "33": {
+              "slot_index": 33,
+              "slot_coords": [
+                1,
+                2
+              ]
+            },
+            "34": {
+              "slot_index": 34,
+              "slot_coords": [
+                2,
+                2
+              ]
+            },
+            "35": {
+              "slot_index": 35,
+              "slot_coords": [
+                3,
+                2
+              ]
+            },
+            "36": {
+              "slot_index": 36,
+              "slot_coords": [
+                4,
+                2
+              ]
+            },
+            "37": {
+              "slot_index": 37,
+              "slot_coords": [
+                5,
+                2
+              ]
+            },
+            "38": {
+              "slot_index": 38,
+              "slot_coords": [
+                6,
+                2
+              ]
+            },
+            "39": {
+              "slot_index": 39,
+              "slot_coords": [
+                7,
+                2
+              ]
+            },
+            "40": {
+              "slot_index": 40,
+              "slot_coords": [
+                8,
+                2
+              ]
+            },
+            "41": {
+              "slot_index": 41,
+              "slot_coords": [
+                9,
+                2
+              ]
+            },
+            "42": {
+              "slot_index": 42,
+              "slot_coords": [
+                10,
+                2
+              ]
+            },
+            "43": {
+              "slot_index": 43,
+              "slot_coords": [
+                11,
+                2
+              ]
+            },
+            "44": {
+              "slot_index": 44,
+              "slot_coords": [
+                12,
+                2
+              ]
+            },
+            "45": {
+              "slot_index": 45,
+              "slot_coords": [
+                13,
+                2
+              ]
+            },
+            "46": {
+              "slot_index": 46,
+              "slot_coords": [
+                14,
+                2
+              ]
+            },
+            "47": {
+              "slot_index": 47,
+              "slot_coords": [
+                15,
+                2
+              ]
+            },
+            "48": {
+              "slot_index": 48,
+              "slot_coords": [
+                0,
+                3
+              ]
+            },
+            "49": {
+              "slot_index": 49,
+              "slot_coords": [
+                1,
+                3
+              ]
+            },
+            "50": {
+              "slot_index": 50,
+              "slot_coords": [
+                2,
+                3
+              ]
+            },
+            "51": {
+              "slot_index": 51,
+              "slot_coords": [
+                3,
+                3
+              ]
+            },
+            "52": {
+              "slot_index": 52,
+              "slot_coords": [
+                4,
+                3
+              ]
+            },
+            "53": {
+              "slot_index": 53,
+              "slot_coords": [
+                5,
+                3
+              ]
+            },
+            "54": {
+              "slot_index": 54,
+              "slot_coords": [
+                6,
+                3
+              ]
+            },
+            "55": {
+              "slot_index": 55,
+              "slot_coords": [
+                7,
+                3
+              ]
+            },
+            "56": {
+              "slot_index": 56,
+              "slot_coords": [
+                8,
+                3
+              ]
+            },
+            "57": {
+              "slot_index": 57,
+              "slot_coords": [
+                9,
+                3
+              ]
+            },
+            "58": {
+              "slot_index": 58,
+              "slot_coords": [
+                10,
+                3
+              ]
+            },
+            "59": {
+              "slot_index": 59,
+              "slot_coords": [
+                11,
+                3
+              ]
+            },
+            "60": {
+              "slot_index": 60,
+              "slot_coords": [
+                12,
+                3
+              ]
+            },
+            "61": {
+              "slot_index": 61,
+              "slot_coords": [
+                13,
+                3
+              ]
+            },
+            "62": {
+              "slot_index": 62,
+              "slot_coords": [
+                14,
+                3
+              ]
+            },
+            "63": {
+              "slot_index": 63,
+              "slot_coords": [
+                15,
+                3
+              ]
+            },
+            "64": {
+              "slot_index": 64,
+              "slot_coords": [
+                0,
+                4
+              ]
+            },
+            "65": {
+              "slot_index": 65,
+              "slot_coords": [
+                1,
+                4
+              ]
+            },
+            "66": {
+              "slot_index": 66,
+              "slot_coords": [
+                2,
+                4
+              ]
+            },
+            "67": {
+              "slot_index": 67,
+              "slot_coords": [
+                3,
+                4
+              ]
+            },
+            "68": {
+              "slot_index": 68,
+              "slot_coords": [
+                4,
+                4
+              ]
+            },
+            "69": {
+              "slot_index": 69,
+              "slot_coords": [
+                5,
+                4
+              ]
+            },
+            "70": {
+              "slot_index": 70,
+              "slot_coords": [
+                6,
+                4
+              ]
+            },
+            "71": {
+              "slot_index": 71,
+              "slot_coords": [
+                7,
+                4
+              ]
+            },
+            "72": {
+              "slot_index": 72,
+              "slot_coords": [
+                8,
+                4
+              ]
+            },
+            "73": {
+              "slot_index": 73,
+              "slot_coords": [
+                9,
+                4
+              ]
+            },
+            "74": {
+              "slot_index": 74,
+              "slot_coords": [
+                10,
+                4
+              ]
+            },
+            "75": {
+              "slot_index": 75,
+              "slot_coords": [
+                11,
+                4
+              ]
+            },
+            "76": {
+              "slot_index": 76,
+              "slot_coords": [
+                12,
+                4
+              ]
+            },
+            "77": {
+              "slot_index": 77,
+              "slot_coords": [
+                13,
+                4
+              ]
+            },
+            "78": {
+              "slot_index": 78,
+              "slot_coords": [
+                14,
+                4
+              ]
+            },
+            "79": {
+              "slot_index": 79,
+              "slot_coords": [
+                15,
+                4
+              ]
+            },
+            "80": {
+              "slot_index": 80,
+              "slot_coords": [
+                0,
+                5
+              ]
+            },
+            "81": {
+              "slot_index": 81,
+              "slot_coords": [
+                1,
+                5
+              ]
+            },
+            "82": {
+              "slot_index": 82,
+              "slot_coords": [
+                2,
+                5
+              ]
+            },
+            "83": {
+              "slot_index": 83,
+              "slot_coords": [
+                3,
+                5
+              ]
+            },
+            "84": {
+              "slot_index": 84,
+              "slot_coords": [
+                4,
+                5
+              ]
+            },
+            "85": {
+              "slot_index": 85,
+              "slot_coords": [
+                5,
+                5
+              ]
+            },
+            "86": {
+              "slot_index": 86,
+              "slot_coords": [
+                6,
+                5
+              ]
+            },
+            "87": {
+              "slot_index": 87,
+              "slot_coords": [
+                7,
+                5
+              ]
+            },
+            "88": {
+              "slot_index": 88,
+              "slot_coords": [
+                8,
+                5
+              ]
+            },
+            "89": {
+              "slot_index": 89,
+              "slot_coords": [
+                9,
+                5
+              ]
+            },
+            "90": {
+              "slot_index": 90,
+              "slot_coords": [
+                10,
+                5
+              ]
+            },
+            "91": {
+              "slot_index": 91,
+              "slot_coords": [
+                11,
+                5
+              ]
+            },
+            "92": {
+              "slot_index": 92,
+              "slot_coords": [
+                12,
+                5
+              ]
+            },
+            "93": {
+              "slot_index": 93,
+              "slot_coords": [
+                13,
+                5
+              ]
+            },
+            "94": {
+              "slot_index": 94,
+              "slot_coords": [
+                14,
+                5
+              ]
+            },
+            "95": {
+              "slot_index": 95,
+              "slot_coords": [
+                15,
+                5
+              ]
+            },
+            "96": {
+              "slot_index": 96,
+              "slot_coords": [
+                0,
+                6
+              ]
+            },
+            "97": {
+              "slot_index": 97,
+              "slot_coords": [
+                1,
+                6
+              ]
+            },
+            "98": {
+              "slot_index": 98,
+              "slot_coords": [
+                2,
+                6
+              ]
+            },
+            "99": {
+              "slot_index": 99,
+              "slot_coords": [
+                3,
+                6
+              ]
+            },
+            "100": {
+              "slot_index": 100,
+              "slot_coords": [
+                4,
+                6
+              ]
+            },
+            "101": {
+              "slot_index": 101,
+              "slot_coords": [
+                5,
+                6
+              ]
+            },
+            "102": {
+              "slot_index": 102,
+              "slot_coords": [
+                6,
+                6
+              ]
+            },
+            "103": {
+              "slot_index": 103,
+              "slot_coords": [
+                7,
+                6
+              ]
+            },
+            "104": {
+              "slot_index": 104,
+              "slot_coords": [
+                8,
+                6
+              ]
+            },
+            "105": {
+              "slot_index": 105,
+              "slot_coords": [
+                9,
+                6
+              ]
+            },
+            "106": {
+              "slot_index": 106,
+              "slot_coords": [
+                10,
+                6
+              ]
+            },
+            "107": {
+              "slot_index": 107,
+              "slot_coords": [
+                11,
+                6
+              ]
+            },
+            "108": {
+              "slot_index": 108,
+              "slot_coords": [
+                12,
+                6
+              ]
+            },
+            "109": {
+              "slot_index": 109,
+              "slot_coords": [
+                13,
+                6
+              ]
+            },
+            "110": {
+              "slot_index": 110,
+              "slot_coords": [
+                14,
+                6
+              ]
+            },
+            "111": {
+              "slot_index": 111,
+              "slot_coords": [
+                15,
+                6
+              ]
+            },
+            "112": {
+              "slot_index": 112,
+              "slot_coords": [
+                0,
+                7
+              ]
+            },
+            "113": {
+              "slot_index": 113,
+              "slot_coords": [
+                1,
+                7
+              ]
+            },
+            "114": {
+              "slot_index": 114,
+              "slot_coords": [
+                2,
+                7
+              ]
+            },
+            "115": {
+              "slot_index": 115,
+              "slot_coords": [
+                3,
+                7
+              ]
+            },
+            "116": {
+              "slot_index": 116,
+              "slot_coords": [
+                4,
+                7
+              ]
+            },
+            "117": {
+              "slot_index": 117,
+              "slot_coords": [
+                5,
+                7
+              ]
+            },
+            "118": {
+              "slot_index": 118,
+              "slot_coords": [
+                6,
+                7
+              ]
+            },
+            "119": {
+              "slot_index": 119,
+              "slot_coords": [
+                7,
+                7
+              ]
+            },
+            "120": {
+              "slot_index": 120,
+              "slot_coords": [
+                8,
+                7
+              ]
+            },
+            "121": {
+              "slot_index": 121,
+              "slot_coords": [
+                9,
+                7
+              ]
+            },
+            "122": {
+              "slot_index": 122,
+              "slot_coords": [
+                10,
+                7
+              ]
+            },
+            "123": {
+              "slot_index": 123,
+              "slot_coords": [
+                11,
+                7
+              ]
+            },
+            "124": {
+              "slot_index": 124,
+              "slot_coords": [
+                12,
+                7
+              ]
+            },
+            "125": {
+              "slot_index": 125,
+              "slot_coords": [
+                13,
+                7
+              ]
+            },
+            "126": {
+              "slot_index": 126,
+              "slot_coords": [
+                14,
+                7
+              ]
+            },
+            "127": {
+              "slot_index": 127,
+              "slot_coords": [
+                15,
+                7
+              ]
+            },
+            "128": {
+              "slot_index": 128,
+              "slot_coords": [
+                0,
+                8
+              ]
+            },
+            "129": {
+              "slot_index": 129,
+              "slot_coords": [
+                1,
+                8
+              ]
+            },
+            "130": {
+              "slot_index": 130,
+              "slot_coords": [
+                2,
+                8
+              ]
+            },
+            "131": {
+              "slot_index": 131,
+              "slot_coords": [
+                3,
+                8
+              ]
+            },
+            "132": {
+              "slot_index": 132,
+              "slot_coords": [
+                4,
+                8
+              ]
+            },
+            "133": {
+              "slot_index": 133,
+              "slot_coords": [
+                5,
+                8
+              ]
+            },
+            "134": {
+              "slot_index": 134,
+              "slot_coords": [
+                6,
+                8
+              ]
+            },
+            "135": {
+              "slot_index": 135,
+              "slot_coords": [
+                7,
+                8
+              ]
+            },
+            "136": {
+              "slot_index": 136,
+              "slot_coords": [
+                8,
+                8
+              ]
+            },
+            "137": {
+              "slot_index": 137,
+              "slot_coords": [
+                9,
+                8
+              ]
+            },
+            "138": {
+              "slot_index": 138,
+              "slot_coords": [
+                10,
+                8
+              ]
+            },
+            "139": {
+              "slot_index": 139,
+              "slot_coords": [
+                11,
+                8
+              ]
+            },
+            "140": {
+              "slot_index": 140,
+              "slot_coords": [
+                12,
+                8
+              ]
+            },
+            "141": {
+              "slot_index": 141,
+              "slot_coords": [
+                13,
+                8
+              ]
+            },
+            "142": {
+              "slot_index": 142,
+              "slot_coords": [
+                14,
+                8
+              ]
+            },
+            "143": {
+              "slot_index": 143,
+              "slot_coords": [
+                15,
+                8
+              ]
+            },
+            "144": {
+              "slot_index": 144,
+              "slot_coords": [
+                0,
+                9
+              ]
+            },
+            "145": {
+              "slot_index": 145,
+              "slot_coords": [
+                1,
+                9
+              ]
+            },
+            "146": {
+              "slot_index": 146,
+              "slot_coords": [
+                2,
+                9
+              ]
+            },
+            "147": {
+              "slot_index": 147,
+              "slot_coords": [
+                3,
+                9
+              ]
+            },
+            "148": {
+              "slot_index": 148,
+              "slot_coords": [
+                4,
+                9
+              ]
+            },
+            "149": {
+              "slot_index": 149,
+              "slot_coords": [
+                5,
+                9
+              ]
+            },
+            "150": {
+              "slot_index": 150,
+              "slot_coords": [
+                6,
+                9
+              ]
+            },
+            "151": {
+              "slot_index": 151,
+              "slot_coords": [
+                7,
+                9
+              ]
+            },
+            "152": {
+              "slot_index": 152,
+              "slot_coords": [
+                8,
+                9
+              ]
+            },
+            "153": {
+              "slot_index": 153,
+              "slot_coords": [
+                9,
+                9
+              ]
+            },
+            "154": {
+              "slot_index": 154,
+              "slot_coords": [
+                10,
+                9
+              ]
+            },
+            "155": {
+              "slot_index": 155,
+              "slot_coords": [
+                11,
+                9
+              ]
+            },
+            "156": {
+              "slot_index": 156,
+              "slot_coords": [
+                12,
+                9
+              ]
+            },
+            "157": {
+              "slot_index": 157,
+              "slot_coords": [
+                13,
+                9
+              ]
+            },
+            "158": {
+              "slot_index": 158,
+              "slot_coords": [
+                14,
+                9
+              ]
+            },
+            "159": {
+              "slot_index": 159,
+              "slot_coords": [
+                15,
+                9
+              ]
+            },
+            "160": {
+              "slot_index": 160,
+              "slot_coords": [
+                0,
+                10
+              ]
+            },
+            "161": {
+              "slot_index": 161,
+              "slot_coords": [
+                1,
+                10
+              ]
+            },
+            "162": {
+              "slot_index": 162,
+              "slot_coords": [
+                2,
+                10
+              ]
+            },
+            "163": {
+              "slot_index": 163,
+              "slot_coords": [
+                3,
+                10
+              ]
+            },
+            "164": {
+              "slot_index": 164,
+              "slot_coords": [
+                4,
+                10
+              ]
+            },
+            "165": {
+              "slot_index": 165,
+              "slot_coords": [
+                5,
+                10
+              ]
+            },
+            "166": {
+              "slot_index": 166,
+              "slot_coords": [
+                6,
+                10
+              ]
+            },
+            "167": {
+              "slot_index": 167,
+              "slot_coords": [
+                7,
+                10
+              ]
+            },
+            "168": {
+              "slot_index": 168,
+              "slot_coords": [
+                8,
+                10
+              ]
+            },
+            "169": {
+              "slot_index": 169,
+              "slot_coords": [
+                9,
+                10
+              ]
+            },
+            "170": {
+              "slot_index": 170,
+              "slot_coords": [
+                10,
+                10
+              ]
+            },
+            "171": {
+              "slot_index": 171,
+              "slot_coords": [
+                11,
+                10
+              ]
+            },
+            "172": {
+              "slot_index": 172,
+              "slot_coords": [
+                12,
+                10
+              ]
+            },
+            "173": {
+              "slot_index": 173,
+              "slot_coords": [
+                13,
+                10
+              ]
+            },
+            "174": {
+              "slot_index": 174,
+              "slot_coords": [
+                14,
+                10
+              ]
+            },
+            "175": {
+              "slot_index": 175,
+              "slot_coords": [
+                15,
+                10
+              ]
+            },
+            "176": {
+              "slot_index": 176,
+              "slot_coords": [
+                0,
+                11
+              ]
+            },
+            "177": {
+              "slot_index": 177,
+              "slot_coords": [
+                1,
+                11
+              ]
+            },
+            "178": {
+              "slot_index": 178,
+              "slot_coords": [
+                2,
+                11
+              ]
+            },
+            "179": {
+              "slot_index": 179,
+              "slot_coords": [
+                3,
+                11
+              ]
+            },
+            "180": {
+              "slot_index": 180,
+              "slot_coords": [
+                4,
+                11
+              ]
+            },
+            "181": {
+              "slot_index": 181,
+              "slot_coords": [
+                5,
+                11
+              ]
+            },
+            "182": {
+              "slot_index": 182,
+              "slot_coords": [
+                6,
+                11
+              ]
+            },
+            "183": {
+              "slot_index": 183,
+              "slot_coords": [
+                7,
+                11
+              ]
+            },
+            "184": {
+              "slot_index": 184,
+              "slot_coords": [
+                8,
+                11
+              ]
+            },
+            "185": {
+              "slot_index": 185,
+              "slot_coords": [
+                9,
+                11
+              ]
+            },
+            "186": {
+              "slot_index": 186,
+              "slot_coords": [
+                10,
+                11
+              ]
+            },
+            "187": {
+              "slot_index": 187,
+              "slot_coords": [
+                11,
+                11
+              ]
+            },
+            "188": {
+              "slot_index": 188,
+              "slot_coords": [
+                12,
+                11
+              ]
+            },
+            "189": {
+              "slot_index": 189,
+              "slot_coords": [
+                13,
+                11
+              ]
+            },
+            "190": {
+              "slot_index": 190,
+              "slot_coords": [
+                14,
+                11
+              ]
+            },
+            "191": {
+              "slot_index": 191,
+              "slot_coords": [
+                15,
+                11
+              ]
+            },
+            "192": {
+              "slot_index": 192,
+              "slot_coords": [
+                0,
+                12
+              ]
+            },
+            "193": {
+              "slot_index": 193,
+              "slot_coords": [
+                1,
+                12
+              ]
+            },
+            "194": {
+              "slot_index": 194,
+              "slot_coords": [
+                2,
+                12
+              ]
+            },
+            "195": {
+              "slot_index": 195,
+              "slot_coords": [
+                3,
+                12
+              ]
+            },
+            "196": {
+              "slot_index": 196,
+              "slot_coords": [
+                4,
+                12
+              ]
+            },
+            "197": {
+              "slot_index": 197,
+              "slot_coords": [
+                5,
+                12
+              ]
+            },
+            "198": {
+              "slot_index": 198,
+              "slot_coords": [
+                6,
+                12
+              ]
+            },
+            "199": {
+              "slot_index": 199,
+              "slot_coords": [
+                7,
+                12
+              ]
+            },
+            "200": {
+              "slot_index": 200,
+              "slot_coords": [
+                8,
+                12
+              ]
+            },
+            "201": {
+              "slot_index": 201,
+              "slot_coords": [
+                9,
+                12
+              ]
+            },
+            "202": {
+              "slot_index": 202,
+              "slot_coords": [
+                10,
+                12
+              ]
+            },
+            "203": {
+              "slot_index": 203,
+              "slot_coords": [
+                11,
+                12
+              ]
+            },
+            "204": {
+              "slot_index": 204,
+              "slot_coords": [
+                12,
+                12
+              ]
+            },
+            "205": {
+              "slot_index": 205,
+              "slot_coords": [
+                13,
+                12
+              ]
+            },
+            "206": {
+              "slot_index": 206,
+              "slot_coords": [
+                14,
+                12
+              ]
+            },
+            "207": {
+              "slot_index": 207,
+              "slot_coords": [
+                15,
+                12
+              ]
+            },
+            "208": {
+              "slot_index": 208,
+              "slot_coords": [
+                0,
+                13
+              ]
+            },
+            "209": {
+              "slot_index": 209,
+              "slot_coords": [
+                1,
+                13
+              ]
+            },
+            "210": {
+              "slot_index": 210,
+              "slot_coords": [
+                2,
+                13
+              ]
+            },
+            "211": {
+              "slot_index": 211,
+              "slot_coords": [
+                3,
+                13
+              ]
+            },
+            "212": {
+              "slot_index": 212,
+              "slot_coords": [
+                4,
+                13
+              ]
+            },
+            "213": {
+              "slot_index": 213,
+              "slot_coords": [
+                5,
+                13
+              ]
+            },
+            "214": {
+              "slot_index": 214,
+              "slot_coords": [
+                6,
+                13
+              ]
+            },
+            "215": {
+              "slot_index": 215,
+              "slot_coords": [
+                7,
+                13
+              ]
+            },
+            "216": {
+              "slot_index": 216,
+              "slot_coords": [
+                8,
+                13
+              ]
+            },
+            "217": {
+              "slot_index": 217,
+              "slot_coords": [
+                9,
+                13
+              ]
+            },
+            "218": {
+              "slot_index": 218,
+              "slot_coords": [
+                10,
+                13
+              ]
+            },
+            "219": {
+              "slot_index": 219,
+              "slot_coords": [
+                11,
+                13
+              ]
+            },
+            "220": {
+              "slot_index": 220,
+              "slot_coords": [
+                12,
+                13
+              ]
+            },
+            "221": {
+              "slot_index": 221,
+              "slot_coords": [
+                13,
+                13
+              ]
+            },
+            "222": {
+              "slot_index": 222,
+              "slot_coords": [
+                14,
+                13
+              ]
+            },
+            "223": {
+              "slot_index": 223,
+              "slot_coords": [
+                15,
+                13
+              ]
+            },
+            "224": {
+              "slot_index": 224,
+              "slot_coords": [
+                0,
+                14
+              ]
+            },
+            "225": {
+              "slot_index": 225,
+              "slot_coords": [
+                1,
+                14
+              ]
+            },
+            "226": {
+              "slot_index": 226,
+              "slot_coords": [
+                2,
+                14
+              ]
+            },
+            "227": {
+              "slot_index": 227,
+              "slot_coords": [
+                3,
+                14
+              ]
+            },
+            "228": {
+              "slot_index": 228,
+              "slot_coords": [
+                4,
+                14
+              ]
+            },
+            "229": {
+              "slot_index": 229,
+              "slot_coords": [
+                5,
+                14
+              ]
+            },
+            "230": {
+              "slot_index": 230,
+              "slot_coords": [
+                6,
+                14
+              ]
+            },
+            "231": {
+              "slot_index": 231,
+              "slot_coords": [
+                7,
+                14
+              ]
+            },
+            "232": {
+              "slot_index": 232,
+              "slot_coords": [
+                8,
+                14
+              ]
+            },
+            "233": {
+              "slot_index": 233,
+              "slot_coords": [
+                9,
+                14
+              ]
+            },
+            "234": {
+              "slot_index": 234,
+              "slot_coords": [
+                10,
+                14
+              ]
+            },
+            "235": {
+              "slot_index": 235,
+              "slot_coords": [
+                11,
+                14
+              ]
+            },
+            "236": {
+              "slot_index": 236,
+              "slot_coords": [
+                12,
+                14
+              ]
+            },
+            "237": {
+              "slot_index": 237,
+              "slot_coords": [
+                13,
+                14
+              ]
+            },
+            "238": {
+              "slot_index": 238,
+              "slot_coords": [
+                14,
+                14
+              ]
+            },
+            "239": {
+              "slot_index": 239,
+              "slot_coords": [
+                15,
+                14
+              ]
+            },
+            "240": {
+              "slot_index": 240,
+              "slot_coords": [
+                0,
+                15
+              ]
+            },
+            "241": {
+              "slot_index": 241,
+              "slot_coords": [
+                1,
+                15
+              ]
+            },
+            "242": {
+              "slot_index": 242,
+              "slot_coords": [
+                2,
+                15
+              ]
+            },
+            "243": {
+              "slot_index": 243,
+              "slot_coords": [
+                3,
+                15
+              ]
+            },
+            "244": {
+              "slot_index": 244,
+              "slot_coords": [
+                4,
+                15
+              ]
+            },
+            "245": {
+              "slot_index": 245,
+              "slot_coords": [
+                5,
+                15
+              ]
+            },
+            "246": {
+              "slot_index": 246,
+              "slot_coords": [
+                6,
+                15
+              ]
+            },
+            "247": {
+              "slot_index": 247,
+              "slot_coords": [
+                7,
+                15
+              ]
+            },
+            "248": {
+              "slot_index": 248,
+              "slot_coords": [
+                8,
+                15
+              ]
+            },
+            "249": {
+              "slot_index": 249,
+              "slot_coords": [
+                9,
+                15
+              ]
+            },
+            "250": {
+              "slot_index": 250,
+              "slot_coords": [
+                10,
+                15
+              ]
+            },
+            "251": {
+              "slot_index": 251,
+              "slot_coords": [
+                11,
+                15
+              ]
+            },
+            "252": {
+              "slot_index": 252,
+              "slot_coords": [
+                12,
+                15
+              ]
+            },
+            "253": {
+              "slot_index": 253,
+              "slot_coords": [
+                13,
+                15
+              ]
+            },
+            "254": {
+              "slot_index": 254,
+              "slot_coords": [
+                14,
+                15
+              ]
+            },
+            "255": {
+              "slot_index": 255,
+              "slot_coords": [
+                15,
+                15
+              ]
+            }
+          }
+        }
+      ],
+      "total_blocks": 256
+    },
+    "side": {
+      "files": [
+        {
+          "filename": "atlas_side.png",
+          "grid_size": [
+            3,
+            3
+          ],
+          "total_slots": 9,
+          "used_slots": 8,
+          "efficiency": 88.9,
+          "blocks": {
+            "3": {
+              "slot_index": 0,
+              "slot_coords": [
+                0,
+                0
+              ]
+            },
+            "30": {
+              "slot_index": 1,
+              "slot_coords": [
+                1,
+                0
+              ]
+            },
+            "31": {
+              "slot_index": 2,
+              "slot_coords": [
+                2,
+                0
+              ]
+            },
+            "32": {
+              "slot_index": 3,
+              "slot_coords": [
+                0,
+                1
+              ]
+            },
+            "33": {
+              "slot_index": 4,
+              "slot_coords": [
+                1,
+                1
+              ]
+            },
+            "74": {
+              "slot_index": 5,
+              "slot_coords": [
+                2,
+                1
+              ]
+            },
+            "75": {
+              "slot_index": 6,
+              "slot_coords": [
+                0,
+                2
+              ]
+            },
+            "76": {
+              "slot_index": 7,
+              "slot_coords": [
+                1,
+                2
+              ]
+            }
+          }
+        }
+      ],
+      "total_blocks": 8
+    },
+    "bottom": {
+      "files": [
+        {
+          "filename": "atlas_bottom.png",
+          "grid_size": [
+            1,
+            1
+          ],
+          "total_slots": 1,
+          "used_slots": 1,
+          "efficiency": 100.0,
+          "blocks": {
+            "3": {
+              "slot_index": 0,
+              "slot_coords": [
+                0,
+                0
+              ]
+            }
+          }
+        }
+      ],
+      "total_blocks": 1
+    }
+  }
+}
