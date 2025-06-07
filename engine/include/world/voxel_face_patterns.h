@@ -43,7 +43,14 @@ enum class FacePattern : uint8_t {
      * Atlas Usage: Multiple slots across atlases for front/back/left/right faces
      * Note: This pattern is reserved for future directional block implementation
      */
-    DIRECTIONAL = 3
+    DIRECTIONAL = 3,
+    
+    /**
+     * All 6 faces use different textures (advanced blocks)
+     * Examples: Furnaces (front face different), multiblocks, complex machinery
+     * Atlas Usage: 6 slots distributed across atlases (top, bottom, front, back, left, right)
+     */
+    ALL_FACES_DIFFERENT = 4
 };
 
 /**

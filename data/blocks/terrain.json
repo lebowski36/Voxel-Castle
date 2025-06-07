@@ -1,0 +1,1725 @@
+{
+  "$schema": "../block_schema_proposal.json",
+  "category": "terrain",
+  "description": "Block category: terrain",
+  "id_range": [
+    0,
+    49
+  ],
+  "blocks": {
+    "AIR": {
+      "id": 0,
+      "name": "Air",
+      "description": "Air - migrated from working BLOCK_MAPPING",
+      "category": "special",
+      "tags": [
+        "transparent",
+        "walkable",
+        "non_solid"
+      ],
+      "physical_properties": {
+        "solid": false,
+        "transparent": true,
+        "fluid": false,
+        "walkable": true,
+        "hardness": 0,
+        "density": 0
+      },
+      "texture_info": {
+        "face_pattern": "UNIFORM",
+        "generation": {
+          "type": "air",
+          "subtype": "transparent"
+        }
+      },
+      "world_generation": {
+        "natural_generation": true
+      }
+    },
+    "STONE": {
+      "id": 1,
+      "name": "Stone",
+      "description": "Stone - migrated from working BLOCK_MAPPING",
+      "category": "stone",
+      "tags": [
+        "solid",
+        "natural"
+      ],
+      "physical_properties": {
+        "solid": true,
+        "transparent": false,
+        "fluid": false,
+        "walkable": false,
+        "hardness": 1.5,
+        "density": 2.7
+      },
+      "texture_info": {
+        "face_pattern": "UNIFORM",
+        "generation": {
+          "type": "stone",
+          "subtype": "stone"
+        }
+      },
+      "world_generation": {
+        "natural_generation": true
+      },
+      "gameplay_properties": {
+        "tool_requirements": {
+          "required_tool": "pickaxe",
+          "minimum_tier": 1
+        }
+      }
+    },
+    "DIRT": {
+      "id": 2,
+      "name": "Dirt",
+      "description": "Dirt - migrated from working BLOCK_MAPPING",
+      "category": "organic",
+      "tags": [
+        "solid",
+        "organic",
+        "natural"
+      ],
+      "physical_properties": {
+        "solid": true,
+        "transparent": false,
+        "fluid": false,
+        "walkable": false,
+        "hardness": 0.5,
+        "density": 1.2
+      },
+      "texture_info": {
+        "face_pattern": "UNIFORM",
+        "generation": {
+          "type": "organic",
+          "subtype": "dirt"
+        }
+      },
+      "world_generation": {
+        "natural_generation": true
+      },
+      "gameplay_properties": {
+        "tool_requirements": {
+          "required_tool": "shovel",
+          "minimum_tier": 1
+        }
+      }
+    },
+    "GRASS": {
+      "id": 3,
+      "name": "Grass",
+      "description": "Grass - migrated from working BLOCK_MAPPING",
+      "category": "organic",
+      "tags": [
+        "solid",
+        "organic",
+        "natural"
+      ],
+      "physical_properties": {
+        "solid": true,
+        "transparent": false,
+        "fluid": false,
+        "walkable": false,
+        "hardness": 0.5,
+        "density": 1.2
+      },
+      "texture_info": {
+        "face_pattern": "UNIFORM",
+        "generation": {
+          "type": "organic",
+          "subtype": "grass"
+        }
+      },
+      "world_generation": {
+        "natural_generation": true
+      },
+      "gameplay_properties": {
+        "tool_requirements": {
+          "required_tool": "shovel",
+          "minimum_tier": 1
+        }
+      }
+    },
+    "SAND": {
+      "id": 4,
+      "name": "Sand",
+      "description": "Sand - migrated from working BLOCK_MAPPING",
+      "category": "organic",
+      "tags": [
+        "solid",
+        "organic",
+        "natural"
+      ],
+      "physical_properties": {
+        "solid": true,
+        "transparent": false,
+        "fluid": false,
+        "walkable": false,
+        "hardness": 0.5,
+        "density": 1.2
+      },
+      "texture_info": {
+        "face_pattern": "UNIFORM",
+        "generation": {
+          "type": "organic",
+          "subtype": "sand"
+        }
+      },
+      "world_generation": {
+        "natural_generation": true
+      },
+      "gameplay_properties": {
+        "tool_requirements": {
+          "required_tool": "shovel",
+          "minimum_tier": 1
+        }
+      }
+    },
+    "GRAVEL": {
+      "id": 5,
+      "name": "Gravel",
+      "description": "Gravel - migrated from working BLOCK_MAPPING",
+      "category": "stone",
+      "tags": [
+        "solid",
+        "natural"
+      ],
+      "physical_properties": {
+        "solid": true,
+        "transparent": false,
+        "fluid": false,
+        "walkable": false,
+        "hardness": 1.5,
+        "density": 2.7
+      },
+      "texture_info": {
+        "face_pattern": "UNIFORM",
+        "generation": {
+          "type": "stone",
+          "subtype": "gravel"
+        }
+      },
+      "world_generation": {
+        "natural_generation": true
+      },
+      "gameplay_properties": {
+        "tool_requirements": {
+          "required_tool": "pickaxe",
+          "minimum_tier": 1
+        }
+      }
+    },
+    "CLAY": {
+      "id": 6,
+      "name": "Clay",
+      "description": "Clay - migrated from working BLOCK_MAPPING",
+      "category": "ceramic",
+      "tags": [
+        "solid"
+      ],
+      "physical_properties": {
+        "solid": true,
+        "transparent": false,
+        "fluid": false,
+        "walkable": false,
+        "hardness": 1.0,
+        "density": 1.0
+      },
+      "texture_info": {
+        "face_pattern": "UNIFORM",
+        "generation": {
+          "type": "ceramic",
+          "subtype": "clay"
+        }
+      },
+      "world_generation": {
+        "natural_generation": true
+      },
+      "gameplay_properties": {
+        "tool_requirements": {
+          "required_tool": "shovel",
+          "minimum_tier": 1
+        }
+      }
+    },
+    "BEDROCK": {
+      "id": 7,
+      "name": "Bedrock",
+      "description": "Bedrock - migrated from working BLOCK_MAPPING",
+      "category": "stone",
+      "tags": [
+        "solid",
+        "natural"
+      ],
+      "physical_properties": {
+        "solid": true,
+        "transparent": false,
+        "fluid": false,
+        "walkable": false,
+        "hardness": 1.5,
+        "density": 2.7
+      },
+      "texture_info": {
+        "face_pattern": "UNIFORM",
+        "generation": {
+          "type": "stone",
+          "subtype": "bedrock"
+        }
+      },
+      "world_generation": {
+        "natural_generation": true
+      },
+      "gameplay_properties": {
+        "tool_requirements": {
+          "required_tool": "pickaxe",
+          "minimum_tier": 1
+        }
+      }
+    },
+    "TOPSOIL": {
+      "id": 8,
+      "name": "Topsoil",
+      "description": "Topsoil - migrated from working BLOCK_MAPPING",
+      "category": "organic",
+      "tags": [
+        "solid",
+        "organic",
+        "natural"
+      ],
+      "physical_properties": {
+        "solid": true,
+        "transparent": false,
+        "fluid": false,
+        "walkable": false,
+        "hardness": 0.5,
+        "density": 1.2
+      },
+      "texture_info": {
+        "face_pattern": "UNIFORM",
+        "generation": {
+          "type": "organic",
+          "subtype": "topsoil"
+        }
+      },
+      "world_generation": {
+        "natural_generation": true
+      },
+      "gameplay_properties": {
+        "tool_requirements": {
+          "required_tool": "shovel",
+          "minimum_tier": 1
+        }
+      }
+    },
+    "SUBSOIL": {
+      "id": 9,
+      "name": "Subsoil",
+      "description": "Subsoil - migrated from working BLOCK_MAPPING",
+      "category": "organic",
+      "tags": [
+        "solid",
+        "organic",
+        "natural"
+      ],
+      "physical_properties": {
+        "solid": true,
+        "transparent": false,
+        "fluid": false,
+        "walkable": false,
+        "hardness": 0.5,
+        "density": 1.2
+      },
+      "texture_info": {
+        "face_pattern": "UNIFORM",
+        "generation": {
+          "type": "organic",
+          "subtype": "subsoil"
+        }
+      },
+      "world_generation": {
+        "natural_generation": true
+      },
+      "gameplay_properties": {
+        "tool_requirements": {
+          "required_tool": "shovel",
+          "minimum_tier": 1
+        }
+      }
+    },
+    "GRANITE": {
+      "id": 10,
+      "name": "Granite",
+      "description": "Granite - migrated from working BLOCK_MAPPING",
+      "category": "stone",
+      "tags": [
+        "solid",
+        "natural"
+      ],
+      "physical_properties": {
+        "solid": true,
+        "transparent": false,
+        "fluid": false,
+        "walkable": false,
+        "hardness": 1.5,
+        "density": 2.7
+      },
+      "texture_info": {
+        "face_pattern": "UNIFORM",
+        "generation": {
+          "type": "stone",
+          "subtype": "granite"
+        }
+      },
+      "world_generation": {
+        "natural_generation": true
+      },
+      "gameplay_properties": {
+        "tool_requirements": {
+          "required_tool": "pickaxe",
+          "minimum_tier": 1
+        }
+      }
+    },
+    "LIMESTONE": {
+      "id": 11,
+      "name": "Limestone",
+      "description": "Limestone - migrated from working BLOCK_MAPPING",
+      "category": "stone",
+      "tags": [
+        "solid",
+        "natural"
+      ],
+      "physical_properties": {
+        "solid": true,
+        "transparent": false,
+        "fluid": false,
+        "walkable": false,
+        "hardness": 1.5,
+        "density": 2.7
+      },
+      "texture_info": {
+        "face_pattern": "UNIFORM",
+        "generation": {
+          "type": "stone",
+          "subtype": "limestone"
+        }
+      },
+      "world_generation": {
+        "natural_generation": true
+      },
+      "gameplay_properties": {
+        "tool_requirements": {
+          "required_tool": "pickaxe",
+          "minimum_tier": 1
+        }
+      }
+    },
+    "MARBLE": {
+      "id": 12,
+      "name": "Marble",
+      "description": "Marble - migrated from working BLOCK_MAPPING",
+      "category": "stone",
+      "tags": [
+        "solid",
+        "natural"
+      ],
+      "physical_properties": {
+        "solid": true,
+        "transparent": false,
+        "fluid": false,
+        "walkable": false,
+        "hardness": 1.5,
+        "density": 2.7
+      },
+      "texture_info": {
+        "face_pattern": "UNIFORM",
+        "generation": {
+          "type": "stone",
+          "subtype": "marble"
+        }
+      },
+      "world_generation": {
+        "natural_generation": true
+      },
+      "gameplay_properties": {
+        "tool_requirements": {
+          "required_tool": "pickaxe",
+          "minimum_tier": 1
+        }
+      }
+    },
+    "SANDSTONE": {
+      "id": 13,
+      "name": "Sandstone",
+      "description": "Sandstone - migrated from working BLOCK_MAPPING",
+      "category": "stone",
+      "tags": [
+        "solid",
+        "natural"
+      ],
+      "physical_properties": {
+        "solid": true,
+        "transparent": false,
+        "fluid": false,
+        "walkable": false,
+        "hardness": 1.5,
+        "density": 2.7
+      },
+      "texture_info": {
+        "face_pattern": "UNIFORM",
+        "generation": {
+          "type": "stone",
+          "subtype": "sandstone"
+        }
+      },
+      "world_generation": {
+        "natural_generation": true
+      },
+      "gameplay_properties": {
+        "tool_requirements": {
+          "required_tool": "pickaxe",
+          "minimum_tier": 1
+        }
+      }
+    },
+    "SLATE": {
+      "id": 14,
+      "name": "Slate",
+      "description": "Slate - migrated from working BLOCK_MAPPING",
+      "category": "stone",
+      "tags": [
+        "solid",
+        "natural"
+      ],
+      "physical_properties": {
+        "solid": true,
+        "transparent": false,
+        "fluid": false,
+        "walkable": false,
+        "hardness": 1.5,
+        "density": 2.7
+      },
+      "texture_info": {
+        "face_pattern": "UNIFORM",
+        "generation": {
+          "type": "stone",
+          "subtype": "slate"
+        }
+      },
+      "world_generation": {
+        "natural_generation": true
+      },
+      "gameplay_properties": {
+        "tool_requirements": {
+          "required_tool": "pickaxe",
+          "minimum_tier": 1
+        }
+      }
+    },
+    "BASALT": {
+      "id": 15,
+      "name": "Basalt",
+      "description": "Basalt - migrated from working BLOCK_MAPPING",
+      "category": "stone",
+      "tags": [
+        "solid",
+        "natural"
+      ],
+      "physical_properties": {
+        "solid": true,
+        "transparent": false,
+        "fluid": false,
+        "walkable": false,
+        "hardness": 1.5,
+        "density": 2.7
+      },
+      "texture_info": {
+        "face_pattern": "UNIFORM",
+        "generation": {
+          "type": "stone",
+          "subtype": "basalt"
+        }
+      },
+      "world_generation": {
+        "natural_generation": true
+      },
+      "gameplay_properties": {
+        "tool_requirements": {
+          "required_tool": "pickaxe",
+          "minimum_tier": 1
+        }
+      }
+    },
+    "QUARTZITE": {
+      "id": 16,
+      "name": "Quartzite",
+      "description": "Quartzite - migrated from working BLOCK_MAPPING",
+      "category": "stone",
+      "tags": [
+        "solid",
+        "natural"
+      ],
+      "physical_properties": {
+        "solid": true,
+        "transparent": false,
+        "fluid": false,
+        "walkable": false,
+        "hardness": 1.5,
+        "density": 2.7
+      },
+      "texture_info": {
+        "face_pattern": "UNIFORM",
+        "generation": {
+          "type": "stone",
+          "subtype": "quartzite"
+        }
+      },
+      "world_generation": {
+        "natural_generation": true
+      },
+      "gameplay_properties": {
+        "tool_requirements": {
+          "required_tool": "pickaxe",
+          "minimum_tier": 1
+        }
+      }
+    },
+    "OBSIDIAN": {
+      "id": 17,
+      "name": "Obsidian",
+      "description": "Obsidian - migrated from working BLOCK_MAPPING",
+      "category": "stone",
+      "tags": [
+        "solid",
+        "natural"
+      ],
+      "physical_properties": {
+        "solid": true,
+        "transparent": false,
+        "fluid": false,
+        "walkable": false,
+        "hardness": 1.5,
+        "density": 2.7
+      },
+      "texture_info": {
+        "face_pattern": "UNIFORM",
+        "generation": {
+          "type": "stone",
+          "subtype": "obsidian"
+        }
+      },
+      "world_generation": {
+        "natural_generation": true
+      },
+      "gameplay_properties": {
+        "tool_requirements": {
+          "required_tool": "pickaxe",
+          "minimum_tier": 1
+        }
+      }
+    },
+    "PUMICE": {
+      "id": 18,
+      "name": "Pumice",
+      "description": "Pumice - migrated from working BLOCK_MAPPING",
+      "category": "stone",
+      "tags": [
+        "solid",
+        "natural"
+      ],
+      "physical_properties": {
+        "solid": true,
+        "transparent": false,
+        "fluid": false,
+        "walkable": false,
+        "hardness": 1.5,
+        "density": 2.7
+      },
+      "texture_info": {
+        "face_pattern": "UNIFORM",
+        "generation": {
+          "type": "stone",
+          "subtype": "pumice"
+        }
+      },
+      "world_generation": {
+        "natural_generation": true
+      },
+      "gameplay_properties": {
+        "tool_requirements": {
+          "required_tool": "pickaxe",
+          "minimum_tier": 1
+        }
+      }
+    },
+    "SHALE": {
+      "id": 19,
+      "name": "Shale",
+      "description": "Shale - migrated from working BLOCK_MAPPING",
+      "category": "stone",
+      "tags": [
+        "solid",
+        "natural"
+      ],
+      "physical_properties": {
+        "solid": true,
+        "transparent": false,
+        "fluid": false,
+        "walkable": false,
+        "hardness": 1.5,
+        "density": 2.7
+      },
+      "texture_info": {
+        "face_pattern": "UNIFORM",
+        "generation": {
+          "type": "stone",
+          "subtype": "shale"
+        }
+      },
+      "world_generation": {
+        "natural_generation": true
+      },
+      "gameplay_properties": {
+        "tool_requirements": {
+          "required_tool": "pickaxe",
+          "minimum_tier": 1
+        }
+      }
+    },
+    "COAL_ORE": {
+      "id": 20,
+      "name": "Coal Ore",
+      "description": "Coal Ore - migrated from working BLOCK_MAPPING",
+      "category": "ore",
+      "tags": [
+        "solid",
+        "natural",
+        "ore"
+      ],
+      "physical_properties": {
+        "solid": true,
+        "transparent": false,
+        "fluid": false,
+        "walkable": false,
+        "hardness": 1.5,
+        "density": 2.7
+      },
+      "texture_info": {
+        "face_pattern": "UNIFORM",
+        "generation": {
+          "type": "ore",
+          "subtype": "coal"
+        }
+      },
+      "world_generation": {
+        "natural_generation": true
+      },
+      "gameplay_properties": {
+        "tool_requirements": {
+          "required_tool": "pickaxe",
+          "minimum_tier": 1
+        }
+      }
+    },
+    "IRON_ORE": {
+      "id": 21,
+      "name": "Iron Ore",
+      "description": "Iron Ore - migrated from working BLOCK_MAPPING",
+      "category": "ore",
+      "tags": [
+        "solid",
+        "natural",
+        "ore"
+      ],
+      "physical_properties": {
+        "solid": true,
+        "transparent": false,
+        "fluid": false,
+        "walkable": false,
+        "hardness": 1.5,
+        "density": 2.7
+      },
+      "texture_info": {
+        "face_pattern": "UNIFORM",
+        "generation": {
+          "type": "ore",
+          "subtype": "iron"
+        }
+      },
+      "world_generation": {
+        "natural_generation": true
+      },
+      "gameplay_properties": {
+        "tool_requirements": {
+          "required_tool": "pickaxe",
+          "minimum_tier": 1
+        }
+      }
+    },
+    "COPPER_ORE": {
+      "id": 22,
+      "name": "Copper Ore",
+      "description": "Copper Ore - migrated from working BLOCK_MAPPING",
+      "category": "ore",
+      "tags": [
+        "solid",
+        "natural",
+        "ore"
+      ],
+      "physical_properties": {
+        "solid": true,
+        "transparent": false,
+        "fluid": false,
+        "walkable": false,
+        "hardness": 1.5,
+        "density": 2.7
+      },
+      "texture_info": {
+        "face_pattern": "UNIFORM",
+        "generation": {
+          "type": "ore",
+          "subtype": "copper"
+        }
+      },
+      "world_generation": {
+        "natural_generation": true
+      },
+      "gameplay_properties": {
+        "tool_requirements": {
+          "required_tool": "pickaxe",
+          "minimum_tier": 1
+        }
+      }
+    },
+    "TIN_ORE": {
+      "id": 23,
+      "name": "Tin Ore",
+      "description": "Tin Ore - migrated from working BLOCK_MAPPING",
+      "category": "ore",
+      "tags": [
+        "solid",
+        "natural",
+        "ore"
+      ],
+      "physical_properties": {
+        "solid": true,
+        "transparent": false,
+        "fluid": false,
+        "walkable": false,
+        "hardness": 1.5,
+        "density": 2.7
+      },
+      "texture_info": {
+        "face_pattern": "UNIFORM",
+        "generation": {
+          "type": "ore",
+          "subtype": "tin"
+        }
+      },
+      "world_generation": {
+        "natural_generation": true
+      },
+      "gameplay_properties": {
+        "tool_requirements": {
+          "required_tool": "pickaxe",
+          "minimum_tier": 1
+        }
+      }
+    },
+    "SILVER_ORE": {
+      "id": 24,
+      "name": "Silver Ore",
+      "description": "Silver Ore - migrated from working BLOCK_MAPPING",
+      "category": "ore",
+      "tags": [
+        "solid",
+        "natural",
+        "ore"
+      ],
+      "physical_properties": {
+        "solid": true,
+        "transparent": false,
+        "fluid": false,
+        "walkable": false,
+        "hardness": 1.5,
+        "density": 2.7
+      },
+      "texture_info": {
+        "face_pattern": "UNIFORM",
+        "generation": {
+          "type": "ore",
+          "subtype": "silver"
+        }
+      },
+      "world_generation": {
+        "natural_generation": true
+      },
+      "gameplay_properties": {
+        "tool_requirements": {
+          "required_tool": "pickaxe",
+          "minimum_tier": 1
+        }
+      }
+    },
+    "GOLD_ORE": {
+      "id": 25,
+      "name": "Gold Ore",
+      "description": "Gold Ore - migrated from working BLOCK_MAPPING",
+      "category": "ore",
+      "tags": [
+        "solid",
+        "natural",
+        "ore"
+      ],
+      "physical_properties": {
+        "solid": true,
+        "transparent": false,
+        "fluid": false,
+        "walkable": false,
+        "hardness": 1.5,
+        "density": 2.7
+      },
+      "texture_info": {
+        "face_pattern": "UNIFORM",
+        "generation": {
+          "type": "ore",
+          "subtype": "gold"
+        }
+      },
+      "world_generation": {
+        "natural_generation": true
+      },
+      "gameplay_properties": {
+        "tool_requirements": {
+          "required_tool": "pickaxe",
+          "minimum_tier": 1
+        }
+      }
+    },
+    "RUBY": {
+      "id": 26,
+      "name": "Ruby",
+      "description": "Ruby - migrated from working BLOCK_MAPPING",
+      "category": "crystal",
+      "tags": [
+        "solid"
+      ],
+      "physical_properties": {
+        "solid": true,
+        "transparent": false,
+        "fluid": false,
+        "walkable": false,
+        "hardness": 1.0,
+        "density": 1.0
+      },
+      "texture_info": {
+        "face_pattern": "UNIFORM",
+        "generation": {
+          "type": "crystal",
+          "subtype": "ruby"
+        }
+      },
+      "world_generation": {
+        "natural_generation": true
+      },
+      "gameplay_properties": {
+        "tool_requirements": {
+          "required_tool": "shovel",
+          "minimum_tier": 1
+        }
+      }
+    },
+    "SAPPHIRE": {
+      "id": 27,
+      "name": "Sapphire",
+      "description": "Sapphire - migrated from working BLOCK_MAPPING",
+      "category": "crystal",
+      "tags": [
+        "solid"
+      ],
+      "physical_properties": {
+        "solid": true,
+        "transparent": false,
+        "fluid": false,
+        "walkable": false,
+        "hardness": 1.0,
+        "density": 1.0
+      },
+      "texture_info": {
+        "face_pattern": "UNIFORM",
+        "generation": {
+          "type": "crystal",
+          "subtype": "sapphire"
+        }
+      },
+      "world_generation": {
+        "natural_generation": true
+      },
+      "gameplay_properties": {
+        "tool_requirements": {
+          "required_tool": "shovel",
+          "minimum_tier": 1
+        }
+      }
+    },
+    "EMERALD": {
+      "id": 28,
+      "name": "Emerald",
+      "description": "Emerald - migrated from working BLOCK_MAPPING",
+      "category": "crystal",
+      "tags": [
+        "solid"
+      ],
+      "physical_properties": {
+        "solid": true,
+        "transparent": false,
+        "fluid": false,
+        "walkable": false,
+        "hardness": 1.0,
+        "density": 1.0
+      },
+      "texture_info": {
+        "face_pattern": "UNIFORM",
+        "generation": {
+          "type": "crystal",
+          "subtype": "emerald"
+        }
+      },
+      "world_generation": {
+        "natural_generation": true
+      },
+      "gameplay_properties": {
+        "tool_requirements": {
+          "required_tool": "shovel",
+          "minimum_tier": 1
+        }
+      }
+    },
+    "DIAMOND": {
+      "id": 29,
+      "name": "Diamond",
+      "description": "Diamond - migrated from working BLOCK_MAPPING",
+      "category": "crystal",
+      "tags": [
+        "solid"
+      ],
+      "physical_properties": {
+        "solid": true,
+        "transparent": false,
+        "fluid": false,
+        "walkable": false,
+        "hardness": 1.0,
+        "density": 1.0
+      },
+      "texture_info": {
+        "face_pattern": "UNIFORM",
+        "generation": {
+          "type": "crystal",
+          "subtype": "diamond"
+        }
+      },
+      "world_generation": {
+        "natural_generation": true
+      },
+      "gameplay_properties": {
+        "tool_requirements": {
+          "required_tool": "shovel",
+          "minimum_tier": 1
+        }
+      }
+    },
+    "OAK_WOOD": {
+      "id": 30,
+      "name": "Oak Wood",
+      "description": "Oak Wood - migrated from working BLOCK_MAPPING",
+      "category": "wood",
+      "tags": [
+        "solid",
+        "organic",
+        "building_material"
+      ],
+      "physical_properties": {
+        "solid": true,
+        "transparent": false,
+        "fluid": false,
+        "walkable": false,
+        "hardness": 1.0,
+        "density": 0.8
+      },
+      "texture_info": {
+        "face_pattern": "UNIFORM",
+        "generation": {
+          "type": "wood",
+          "subtype": "oak"
+        }
+      },
+      "world_generation": {
+        "natural_generation": true
+      },
+      "gameplay_properties": {
+        "tool_requirements": {
+          "required_tool": "axe",
+          "minimum_tier": 1
+        }
+      }
+    },
+    "PINE_WOOD": {
+      "id": 31,
+      "name": "Pine Wood",
+      "description": "Pine Wood - migrated from working BLOCK_MAPPING",
+      "category": "wood",
+      "tags": [
+        "solid",
+        "organic",
+        "building_material"
+      ],
+      "physical_properties": {
+        "solid": true,
+        "transparent": false,
+        "fluid": false,
+        "walkable": false,
+        "hardness": 1.0,
+        "density": 0.8
+      },
+      "texture_info": {
+        "face_pattern": "UNIFORM",
+        "generation": {
+          "type": "wood",
+          "subtype": "pine"
+        }
+      },
+      "world_generation": {
+        "natural_generation": true
+      },
+      "gameplay_properties": {
+        "tool_requirements": {
+          "required_tool": "axe",
+          "minimum_tier": 1
+        }
+      }
+    },
+    "BIRCH_WOOD": {
+      "id": 32,
+      "name": "Birch Wood",
+      "description": "Birch Wood - migrated from working BLOCK_MAPPING",
+      "category": "wood",
+      "tags": [
+        "solid",
+        "organic",
+        "building_material"
+      ],
+      "physical_properties": {
+        "solid": true,
+        "transparent": false,
+        "fluid": false,
+        "walkable": false,
+        "hardness": 1.0,
+        "density": 0.8
+      },
+      "texture_info": {
+        "face_pattern": "UNIFORM",
+        "generation": {
+          "type": "wood",
+          "subtype": "birch"
+        }
+      },
+      "world_generation": {
+        "natural_generation": true
+      },
+      "gameplay_properties": {
+        "tool_requirements": {
+          "required_tool": "axe",
+          "minimum_tier": 1
+        }
+      }
+    },
+    "MAHOGANY_WOOD": {
+      "id": 33,
+      "name": "Mahogany Wood",
+      "description": "Mahogany Wood - migrated from working BLOCK_MAPPING",
+      "category": "wood",
+      "tags": [
+        "solid",
+        "organic",
+        "building_material"
+      ],
+      "physical_properties": {
+        "solid": true,
+        "transparent": false,
+        "fluid": false,
+        "walkable": false,
+        "hardness": 1.0,
+        "density": 0.8
+      },
+      "texture_info": {
+        "face_pattern": "UNIFORM",
+        "generation": {
+          "type": "wood",
+          "subtype": "mahogany"
+        }
+      },
+      "world_generation": {
+        "natural_generation": true
+      },
+      "gameplay_properties": {
+        "tool_requirements": {
+          "required_tool": "axe",
+          "minimum_tier": 1
+        }
+      }
+    },
+    "OAK_LEAVES": {
+      "id": 34,
+      "name": "Oak Leaves",
+      "description": "Oak Leaves - migrated from working BLOCK_MAPPING",
+      "category": "organic",
+      "tags": [
+        "solid",
+        "organic",
+        "natural"
+      ],
+      "physical_properties": {
+        "solid": true,
+        "transparent": false,
+        "fluid": false,
+        "walkable": false,
+        "hardness": 0.5,
+        "density": 1.2
+      },
+      "texture_info": {
+        "face_pattern": "UNIFORM",
+        "generation": {
+          "type": "organic",
+          "subtype": "oak_leaves"
+        }
+      },
+      "world_generation": {
+        "natural_generation": true
+      },
+      "gameplay_properties": {
+        "tool_requirements": {
+          "required_tool": "shovel",
+          "minimum_tier": 1
+        }
+      }
+    },
+    "PINE_LEAVES": {
+      "id": 35,
+      "name": "Pine Leaves",
+      "description": "Pine Leaves - migrated from working BLOCK_MAPPING",
+      "category": "organic",
+      "tags": [
+        "solid",
+        "organic",
+        "natural"
+      ],
+      "physical_properties": {
+        "solid": true,
+        "transparent": false,
+        "fluid": false,
+        "walkable": false,
+        "hardness": 0.5,
+        "density": 1.2
+      },
+      "texture_info": {
+        "face_pattern": "UNIFORM",
+        "generation": {
+          "type": "organic",
+          "subtype": "pine_leaves"
+        }
+      },
+      "world_generation": {
+        "natural_generation": true
+      },
+      "gameplay_properties": {
+        "tool_requirements": {
+          "required_tool": "shovel",
+          "minimum_tier": 1
+        }
+      }
+    },
+    "BIRCH_LEAVES": {
+      "id": 36,
+      "name": "Birch Leaves",
+      "description": "Birch Leaves - migrated from working BLOCK_MAPPING",
+      "category": "organic",
+      "tags": [
+        "solid",
+        "organic",
+        "natural"
+      ],
+      "physical_properties": {
+        "solid": true,
+        "transparent": false,
+        "fluid": false,
+        "walkable": false,
+        "hardness": 0.5,
+        "density": 1.2
+      },
+      "texture_info": {
+        "face_pattern": "UNIFORM",
+        "generation": {
+          "type": "organic",
+          "subtype": "birch_leaves"
+        }
+      },
+      "world_generation": {
+        "natural_generation": true
+      },
+      "gameplay_properties": {
+        "tool_requirements": {
+          "required_tool": "shovel",
+          "minimum_tier": 1
+        }
+      }
+    },
+    "PALM_LEAVES": {
+      "id": 37,
+      "name": "Palm Leaves",
+      "description": "Palm Leaves - migrated from working BLOCK_MAPPING",
+      "category": "organic",
+      "tags": [
+        "solid",
+        "organic",
+        "natural"
+      ],
+      "physical_properties": {
+        "solid": true,
+        "transparent": false,
+        "fluid": false,
+        "walkable": false,
+        "hardness": 0.5,
+        "density": 1.2
+      },
+      "texture_info": {
+        "face_pattern": "UNIFORM",
+        "generation": {
+          "type": "organic",
+          "subtype": "palm_leaves"
+        }
+      },
+      "world_generation": {
+        "natural_generation": true
+      },
+      "gameplay_properties": {
+        "tool_requirements": {
+          "required_tool": "shovel",
+          "minimum_tier": 1
+        }
+      }
+    },
+    "BROWN_MUSHROOM": {
+      "id": 38,
+      "name": "Brown Mushroom",
+      "description": "Brown Mushroom - migrated from working BLOCK_MAPPING",
+      "category": "organic",
+      "tags": [
+        "solid",
+        "organic",
+        "natural"
+      ],
+      "physical_properties": {
+        "solid": true,
+        "transparent": false,
+        "fluid": false,
+        "walkable": false,
+        "hardness": 0.5,
+        "density": 1.2
+      },
+      "texture_info": {
+        "face_pattern": "UNIFORM",
+        "generation": {
+          "type": "organic",
+          "subtype": "mushroom_brown"
+        }
+      },
+      "world_generation": {
+        "natural_generation": true
+      },
+      "gameplay_properties": {
+        "tool_requirements": {
+          "required_tool": "shovel",
+          "minimum_tier": 1
+        }
+      }
+    },
+    "RED_MUSHROOM": {
+      "id": 39,
+      "name": "Red Mushroom",
+      "description": "Red Mushroom - migrated from working BLOCK_MAPPING",
+      "category": "organic",
+      "tags": [
+        "solid",
+        "organic",
+        "natural"
+      ],
+      "physical_properties": {
+        "solid": true,
+        "transparent": false,
+        "fluid": false,
+        "walkable": false,
+        "hardness": 0.5,
+        "density": 1.2
+      },
+      "texture_info": {
+        "face_pattern": "UNIFORM",
+        "generation": {
+          "type": "organic",
+          "subtype": "mushroom_red"
+        }
+      },
+      "world_generation": {
+        "natural_generation": true
+      },
+      "gameplay_properties": {
+        "tool_requirements": {
+          "required_tool": "shovel",
+          "minimum_tier": 1
+        }
+      }
+    },
+    "SNOW": {
+      "id": 40,
+      "name": "Snow",
+      "description": "Snow - migrated from working BLOCK_MAPPING",
+      "category": "special",
+      "tags": [
+        "solid"
+      ],
+      "physical_properties": {
+        "solid": true,
+        "transparent": false,
+        "fluid": false,
+        "walkable": false,
+        "hardness": 1.0,
+        "density": 1.0
+      },
+      "texture_info": {
+        "face_pattern": "UNIFORM",
+        "generation": {
+          "type": "special",
+          "subtype": "snow"
+        }
+      },
+      "world_generation": {
+        "natural_generation": true
+      },
+      "gameplay_properties": {
+        "tool_requirements": {
+          "required_tool": "shovel",
+          "minimum_tier": 1
+        }
+      }
+    },
+    "ICE": {
+      "id": 41,
+      "name": "Ice",
+      "description": "Ice - migrated from working BLOCK_MAPPING",
+      "category": "special",
+      "tags": [
+        "solid"
+      ],
+      "physical_properties": {
+        "solid": true,
+        "transparent": false,
+        "fluid": false,
+        "walkable": false,
+        "hardness": 1.0,
+        "density": 1.0
+      },
+      "texture_info": {
+        "face_pattern": "UNIFORM",
+        "generation": {
+          "type": "special",
+          "subtype": "ice"
+        }
+      },
+      "world_generation": {
+        "natural_generation": true
+      },
+      "gameplay_properties": {
+        "tool_requirements": {
+          "required_tool": "shovel",
+          "minimum_tier": 1
+        }
+      }
+    },
+    "PACKED_ICE": {
+      "id": 42,
+      "name": "Packed Ice",
+      "description": "Packed Ice - migrated from working BLOCK_MAPPING",
+      "category": "special",
+      "tags": [
+        "solid"
+      ],
+      "physical_properties": {
+        "solid": true,
+        "transparent": false,
+        "fluid": false,
+        "walkable": false,
+        "hardness": 1.0,
+        "density": 1.0
+      },
+      "texture_info": {
+        "face_pattern": "UNIFORM",
+        "generation": {
+          "type": "special",
+          "subtype": "packed_ice"
+        }
+      },
+      "world_generation": {
+        "natural_generation": true
+      },
+      "gameplay_properties": {
+        "tool_requirements": {
+          "required_tool": "shovel",
+          "minimum_tier": 1
+        }
+      }
+    },
+    "CACTUS": {
+      "id": 43,
+      "name": "Cactus",
+      "description": "Cactus - migrated from working BLOCK_MAPPING",
+      "category": "organic",
+      "tags": [
+        "solid",
+        "organic",
+        "natural"
+      ],
+      "physical_properties": {
+        "solid": true,
+        "transparent": false,
+        "fluid": false,
+        "walkable": false,
+        "hardness": 0.5,
+        "density": 1.2
+      },
+      "texture_info": {
+        "face_pattern": "UNIFORM",
+        "generation": {
+          "type": "organic",
+          "subtype": "cactus"
+        }
+      },
+      "world_generation": {
+        "natural_generation": true
+      },
+      "gameplay_properties": {
+        "tool_requirements": {
+          "required_tool": "shovel",
+          "minimum_tier": 1
+        }
+      }
+    },
+    "JUNGLE_VINE": {
+      "id": 44,
+      "name": "Jungle Vine",
+      "description": "Jungle Vine - migrated from working BLOCK_MAPPING",
+      "category": "organic",
+      "tags": [
+        "solid",
+        "organic",
+        "natural"
+      ],
+      "physical_properties": {
+        "solid": true,
+        "transparent": false,
+        "fluid": false,
+        "walkable": false,
+        "hardness": 0.5,
+        "density": 1.2
+      },
+      "texture_info": {
+        "face_pattern": "UNIFORM",
+        "generation": {
+          "type": "organic",
+          "subtype": "jungle_vine"
+        }
+      },
+      "world_generation": {
+        "natural_generation": true
+      },
+      "gameplay_properties": {
+        "tool_requirements": {
+          "required_tool": "shovel",
+          "minimum_tier": 1
+        }
+      }
+    },
+    "PINK_CORAL": {
+      "id": 45,
+      "name": "Pink Coral",
+      "description": "Pink Coral - migrated from working BLOCK_MAPPING",
+      "category": "organic",
+      "tags": [
+        "solid",
+        "organic",
+        "natural"
+      ],
+      "physical_properties": {
+        "solid": true,
+        "transparent": false,
+        "fluid": false,
+        "walkable": false,
+        "hardness": 0.5,
+        "density": 1.2
+      },
+      "texture_info": {
+        "face_pattern": "UNIFORM",
+        "generation": {
+          "type": "organic",
+          "subtype": "coral_pink"
+        }
+      },
+      "world_generation": {
+        "natural_generation": true
+      },
+      "gameplay_properties": {
+        "tool_requirements": {
+          "required_tool": "shovel",
+          "minimum_tier": 1
+        }
+      }
+    },
+    "BLUE_CORAL": {
+      "id": 46,
+      "name": "Blue Coral",
+      "description": "Blue Coral - migrated from working BLOCK_MAPPING",
+      "category": "organic",
+      "tags": [
+        "solid",
+        "organic",
+        "natural"
+      ],
+      "physical_properties": {
+        "solid": true,
+        "transparent": false,
+        "fluid": false,
+        "walkable": false,
+        "hardness": 0.5,
+        "density": 1.2
+      },
+      "texture_info": {
+        "face_pattern": "UNIFORM",
+        "generation": {
+          "type": "organic",
+          "subtype": "coral_blue"
+        }
+      },
+      "world_generation": {
+        "natural_generation": true
+      },
+      "gameplay_properties": {
+        "tool_requirements": {
+          "required_tool": "shovel",
+          "minimum_tier": 1
+        }
+      }
+    },
+    "SEAWEED": {
+      "id": 47,
+      "name": "Seaweed",
+      "description": "Seaweed - migrated from working BLOCK_MAPPING",
+      "category": "organic",
+      "tags": [
+        "solid",
+        "organic",
+        "natural"
+      ],
+      "physical_properties": {
+        "solid": true,
+        "transparent": false,
+        "fluid": false,
+        "walkable": false,
+        "hardness": 0.5,
+        "density": 1.2
+      },
+      "texture_info": {
+        "face_pattern": "UNIFORM",
+        "generation": {
+          "type": "organic",
+          "subtype": "seaweed"
+        }
+      },
+      "world_generation": {
+        "natural_generation": true
+      },
+      "gameplay_properties": {
+        "tool_requirements": {
+          "required_tool": "shovel",
+          "minimum_tier": 1
+        }
+      }
+    },
+    "TUNDRA_MOSS": {
+      "id": 48,
+      "name": "Tundra Moss",
+      "description": "Tundra Moss - migrated from working BLOCK_MAPPING",
+      "category": "organic",
+      "tags": [
+        "solid",
+        "organic",
+        "natural"
+      ],
+      "physical_properties": {
+        "solid": true,
+        "transparent": false,
+        "fluid": false,
+        "walkable": false,
+        "hardness": 0.5,
+        "density": 1.2
+      },
+      "texture_info": {
+        "face_pattern": "UNIFORM",
+        "generation": {
+          "type": "organic",
+          "subtype": "tundra_moss"
+        }
+      },
+      "world_generation": {
+        "natural_generation": true
+      },
+      "gameplay_properties": {
+        "tool_requirements": {
+          "required_tool": "shovel",
+          "minimum_tier": 1
+        }
+      }
+    },
+    "DESERT_ROCK": {
+      "id": 49,
+      "name": "Desert Rock",
+      "description": "Desert Rock - migrated from working BLOCK_MAPPING",
+      "category": "stone",
+      "tags": [
+        "solid",
+        "natural"
+      ],
+      "physical_properties": {
+        "solid": true,
+        "transparent": false,
+        "fluid": false,
+        "walkable": false,
+        "hardness": 1.5,
+        "density": 2.7
+      },
+      "texture_info": {
+        "face_pattern": "UNIFORM",
+        "generation": {
+          "type": "stone",
+          "subtype": "desert_rock"
+        }
+      },
+      "world_generation": {
+        "natural_generation": true
+      },
+      "gameplay_properties": {
+        "tool_requirements": {
+          "required_tool": "pickaxe",
+          "minimum_tier": 1
+        }
+      }
+    }
+  }
+}

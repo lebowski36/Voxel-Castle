@@ -1,0 +1,225 @@
+{
+  "metadata": {
+    "version": "1.0.0",
+    "generated": "2025-06-07T12:00:00Z",
+    "atlas_config": {
+      "tile_size": 32,
+      "max_atlas_size": 16,
+      "naming_convention": "sequential"
+    }
+  },
+  "blocks": {
+    "AIR": {
+      "id": 0,
+      "name": "Air",
+      "description": "Empty space, transparent and non-collidable",
+      "category": "special",
+      "tags": ["transparent", "walkable"],
+      "physical_properties": {
+        "solid": false,
+        "transparent": true,
+        "fluid": false,
+        "walkable": true,
+        "hardness": 0,
+        "density": 0
+      },
+      "texture_info": {
+        "face_pattern": "UNIFORM",
+        "generation": {
+          "type": "special",
+          "subtype": "transparent"
+        }
+      }
+    },
+    "STONE": {
+      "id": 1,
+      "name": "Stone",
+      "description": "Basic stone, common solid building material",
+      "category": "stone",
+      "tags": ["solid", "building_material", "common"],
+      "physical_properties": {
+        "solid": true,
+        "transparent": false,
+        "hardness": 1.5,
+        "density": 2.7
+      },
+      "gameplay_properties": {
+        "tool_requirements": {
+          "required_tool": "pickaxe",
+          "minimum_tier": 1
+        }
+      },
+      "texture_info": {
+        "face_pattern": "UNIFORM",
+        "generation": {
+          "type": "stone",
+          "subtype": "stone",
+          "parameters": {
+            "base_color": "#8C8C8C",
+            "roughness": 0.7
+          }
+        },
+        "atlas_assignment": {
+          "main": 1
+        }
+      },
+      "interactions": {
+        "drops": [
+          {"item": "STONE", "quantity": 1, "probability": 1.0}
+        ]
+      },
+      "world_generation": {
+        "natural_generation": true,
+        "biome_weights": {
+          "mountain": 0.8,
+          "underground": 0.9,
+          "default": 0.3
+        }
+      }
+    },
+    "GRASS": {
+      "id": 3,
+      "name": "Grass Block",
+      "description": "Natural grass surface with dirt base",
+      "category": "terrain",
+      "tags": ["organic", "surface", "common"],
+      "physical_properties": {
+        "solid": true,
+        "transparent": false,
+        "hardness": 0.6,
+        "density": 1.5
+      },
+      "gameplay_properties": {
+        "tool_requirements": {
+          "required_tool": "shovel",
+          "minimum_tier": 0
+        }
+      },
+      "texture_info": {
+        "face_pattern": "ALL_DIFFERENT",
+        "generation": {
+          "type": "organic",
+          "subtype": "grass",
+          "parameters": {
+            "grass_density": 0.8,
+            "seasonal_variation": true
+          }
+        },
+        "atlas_assignment": {
+          "main": 3,
+          "side": 1,
+          "bottom": 1
+        }
+      },
+      "interactions": {
+        "drops": [
+          {"item": "DIRT", "quantity": 1, "probability": 1.0},
+          {"item": "SEEDS", "quantity": 1, "probability": 0.1}
+        ],
+        "placement_rules": {
+          "requires_support": true,
+          "support_directions": ["bottom"]
+        }
+      },
+      "world_generation": {
+        "natural_generation": true,
+        "biome_weights": {
+          "plains": 0.9,
+          "forest": 0.7,
+          "hills": 0.6
+        }
+      }
+    },
+    "GLASS": {
+      "id": 45,
+      "name": "Glass",
+      "description": "Transparent manufactured material",
+      "category": "manufactured",
+      "tags": ["transparent", "fragile", "manufactured"],
+      "physical_properties": {
+        "solid": true,
+        "transparent": true,
+        "hardness": 0.3,
+        "density": 2.5
+      },
+      "gameplay_properties": {
+        "tool_requirements": {
+          "required_tool": "none",
+          "minimum_tier": 0
+        }
+      },
+      "texture_info": {
+        "face_pattern": "UNIFORM",
+        "generation": {
+          "type": "special",
+          "subtype": "glass",
+          "parameters": {
+            "transparency": 0.9,
+            "tint": "#F0F8FF"
+          }
+        },
+        "atlas_assignment": {
+          "main": 45
+        }
+      },
+      "interactions": {
+        "drops": [
+          {"item": "GLASS_SHARD", "quantity": 3, "probability": 0.8}
+        ]
+      },
+      "world_generation": {
+        "natural_generation": false
+      }
+    },
+    "WATER": {
+      "id": 50,
+      "name": "Water",
+      "description": "Liquid water that flows and can be contained",
+      "category": "liquid",
+      "tags": ["fluid", "transparent", "essential"],
+      "physical_properties": {
+        "solid": false,
+        "transparent": true,
+        "translucent": true,
+        "fluid": true,
+        "walkable": true,
+        "hardness": 0,
+        "density": 1.0
+      },
+      "gameplay_properties": {
+        "lighting": {
+          "emits_light": false,
+          "light_level": 0
+        }
+      },
+      "texture_info": {
+        "face_pattern": "UNIFORM",
+        "generation": {
+          "type": "fluid",
+          "subtype": "water",
+          "parameters": {
+            "transparency": 0.8,
+            "flow_animation": true
+          }
+        },
+        "atlas_assignment": {
+          "main": 50
+        },
+        "animation": {
+          "animated": true,
+          "frame_count": 8,
+          "frame_duration": 0.2
+        }
+      },
+      "world_generation": {
+        "natural_generation": true,
+        "biome_weights": {
+          "ocean": 1.0,
+          "river": 1.0,
+          "lake": 1.0,
+          "swamp": 0.8
+        }
+      }
+    }
+  }
+}

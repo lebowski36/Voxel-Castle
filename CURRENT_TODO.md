@@ -2,7 +2,7 @@
 
 ## 🚀 Current Focus: Building Custom C++ Engine Components
 
-This file tracks our immediate high-level tasks and progress. Detailed sub-tasks for each item are located in corresponding files within the `/home/system-x1/Projects/Voxel Castle/development_tasks/` directory.
+This file tr**Current Focus:** ⚡ Unified Block Resource System (08d.3a) - Creating centralized data source for blockscks our immediate high-level tasks and progress. Detailed sub-tasks for each item are located in corresponding files within the `/home/system-x1/Projects/Voxel Castle/development_tasks/` directory.
 
 **IMPORTANT: This file is updated after each major development step is confirmed as complete by the user. The agent works from detailed sub-task files.**
 

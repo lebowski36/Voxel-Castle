@@ -1,0 +1,239 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Voxel Fortress Block Definition Schema",
+  "description": "Unified block and item resource system for texture generation and game logic",
+  "type": "object",
+  "properties": {
+    "metadata": {
+      "type": "object",
+      "properties": {
+        "version": {"type": "string"},
+        "generated": {"type": "string", "format": "date-time"},
+        "atlas_config": {
+          "type": "object",
+          "properties": {
+            "tile_size": {"type": "integer", "default": 32},
+            "max_atlas_size": {"type": "integer", "default": 16},
+            "naming_convention": {"type": "string", "enum": ["sequential", "descriptive"]}
+          }
+        }
+      }
+    },
+    "blocks": {
+      "type": "object",
+      "patternProperties": {
+        "^[A-Z_]+$": {
+          "$ref": "#/definitions/block"
+        }
+      }
+    },
+    "items": {
+      "type": "object",
+      "patternProperties": {
+        "^[A-Z_]+$": {
+          "$ref": "#/definitions/item"
+        }
+      }
+    }
+  },
+  "definitions": {
+    "block": {
+      "type": "object",
+      "required": ["id", "name", "category", "physical_properties", "texture_info"],
+      "properties": {
+        "id": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 255,
+          "description": "Unique 8-bit identifier for the block type"
+        },
+        "name": {
+          "type": "string",
+          "description": "Human-readable display name"
+        },
+        "description": {
+          "type": "string",
+          "description": "Detailed description for tooltips and documentation"
+        },
+        "category": {
+          "type": "string",
+          "enum": ["terrain", "stone", "ore", "wood", "liquid", "vegetation", "manufactured", "decorative", "special"]
+        },
+        "tags": {
+          "type": "array",
+          "items": {"type": "string"},
+          "description": "Searchable tags for filtering and categorization"
+        },
+        "physical_properties": {
+          "$ref": "#/definitions/physical_properties"
+        },
+        "gameplay_properties": {
+          "$ref": "#/definitions/gameplay_properties"
+        },
+        "texture_info": {
+          "$ref": "#/definitions/texture_info"
+        },
+        "interactions": {
+          "$ref": "#/definitions/block_interactions"
+        },
+        "world_generation": {
+          "$ref": "#/definitions/worldgen_properties"
+        }
+      }
+    },
+    "physical_properties": {
+      "type": "object",
+      "properties": {
+        "solid": {"type": "boolean", "default": true},
+        "transparent": {"type": "boolean", "default": false},
+        "translucent": {"type": "boolean", "default": false},
+        "fluid": {"type": "boolean", "default": false},
+        "walkable": {"type": "boolean", "description": "Auto-calculated if not specified"},
+        "hardness": {"type": "number", "minimum": 0, "maximum": 10},
+        "density": {"type": "number", "minimum": 0},
+        "melting_point": {"type": "number"},
+        "conductivity": {
+          "type": "object",
+          "properties": {
+            "thermal": {"type": "number"},
+            "electrical": {"type": "number"}
+          }
+        }
+      }
+    },
+    "gameplay_properties": {
+      "type": "object",
+      "properties": {
+        "tool_requirements": {
+          "type": "object",
+          "properties": {
+            "required_tool": {"type": "string", "enum": ["none", "pickaxe", "axe", "shovel", "hammer", "drill"]},
+            "minimum_tier": {"type": "integer", "minimum": 0, "maximum": 10}
+          }
+        },
+        "lighting": {
+          "type": "object",
+          "properties": {
+            "emits_light": {"type": "boolean", "default": false},
+            "light_level": {"type": "integer", "minimum": 0, "maximum": 15},
+            "light_color": {"type": "string", "pattern": "^#[0-9A-Fa-f]{6}$"}
+          }
+        },
+        "flammability": {
+          "type": "object",
+          "properties": {
+            "flammable": {"type": "boolean", "default": false},
+            "fire_spread_rate": {"type": "number", "minimum": 0},
+            "burn_time": {"type": "number", "minimum": 0}
+          }
+        },
+        "weathering": {
+          "type": "object",
+          "properties": {
+            "enabled": {"type": "boolean", "default": false},
+            "rate": {"type": "number", "minimum": 0},
+            "result_block": {"type": "string"}
+          }
+        }
+      }
+    },
+    "texture_info": {
+      "type": "object",
+      "required": ["face_pattern", "generation"],
+      "properties": {
+        "face_pattern": {
+          "type": "string",
+          "enum": ["UNIFORM", "ALL_DIFFERENT", "TOP_BOTTOM_DIFFERENT", "SIDES_DIFFERENT", "ALL_FACES_DIFFERENT"],
+          "description": "Determines how many atlas slots are needed"
+        },
+        "generation": {
+          "type": "object",
+          "required": ["type"],
+          "properties": {
+            "type": {"type": "string"},
+            "subtype": {"type": "string"},
+            "parameters": {
+              "type": "object",
+              "description": "Generator-specific parameters"
+            }
+          }
+        },
+        "atlas_assignment": {
+          "type": "object",
+          "properties": {
+            "main": {"type": "integer", "description": "Atlas slot for uniform/top faces"},
+            "side": {"type": "integer", "description": "Atlas slot for side faces"},
+            "bottom": {"type": "integer", "description": "Atlas slot for bottom face"},
+            "front": {"type": "integer", "description": "Atlas slot for front face (ALL_FACES_DIFFERENT only)"},
+            "back": {"type": "integer", "description": "Atlas slot for back face (ALL_FACES_DIFFERENT only)"},
+            "left": {"type": "integer", "description": "Atlas slot for left face (ALL_FACES_DIFFERENT only)"},
+            "right": {"type": "integer", "description": "Atlas slot for right face (ALL_FACES_DIFFERENT only)"},
+            "top": {"type": "integer", "description": "Atlas slot for top face (ALL_FACES_DIFFERENT only)"}
+          }
+        },
+        "animation": {
+          "type": "object",
+          "properties": {
+            "animated": {"type": "boolean", "default": false},
+            "frame_count": {"type": "integer", "minimum": 1},
+            "frame_duration": {"type": "number", "minimum": 0}
+          }
+        }
+      }
+    },
+    "block_interactions": {
+      "type": "object",
+      "properties": {
+        "drops": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "item": {"type": "string"},
+              "quantity": {"type": "integer", "minimum": 1},
+              "probability": {"type": "number", "minimum": 0, "maximum": 1}
+            }
+          }
+        },
+        "placement_rules": {
+          "type": "object",
+          "properties": {
+            "requires_support": {"type": "boolean"},
+            "support_directions": {"type": "array", "items": {"type": "string"}},
+            "biome_restrictions": {"type": "array", "items": {"type": "string"}}
+          }
+        }
+      }
+    },
+    "worldgen_properties": {
+      "type": "object",
+      "properties": {
+        "natural_generation": {"type": "boolean", "default": false},
+        "ore_generation": {
+          "type": "object",
+          "properties": {
+            "vein_size": {"type": "integer", "minimum": 1},
+            "rarity": {"type": "number", "minimum": 0, "maximum": 1},
+            "depth_range": {
+              "type": "object",
+              "properties": {
+                "min": {"type": "integer"},
+                "max": {"type": "integer"}
+              }
+            }
+          }
+        },
+        "biome_weights": {
+          "type": "object",
+          "patternProperties": {
+            "^[a-z_]+$": {"type": "number", "minimum": 0}
+          }
+        }
+      }
+    },
+    "item": {
+      "type": "object",
+      "description": "Items (tools, resources, etc.) that aren't blocks"
+    }
+  }
+}

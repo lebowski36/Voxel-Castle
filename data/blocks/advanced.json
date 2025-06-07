@@ -1,0 +1,1002 @@
+{
+  "$schema": "../block_schema_proposal.json",
+  "category": "advanced",
+  "description": "Block category: advanced",
+  "id_range": [
+    150,
+    179
+  ],
+  "blocks": {
+    "BLOCK_150": {
+      "id": 150,
+      "name": "Block 150",
+      "description": "Block 150 - migrated from working BLOCK_MAPPING",
+      "category": "crystal",
+      "tags": [
+        "solid"
+      ],
+      "physical_properties": {
+        "solid": true,
+        "transparent": false,
+        "fluid": false,
+        "walkable": false,
+        "hardness": 1.0,
+        "density": 1.0
+      },
+      "texture_info": {
+        "face_pattern": "UNIFORM",
+        "generation": {
+          "type": "crystal",
+          "subtype": "clear"
+        }
+      },
+      "world_generation": {
+        "natural_generation": false
+      },
+      "gameplay_properties": {
+        "tool_requirements": {
+          "required_tool": "shovel",
+          "minimum_tier": 1
+        }
+      }
+    },
+    "BLOCK_151": {
+      "id": 151,
+      "name": "Block 151",
+      "description": "Block 151 - migrated from working BLOCK_MAPPING",
+      "category": "crystal",
+      "tags": [
+        "solid"
+      ],
+      "physical_properties": {
+        "solid": true,
+        "transparent": false,
+        "fluid": false,
+        "walkable": false,
+        "hardness": 1.0,
+        "density": 1.0
+      },
+      "texture_info": {
+        "face_pattern": "UNIFORM",
+        "generation": {
+          "type": "crystal",
+          "subtype": "blue"
+        }
+      },
+      "world_generation": {
+        "natural_generation": false
+      },
+      "gameplay_properties": {
+        "tool_requirements": {
+          "required_tool": "shovel",
+          "minimum_tier": 1
+        }
+      }
+    },
+    "BLOCK_152": {
+      "id": 152,
+      "name": "Block 152",
+      "description": "Block 152 - migrated from working BLOCK_MAPPING",
+      "category": "crystal",
+      "tags": [
+        "solid"
+      ],
+      "physical_properties": {
+        "solid": true,
+        "transparent": false,
+        "fluid": false,
+        "walkable": false,
+        "hardness": 1.0,
+        "density": 1.0
+      },
+      "texture_info": {
+        "face_pattern": "UNIFORM",
+        "generation": {
+          "type": "crystal",
+          "subtype": "red"
+        }
+      },
+      "world_generation": {
+        "natural_generation": false
+      },
+      "gameplay_properties": {
+        "tool_requirements": {
+          "required_tool": "shovel",
+          "minimum_tier": 1
+        }
+      }
+    },
+    "BLOCK_153": {
+      "id": 153,
+      "name": "Block 153",
+      "description": "Block 153 - migrated from working BLOCK_MAPPING",
+      "category": "crystal",
+      "tags": [
+        "solid"
+      ],
+      "physical_properties": {
+        "solid": true,
+        "transparent": false,
+        "fluid": false,
+        "walkable": false,
+        "hardness": 1.0,
+        "density": 1.0
+      },
+      "texture_info": {
+        "face_pattern": "UNIFORM",
+        "generation": {
+          "type": "crystal",
+          "subtype": "green"
+        }
+      },
+      "world_generation": {
+        "natural_generation": false
+      },
+      "gameplay_properties": {
+        "tool_requirements": {
+          "required_tool": "shovel",
+          "minimum_tier": 1
+        }
+      }
+    },
+    "BLOCK_154": {
+      "id": 154,
+      "name": "Block 154",
+      "description": "Block 154 - migrated from working BLOCK_MAPPING",
+      "category": "special",
+      "tags": [
+        "solid"
+      ],
+      "physical_properties": {
+        "solid": true,
+        "transparent": false,
+        "fluid": false,
+        "walkable": false,
+        "hardness": 1.0,
+        "density": 1.0
+      },
+      "texture_info": {
+        "face_pattern": "UNIFORM",
+        "generation": {
+          "type": "special",
+          "subtype": "enchanted_stone"
+        }
+      },
+      "world_generation": {
+        "natural_generation": false
+      },
+      "gameplay_properties": {
+        "tool_requirements": {
+          "required_tool": "shovel",
+          "minimum_tier": 1
+        }
+      }
+    },
+    "BLOCK_155": {
+      "id": 155,
+      "name": "Block 155",
+      "description": "Block 155 - migrated from working BLOCK_MAPPING",
+      "category": "special",
+      "tags": [
+        "solid"
+      ],
+      "physical_properties": {
+        "solid": true,
+        "transparent": false,
+        "fluid": false,
+        "walkable": false,
+        "hardness": 1.0,
+        "density": 1.0
+      },
+      "texture_info": {
+        "face_pattern": "UNIFORM",
+        "generation": {
+          "type": "special",
+          "subtype": "runic_block"
+        }
+      },
+      "world_generation": {
+        "natural_generation": false
+      },
+      "gameplay_properties": {
+        "tool_requirements": {
+          "required_tool": "shovel",
+          "minimum_tier": 1
+        }
+      }
+    },
+    "BLOCK_156": {
+      "id": 156,
+      "name": "Block 156",
+      "description": "Block 156 - migrated from working BLOCK_MAPPING",
+      "category": "crystal",
+      "tags": [
+        "solid"
+      ],
+      "physical_properties": {
+        "solid": true,
+        "transparent": false,
+        "fluid": false,
+        "walkable": false,
+        "hardness": 1.0,
+        "density": 1.0
+      },
+      "texture_info": {
+        "face_pattern": "UNIFORM",
+        "generation": {
+          "type": "crystal",
+          "subtype": "ether"
+        }
+      },
+      "world_generation": {
+        "natural_generation": false
+      },
+      "gameplay_properties": {
+        "tool_requirements": {
+          "required_tool": "shovel",
+          "minimum_tier": 1
+        }
+      }
+    },
+    "BLOCK_157": {
+      "id": 157,
+      "name": "Block 157",
+      "description": "Block 157 - migrated from working BLOCK_MAPPING",
+      "category": "special",
+      "tags": [
+        "solid"
+      ],
+      "physical_properties": {
+        "solid": true,
+        "transparent": false,
+        "fluid": false,
+        "walkable": false,
+        "hardness": 1.0,
+        "density": 1.0
+      },
+      "texture_info": {
+        "face_pattern": "UNIFORM",
+        "generation": {
+          "type": "special",
+          "subtype": "void_stone"
+        }
+      },
+      "world_generation": {
+        "natural_generation": false
+      },
+      "gameplay_properties": {
+        "tool_requirements": {
+          "required_tool": "shovel",
+          "minimum_tier": 1
+        }
+      }
+    },
+    "BLOCK_158": {
+      "id": 158,
+      "name": "Block 158",
+      "description": "Block 158 - migrated from working BLOCK_MAPPING",
+      "category": "stone",
+      "tags": [
+        "solid",
+        "natural"
+      ],
+      "physical_properties": {
+        "solid": true,
+        "transparent": false,
+        "fluid": false,
+        "walkable": false,
+        "hardness": 1.5,
+        "density": 2.7
+      },
+      "texture_info": {
+        "face_pattern": "UNIFORM",
+        "generation": {
+          "type": "stone",
+          "subtype": "celestial_marble"
+        }
+      },
+      "world_generation": {
+        "natural_generation": false
+      },
+      "gameplay_properties": {
+        "tool_requirements": {
+          "required_tool": "pickaxe",
+          "minimum_tier": 1
+        }
+      }
+    },
+    "BLOCK_159": {
+      "id": 159,
+      "name": "Block 159",
+      "description": "Block 159 - migrated from working BLOCK_MAPPING",
+      "category": "special",
+      "tags": [
+        "solid"
+      ],
+      "physical_properties": {
+        "solid": true,
+        "transparent": false,
+        "fluid": false,
+        "walkable": false,
+        "hardness": 1.0,
+        "density": 1.0
+      },
+      "texture_info": {
+        "face_pattern": "UNIFORM",
+        "generation": {
+          "type": "special",
+          "subtype": "shadow_glass"
+        }
+      },
+      "world_generation": {
+        "natural_generation": false
+      },
+      "gameplay_properties": {
+        "tool_requirements": {
+          "required_tool": "shovel",
+          "minimum_tier": 1
+        }
+      }
+    },
+    "BLOCK_160": {
+      "id": 160,
+      "name": "Block 160",
+      "description": "Block 160 - migrated from working BLOCK_MAPPING",
+      "category": "special",
+      "tags": [
+        "solid"
+      ],
+      "physical_properties": {
+        "solid": true,
+        "transparent": false,
+        "fluid": false,
+        "walkable": false,
+        "hardness": 1.0,
+        "density": 1.0
+      },
+      "texture_info": {
+        "face_pattern": "UNIFORM",
+        "generation": {
+          "type": "special",
+          "subtype": "technology"
+        }
+      },
+      "world_generation": {
+        "natural_generation": false
+      },
+      "gameplay_properties": {
+        "tool_requirements": {
+          "required_tool": "shovel",
+          "minimum_tier": 1
+        }
+      }
+    },
+    "BLOCK_161": {
+      "id": 161,
+      "name": "Block 161",
+      "description": "Block 161 - migrated from working BLOCK_MAPPING",
+      "category": "special",
+      "tags": [
+        "solid"
+      ],
+      "physical_properties": {
+        "solid": true,
+        "transparent": false,
+        "fluid": false,
+        "walkable": false,
+        "hardness": 1.0,
+        "density": 1.0
+      },
+      "texture_info": {
+        "face_pattern": "UNIFORM",
+        "generation": {
+          "type": "special",
+          "subtype": "technology"
+        }
+      },
+      "world_generation": {
+        "natural_generation": false
+      },
+      "gameplay_properties": {
+        "tool_requirements": {
+          "required_tool": "shovel",
+          "minimum_tier": 1
+        }
+      }
+    },
+    "BLOCK_162": {
+      "id": 162,
+      "name": "Block 162",
+      "description": "Block 162 - migrated from working BLOCK_MAPPING",
+      "category": "special",
+      "tags": [
+        "solid"
+      ],
+      "physical_properties": {
+        "solid": true,
+        "transparent": false,
+        "fluid": false,
+        "walkable": false,
+        "hardness": 1.0,
+        "density": 1.0
+      },
+      "texture_info": {
+        "face_pattern": "UNIFORM",
+        "generation": {
+          "type": "special",
+          "subtype": "technology"
+        }
+      },
+      "world_generation": {
+        "natural_generation": false
+      },
+      "gameplay_properties": {
+        "tool_requirements": {
+          "required_tool": "shovel",
+          "minimum_tier": 1
+        }
+      }
+    },
+    "BLOCK_163": {
+      "id": 163,
+      "name": "Block 163",
+      "description": "Block 163 - migrated from working BLOCK_MAPPING",
+      "category": "special",
+      "tags": [
+        "solid"
+      ],
+      "physical_properties": {
+        "solid": true,
+        "transparent": false,
+        "fluid": false,
+        "walkable": false,
+        "hardness": 1.0,
+        "density": 1.0
+      },
+      "texture_info": {
+        "face_pattern": "UNIFORM",
+        "generation": {
+          "type": "special",
+          "subtype": "technology"
+        }
+      },
+      "world_generation": {
+        "natural_generation": false
+      },
+      "gameplay_properties": {
+        "tool_requirements": {
+          "required_tool": "shovel",
+          "minimum_tier": 1
+        }
+      }
+    },
+    "BLOCK_164": {
+      "id": 164,
+      "name": "Block 164",
+      "description": "Block 164 - migrated from working BLOCK_MAPPING",
+      "category": "special",
+      "tags": [
+        "solid"
+      ],
+      "physical_properties": {
+        "solid": true,
+        "transparent": false,
+        "fluid": false,
+        "walkable": false,
+        "hardness": 1.0,
+        "density": 1.0
+      },
+      "texture_info": {
+        "face_pattern": "UNIFORM",
+        "generation": {
+          "type": "special",
+          "subtype": "technology"
+        }
+      },
+      "world_generation": {
+        "natural_generation": false
+      },
+      "gameplay_properties": {
+        "tool_requirements": {
+          "required_tool": "shovel",
+          "minimum_tier": 1
+        }
+      }
+    },
+    "BLOCK_165": {
+      "id": 165,
+      "name": "Block 165",
+      "description": "Block 165 - migrated from working BLOCK_MAPPING",
+      "category": "special",
+      "tags": [
+        "solid"
+      ],
+      "physical_properties": {
+        "solid": true,
+        "transparent": false,
+        "fluid": false,
+        "walkable": false,
+        "hardness": 1.0,
+        "density": 1.0
+      },
+      "texture_info": {
+        "face_pattern": "UNIFORM",
+        "generation": {
+          "type": "special",
+          "subtype": "technology"
+        }
+      },
+      "world_generation": {
+        "natural_generation": false
+      },
+      "gameplay_properties": {
+        "tool_requirements": {
+          "required_tool": "shovel",
+          "minimum_tier": 1
+        }
+      }
+    },
+    "BLOCK_166": {
+      "id": 166,
+      "name": "Block 166",
+      "description": "Block 166 - migrated from working BLOCK_MAPPING",
+      "category": "special",
+      "tags": [
+        "solid"
+      ],
+      "physical_properties": {
+        "solid": true,
+        "transparent": false,
+        "fluid": false,
+        "walkable": false,
+        "hardness": 1.0,
+        "density": 1.0
+      },
+      "texture_info": {
+        "face_pattern": "UNIFORM",
+        "generation": {
+          "type": "special",
+          "subtype": "technology"
+        }
+      },
+      "world_generation": {
+        "natural_generation": false
+      },
+      "gameplay_properties": {
+        "tool_requirements": {
+          "required_tool": "shovel",
+          "minimum_tier": 1
+        }
+      }
+    },
+    "BLOCK_167": {
+      "id": 167,
+      "name": "Block 167",
+      "description": "Block 167 - migrated from working BLOCK_MAPPING",
+      "category": "special",
+      "tags": [
+        "solid"
+      ],
+      "physical_properties": {
+        "solid": true,
+        "transparent": false,
+        "fluid": false,
+        "walkable": false,
+        "hardness": 1.0,
+        "density": 1.0
+      },
+      "texture_info": {
+        "face_pattern": "UNIFORM",
+        "generation": {
+          "type": "special",
+          "subtype": "technology"
+        }
+      },
+      "world_generation": {
+        "natural_generation": false
+      },
+      "gameplay_properties": {
+        "tool_requirements": {
+          "required_tool": "shovel",
+          "minimum_tier": 1
+        }
+      }
+    },
+    "BLOCK_168": {
+      "id": 168,
+      "name": "Block 168",
+      "description": "Block 168 - migrated from working BLOCK_MAPPING",
+      "category": "special",
+      "tags": [
+        "solid"
+      ],
+      "physical_properties": {
+        "solid": true,
+        "transparent": false,
+        "fluid": false,
+        "walkable": false,
+        "hardness": 1.0,
+        "density": 1.0
+      },
+      "texture_info": {
+        "face_pattern": "UNIFORM",
+        "generation": {
+          "type": "special",
+          "subtype": "technology"
+        }
+      },
+      "world_generation": {
+        "natural_generation": false
+      },
+      "gameplay_properties": {
+        "tool_requirements": {
+          "required_tool": "shovel",
+          "minimum_tier": 1
+        }
+      }
+    },
+    "BLOCK_169": {
+      "id": 169,
+      "name": "Block 169",
+      "description": "Block 169 - migrated from working BLOCK_MAPPING",
+      "category": "special",
+      "tags": [
+        "solid"
+      ],
+      "physical_properties": {
+        "solid": true,
+        "transparent": false,
+        "fluid": false,
+        "walkable": false,
+        "hardness": 1.0,
+        "density": 1.0
+      },
+      "texture_info": {
+        "face_pattern": "UNIFORM",
+        "generation": {
+          "type": "special",
+          "subtype": "technology"
+        }
+      },
+      "world_generation": {
+        "natural_generation": false
+      },
+      "gameplay_properties": {
+        "tool_requirements": {
+          "required_tool": "shovel",
+          "minimum_tier": 1
+        }
+      }
+    },
+    "BLOCK_170": {
+      "id": 170,
+      "name": "Block 170",
+      "description": "Block 170 - migrated from working BLOCK_MAPPING",
+      "category": "special",
+      "tags": [
+        "solid"
+      ],
+      "physical_properties": {
+        "solid": true,
+        "transparent": false,
+        "fluid": false,
+        "walkable": false,
+        "hardness": 1.0,
+        "density": 1.0
+      },
+      "texture_info": {
+        "face_pattern": "UNIFORM",
+        "generation": {
+          "type": "special",
+          "subtype": "magical"
+        }
+      },
+      "world_generation": {
+        "natural_generation": false
+      },
+      "gameplay_properties": {
+        "tool_requirements": {
+          "required_tool": "shovel",
+          "minimum_tier": 1
+        }
+      }
+    },
+    "BLOCK_171": {
+      "id": 171,
+      "name": "Block 171",
+      "description": "Block 171 - migrated from working BLOCK_MAPPING",
+      "category": "special",
+      "tags": [
+        "solid"
+      ],
+      "physical_properties": {
+        "solid": true,
+        "transparent": false,
+        "fluid": false,
+        "walkable": false,
+        "hardness": 1.0,
+        "density": 1.0
+      },
+      "texture_info": {
+        "face_pattern": "UNIFORM",
+        "generation": {
+          "type": "special",
+          "subtype": "magical"
+        }
+      },
+      "world_generation": {
+        "natural_generation": false
+      },
+      "gameplay_properties": {
+        "tool_requirements": {
+          "required_tool": "shovel",
+          "minimum_tier": 1
+        }
+      }
+    },
+    "BLOCK_172": {
+      "id": 172,
+      "name": "Block 172",
+      "description": "Block 172 - migrated from working BLOCK_MAPPING",
+      "category": "special",
+      "tags": [
+        "solid"
+      ],
+      "physical_properties": {
+        "solid": true,
+        "transparent": false,
+        "fluid": false,
+        "walkable": false,
+        "hardness": 1.0,
+        "density": 1.0
+      },
+      "texture_info": {
+        "face_pattern": "UNIFORM",
+        "generation": {
+          "type": "special",
+          "subtype": "magical"
+        }
+      },
+      "world_generation": {
+        "natural_generation": false
+      },
+      "gameplay_properties": {
+        "tool_requirements": {
+          "required_tool": "shovel",
+          "minimum_tier": 1
+        }
+      }
+    },
+    "BLOCK_173": {
+      "id": 173,
+      "name": "Block 173",
+      "description": "Block 173 - migrated from working BLOCK_MAPPING",
+      "category": "special",
+      "tags": [
+        "solid"
+      ],
+      "physical_properties": {
+        "solid": true,
+        "transparent": false,
+        "fluid": false,
+        "walkable": false,
+        "hardness": 1.0,
+        "density": 1.0
+      },
+      "texture_info": {
+        "face_pattern": "UNIFORM",
+        "generation": {
+          "type": "special",
+          "subtype": "magical"
+        }
+      },
+      "world_generation": {
+        "natural_generation": false
+      },
+      "gameplay_properties": {
+        "tool_requirements": {
+          "required_tool": "shovel",
+          "minimum_tier": 1
+        }
+      }
+    },
+    "BLOCK_174": {
+      "id": 174,
+      "name": "Block 174",
+      "description": "Block 174 - migrated from working BLOCK_MAPPING",
+      "category": "special",
+      "tags": [
+        "solid"
+      ],
+      "physical_properties": {
+        "solid": true,
+        "transparent": false,
+        "fluid": false,
+        "walkable": false,
+        "hardness": 1.0,
+        "density": 1.0
+      },
+      "texture_info": {
+        "face_pattern": "UNIFORM",
+        "generation": {
+          "type": "special",
+          "subtype": "magical"
+        }
+      },
+      "world_generation": {
+        "natural_generation": false
+      },
+      "gameplay_properties": {
+        "tool_requirements": {
+          "required_tool": "shovel",
+          "minimum_tier": 1
+        }
+      }
+    },
+    "BLOCK_175": {
+      "id": 175,
+      "name": "Block 175",
+      "description": "Block 175 - migrated from working BLOCK_MAPPING",
+      "category": "special",
+      "tags": [
+        "solid"
+      ],
+      "physical_properties": {
+        "solid": true,
+        "transparent": false,
+        "fluid": false,
+        "walkable": false,
+        "hardness": 1.0,
+        "density": 1.0
+      },
+      "texture_info": {
+        "face_pattern": "UNIFORM",
+        "generation": {
+          "type": "special",
+          "subtype": "magical"
+        }
+      },
+      "world_generation": {
+        "natural_generation": false
+      },
+      "gameplay_properties": {
+        "tool_requirements": {
+          "required_tool": "shovel",
+          "minimum_tier": 1
+        }
+      }
+    },
+    "BLOCK_176": {
+      "id": 176,
+      "name": "Block 176",
+      "description": "Block 176 - migrated from working BLOCK_MAPPING",
+      "category": "special",
+      "tags": [
+        "solid"
+      ],
+      "physical_properties": {
+        "solid": true,
+        "transparent": false,
+        "fluid": false,
+        "walkable": false,
+        "hardness": 1.0,
+        "density": 1.0
+      },
+      "texture_info": {
+        "face_pattern": "UNIFORM",
+        "generation": {
+          "type": "special",
+          "subtype": "magical"
+        }
+      },
+      "world_generation": {
+        "natural_generation": false
+      },
+      "gameplay_properties": {
+        "tool_requirements": {
+          "required_tool": "shovel",
+          "minimum_tier": 1
+        }
+      }
+    },
+    "BLOCK_177": {
+      "id": 177,
+      "name": "Block 177",
+      "description": "Block 177 - migrated from working BLOCK_MAPPING",
+      "category": "special",
+      "tags": [
+        "solid"
+      ],
+      "physical_properties": {
+        "solid": true,
+        "transparent": false,
+        "fluid": false,
+        "walkable": false,
+        "hardness": 1.0,
+        "density": 1.0
+      },
+      "texture_info": {
+        "face_pattern": "UNIFORM",
+        "generation": {
+          "type": "special",
+          "subtype": "magical"
+        }
+      },
+      "world_generation": {
+        "natural_generation": false
+      },
+      "gameplay_properties": {
+        "tool_requirements": {
+          "required_tool": "shovel",
+          "minimum_tier": 1
+        }
+      }
+    },
+    "BLOCK_178": {
+      "id": 178,
+      "name": "Block 178",
+      "description": "Block 178 - migrated from working BLOCK_MAPPING",
+      "category": "special",
+      "tags": [
+        "solid"
+      ],
+      "physical_properties": {
+        "solid": true,
+        "transparent": false,
+        "fluid": false,
+        "walkable": false,
+        "hardness": 1.0,
+        "density": 1.0
+      },
+      "texture_info": {
+        "face_pattern": "UNIFORM",
+        "generation": {
+          "type": "special",
+          "subtype": "magical"
+        }
+      },
+      "world_generation": {
+        "natural_generation": false
+      },
+      "gameplay_properties": {
+        "tool_requirements": {
+          "required_tool": "shovel",
+          "minimum_tier": 1
+        }
+      }
+    },
+    "BLOCK_179": {
+      "id": 179,
+      "name": "Block 179",
+      "description": "Block 179 - migrated from working BLOCK_MAPPING",
+      "category": "special",
+      "tags": [
+        "solid"
+      ],
+      "physical_properties": {
+        "solid": true,
+        "transparent": false,
+        "fluid": false,
+        "walkable": false,
+        "hardness": 1.0,
+        "density": 1.0
+      },
+      "texture_info": {
+        "face_pattern": "UNIFORM",
+        "generation": {
+          "type": "special",
+          "subtype": "magical"
+        }
+      },
+      "world_generation": {
+        "natural_generation": false
+      },
+      "gameplay_properties": {
+        "tool_requirements": {
+          "required_tool": "shovel",
+          "minimum_tier": 1
+        }
+      }
+    }
+  }
+}

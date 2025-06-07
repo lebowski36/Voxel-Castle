@@ -9,9 +9,10 @@ This document defines the comprehensive 256-block taxonomy that will replace the
 ## Current Status: MODULAR IMPLEMENTATION
 This system is being implemented in phases through dedicated subtasks:
 
-- **[08d.1 - Efficient Face-Based Atlas System](08d.1_efficient_face_based_atlas_system.md)** - Face classification and efficient packing
-- **[08d.2 - Fix Current Atlas Generation Issues](08d.2_fix_current_atlas_generation_issues.md)** - Active bugfix tracking  
-- **[08d.3 - Worldgen Block Coverage Analysis](08d.3_worldgen_block_coverage_analysis.md)** - Block audit and coverage
+- **[08d.1 - Efficient Face-Based Atlas System](08d.1_efficient_face_based_atlas_system.md)** ✅ - Face classification and efficient packing
+- **[08d.2 - Fix Current Atlas Generation Issues](08d.2_fix_current_atlas_generation_issues.md)** ✅ - Active bugfix tracking  
+- **[08d.3a - Unified Block Resource System](08d.3a_unified_block_resource_system.md)** ⏳ ACTIVE - Single data source for textures and game logic
+- **[08d.3b - Worldgen Block Coverage Analysis](08d.3b_worldgen_block_coverage_analysis.md)** ⏳ PENDING - Block audit and coverage
 - **08d.4 - System Integration** (Future) - Full VoxelType enum and BlockProperties implementation
 
 ## Design Principles

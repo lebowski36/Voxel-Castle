@@ -1,0 +1,296 @@
+{
+  "$schema": "../block_schema_proposal.json",
+  "category": "fluids",
+  "description": "Block category: fluids",
+  "id_range": [
+    50,
+    59
+  ],
+  "blocks": {
+    "WATER": {
+      "id": 50,
+      "name": "Water",
+      "description": "Water - migrated from working BLOCK_MAPPING",
+      "category": "fluid",
+      "tags": [
+        "fluid",
+        "transparent"
+      ],
+      "physical_properties": {
+        "solid": false,
+        "transparent": true,
+        "fluid": true,
+        "walkable": false,
+        "hardness": 0,
+        "density": 1.0
+      },
+      "texture_info": {
+        "face_pattern": "UNIFORM",
+        "generation": {
+          "type": "fluid",
+          "subtype": "water"
+        }
+      },
+      "world_generation": {
+        "natural_generation": false
+      }
+    },
+    "LAVA": {
+      "id": 51,
+      "name": "Lava",
+      "description": "Lava - migrated from working BLOCK_MAPPING",
+      "category": "fluid",
+      "tags": [
+        "fluid",
+        "transparent"
+      ],
+      "physical_properties": {
+        "solid": false,
+        "transparent": true,
+        "fluid": true,
+        "walkable": false,
+        "hardness": 0,
+        "density": 1.0
+      },
+      "texture_info": {
+        "face_pattern": "UNIFORM",
+        "generation": {
+          "type": "fluid",
+          "subtype": "lava"
+        }
+      },
+      "world_generation": {
+        "natural_generation": false
+      }
+    },
+    "OIL": {
+      "id": 52,
+      "name": "Oil",
+      "description": "Oil - migrated from working BLOCK_MAPPING",
+      "category": "fluid",
+      "tags": [
+        "fluid",
+        "transparent"
+      ],
+      "physical_properties": {
+        "solid": false,
+        "transparent": true,
+        "fluid": true,
+        "walkable": false,
+        "hardness": 0,
+        "density": 1.0
+      },
+      "texture_info": {
+        "face_pattern": "UNIFORM",
+        "generation": {
+          "type": "fluid",
+          "subtype": "oil"
+        }
+      },
+      "world_generation": {
+        "natural_generation": false
+      }
+    },
+    "ACID": {
+      "id": 53,
+      "name": "Acid",
+      "description": "Acid - migrated from working BLOCK_MAPPING",
+      "category": "fluid",
+      "tags": [
+        "fluid",
+        "transparent"
+      ],
+      "physical_properties": {
+        "solid": false,
+        "transparent": true,
+        "fluid": true,
+        "walkable": false,
+        "hardness": 0,
+        "density": 1.0
+      },
+      "texture_info": {
+        "face_pattern": "UNIFORM",
+        "generation": {
+          "type": "fluid",
+          "subtype": "acid"
+        }
+      },
+      "world_generation": {
+        "natural_generation": false
+      }
+    },
+    "HONEY": {
+      "id": 54,
+      "name": "Honey",
+      "description": "Honey - migrated from working BLOCK_MAPPING",
+      "category": "fluid",
+      "tags": [
+        "fluid",
+        "transparent"
+      ],
+      "physical_properties": {
+        "solid": false,
+        "transparent": true,
+        "fluid": true,
+        "walkable": false,
+        "hardness": 0,
+        "density": 1.0
+      },
+      "texture_info": {
+        "face_pattern": "UNIFORM",
+        "generation": {
+          "type": "fluid",
+          "subtype": "honey"
+        }
+      },
+      "world_generation": {
+        "natural_generation": false
+      }
+    },
+    "STEAM": {
+      "id": 55,
+      "name": "Steam",
+      "description": "Steam - migrated from working BLOCK_MAPPING",
+      "category": "fluid",
+      "tags": [
+        "fluid",
+        "transparent"
+      ],
+      "physical_properties": {
+        "solid": false,
+        "transparent": true,
+        "fluid": true,
+        "walkable": false,
+        "hardness": 0,
+        "density": 1.0
+      },
+      "texture_info": {
+        "face_pattern": "UNIFORM",
+        "generation": {
+          "type": "fluid",
+          "subtype": "steam"
+        }
+      },
+      "world_generation": {
+        "natural_generation": false
+      }
+    },
+    "TOXIC_GAS": {
+      "id": 56,
+      "name": "Toxic Gas",
+      "description": "Toxic Gas - migrated from working BLOCK_MAPPING",
+      "category": "fluid",
+      "tags": [
+        "fluid",
+        "transparent"
+      ],
+      "physical_properties": {
+        "solid": false,
+        "transparent": true,
+        "fluid": true,
+        "walkable": false,
+        "hardness": 0,
+        "density": 1.0
+      },
+      "texture_info": {
+        "face_pattern": "UNIFORM",
+        "generation": {
+          "type": "fluid",
+          "subtype": "toxic_gas"
+        }
+      },
+      "world_generation": {
+        "natural_generation": false
+      }
+    },
+    "NATURAL_GAS": {
+      "id": 57,
+      "name": "Natural Gas",
+      "description": "Natural Gas - migrated from working BLOCK_MAPPING",
+      "category": "fluid",
+      "tags": [
+        "fluid",
+        "transparent"
+      ],
+      "physical_properties": {
+        "solid": false,
+        "transparent": true,
+        "fluid": true,
+        "walkable": false,
+        "hardness": 0,
+        "density": 1.0
+      },
+      "texture_info": {
+        "face_pattern": "UNIFORM",
+        "generation": {
+          "type": "fluid",
+          "subtype": "natural_gas"
+        }
+      },
+      "world_generation": {
+        "natural_generation": false
+      }
+    },
+    "MAGICAL_MIST": {
+      "id": 58,
+      "name": "Magical Mist",
+      "description": "Magical Mist - migrated from working BLOCK_MAPPING",
+      "category": "special",
+      "tags": [
+        "solid"
+      ],
+      "physical_properties": {
+        "solid": true,
+        "transparent": false,
+        "fluid": false,
+        "walkable": false,
+        "hardness": 1.0,
+        "density": 1.0
+      },
+      "texture_info": {
+        "face_pattern": "UNIFORM",
+        "generation": {
+          "type": "special",
+          "subtype": "magical_mist"
+        }
+      },
+      "world_generation": {
+        "natural_generation": false
+      },
+      "gameplay_properties": {
+        "tool_requirements": {
+          "required_tool": "shovel",
+          "minimum_tier": 1
+        }
+      }
+    },
+    "SMOKE": {
+      "id": 59,
+      "name": "Smoke",
+      "description": "Smoke - migrated from working BLOCK_MAPPING",
+      "category": "fluid",
+      "tags": [
+        "fluid",
+        "transparent"
+      ],
+      "physical_properties": {
+        "solid": false,
+        "transparent": true,
+        "fluid": true,
+        "walkable": false,
+        "hardness": 0,
+        "density": 1.0
+      },
+      "texture_info": {
+        "face_pattern": "UNIFORM",
+        "generation": {
+          "type": "fluid",
+          "subtype": "smoke"
+        }
+      },
+      "world_generation": {
+        "natural_generation": false
+      }
+    }
+  }
+}

@@ -15,12 +15,13 @@ class FacePattern(Enum):
     TOP_BOTTOM_DIFFERENT = "TOP_BOTTOM_DIFFERENT"  # Top/bottom same, sides different - 2 atlas slots
     ALL_DIFFERENT = "ALL_DIFFERENT"       # All faces unique - 3 atlas slots
     DIRECTIONAL = "DIRECTIONAL"           # Front/back/left/right different - 4+ atlas slots
+    ALL_FACES_DIFFERENT = "ALL_FACES_DIFFERENT"    # All 6 faces unique - 6 atlas slots
 
 class AtlasType(Enum):
     """Atlas types for the multi-atlas system"""
     MAIN = "main"        # Primary face textures (all blocks)
     SIDE = "side"        # Side face textures (only certain patterns)
-    BOTTOM = "bottom"    # Bottom face textures (only certain patterns)
+    BOTTOM = "bottom"    # Bottom face textures (only certain patterns) (ALL_FACES_DIFFERENT pattern)
 
 # Face pattern mapping for all 256 VoxelType IDs
 # This must match the C++ mapping in voxel_face_patterns.cpp
@@ -161,16 +162,19 @@ class AtlasSlotAllocator:
         self.main_atlas_slots = {}     # voxel_id -> main_slot
         self.side_atlas_slots = {}     # voxel_id -> side_slot  
         self.bottom_atlas_slots = {}   # voxel_id -> bottom_slot
+        self.multiface_atlas_slots = {} # voxel_id -> first_multiface_slot (reserves 6 consecutive)
         
         # Track next available slots for efficient atlases
         self.next_side_slot = 0
         self.next_bottom_slot = 0
+        self.next_multiface_slot = 0
         
         # Statistics
         self.stats = {
             'main_slots_used': 0,
             'side_slots_used': 0,
             'bottom_slots_used': 0,
+            'multiface_slots_used': 0,
             'blocks_by_pattern': {pattern: 0 for pattern in FacePattern}
         }
     
@@ -207,6 +211,12 @@ class AtlasSlotAllocator:
             self.bottom_atlas_slots[voxel_id] = self.next_bottom_slot
             self.next_bottom_slot += 1
             
+        elif pattern == FacePattern.ALL_FACES_DIFFERENT:
+            # Needs 6 different textures: allocate 6 consecutive slots in multiface atlas
+            # This allows for easy indexing: slot + face_offset
+            self.multiface_atlas_slots[voxel_id] = self.next_multiface_slot
+            self.next_multiface_slot += 6  # Reserve 6 slots: top, bottom, front, back, left, right
+            
         elif pattern == FacePattern.DIRECTIONAL:
             # Future implementation - for now treat as ALL_DIFFERENT
             self.side_atlas_slots[voxel_id] = self.next_side_slot
@@ -222,6 +232,8 @@ class AtlasSlotAllocator:
             return self.side_atlas_slots.get(voxel_id)
         elif atlas_type == AtlasType.BOTTOM:
             return self.bottom_atlas_slots.get(voxel_id)
+        elif atlas_type == AtlasType.MULTIFACE:
+            return self.multiface_atlas_slots.get(voxel_id)
         return None
     
     def get_required_face_textures(self, voxel_id: int) -> List[str]:
