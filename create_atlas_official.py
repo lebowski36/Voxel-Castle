@@ -24,6 +24,7 @@ import os
 import sys
 import json
 import math
+import random
 from typing import Dict, List, Tuple, Optional
 from enum import Enum
 
@@ -53,9 +54,230 @@ try:
     from texture_generators.fluid_textures import generate_fluid_texture
     from texture_generators.ore_textures import generate_ore_texture
     MODULAR_SYSTEM_AVAILABLE = True
-except ImportError:
+    print("✓ Modular texture generation system loaded successfully")
+except ImportError as e:
     MODULAR_SYSTEM_AVAILABLE = False
-    print("⚠ Warning: Modular texture system not available. Using basic generation.")
+    print(f"⚠ Warning: Modular texture system not available ({e}). Using basic generation.")
+
+
+def generate_modular_texture(block_id, block_info, size=32, face='all', seed=None):
+    """
+    Generate a texture using the modular system for a specific block.
+    Enhanced with detailed legacy texture generation logic.
+    
+    Args:
+        block_id: The block ID (0-255)
+        block_info: Block data from JSON 
+        size: Texture size in pixels (default 32x32)
+        face: Which face to generate ('top', 'side', 'bottom', 'all')
+        seed: Random seed for reproducible generation
+    
+    Returns:
+        PIL Image of the generated texture
+    """
+    if not MODULAR_SYSTEM_AVAILABLE:
+        return generate_legacy_texture(block_id, block_info, size)
+    
+    if seed is not None:
+        random.seed(seed)
+    
+    # Get block classification from JSON data
+    block_type = block_info.get('type', 'special')
+    subtype = block_info.get('subtype', 'placeholder')
+    
+    try:
+        if block_type == 'stone':
+            print(f"Debug: Generating stone texture for {subtype}, size={size}")
+            if 'brick' in subtype or 'tile' in subtype or 'polished' in subtype or 'smooth' in subtype:
+                return generate_processed_stone_texture(size, subtype)
+            else:
+                return generate_stone_texture(size, subtype)
+        
+        elif block_type == 'wood':
+            print(f"Debug: Generating wood texture for {subtype}, size={size}")
+            if 'planks' in subtype or 'beam' in subtype:
+                wood_species = subtype.split('_')[0]  # oak, pine, etc.
+                return generate_plank_texture(size, wood_species)
+            else:
+                return generate_wood_texture(size, subtype)
+        
+        elif block_type == 'organic':
+            print(f"Debug: Generating organic texture for {subtype}, size={size}")
+            # Handle leaves with per-face logic
+            if 'leaves' in subtype:
+                species = subtype.split('_')[0]  # oak, pine, etc.
+                return generate_organic_texture('leaves_' + species, size, face=face)
+            else:
+                return generate_organic_texture(subtype, size, face=face)
+        
+        elif block_type == 'ore':
+            print(f"Debug: Generating ore texture for type '{subtype}', size={size}")
+            return generate_ore_texture(subtype, size)
+        
+        elif block_type == 'crystal':
+            print(f"Debug: Generating crystal texture for type '{subtype}', size={size}")
+            return generate_crystal_texture(subtype, size)
+        
+        elif block_type == 'ceramic':
+            print(f"Debug: Generating ceramic texture for {subtype}, size={size}")
+            return generate_ceramic_texture(subtype, size)
+        
+        elif block_type == 'metal':
+            print(f"Debug: Generating metal texture for {subtype}, size={size}")
+            return generate_metal_texture(subtype, size)
+        
+        elif block_type == 'fluid':
+            print(f"Debug: Generating fluid texture for {subtype}, size={size}")
+            return generate_fluid_texture(subtype, size)
+        
+        elif block_type == 'special':
+            print(f"Debug: Generating special texture for {subtype}, size={size}")
+            return generate_special_texture(subtype, size)
+        
+        elif block_type == 'air':
+            # Transparent texture
+            return Image.new("RGBA", (size, size), (0, 0, 0, 0))
+        
+        else:
+            # Fallback - purple placeholder
+            print(f"Warning: Unknown block type '{block_type}', using placeholder")
+            img = Image.new("RGBA", (size, size), (128, 64, 128, 255))
+            return img
+            
+    except Exception as e:
+        print(f"Warning: Failed to generate modular texture for block {block_id} ({subtype}): {e}")
+        # Return purple placeholder on error
+        img = Image.new("RGBA", (size, size), (160, 32, 160, 255))
+        return img
+
+
+def generate_legacy_texture(block_id, block_info, size=32):
+    """
+    Generate textures using the legacy system for backwards compatibility.
+    Enhanced with detailed patterns and colors.
+    """
+    # Enhanced legacy color definitions
+    legacy_colors = {
+        0: (0, 0, 0, 0),          # AIR
+        1: (128, 128, 128, 255),  # STONE
+        2: (139, 69, 19, 255),    # DIRT
+        3: (0, 128, 0, 255),      # GRASS
+        4: (244, 164, 96, 255),   # SAND
+        5: (105, 105, 105, 255),  # GRAVEL
+        6: (139, 90, 43, 255),    # CLAY
+        7: (32, 32, 32, 255),     # BEDROCK
+        8: (101, 67, 33, 255),    # TOPSOIL
+        9: (139, 90, 43, 255),    # SUBSOIL
+        
+        # Stone varieties with appropriate colors
+        10: (169, 169, 169, 255), # GRANITE
+        11: (240, 240, 240, 255), # LIMESTONE  
+        12: (255, 255, 255, 255), # MARBLE
+        13: (194, 178, 128, 255), # SANDSTONE
+        14: (47, 79, 79, 255),    # SLATE
+        15: (47, 79, 79, 255),    # BASALT
+        16: (245, 245, 245, 255), # QUARTZITE
+        17: (25, 25, 25, 255),    # OBSIDIAN
+        18: (211, 211, 211, 255), # PUMICE
+        19: (105, 105, 105, 255), # SHALE
+        
+        # Ores with base stone + ore colors
+        20: (64, 64, 64, 255),    # COAL_ORE
+        21: (205, 133, 63, 255),  # IRON_ORE
+        22: (184, 115, 51, 255),  # COPPER_ORE
+        23: (192, 192, 192, 255), # TIN_ORE
+        24: (192, 192, 192, 255), # SILVER_ORE
+        25: (255, 215, 0, 255),   # GOLD_ORE
+        26: (220, 20, 60, 255),   # GEM_RUBY
+        27: (65, 105, 225, 255),  # GEM_SAPPHIRE
+        28: (50, 205, 50, 255),   # GEM_EMERALD
+        29: (185, 242, 255, 255), # GEM_DIAMOND
+        
+        # Wood types
+        30: (139, 69, 19, 255),   # WOOD_OAK
+        31: (160, 82, 45, 255),   # WOOD_PINE
+        32: (245, 245, 220, 255), # WOOD_BIRCH
+        33: (117, 42, 42, 255),   # WOOD_MAHOGANY
+        
+        # Leaves
+        34: (34, 139, 34, 255),   # LEAVES_OAK
+        35: (0, 100, 0, 255),     # LEAVES_PINE
+        36: (154, 205, 50, 255),  # LEAVES_BIRCH
+        37: (46, 125, 50, 255),   # LEAVES_PALM
+        
+        # Fluids
+        50: (30, 144, 255, 255),  # WATER
+        51: (255, 69, 0, 255),    # LAVA
+        52: (30, 30, 30, 255),    # OIL
+        53: (127, 255, 0, 255),   # ACID
+        54: (255, 215, 0, 200),   # HONEY
+    }
+    
+    # Get base color (fallback to purple if not defined)
+    base_color = legacy_colors.get(block_id, (128, 64, 128, 255))
+    
+    # Create base image
+    img = Image.new("RGBA", (size, size), base_color)
+    draw = ImageDraw.Draw(img)
+    
+    # Add detailed patterns based on block type
+    block_type = block_info.get('type', 'unknown')
+    subtype = block_info.get('subtype', 'unknown')
+    
+    if block_type == 'stone' or block_id == 1:  # Stone blocks - add speckles and grain
+        for _ in range(size * 2):  # More speckles for higher detail
+            x = random.randint(0, size-1)
+            y = random.randint(0, size-1)
+            # Random variation in brightness
+            variation = random.randint(-40, 40)
+            darker = tuple(max(0, min(255, c + variation)) for c in base_color[:3]) + (255,)
+            draw.point((x, y), darker)
+    
+    elif block_type == 'organic' and 'leaves' in subtype:  # Leaves - organic pattern
+        for _ in range(size * 3):
+            x = random.randint(0, size-1)
+            y = random.randint(0, size-1)
+            if random.random() < 0.3:  # 30% chance for leaf detail
+                lighter = tuple(min(255, c + 20) for c in base_color[:3]) + (255,)
+                draw.point((x, y), lighter)
+    
+    elif block_type == 'wood':  # Wood - add grain lines
+        # Vertical grain lines
+        for x in range(0, size, 2):
+            if random.random() < 0.7:  # 70% chance for grain line
+                line_darkness = random.randint(-30, -10)
+                grain_color = tuple(max(0, c + line_darkness) for c in base_color[:3]) + (255,)
+                for y in range(size):
+                    if random.random() < 0.8:  # Irregular grain
+                        draw.point((x, y), grain_color)
+    
+    elif block_type == 'ore':  # Ore blocks - add sparkles
+        base_stone = (128, 128, 128, 255)  # Stone base
+        img = Image.new("RGBA", (size, size), base_stone)
+        draw = ImageDraw.Draw(img)
+        
+        # Add ore veins
+        for _ in range(size // 4):
+            x = random.randint(0, size-1)
+            y = random.randint(0, size-1)
+            # Draw small ore clusters
+            cluster_size = random.randint(1, 3)
+            for dx in range(-cluster_size, cluster_size + 1):
+                for dy in range(-cluster_size, cluster_size + 1):
+                    if 0 <= x + dx < size and 0 <= y + dy < size:
+                        if random.random() < 0.6:
+                            draw.point((x + dx, y + dy), base_color)
+    
+    elif block_type == 'fluid':  # Fluid blocks - add shimmer effect
+        for _ in range(size):
+            x = random.randint(0, size-1)
+            y = random.randint(0, size-1)
+            if random.random() < 0.1:  # 10% chance for shimmer
+                lighter = tuple(min(255, c + 50) for c in base_color[:3]) + base_color[3:]
+                draw.point((x, y), lighter)
+    
+    return img
+
 
 class AtlasFileInfo:
     """Information about a specific atlas file"""
@@ -342,16 +564,9 @@ class DynamicAtlasGenerator:
         atlas_image.save(output_path)
     
     def _generate_face_texture(self, block_info: Dict, atlas_type: AtlasType) -> Optional[Image.Image]:
-        """Generate texture for specific face of a block"""
-        if not MODULAR_SYSTEM_AVAILABLE:
-            return None
-        
+        """Generate texture for specific face of a block using enhanced modular system"""
         try:
-            # Use the modular texture system logic (similar to original atlas generator)
-            block_type = block_info.get('type', 'unknown')
-            subtype = block_info.get('subtype', 'unknown')
-            
-            # Map atlas type to face
+            # Map atlas type to face for generation
             face_map = {
                 AtlasType.MAIN: 'top',
                 AtlasType.SIDE: 'side', 
@@ -359,17 +574,27 @@ class DynamicAtlasGenerator:
             }
             face = face_map.get(atlas_type, 'top')
             
-            # Generate using modular system
-            coordinator = SimpleTextureCoordinator()
-            texture = coordinator.generate_texture_for_face(
-                block_type, subtype, face, self.tile_size_px
+            # Get block ID and use consistent seed for reproducible generation
+            block_id = block_info.get("id", 0)
+            texture_seed = block_id * 12345 + hash(face) % 1000
+            
+            # Generate using enhanced modular system
+            texture = generate_modular_texture(
+                block_id, 
+                block_info, 
+                size=self.tile_size_px, 
+                face=face, 
+                seed=texture_seed
             )
             
             if texture and isinstance(texture, Image.Image):
-                return texture.resize((self.tile_size_px, self.tile_size_px))
+                # Ensure correct size
+                if texture.size != (self.tile_size_px, self.tile_size_px):
+                    texture = texture.resize((self.tile_size_px, self.tile_size_px))
+                return texture
             
         except Exception as e:
-            print(f"⚠ Texture generation failed for {block_info.get('name', 'unknown')}: {e}")
+            print(f"⚠ Enhanced texture generation failed for {block_info.get('name', 'unknown')}: {e}")
         
         return None
     
