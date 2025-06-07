@@ -19,12 +19,13 @@ Features:
 Part of: Unified Block Resource System (Phase 2 Complete)
 """
 
-from PIL import Image, ImageDraw
+from PIL import Image, ImageDraw, ImageFont
 import os
 import sys
 import json
 import math
 import random
+import argparse
 from typing import Dict, List, Tuple, Optional
 from enum import Enum
 
