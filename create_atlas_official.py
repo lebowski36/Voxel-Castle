@@ -79,8 +79,15 @@ def generate_modular_texture(block_id, block_info, size=32, face='all', seed=Non
     if not MODULAR_SYSTEM_AVAILABLE:
         return generate_legacy_texture(block_id, block_info, size)
 
-    if seed is not None:
-        random.seed(seed)
+    # Generate deterministic seed based on block ID and face
+    # This ensures reproducible textures that only change when we modify the generator logic
+    if seed is None:
+        # Use block ID and face hash for deterministic seeding
+        face_hash = hash(face) % 1000 if face != 'all' else 0
+        seed = (block_id * 12345 + face_hash) % (2**31)
+    
+    # Set global random seed for this texture generation
+    random.seed(seed)
 
     # Get block classification from JSON data
     # Extract from nested structure: texture_info.generation.type/subtype
@@ -319,11 +326,12 @@ class AtlasFileInfo:
 class DynamicAtlasGenerator:
     """Advanced atlas generator with multi-file support and dynamic expansion"""
     
-    def __init__(self, data_dir="data", tile_size_px=32, max_grid_size=16, print_summary=True):
+    def __init__(self, data_dir="data", tile_size_px=32, max_grid_size=16, print_summary=True, debug=False):
         self.data_dir = data_dir
         self.tile_size_px = tile_size_px
         self.max_grid_size = max_grid_size
         self.print_summary = print_summary
+        self.debug = debug
         
         # Load block data
         self.unified_data = load_unified_block_data(data_dir)
@@ -569,6 +577,10 @@ class DynamicAtlasGenerator:
             self._generate_empty_placeholder(atlas_image, x0, y0)
         
         atlas_image.save(output_path)
+        
+        # Generate debug version if debug mode is enabled
+        if self.debug:
+            self._generate_debug_atlas(file_info, output_path)
     
     def _generate_face_texture(self, block_info: Dict, atlas_type: AtlasType) -> Optional[Image.Image]:
         """Generate texture for specific face of a block using enhanced modular system"""
@@ -645,27 +657,133 @@ class DynamicAtlasGenerator:
         for i in range(-self.tile_size_px, self.tile_size_px, 8):
             draw.line([x0 + i, y0, x0 + i + self.tile_size_px, y0 + self.tile_size_px], 
                      fill=line_color, width=1)
+    
+    def _generate_debug_atlas(self, file_info: AtlasFileInfo, output_path: str) -> None:
+        """Generate debug version of atlas with block IDs and coordinates overlaid"""
+        debug_path = output_path.replace('.png', '_debug.png')
+        
+        # Load the original atlas
+        if not os.path.exists(output_path):
+            print(f"⚠ Original atlas not found: {output_path}")
+            return
+            
+        atlas_image = Image.open(output_path).convert('RGBA')
+        draw = ImageDraw.Draw(atlas_image)
+        
+        # Try to load a font, fallback to default if not available
+        try:
+            # Try to find a system font
+            font_size = max(8, self.tile_size_px // 4)
+            font = ImageFont.truetype("/usr/share/fonts/dejavu/DejaVuSans-Bold.ttf", font_size)
+        except:
+            try:
+                font = ImageFont.load_default()
+            except:
+                font = None
+        
+        # Overlay block IDs and coordinates
+        for block_id, slot_index in file_info.assigned_blocks:
+            slot_x = slot_index % file_info.grid_width
+            slot_y = slot_index // file_info.grid_width
+            x0 = slot_x * self.tile_size_px
+            y0 = slot_y * self.tile_size_px
+            
+            # Create semi-transparent overlay for text background
+            overlay = Image.new('RGBA', (self.tile_size_px, self.tile_size_px), (0, 0, 0, 128))
+            atlas_image.paste(overlay, (x0, y0), overlay)
+            
+            # Add block ID in top-left corner
+            id_text = str(block_id)
+            if font:
+                bbox = draw.textbbox((0, 0), id_text, font=font)
+                text_width = bbox[2] - bbox[0]
+                text_height = bbox[3] - bbox[1]
+            else:
+                text_width, text_height = 20, 10  # Fallback estimate
+            
+            # Position text with small margin
+            text_x = x0 + 2
+            text_y = y0 + 2
+            
+            # Draw text with outline for visibility
+            if font:
+                # Black outline
+                for dx in [-1, 0, 1]:
+                    for dy in [-1, 0, 1]:
+                        if dx != 0 or dy != 0:
+                            draw.text((text_x + dx, text_y + dy), id_text, fill=(0, 0, 0, 255), font=font)
+                # White text
+                draw.text((text_x, text_y), id_text, fill=(255, 255, 255, 255), font=font)
+            else:
+                # Fallback without font
+                draw.text((text_x, text_y), id_text, fill=(255, 255, 255, 255))
+            
+            # Add coordinate in bottom-right corner
+            coord_text = f"({slot_x},{slot_y})"
+            if font:
+                bbox = draw.textbbox((0, 0), coord_text, font=font)
+                coord_width = bbox[2] - bbox[0]
+                coord_height = bbox[3] - bbox[1]
+            else:
+                coord_width, coord_height = 30, 10  # Fallback estimate
+            
+            coord_x = x0 + self.tile_size_px - coord_width - 2
+            coord_y = y0 + self.tile_size_px - coord_height - 2
+            
+            if font:
+                # Black outline
+                for dx in [-1, 0, 1]:
+                    for dy in [-1, 0, 1]:
+                        if dx != 0 or dy != 0:
+                            draw.text((coord_x + dx, coord_y + dy), coord_text, fill=(0, 0, 0, 255), font=font)
+                # White text
+                draw.text((coord_x, coord_y), coord_text, fill=(255, 255, 255, 255), font=font)
+            else:
+                # Fallback without font
+                draw.text((coord_x, coord_y), coord_text, fill=(255, 255, 255, 255))
+        
+        atlas_image.save(debug_path)
+        print(f"🐛 Debug atlas saved: {debug_path}")
 
 def main():
-    """Generate dynamic multi-file atlases"""
+    """Main function with command line argument support"""
+    parser = argparse.ArgumentParser(description='Generate dynamic atlas files for Voxel Castle')
+    parser.add_argument('--debug', action='store_true', 
+                       help='Generate debug atlases with block IDs and coordinates')
+    parser.add_argument('--tile-size', type=int, default=32,
+                       help='Tile size in pixels (default: 32)')
+    parser.add_argument('--max-grid', type=int, default=16,
+                       help='Maximum grid size (default: 16)')
+    parser.add_argument('--output-dir', type=str, default='assets/textures/',
+                       help='Output directory (default: assets/textures/)')
+    
+    args = parser.parse_args()
+    
     print("🚀 Dynamic Multi-File Atlas Generator")
     print("=" * 50)
     
+    if args.debug:
+        print("🐛 Debug mode enabled - will generate debug atlases with IDs")
+    
     try:
-        # Create generator with default settings
+        # Create generator with command line settings
         generator = DynamicAtlasGenerator(
             data_dir="data",
-            tile_size_px=32,
-            max_grid_size=16,
-            print_summary=True
+            tile_size_px=args.tile_size,
+            max_grid_size=args.max_grid,
+            print_summary=True,
+            debug=args.debug
         )
         
         # Generate all atlases
-        files, metadata_path = generator.generate_all_atlases("assets/textures/")
+        files, metadata_path = generator.generate_all_atlases(args.output_dir)
         
         print(f"\n✅ Dynamic atlas generation complete!")
-        print(f"📁 Output directory: assets/textures/")
+        print(f"📁 Output directory: {args.output_dir}")
         print(f"📄 Metadata file: {metadata_path}")
+        
+        if args.debug:
+            print(f"🐛 Debug atlases generated with _debug.png suffix")
         
         return True
         
