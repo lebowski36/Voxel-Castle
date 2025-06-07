@@ -168,18 +168,14 @@ bool Game::initialize() {
     meshRenderer_ = std::make_unique<VoxelEngine::Rendering::MeshRenderer>();
     
     // Connect the texture atlas to the mesh renderer
-    if (textureAtlas_->isTextureLoaded()) {
-        // Set all three atlas textures for the multi-atlas system
-        GLuint mainAtlasId = textureAtlas_->getTextureID(VoxelEngine::Rendering::AtlasType::MAIN);
-        GLuint sideAtlasId = textureAtlas_->getTextureID(VoxelEngine::Rendering::AtlasType::SIDE);
-        GLuint bottomAtlasId = textureAtlas_->getTextureID(VoxelEngine::Rendering::AtlasType::BOTTOM);
-        
-        meshRenderer_->setAtlasTextures(mainAtlasId, sideAtlasId, bottomAtlasId);
-        std::cout << "[Game] Connected Multi-atlas TextureAtlas to MeshRenderer - Main: " << mainAtlasId 
-                  << ", Side: " << sideAtlasId << ", Bottom: " << bottomAtlasId << std::endl;
-    } else {
-        std::cerr << "[Game] Warning: TextureAtlas failed to load texture" << std::endl;
-    }
+    // Set atlas textures for the multi-atlas system
+    GLuint mainAtlasId = textureAtlas_->getTextureID(VoxelEngine::Rendering::AtlasType::MAIN);
+    GLuint sideAtlasId = textureAtlas_->getTextureID(VoxelEngine::Rendering::AtlasType::SIDE);
+    GLuint bottomAtlasId = textureAtlas_->getTextureID(VoxelEngine::Rendering::AtlasType::BOTTOM);
+    
+    meshRenderer_->setAtlasTextures(mainAtlasId, sideAtlasId, bottomAtlasId);
+    std::cout << "[Game] Connected Multi-atlas TextureAtlas to MeshRenderer - Main: " << mainAtlasId 
+              << ", Side: " << sideAtlasId << ", Bottom: " << bottomAtlasId << std::endl;
     
     // Initialize camera with a default position
     camera_ = std::make_unique<SpectatorCamera>(

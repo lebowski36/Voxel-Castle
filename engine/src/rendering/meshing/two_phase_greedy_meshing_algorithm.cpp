@@ -392,15 +392,6 @@ void VoxelEngine::Rendering::Meshing::TwoPhaseGreedyMeshingAlgorithm::addQuad(Vo
     mesh.vertices.emplace_back(p3, normal, quad_uvs[2], atlas_origin_uv, light, static_cast<int>(atlasType));
     mesh.vertices.emplace_back(p4, normal, quad_uvs[3], atlas_origin_uv, light, static_cast<int>(atlasType));
 
-    // Debug mesh vertex creation for GRASS (limited logging)
-    if (voxelType == VoxelEngine::World::VoxelType::GRASS) {
-        static int grass_mesh_debug_count = 0;
-        if (grass_mesh_debug_count < 3) {
-            printf("MESH_DEBUG: Created vertices with AtlasID: %d for GRASS quad\n", static_cast<int>(atlasType));
-            grass_mesh_debug_count++;
-        }
-    }
-
     // Standard quad triangulation
     mesh.indices.push_back(base_index);
     mesh.indices.push_back(base_index + 1);

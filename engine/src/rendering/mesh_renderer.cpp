@@ -276,13 +276,6 @@ void MeshRenderer::draw(const VoxelMesh& mesh, const glm::mat4& model, const glm
     }
 
     // Activate texture units and bind all three atlases
-    // Debug: Log atlas binding information
-    static int atlas_debug_count = 0;
-    if (atlas_debug_count < 3) {
-        printf("ATLAS_DEBUG: Binding atlases - Main: %u, Side: %u, Bottom: %u\n", 
-               mainAtlasID ? mainAtlasID : textureAtlasID, sideAtlasID, bottomAtlasID);
-        atlas_debug_count++;
-    }
     
     // Texture unit 0: Main atlas
     glActiveTexture(GL_TEXTURE0);
@@ -304,11 +297,6 @@ void MeshRenderer::draw(const VoxelMesh& mesh, const glm::mat4& model, const glm
     GLint sideAtlasSamplerLoc = glGetUniformLocation(shaderProgram, "uSideAtlasSampler");
     GLint bottomAtlasSamplerLoc = glGetUniformLocation(shaderProgram, "uBottomAtlasSampler");
     
-    // Debug: Log uniform locations
-    if (atlas_debug_count <= 3) {
-        printf("ATLAS_DEBUG: Uniform locations - Main: %d, Side: %d, Bottom: %d\n", 
-               mainAtlasSamplerLoc, sideAtlasSamplerLoc, bottomAtlasSamplerLoc);
-    }
     
     if (mainAtlasSamplerLoc != -1) {
         glUniform1i(mainAtlasSamplerLoc, 0); // Texture unit 0
