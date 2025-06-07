@@ -13,7 +13,7 @@ namespace UI {
 // Static renderer pointer for accessing the current renderer
 static UIRenderer* g_currentRenderer = nullptr;
 
-// Static texture atlas pointer for accessing block textures
+// Static texture atlas pointer for accessing block texturesa
 static VoxelEngine::Rendering::TextureAtlas* g_textureAtlas = nullptr;
 
 void BlockVisualizationPanel::setCurrentRenderer(UIRenderer* renderer) {
