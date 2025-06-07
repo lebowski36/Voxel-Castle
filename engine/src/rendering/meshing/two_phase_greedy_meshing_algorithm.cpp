@@ -264,7 +264,21 @@ void VoxelEngine::Rendering::Meshing::TwoPhaseGreedyMeshingAlgorithm::addQuad(Vo
     uint32_t base_index = static_cast<uint32_t>(mesh.vertices.size());
 
     float light = debugLight;
-    TextureCoordinates texCoords = atlas.getTextureCoordinates(voxelType);
+    
+    // Determine which face we're rendering based on normal vector
+    VoxelEngine::World::VoxelType textureVoxelType = voxelType;
+    if (voxelType == VoxelEngine::World::VoxelType::GRASS) {
+        // Grass blocks: green on top, dirt on sides/bottom
+        if (normal.y > 0.5f) {
+            // Top face - use grass texture
+            textureVoxelType = VoxelEngine::World::VoxelType::GRASS;
+        } else {
+            // Side/bottom faces - use dirt texture
+            textureVoxelType = VoxelEngine::World::VoxelType::DIRT;
+        }
+    }
+    
+    TextureCoordinates texCoords = atlas.getTextureCoordinates(textureVoxelType);
     glm::vec2 atlas_origin_uv = texCoords.getBottomLeft();
 
     // Map UV coordinates based on world axis orientation for consistent texture orientation
