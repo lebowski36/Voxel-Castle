@@ -310,15 +310,61 @@ VoxelEngine::World::VoxelType BlockPlacement::getCurrentBlockType(const Game& ga
 }
 
 void BlockPlacement::cycleBlockType(Game& game, bool forward) {
-    // List of available block types (excluding AIR)
+    // Expanded list of available block types for testing
     static const std::vector<VoxelEngine::World::VoxelType> availableBlocks = {
+        // Basic terrain blocks
         VoxelEngine::World::VoxelType::STONE,
         VoxelEngine::World::VoxelType::DIRT,
         VoxelEngine::World::VoxelType::GRASS,
         VoxelEngine::World::VoxelType::SAND,
+        VoxelEngine::World::VoxelType::GRAVEL,
+        VoxelEngine::World::VoxelType::CLAY,
+        
+        // Stone variants
+        VoxelEngine::World::VoxelType::GRANITE,
+        VoxelEngine::World::VoxelType::MARBLE,
+        VoxelEngine::World::VoxelType::SANDSTONE,
+        VoxelEngine::World::VoxelType::LIMESTONE,
+        VoxelEngine::World::VoxelType::OBSIDIAN,
+        
+        // Ores
+        VoxelEngine::World::VoxelType::COAL_ORE,
+        VoxelEngine::World::VoxelType::IRON_ORE,
+        VoxelEngine::World::VoxelType::GOLD_ORE,
+        VoxelEngine::World::VoxelType::GEM_DIAMOND,
+        
+        // Wood & Organic
+        VoxelEngine::World::VoxelType::WOOD_OAK,
+        VoxelEngine::World::VoxelType::WOOD_PINE,
+        VoxelEngine::World::VoxelType::WOOD_BIRCH,
+        VoxelEngine::World::VoxelType::LEAVES_OAK,
+        VoxelEngine::World::VoxelType::LEAVES_PINE,
+        VoxelEngine::World::VoxelType::LEAVES_BIRCH,
+        
+        // Fluids
         VoxelEngine::World::VoxelType::WATER,
-        VoxelEngine::World::VoxelType::WOOD,
-        VoxelEngine::World::VoxelType::LEAVES
+        VoxelEngine::World::VoxelType::LAVA,
+        
+        // Biome specific
+        VoxelEngine::World::VoxelType::SNOW,
+        VoxelEngine::World::VoxelType::ICE,
+        VoxelEngine::World::VoxelType::CACTUS,
+        
+        // Transparent/Glass blocks
+        VoxelEngine::World::VoxelType::WINDOW_GLASS,
+        VoxelEngine::World::VoxelType::WINDOW_IRON_BARS,
+        
+        // Crystals
+        VoxelEngine::World::VoxelType::CRYSTAL_CLEAR,
+        VoxelEngine::World::VoxelType::CRYSTAL_BLUE,
+        VoxelEngine::World::VoxelType::CRYSTAL_RED,
+        VoxelEngine::World::VoxelType::CRYSTAL_GREEN,
+        VoxelEngine::World::VoxelType::SHADOW_GLASS,
+        
+        // Advanced blocks
+        VoxelEngine::World::VoxelType::GLASS_STEEL,
+        VoxelEngine::World::VoxelType::BLOCK_INVISIBLE,
+        VoxelEngine::World::VoxelType::BLOCK_INTANGIBLE
     };
     
     // Find current block type index
