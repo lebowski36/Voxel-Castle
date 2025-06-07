@@ -313,15 +313,18 @@ void VoxelEngine::Rendering::Meshing::TwoPhaseGreedyMeshingAlgorithm::addQuad(Vo
         float v_min = std::min(std::min(p1.z, p2.z), std::min(p3.z, p4.z));
         float v_max = std::max(std::max(p1.z, p2.z), std::max(p3.z, p4.z));
         
-        // Normalize UV coordinates relative to quad size
-        float u_size = u_max - u_min;
-        float v_size = v_max - v_min;
+        // Calculate UV coordinates in voxel units for proper texture tiling
+        // The shader uses fract() to repeat textures, so UVs should reflect voxel count
         
-        // Map each vertex based on its X,Z position
+        // Map each vertex based on its X,Z position in voxel units (not normalized)
         quad_uvs[0] = glm::vec2((p1.x - u_min), (p1.z - v_min));  // p1
         quad_uvs[1] = glm::vec2((p2.x - u_min), (p2.z - v_min));  // p2
         quad_uvs[2] = glm::vec2((p3.x - u_min), (p3.z - v_min));  // p3
         quad_uvs[3] = glm::vec2((p4.x - u_min), (p4.z - v_min));  // p4
+        
+        // Get quad dimensions for orientation logic
+        float u_size = u_max - u_min;
+        float v_size = v_max - v_min;
         
         // For Y- faces (ceiling), flip V to maintain proper orientation
         if (normal.y < 0.0f) {
@@ -339,10 +342,11 @@ void VoxelEngine::Rendering::Meshing::TwoPhaseGreedyMeshingAlgorithm::addQuad(Vo
         float v_min = std::min(std::min(p1.y, p2.y), std::min(p3.y, p4.y));
         float v_max = std::max(std::max(p1.y, p2.y), std::max(p3.y, p4.y));
         
+        // Get quad dimensions for orientation logic
         float u_size = u_max - u_min;
         float v_size = v_max - v_min;
         
-        // Map each vertex: U=Z-position, V=Y-position
+        // Map each vertex: U=Z-position, V=Y-position, in voxel units for proper tiling
         quad_uvs[0] = glm::vec2((p1.z - u_min), (p1.y - v_min));  // p1
         quad_uvs[1] = glm::vec2((p2.z - u_min), (p2.y - v_min));  // p2
         quad_uvs[2] = glm::vec2((p3.z - u_min), (p3.y - v_min));  // p3
@@ -364,10 +368,11 @@ void VoxelEngine::Rendering::Meshing::TwoPhaseGreedyMeshingAlgorithm::addQuad(Vo
         float v_min = std::min(std::min(p1.y, p2.y), std::min(p3.y, p4.y));
         float v_max = std::max(std::max(p1.y, p2.y), std::max(p3.y, p4.y));
         
+        // Get quad dimensions for orientation logic
         float u_size = u_max - u_min;
         float v_size = v_max - v_min;
         
-        // Map each vertex: U=X-position, V=Y-position
+        // Map each vertex: U=X-position, V=Y-position, in voxel units for proper tiling
         quad_uvs[0] = glm::vec2((p1.x - u_min), (p1.y - v_min));  // p1
         quad_uvs[1] = glm::vec2((p2.x - u_min), (p2.y - v_min));  // p2
         quad_uvs[2] = glm::vec2((p3.x - u_min), (p3.y - v_min));  // p3
