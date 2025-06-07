@@ -39,7 +39,8 @@
           "required_tool": "pickaxe",
           "minimum_tier": 1
         }
-      }
+      },
+      "face_pattern": "UNIFORM"
     },
     "BLOCK_61": {
       "id": 61,
@@ -73,7 +74,8 @@
           "required_tool": "pickaxe",
           "minimum_tier": 1
         }
-      }
+      },
+      "face_pattern": "UNIFORM"
     },
     "BLOCK_62": {
       "id": 62,
@@ -107,7 +109,8 @@
           "required_tool": "pickaxe",
           "minimum_tier": 1
         }
-      }
+      },
+      "face_pattern": "UNIFORM"
     },
     "BLOCK_63": {
       "id": 63,
@@ -141,7 +144,8 @@
           "required_tool": "pickaxe",
           "minimum_tier": 1
         }
-      }
+      },
+      "face_pattern": "UNIFORM"
     },
     "BLOCK_64": {
       "id": 64,
@@ -175,7 +179,8 @@
           "required_tool": "pickaxe",
           "minimum_tier": 1
         }
-      }
+      },
+      "face_pattern": "UNIFORM"
     },
     "BLOCK_65": {
       "id": 65,
@@ -209,7 +214,8 @@
           "required_tool": "pickaxe",
           "minimum_tier": 1
         }
-      }
+      },
+      "face_pattern": "UNIFORM"
     },
     "BLOCK_66": {
       "id": 66,
@@ -243,7 +249,8 @@
           "required_tool": "pickaxe",
           "minimum_tier": 1
         }
-      }
+      },
+      "face_pattern": "UNIFORM"
     },
     "BLOCK_67": {
       "id": 67,
@@ -277,7 +284,8 @@
           "required_tool": "pickaxe",
           "minimum_tier": 1
         }
-      }
+      },
+      "face_pattern": "UNIFORM"
     },
     "BLOCK_68": {
       "id": 68,
@@ -311,7 +319,8 @@
           "required_tool": "pickaxe",
           "minimum_tier": 1
         }
-      }
+      },
+      "face_pattern": "UNIFORM"
     },
     "BLOCK_69": {
       "id": 69,
@@ -345,7 +354,8 @@
           "required_tool": "pickaxe",
           "minimum_tier": 1
         }
-      }
+      },
+      "face_pattern": "UNIFORM"
     },
     "BLOCK_70": {
       "id": 70,
@@ -380,7 +390,8 @@
           "required_tool": "axe",
           "minimum_tier": 1
         }
-      }
+      },
+      "face_pattern": "UNIFORM"
     },
     "BLOCK_71": {
       "id": 71,
@@ -415,7 +426,8 @@
           "required_tool": "axe",
           "minimum_tier": 1
         }
-      }
+      },
+      "face_pattern": "UNIFORM"
     },
     "BLOCK_72": {
       "id": 72,
@@ -450,7 +462,8 @@
           "required_tool": "axe",
           "minimum_tier": 1
         }
-      }
+      },
+      "face_pattern": "UNIFORM"
     },
     "BLOCK_73": {
       "id": 73,
@@ -485,7 +498,8 @@
           "required_tool": "axe",
           "minimum_tier": 1
         }
-      }
+      },
+      "face_pattern": "UNIFORM"
     },
     "BLOCK_74": {
       "id": 74,
@@ -520,7 +534,8 @@
           "required_tool": "axe",
           "minimum_tier": 1
         }
-      }
+      },
+      "face_pattern": "TOP_BOTTOM_DIFFERENT"
     },
     "BLOCK_75": {
       "id": 75,
@@ -555,7 +570,8 @@
           "required_tool": "axe",
           "minimum_tier": 1
         }
-      }
+      },
+      "face_pattern": "TOP_BOTTOM_DIFFERENT"
     },
     "BLOCK_76": {
       "id": 76,
@@ -590,7 +606,8 @@
           "required_tool": "axe",
           "minimum_tier": 1
         }
-      }
+      },
+      "face_pattern": "TOP_BOTTOM_DIFFERENT"
     },
     "BLOCK_77": {
       "id": 77,
@@ -625,7 +642,8 @@
           "required_tool": "axe",
           "minimum_tier": 1
         }
-      }
+      },
+      "face_pattern": "UNIFORM"
     },
     "BLOCK_78": {
       "id": 78,
@@ -660,7 +678,8 @@
           "required_tool": "axe",
           "minimum_tier": 1
         }
-      }
+      },
+      "face_pattern": "UNIFORM"
     },
     "BLOCK_79": {
       "id": 79,
@@ -693,7 +712,8 @@
           "required_tool": "shovel",
           "minimum_tier": 1
         }
-      }
+      },
+      "face_pattern": "UNIFORM"
     },
     "BLOCK_80": {
       "id": 80,
@@ -726,7 +746,8 @@
           "required_tool": "shovel",
           "minimum_tier": 1
         }
-      }
+      },
+      "face_pattern": "UNIFORM"
     },
     "BLOCK_81": {
       "id": 81,
@@ -759,7 +780,8 @@
           "required_tool": "shovel",
           "minimum_tier": 1
         }
-      }
+      },
+      "face_pattern": "UNIFORM"
     },
     "BLOCK_82": {
       "id": 82,
@@ -792,7 +814,8 @@
           "required_tool": "shovel",
           "minimum_tier": 1
         }
-      }
+      },
+      "face_pattern": "UNIFORM"
     },
     "BLOCK_83": {
       "id": 83,
@@ -825,7 +848,8 @@
           "required_tool": "shovel",
           "minimum_tier": 1
         }
-      }
+      },
+      "face_pattern": "UNIFORM"
     },
     "BLOCK_84": {
       "id": 84,
@@ -858,7 +882,8 @@
           "required_tool": "shovel",
           "minimum_tier": 1
         }
-      }
+      },
+      "face_pattern": "UNIFORM"
     },
     "BLOCK_85": {
       "id": 85,
@@ -891,7 +916,8 @@
           "required_tool": "shovel",
           "minimum_tier": 1
         }
-      }
+      },
+      "face_pattern": "UNIFORM"
     },
     "BLOCK_86": {
       "id": 86,
@@ -924,7 +950,8 @@
           "required_tool": "shovel",
           "minimum_tier": 1
         }
-      }
+      },
+      "face_pattern": "UNIFORM"
     },
     "BLOCK_87": {
       "id": 87,
@@ -957,7 +984,8 @@
           "required_tool": "shovel",
           "minimum_tier": 1
         }
-      }
+      },
+      "face_pattern": "UNIFORM"
     },
     "BLOCK_88": {
       "id": 88,
@@ -990,7 +1018,8 @@
           "required_tool": "shovel",
           "minimum_tier": 1
         }
-      }
+      },
+      "face_pattern": "UNIFORM"
     },
     "BLOCK_89": {
       "id": 89,
@@ -1023,7 +1052,8 @@
           "required_tool": "shovel",
           "minimum_tier": 1
         }
-      }
+      },
+      "face_pattern": "UNIFORM"
     },
     "BLOCK_90": {
       "id": 90,
@@ -1056,7 +1086,8 @@
           "required_tool": "shovel",
           "minimum_tier": 1
         }
-      }
+      },
+      "face_pattern": "UNIFORM"
     },
     "BLOCK_91": {
       "id": 91,
@@ -1089,7 +1120,8 @@
           "required_tool": "shovel",
           "minimum_tier": 1
         }
-      }
+      },
+      "face_pattern": "UNIFORM"
     },
     "BLOCK_92": {
       "id": 92,
@@ -1122,7 +1154,8 @@
           "required_tool": "shovel",
           "minimum_tier": 1
         }
-      }
+      },
+      "face_pattern": "UNIFORM"
     },
     "BLOCK_93": {
       "id": 93,
@@ -1155,7 +1188,8 @@
           "required_tool": "shovel",
           "minimum_tier": 1
         }
-      }
+      },
+      "face_pattern": "UNIFORM"
     },
     "BLOCK_94": {
       "id": 94,
@@ -1188,7 +1222,8 @@
           "required_tool": "shovel",
           "minimum_tier": 1
         }
-      }
+      },
+      "face_pattern": "UNIFORM"
     },
     "BLOCK_95": {
       "id": 95,
@@ -1221,7 +1256,8 @@
           "required_tool": "shovel",
           "minimum_tier": 1
         }
-      }
+      },
+      "face_pattern": "UNIFORM"
     },
     "BLOCK_96": {
       "id": 96,
@@ -1254,7 +1290,8 @@
           "required_tool": "shovel",
           "minimum_tier": 1
         }
-      }
+      },
+      "face_pattern": "UNIFORM"
     },
     "BLOCK_97": {
       "id": 97,
@@ -1287,7 +1324,8 @@
           "required_tool": "shovel",
           "minimum_tier": 1
         }
-      }
+      },
+      "face_pattern": "UNIFORM"
     },
     "BLOCK_98": {
       "id": 98,
@@ -1320,7 +1358,8 @@
           "required_tool": "shovel",
           "minimum_tier": 1
         }
-      }
+      },
+      "face_pattern": "UNIFORM"
     },
     "BLOCK_99": {
       "id": 99,
@@ -1353,7 +1392,8 @@
           "required_tool": "shovel",
           "minimum_tier": 1
         }
-      }
+      },
+      "face_pattern": "UNIFORM"
     }
   }
 }

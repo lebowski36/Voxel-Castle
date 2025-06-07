@@ -34,7 +34,8 @@
       },
       "world_generation": {
         "natural_generation": true
-      }
+      },
+      "face_pattern": "UNIFORM"
     },
     "STONE": {
       "id": 1,
@@ -68,7 +69,8 @@
           "required_tool": "pickaxe",
           "minimum_tier": 1
         }
-      }
+      },
+      "face_pattern": "UNIFORM"
     },
     "DIRT": {
       "id": 2,
@@ -103,7 +105,8 @@
           "required_tool": "shovel",
           "minimum_tier": 1
         }
-      }
+      },
+      "face_pattern": "UNIFORM"
     },
     "GRASS": {
       "id": 3,
@@ -138,7 +141,8 @@
           "required_tool": "shovel",
           "minimum_tier": 1
         }
-      }
+      },
+      "face_pattern": "ALL_DIFFERENT"
     },
     "SAND": {
       "id": 4,
@@ -173,7 +177,8 @@
           "required_tool": "shovel",
           "minimum_tier": 1
         }
-      }
+      },
+      "face_pattern": "UNIFORM"
     },
     "GRAVEL": {
       "id": 5,
@@ -207,7 +212,8 @@
           "required_tool": "pickaxe",
           "minimum_tier": 1
         }
-      }
+      },
+      "face_pattern": "UNIFORM"
     },
     "CLAY": {
       "id": 6,
@@ -240,7 +246,8 @@
           "required_tool": "shovel",
           "minimum_tier": 1
         }
-      }
+      },
+      "face_pattern": "UNIFORM"
     },
     "BEDROCK": {
       "id": 7,
@@ -274,7 +281,8 @@
           "required_tool": "pickaxe",
           "minimum_tier": 1
         }
-      }
+      },
+      "face_pattern": "UNIFORM"
     },
     "TOPSOIL": {
       "id": 8,
@@ -309,7 +317,8 @@
           "required_tool": "shovel",
           "minimum_tier": 1
         }
-      }
+      },
+      "face_pattern": "UNIFORM"
     },
     "SUBSOIL": {
       "id": 9,
@@ -344,7 +353,8 @@
           "required_tool": "shovel",
           "minimum_tier": 1
         }
-      }
+      },
+      "face_pattern": "UNIFORM"
     },
     "GRANITE": {
       "id": 10,
@@ -378,7 +388,8 @@
           "required_tool": "pickaxe",
           "minimum_tier": 1
         }
-      }
+      },
+      "face_pattern": "UNIFORM"
     },
     "LIMESTONE": {
       "id": 11,
@@ -412,7 +423,8 @@
           "required_tool": "pickaxe",
           "minimum_tier": 1
         }
-      }
+      },
+      "face_pattern": "UNIFORM"
     },
     "MARBLE": {
       "id": 12,
@@ -446,7 +458,8 @@
           "required_tool": "pickaxe",
           "minimum_tier": 1
         }
-      }
+      },
+      "face_pattern": "UNIFORM"
     },
     "SANDSTONE": {
       "id": 13,
@@ -480,7 +493,8 @@
           "required_tool": "pickaxe",
           "minimum_tier": 1
         }
-      }
+      },
+      "face_pattern": "UNIFORM"
     },
     "SLATE": {
       "id": 14,
@@ -514,7 +528,8 @@
           "required_tool": "pickaxe",
           "minimum_tier": 1
         }
-      }
+      },
+      "face_pattern": "UNIFORM"
     },
     "BASALT": {
       "id": 15,
@@ -548,7 +563,8 @@
           "required_tool": "pickaxe",
           "minimum_tier": 1
         }
-      }
+      },
+      "face_pattern": "UNIFORM"
     },
     "QUARTZITE": {
       "id": 16,
@@ -582,7 +598,8 @@
           "required_tool": "pickaxe",
           "minimum_tier": 1
         }
-      }
+      },
+      "face_pattern": "UNIFORM"
     },
     "OBSIDIAN": {
       "id": 17,
@@ -616,7 +633,8 @@
           "required_tool": "pickaxe",
           "minimum_tier": 1
         }
-      }
+      },
+      "face_pattern": "UNIFORM"
     },
     "PUMICE": {
       "id": 18,
@@ -650,7 +668,8 @@
           "required_tool": "pickaxe",
           "minimum_tier": 1
         }
-      }
+      },
+      "face_pattern": "UNIFORM"
     },
     "SHALE": {
       "id": 19,
@@ -684,7 +703,8 @@
           "required_tool": "pickaxe",
           "minimum_tier": 1
         }
-      }
+      },
+      "face_pattern": "UNIFORM"
     },
     "COAL_ORE": {
       "id": 20,
@@ -719,7 +739,8 @@
           "required_tool": "pickaxe",
           "minimum_tier": 1
         }
-      }
+      },
+      "face_pattern": "UNIFORM"
     },
     "IRON_ORE": {
       "id": 21,
@@ -754,7 +775,8 @@
           "required_tool": "pickaxe",
           "minimum_tier": 1
         }
-      }
+      },
+      "face_pattern": "UNIFORM"
     },
     "COPPER_ORE": {
       "id": 22,
@@ -789,7 +811,8 @@
           "required_tool": "pickaxe",
           "minimum_tier": 1
         }
-      }
+      },
+      "face_pattern": "UNIFORM"
     },
     "TIN_ORE": {
       "id": 23,
@@ -824,7 +847,8 @@
           "required_tool": "pickaxe",
           "minimum_tier": 1
         }
-      }
+      },
+      "face_pattern": "UNIFORM"
     },
     "SILVER_ORE": {
       "id": 24,
@@ -859,7 +883,8 @@
           "required_tool": "pickaxe",
           "minimum_tier": 1
         }
-      }
+      },
+      "face_pattern": "UNIFORM"
     },
     "GOLD_ORE": {
       "id": 25,
@@ -894,7 +919,8 @@
           "required_tool": "pickaxe",
           "minimum_tier": 1
         }
-      }
+      },
+      "face_pattern": "UNIFORM"
     },
     "RUBY": {
       "id": 26,
@@ -927,7 +953,8 @@
           "required_tool": "shovel",
           "minimum_tier": 1
         }
-      }
+      },
+      "face_pattern": "UNIFORM"
     },
     "SAPPHIRE": {
       "id": 27,
@@ -960,7 +987,8 @@
           "required_tool": "shovel",
           "minimum_tier": 1
         }
-      }
+      },
+      "face_pattern": "UNIFORM"
     },
     "EMERALD": {
       "id": 28,
@@ -993,7 +1021,8 @@
           "required_tool": "shovel",
           "minimum_tier": 1
         }
-      }
+      },
+      "face_pattern": "UNIFORM"
     },
     "DIAMOND": {
       "id": 29,
@@ -1026,7 +1055,8 @@
           "required_tool": "shovel",
           "minimum_tier": 1
         }
-      }
+      },
+      "face_pattern": "UNIFORM"
     },
     "OAK_WOOD": {
       "id": 30,
@@ -1061,7 +1091,8 @@
           "required_tool": "axe",
           "minimum_tier": 1
         }
-      }
+      },
+      "face_pattern": "TOP_BOTTOM_DIFFERENT"
     },
     "PINE_WOOD": {
       "id": 31,
@@ -1096,7 +1127,8 @@
           "required_tool": "axe",
           "minimum_tier": 1
         }
-      }
+      },
+      "face_pattern": "TOP_BOTTOM_DIFFERENT"
     },
     "BIRCH_WOOD": {
       "id": 32,
@@ -1131,7 +1163,8 @@
           "required_tool": "axe",
           "minimum_tier": 1
         }
-      }
+      },
+      "face_pattern": "TOP_BOTTOM_DIFFERENT"
     },
     "MAHOGANY_WOOD": {
       "id": 33,
@@ -1166,7 +1199,8 @@
           "required_tool": "axe",
           "minimum_tier": 1
         }
-      }
+      },
+      "face_pattern": "TOP_BOTTOM_DIFFERENT"
     },
     "OAK_LEAVES": {
       "id": 34,
@@ -1201,7 +1235,8 @@
           "required_tool": "shovel",
           "minimum_tier": 1
         }
-      }
+      },
+      "face_pattern": "UNIFORM"
     },
     "PINE_LEAVES": {
       "id": 35,
@@ -1236,7 +1271,8 @@
           "required_tool": "shovel",
           "minimum_tier": 1
         }
-      }
+      },
+      "face_pattern": "UNIFORM"
     },
     "BIRCH_LEAVES": {
       "id": 36,
@@ -1271,7 +1307,8 @@
           "required_tool": "shovel",
           "minimum_tier": 1
         }
-      }
+      },
+      "face_pattern": "UNIFORM"
     },
     "PALM_LEAVES": {
       "id": 37,
@@ -1306,7 +1343,8 @@
           "required_tool": "shovel",
           "minimum_tier": 1
         }
-      }
+      },
+      "face_pattern": "UNIFORM"
     },
     "BROWN_MUSHROOM": {
       "id": 38,
@@ -1341,7 +1379,8 @@
           "required_tool": "shovel",
           "minimum_tier": 1
         }
-      }
+      },
+      "face_pattern": "UNIFORM"
     },
     "RED_MUSHROOM": {
       "id": 39,
@@ -1376,7 +1415,8 @@
           "required_tool": "shovel",
           "minimum_tier": 1
         }
-      }
+      },
+      "face_pattern": "UNIFORM"
     },
     "SNOW": {
       "id": 40,
@@ -1409,7 +1449,8 @@
           "required_tool": "shovel",
           "minimum_tier": 1
         }
-      }
+      },
+      "face_pattern": "UNIFORM"
     },
     "ICE": {
       "id": 41,
@@ -1442,7 +1483,8 @@
           "required_tool": "shovel",
           "minimum_tier": 1
         }
-      }
+      },
+      "face_pattern": "UNIFORM"
     },
     "PACKED_ICE": {
       "id": 42,
@@ -1475,7 +1517,8 @@
           "required_tool": "shovel",
           "minimum_tier": 1
         }
-      }
+      },
+      "face_pattern": "UNIFORM"
     },
     "CACTUS": {
       "id": 43,
@@ -1510,7 +1553,8 @@
           "required_tool": "shovel",
           "minimum_tier": 1
         }
-      }
+      },
+      "face_pattern": "UNIFORM"
     },
     "JUNGLE_VINE": {
       "id": 44,
@@ -1545,7 +1589,8 @@
           "required_tool": "shovel",
           "minimum_tier": 1
         }
-      }
+      },
+      "face_pattern": "UNIFORM"
     },
     "PINK_CORAL": {
       "id": 45,
@@ -1580,7 +1625,8 @@
           "required_tool": "shovel",
           "minimum_tier": 1
         }
-      }
+      },
+      "face_pattern": "UNIFORM"
     },
     "BLUE_CORAL": {
       "id": 46,
@@ -1615,7 +1661,8 @@
           "required_tool": "shovel",
           "minimum_tier": 1
         }
-      }
+      },
+      "face_pattern": "UNIFORM"
     },
     "SEAWEED": {
       "id": 47,
@@ -1650,7 +1697,8 @@
           "required_tool": "shovel",
           "minimum_tier": 1
         }
-      }
+      },
+      "face_pattern": "UNIFORM"
     },
     "TUNDRA_MOSS": {
       "id": 48,
@@ -1685,7 +1733,8 @@
           "required_tool": "shovel",
           "minimum_tier": 1
         }
-      }
+      },
+      "face_pattern": "UNIFORM"
     },
     "DESERT_ROCK": {
       "id": 49,
@@ -1719,7 +1768,8 @@
           "required_tool": "pickaxe",
           "minimum_tier": 1
         }
-      }
+      },
+      "face_pattern": "UNIFORM"
     }
   }
 }

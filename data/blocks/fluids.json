@@ -33,7 +33,8 @@
       },
       "world_generation": {
         "natural_generation": false
-      }
+      },
+      "face_pattern": "UNIFORM"
     },
     "LAVA": {
       "id": 51,
@@ -61,7 +62,8 @@
       },
       "world_generation": {
         "natural_generation": false
-      }
+      },
+      "face_pattern": "UNIFORM"
     },
     "OIL": {
       "id": 52,
@@ -89,7 +91,8 @@
       },
       "world_generation": {
         "natural_generation": false
-      }
+      },
+      "face_pattern": "UNIFORM"
     },
     "ACID": {
       "id": 53,
@@ -117,7 +120,8 @@
       },
       "world_generation": {
         "natural_generation": false
-      }
+      },
+      "face_pattern": "UNIFORM"
     },
     "HONEY": {
       "id": 54,
@@ -145,7 +149,8 @@
       },
       "world_generation": {
         "natural_generation": false
-      }
+      },
+      "face_pattern": "UNIFORM"
     },
     "STEAM": {
       "id": 55,
@@ -173,7 +178,8 @@
       },
       "world_generation": {
         "natural_generation": false
-      }
+      },
+      "face_pattern": "UNIFORM"
     },
     "TOXIC_GAS": {
       "id": 56,
@@ -201,7 +207,8 @@
       },
       "world_generation": {
         "natural_generation": false
-      }
+      },
+      "face_pattern": "UNIFORM"
     },
     "NATURAL_GAS": {
       "id": 57,
@@ -229,7 +236,8 @@
       },
       "world_generation": {
         "natural_generation": false
-      }
+      },
+      "face_pattern": "UNIFORM"
     },
     "MAGICAL_MIST": {
       "id": 58,
@@ -262,7 +270,8 @@
           "required_tool": "shovel",
           "minimum_tier": 1
         }
-      }
+      },
+      "face_pattern": "UNIFORM"
     },
     "SMOKE": {
       "id": 59,
@@ -290,7 +299,8 @@
       },
       "world_generation": {
         "natural_generation": false
-      }
+      },
+      "face_pattern": "UNIFORM"
     }
   }
 }
