@@ -1,4 +1,5 @@
 #include "world/biome/biome_registry.h"
+#include "world/biome/biome_types.h"
 #include "world/voxel_types.h"
 #include <stdexcept>
 #include <algorithm>
@@ -57,7 +58,7 @@ const BiomeData& BiomeRegistry::getBiomeData(BiomeType type) {
         throw std::runtime_error("BiomeRegistry not initialized. Call initialize() first.");
     }
     
-    if (!isValidBiomeType(type)) {
+    if (!IsValidBiomeType(type)) {
         throw std::runtime_error("Invalid biome type provided to getBiomeData");
     }
     
@@ -68,7 +69,7 @@ const BiomeData& BiomeRegistry::getBiomeData(BiomeType type) {
         });
     
     if (it == biomeRegistry_.end()) {
-        throw std::runtime_error("Biome data not found for type: " + biomeTypeToString(type));
+        throw std::runtime_error("Biome data not found for type: " + std::string(BiomeTypeToString(type)));
     }
     
     return *it;
