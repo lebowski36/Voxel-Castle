@@ -27,6 +27,8 @@ add_library(VoxelEngine STATIC
     src/world/geological_data.cpp # Geological data structures and simulation
     src/world/hydrological_data.cpp # Hydrological data structures and simulation
     src/world/climate_data.cpp # Climate data structures and simulation
+    src/world/tectonic_plate.cpp # Tectonic plate structures and operations
+    src/world/tectonic_simulator.cpp # Tectonic simulation system
     src/world/quadtree.cpp      # Added Quadtree source
     # src/world/test_quadtree.cpp # Removed Quadtree test source
     src/world/test_voxel_system.cpp # Added Voxel System test source

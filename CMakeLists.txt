@@ -142,6 +142,11 @@ target_include_directories(test_seed_world_generator_regional PRIVATE
     game/include  # Include game headers for debug utilities
 )
 
+# Add tectonic simulation test executable
+add_executable(test_tectonic_simulation tests/test_tectonic_simulation.cpp)
+target_link_libraries(test_tectonic_simulation PRIVATE VoxelEngine gtest gtest_main)
+target_include_directories(test_tectonic_simulation PRIVATE engine/include)
+
 # Enable CTest (optional, if you add tests)
 enable_testing()
 # add_subdirectory(tests) # If you have a tests directory with CMakeLists.txt
