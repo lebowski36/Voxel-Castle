@@ -50,35 +50,19 @@ void WorldGenerationUI::createUIElements() {
     removeAllChildren();
     currentY_ = TITLE_HEIGHT + ELEMENT_SPACING * 2;
     
-    // Set proper size for the world generation UI (match main menu size)
-    setSize(450.0f, 390.0f);
+    // Set proper size for the world generation UI - larger for detailed interface
+    setSize(600.0f, 500.0f);
     
     // Add a small space at the top 
     currentY_ += 20.0f;
     
-    // Create action buttons - createStyledButton already calls addChild()
-    auto startButton = createStyledButton("Start World Generation", getNextElementY());
-    startButton->setOnClick([this]() { 
-        StartGeneration(); 
-    });
-    // Force very visible colors for debugging
-    startButton->setBackgroundColor({1.0f, 0.0f, 0.0f, 1.0f}); // Bright red
-    startButton->setHoverColor({1.0f, 0.5f, 0.0f, 1.0f}); // Orange
-    startButton->setClickColor({1.0f, 1.0f, 0.0f, 1.0f}); // Yellow
-    addElementSpacing();
-    
-    auto backButton = createStyledButton("Back to Main Menu", getNextElementY());
-    backButton->setOnClick([this]() { 
-        // Return to main menu
-        if (menuSystem_) {
-            menuSystem_->showMainMenu();
-        }
-    });
-    // Force very visible colors for debugging
-    backButton->setBackgroundColor({0.0f, 1.0f, 0.0f, 1.0f}); // Bright green
-    backButton->setHoverColor({0.0f, 1.0f, 0.5f, 1.0f}); // Light green
-    backButton->setClickColor({0.5f, 1.0f, 0.0f, 1.0f}); // Yellow-green
-    addElementSpacing();
+    if (!isGenerating_) {
+        // Configuration Phase - Show world parameters and start button
+        createConfigurationUI();
+    } else {
+        // Generation Phase - Show progress, visualization, and controls
+        createGenerationUI();
+    }
     
     // Debug output for children
     std::cout << "[WorldGenerationUI] Created " << children_.size() << " UI elements" << std::endl;
