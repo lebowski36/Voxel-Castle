@@ -1,5 +1,6 @@
 #include "world/seed_world_generator.h"
 #include "world/biome/biome_types.h"
+#include "world/biome/biome_registry.h"  // Add BiomeRegistry for biome-aware generation
 #include "world/tectonic_simulator.h"
 #include "util/noise.h"
 #include "world/voxel_types.h"
@@ -74,6 +75,11 @@ void SeedWorldGenerator::generateChunkSegment(ChunkSegment& segment, int worldX,
 
     // World Y coordinate of this segment's base
     int baseY = worldY * height;
+    
+    // Initialize BiomeRegistry if not already done
+    if (!BiomeRegistry::isInitialized()) {
+        BiomeRegistry::initialize();
+    }
 
     for (int x = 0; x < width; ++x) {
         for (int z = 0; z < depth; ++z) {
@@ -110,7 +116,11 @@ void SeedWorldGenerator::generateChunkSegment(ChunkSegment& segment, int worldX,
             // Fill the vertical column with appropriate voxel types
             for (int y = 0; y < height; ++y) {
                 int globalY = baseY + y;
-                ::VoxelEngine::World::VoxelType type = getVoxelType(globalY, columnHeight);
+                
+                // Get regional biome data for this location
+                RegionalData regionalData = getRegionalData(globalX, globalZ);
+                
+                ::VoxelEngine::World::VoxelType type = getVoxelType(globalY, columnHeight, regionalData.primaryBiome);
                 segment.setVoxel(x, y, z, ::VoxelEngine::World::Voxel(static_cast<uint8_t>(type)));
 
                 // Added for logging task 3.1 - log for local (0,y,0) and (15,y,15)
@@ -281,6 +291,97 @@ int SeedWorldGenerator::generateTerrainHeight(int globalX, int globalZ) const {
         }
     } else if (depthBelowSurface <= 4.0f) { // 1-4m: Subsoil
         return ::VoxelEngine::World::VoxelType::DIRT;
+    } else if (depthBelowSurface <= 20.0f) { // 4-20m: Weathered rock
+        return ::VoxelEngine::World::VoxelType::STONE;
+    } else if (depthBelowSurface <= 100.0f) { // 20-100m: Bedrock
+        return ::VoxelEngine::World::VoxelType::STONE;
+    } else {
+        // Deep underground: Different rock types based on depth
+        // For now, use stone - future: implement geological layers
+        return ::VoxelEngine::World::VoxelType::STONE;
+    }
+}
+
+::VoxelEngine::World::VoxelType SeedWorldGenerator::getVoxelType(int globalY, int terrainHeight, BiomeType biome) const {
+    if (legacyCompatible_) {
+        // Use original method for legacy compatibility
+        return getVoxelType(globalY, terrainHeight);
+    }
+    
+    // Enhanced biome-aware voxel type assignment
+    const float worldY = globalY * VoxelCastle::World::WorldCoordinates::VOXEL_SIZE_METERS;
+    const float terrainWorldY = terrainHeight * VoxelCastle::World::WorldCoordinates::VOXEL_SIZE_METERS;
+    
+    // Debug output for testing
+    if (globalY == terrainHeight || globalY == terrainHeight - 1) {
+        std::cout << "[DEBUG_BIOME] globalY=" << globalY << ", terrainHeight=" << terrainHeight 
+                  << ", worldY=" << worldY << ", terrainWorldY=" << terrainWorldY 
+                  << ", biome=" << static_cast<int>(biome) << std::endl;
+    }
+    
+    // Above terrain: Air
+    if (worldY > terrainWorldY) {
+        return ::VoxelEngine::World::VoxelType::AIR;
+    }
+    
+    // Get biome data for surface material selection
+    const BiomeData& biomeData = BiomeRegistry::getBiomeData(biome);
+    
+    const float depthBelowSurface = terrainWorldY - worldY;
+    const float seaLevel = 0.0f;
+    
+    // Surface layer (top block) - use biome-specific surface material
+    if (globalY == terrainHeight) {
+        ::VoxelEngine::World::VoxelType surfaceType;
+        if (terrainWorldY > 200.0f) {
+            // High altitude: Snow or stone based on biome
+            if (biome == BiomeType::MOUNTAINS) {
+                surfaceType = ::VoxelEngine::World::VoxelType::STONE;
+            } else {
+                surfaceType = ::VoxelEngine::World::VoxelType::STONE; // TODO: Add SNOW when available
+            }
+        } else if (terrainWorldY > 100.0f) {
+            // Mid-high altitude: Stone exposure for mountains, biome surface for others
+            if (biome == BiomeType::MOUNTAINS) {
+                surfaceType = ::VoxelEngine::World::VoxelType::STONE;
+            } else {
+                surfaceType = biomeData.surfaceBlock;
+            }
+        } else if (terrainWorldY > seaLevel) {
+            // Above sea level: Use biome-specific surface material
+            surfaceType = biomeData.surfaceBlock;
+        } else {
+            // Below sea level: Sand/underwater or biome-specific underwater material
+            if (biome == BiomeType::OCEAN) {
+                surfaceType = ::VoxelEngine::World::VoxelType::SAND; // Ocean floor
+            } else {
+                surfaceType = ::VoxelEngine::World::VoxelType::SAND; // Flooded areas
+            }
+        }
+        
+        // Debug output for surface block selection
+        std::cout << "[DEBUG_SURFACE] Selected surface type: " << static_cast<int>(surfaceType) 
+                  << ", biome surface: " << static_cast<int>(biomeData.surfaceBlock) << std::endl;
+        return surfaceType;
+    }
+    
+    // Subsurface layers - use biome-specific subsurface material for shallow depths
+    if (depthBelowSurface <= 1.0f) { // 0-1m: Topsoil
+        ::VoxelEngine::World::VoxelType subsurfaceType;
+        if (terrainWorldY > seaLevel) {
+            subsurfaceType = biomeData.subsurfaceBlock;
+        } else {
+            subsurfaceType = ::VoxelEngine::World::VoxelType::SAND;
+        }
+        
+        // Debug output for subsurface block selection
+        if (globalY == terrainHeight - 1) {
+            std::cout << "[DEBUG_SUBSURFACE] Selected subsurface type: " << static_cast<int>(subsurfaceType) 
+                      << ", biome subsurface: " << static_cast<int>(biomeData.subsurfaceBlock) << std::endl;
+        }
+        return subsurfaceType;
+    } else if (depthBelowSurface <= 4.0f) { // 1-4m: Subsoil
+        return biomeData.subsurfaceBlock;
     } else if (depthBelowSurface <= 20.0f) { // 4-20m: Weathered rock
         return ::VoxelEngine::World::VoxelType::STONE;
     } else if (depthBelowSurface <= 100.0f) { // 20-100m: Bedrock

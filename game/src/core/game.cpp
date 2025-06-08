@@ -313,6 +313,25 @@ bool Game::initialize() {
             }
         });
         
+        // Set up world creation callback - for new advanced world generation
+        menuSystem_->setOnWorldCreateRequest([this](const VoxelCastle::World::WorldSeed& seed, int sizeInt) {
+            std::cout << "[Game] New world creation requested with seed: " << seed.getMasterSeed() 
+                      << ", size: " << sizeInt << std::endl;
+            
+            // TODO: Implement advanced world creation with SeedWorldGenerator
+            // For now, create a world using the provided seed
+            std::string seedString = std::to_string(seed.getMasterSeed());
+            if (initializeWorldSystems(seedString)) {
+                // Transition to gameplay state
+                if (stateManager_) {
+                    stateManager_->requestStateChange(GameState::STRATEGIC_MODE);
+                }
+                std::cout << "[Game] New world created and switched to gameplay mode" << std::endl;
+            } else {
+                std::cerr << "[Game] Failed to create new world" << std::endl;
+            }
+        });
+        
         // Set up exit request callback
         menuSystem_->setOnExitRequest([this]() {
             std::cout << "[Game] Exit requested from menu" << std::endl;

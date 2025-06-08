@@ -5,6 +5,8 @@
 #include "world/chunk_segment.h"
 #include "world/regional_data.h"
 #include "world/tectonic_simulator.h"
+#include "world/biome/biome_types.h"  // For BiomeType enum
+#include "world/biome/biome_data.h"   // For BiomeData struct
 #include <memory>
 #include <random>
 
@@ -135,6 +137,14 @@ private:
      * - Above terrain: AIR
      */
     ::VoxelEngine::World::VoxelType getVoxelType(int globalY, int terrainHeight) const;
+
+    /**
+     * @brief Determine voxel type for a given position, terrain height, and biome
+     * 
+     * Enhanced version that uses biome-specific surface and subsurface materials
+     * to create visually distinct biomes while maintaining realistic layering.
+     */
+    ::VoxelEngine::World::VoxelType getVoxelType(int globalY, int terrainHeight, BiomeType biome) const;
 
     /**
      * @brief Get seeded random number for specific coordinate (for future features)

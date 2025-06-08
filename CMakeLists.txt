@@ -152,6 +152,35 @@ add_executable(test_tectonic_integration test_tectonic_integration.cpp)
 target_link_libraries(test_tectonic_integration PRIVATE VoxelEngine glm::glm)
 target_include_directories(test_tectonic_integration PRIVATE engine/include)
 
+# Add biome differentiation test executable
+add_executable(test_biome_differentiation test_biome_differentiation.cpp)
+target_link_libraries(test_biome_differentiation PRIVATE VoxelEngine glm::glm)
+target_include_directories(test_biome_differentiation PRIVATE engine/include)
+
+# Add biome visual differentiation test
+add_executable(test_biome_visual_differentiation 
+    test_biome_visual_differentiation.cpp
+)
+
+target_link_libraries(test_biome_visual_differentiation 
+    VoxelEngine
+    ${OPENGL_LIBRARIES}
+    ${SDL2_LIBRARIES}
+    ${CMAKE_DL_LIBS}
+)
+
+# Add advanced world generation test
+add_executable(test_advanced_worldgen 
+    test_advanced_worldgen.cpp
+)
+
+target_link_libraries(test_advanced_worldgen 
+    VoxelEngine
+    ${OPENGL_LIBRARIES}
+    ${SDL2_LIBRARIES}
+    ${CMAKE_DL_LIBS}
+)
+
 # Enable CTest (optional, if you add tests)
 enable_testing()
 # add_subdirectory(tests) # If you have a tests directory with CMakeLists.txt
