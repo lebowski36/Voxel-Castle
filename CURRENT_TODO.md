@@ -172,6 +172,9 @@ With the block system complete, we're now focused on enhancing the world generat
 
 **Next Active Steps:**
 1. 🔄 **Biome System Implementation (08c.4)** - Create varied ecosystems and environments
+   - **📋 COMPREHENSIVE PLAN**: [docs/BIOME_IMPLEMENTATION_PLAN.md](docs/BIOME_IMPLEMENTATION_PLAN.md)
+   - Implementation phases, task dependencies, and timeline all documented
+   - Links to all detailed subtasks in development_tasks/04_essential_game_infrastructure/
 2. 🔄 **Structure Generation (08c.5)** - Add buildings, landmarks, and features
 3. 🔄 **Advanced Block Distribution** - Leverage the full 257-block taxonomy for rich worlds
 
@@ -197,6 +200,7 @@ With the block system complete, the next logical major milestones are:
 
 ### Phase 2: Advanced Features (🔄 ACTIVE)
 - 🔄 **Biome System (08c.4)**
+  - **📋 MASTER PLAN**: [docs/BIOME_IMPLEMENTATION_PLAN.md](docs/BIOME_IMPLEMENTATION_PLAN.md)
   - Two-tier architecture (regional + chunk-level)
   - Environmental diversity with multiple biome types
   - Climate systems (temperature, rainfall, elevation)
