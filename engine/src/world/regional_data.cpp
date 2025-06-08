@@ -23,6 +23,9 @@ RegionalData::RegionalData()
     , humidity(60.0f)
     , elevation(100.0f)
     , precipitation(800.0f)
+    , generationSeed(0)
+    , generationTime(0)
+    , simulationLevel(50)
 {
     std::memset(reserved, 0, sizeof(reserved));
     SetDefaults();
@@ -41,18 +44,31 @@ RegionalData::RegionalData(int32_t x, int32_t z, BiomeType biome,
     , humidity(humid)
     , elevation(elev)
     , precipitation(800.0f)
+    , generationSeed(0)
+    , generationTime(0)
+    , simulationLevel(50)
 {
     std::memset(reserved, 0, sizeof(reserved));
     SetDefaults();
 }
 
 bool RegionalData::SerializeToBinary(std::vector<uint8_t>& buffer) const {
-    // Calculate total size needed
-    size_t totalSize = sizeof(uint32_t) * 4 +  // magicNumber, version, flags, dataSize
+    // Calculate header size
+    size_t headerSize = sizeof(uint32_t) * 4 +  // magicNumber, version, flags, dataSize
                        sizeof(int32_t) * 2 +   // regionX, regionZ
                        sizeof(uint32_t) +      // primaryBiome (as uint32_t)
                        sizeof(float) * 4 +     // temperature, humidity, elevation, precipitation
+                       sizeof(uint64_t) +      // generationSeed
+                       sizeof(uint32_t) +      // generationTime
+                       sizeof(uint8_t) +       // simulationLevel
                        sizeof(reserved);       // reserved space
+    
+    // Calculate data sizes for advanced structures
+    size_t geologicalSize = geological.GetSerializedSize();
+    size_t hydrologicalSize = hydrological.GetSerializedSize();
+    size_t climateSize = climate.GetSerializedSize();
+    
+    size_t totalSize = headerSize + geologicalSize + hydrologicalSize + climateSize;
     
     buffer.resize(totalSize);
     uint8_t* ptr = buffer.data();
@@ -70,7 +86,7 @@ bool RegionalData::SerializeToBinary(std::vector<uint8_t>& buffer) const {
     std::memcpy(ptr, &regionX, sizeof(regionX)); ptr += sizeof(regionX);
     std::memcpy(ptr, &regionZ, sizeof(regionZ)); ptr += sizeof(regionZ);
     
-    // Write environmental data
+    // Write basic environmental data (legacy compatibility)
     uint32_t biomeValue = static_cast<uint32_t>(primaryBiome);
     std::memcpy(ptr, &biomeValue, sizeof(biomeValue)); ptr += sizeof(biomeValue);
     std::memcpy(ptr, &temperature, sizeof(temperature)); ptr += sizeof(temperature);
@@ -78,14 +94,41 @@ bool RegionalData::SerializeToBinary(std::vector<uint8_t>& buffer) const {
     std::memcpy(ptr, &elevation, sizeof(elevation)); ptr += sizeof(elevation);
     std::memcpy(ptr, &precipitation, sizeof(precipitation)); ptr += sizeof(precipitation);
     
+    // Write generation metadata
+    std::memcpy(ptr, &generationSeed, sizeof(generationSeed)); ptr += sizeof(generationSeed);
+    std::memcpy(ptr, &generationTime, sizeof(generationTime)); ptr += sizeof(generationTime);
+    std::memcpy(ptr, &simulationLevel, sizeof(simulationLevel)); ptr += sizeof(simulationLevel);
+    
     // Write reserved space
-    std::memcpy(ptr, reserved, sizeof(reserved));
+    std::memcpy(ptr, reserved, sizeof(reserved)); ptr += sizeof(reserved);
+    
+    // Serialize advanced data structures
+    std::vector<uint8_t> geologicalBuffer;
+    if (!geological.SerializeToBinary(geologicalBuffer)) {
+        return false;
+    }
+    std::memcpy(ptr, geologicalBuffer.data(), geologicalBuffer.size());
+    ptr += geologicalBuffer.size();
+    
+    std::vector<uint8_t> hydrologicalBuffer;
+    if (!hydrological.SerializeToBinary(hydrologicalBuffer)) {
+        return false;
+    }
+    std::memcpy(ptr, hydrologicalBuffer.data(), hydrologicalBuffer.size());
+    ptr += hydrologicalBuffer.size();
+    
+    std::vector<uint8_t> climateBuffer;
+    if (!climate.SerializeToBinary(climateBuffer)) {
+        return false;
+    }
+    std::memcpy(ptr, climateBuffer.data(), climateBuffer.size());
     
     return true;
 }
 
 bool RegionalData::DeserializeFromBinary(const std::vector<uint8_t>& buffer) {
     if (buffer.size() < sizeof(uint32_t) * 4) {
+        std::cerr << "DEBUG: Buffer too small for header: " << buffer.size() << " < " << (sizeof(uint32_t) * 4) << std::endl;
         return false; // Buffer too small for header
     }
     
@@ -95,12 +138,14 @@ bool RegionalData::DeserializeFromBinary(const std::vector<uint8_t>& buffer) {
     uint32_t readMagic;
     std::memcpy(&readMagic, ptr, sizeof(readMagic)); ptr += sizeof(readMagic);
     if (readMagic != MAGIC_NUMBER) {
+        std::cerr << "DEBUG: Invalid magic number: " << readMagic << " != " << MAGIC_NUMBER << std::endl;
         return false; // Invalid magic number
     }
     
     uint32_t readVersion;
     std::memcpy(&readVersion, ptr, sizeof(readVersion)); ptr += sizeof(readVersion);
     if (readVersion > CURRENT_VERSION) {
+        std::cerr << "DEBUG: Version too new: " << readVersion << " > " << CURRENT_VERSION << std::endl;
         return false; // Version too new
     }
     
@@ -108,7 +153,9 @@ bool RegionalData::DeserializeFromBinary(const std::vector<uint8_t>& buffer) {
     std::memcpy(&dataSize, ptr, sizeof(dataSize)); ptr += sizeof(dataSize);
     
     // Validate data size
+    std::cerr << "DEBUG: Buffer size: " << buffer.size() << ", Expected: " << (sizeof(uint32_t) * 4 + dataSize) << ", dataSize: " << dataSize << std::endl;
     if (buffer.size() != sizeof(uint32_t) * 4 + dataSize) {
+        std::cerr << "DEBUG: Size mismatch!" << std::endl;
         return false; // Size mismatch
     }
     
@@ -126,8 +173,41 @@ bool RegionalData::DeserializeFromBinary(const std::vector<uint8_t>& buffer) {
     std::memcpy(&elevation, ptr, sizeof(elevation)); ptr += sizeof(elevation);
     std::memcpy(&precipitation, ptr, sizeof(precipitation)); ptr += sizeof(precipitation);
     
+    // Read generation metadata
+    std::memcpy(&generationSeed, ptr, sizeof(generationSeed)); ptr += sizeof(generationSeed);
+    std::memcpy(&generationTime, ptr, sizeof(generationTime)); ptr += sizeof(generationTime);
+    std::memcpy(&simulationLevel, ptr, sizeof(simulationLevel)); ptr += sizeof(simulationLevel);
+    
     // Read reserved space
-    std::memcpy(reserved, ptr, sizeof(reserved));
+    std::memcpy(reserved, ptr, sizeof(reserved)); ptr += sizeof(reserved);
+    
+    // Deserialize advanced data structures
+    size_t offset = ptr - buffer.data();
+    std::cout << "DEBUG: Starting advanced deserialization at offset: " << offset << std::endl;
+    
+    // Deserialize geological data
+    std::cout << "DEBUG: Deserializing geological data..." << std::endl;
+    if (!geological.DeserializeFromBinary(buffer, offset)) {
+        std::cout << "DEBUG: Geological deserialization FAILED" << std::endl;
+        return false;
+    }
+    std::cout << "DEBUG: Geological deserialization OK, new offset: " << offset << std::endl;
+    
+    // Deserialize hydrological data
+    std::cout << "DEBUG: Deserializing hydrological data..." << std::endl;
+    if (!hydrological.DeserializeFromBinary(buffer, offset)) {
+        std::cout << "DEBUG: Hydrological deserialization FAILED" << std::endl;
+        return false;
+    }
+    std::cout << "DEBUG: Hydrological deserialization OK, new offset: " << offset << std::endl;
+    
+    // Deserialize climate data
+    std::cout << "DEBUG: Deserializing climate data..." << std::endl;
+    if (!climate.DeserializeFromBinary(buffer, offset)) {
+        std::cout << "DEBUG: Climate deserialization FAILED" << std::endl;
+        return false;
+    }
+    std::cout << "DEBUG: Climate deserialization OK, new offset: " << offset << std::endl;
     
     // Store version info
     magicNumber = readMagic;
@@ -190,6 +270,24 @@ bool RegionalData::IsValid() const {
         return false;
     }
     
+    // Validate simulation level
+    if (simulationLevel > 100) {
+        return false;
+    }
+    
+    // Validate advanced data structures
+    if (!geological.IsValid()) {
+        return false;
+    }
+    
+    if (!hydrological.IsValid()) {
+        return false;
+    }
+    
+    if (!climate.IsValid()) {
+        return false;
+    }
+    
     return true;
 }
 
@@ -223,6 +321,11 @@ void RegionalData::SetDefaults() {
             precipitation = 800.0f;
             break;
     }
+    
+    // Initialize advanced data structures with defaults
+    geological.SetDefaults();
+    hydrological.SetDefaults();
+    climate.SetDefaults();
 }
 
 std::string RegionalData::GetRegionFilename() const {
@@ -247,7 +350,13 @@ std::string RegionalData::ToString() const {
         << "  Temperature: " << temperature << "°C\n"
         << "  Humidity: " << humidity << "%\n"
         << "  Elevation: " << elevation << "m\n"
-        << "  Precipitation: " << precipitation << "mm/year\n";
+        << "  Precipitation: " << precipitation << "mm/year\n"
+        << "  Generation Seed: " << generationSeed << "\n"
+        << "  Generation Time: " << generationTime << "\n"
+        << "  Simulation Level: " << static_cast<int>(simulationLevel) << "%\n"
+        << "  Geological Data: " << (geological.IsValid() ? "Valid" : "Invalid") << "\n"
+        << "  Hydrological Data: " << (hydrological.IsValid() ? "Valid" : "Invalid") << "\n"
+        << "  Climate Data: " << (climate.IsValid() ? "Valid" : "Invalid") << "\n";
     return oss.str();
 }
 

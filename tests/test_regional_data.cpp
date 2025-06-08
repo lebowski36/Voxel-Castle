@@ -316,6 +316,83 @@ void TestRoundTripIntegrity() {
     std::cout << "✓ Round-trip integrity test passed" << std::endl;
 }
 
+void TestAdvancedDataStructures() {
+    std::cout << "Testing advanced data structures..." << std::endl;
+    
+    // Create test data with advanced structures
+    RegionalData testData;
+    testData.regionX = 100;
+    testData.regionZ = 200;
+    testData.elevation = 500.0f;
+    testData.temperature = 10.0f;
+    testData.humidity = 45.0f;
+    testData.precipitation = 900.0f;
+    testData.primaryBiome = BiomeType::MOUNTAINS;
+    testData.generationSeed = 12345678ULL;
+    testData.generationTime = 1640995200; // Jan 1, 2022
+    testData.simulationLevel = 75;
+    
+    // Initialize advanced data structures with test values
+    testData.geological.soilDepth = 2.3f;
+    testData.geological.bedrockDepth = 25.0f;
+    testData.geological.mineralRichness = 0.85f;
+    testData.geological.tectonicStability = 0.75f;
+    
+    testData.hydrological.drainageArea = 15.0f;
+    testData.hydrological.runoffCoefficient = 0.75f;
+    testData.hydrological.infiltrationRate = 0.8f;
+    testData.hydrological.groundwaterLevel = 5.2f;
+    
+    testData.climate.annualTemperature = 8.5f;
+    testData.climate.temperatureRange = 25.0f;
+    testData.climate.annualPrecipitation = 850.0f;
+    testData.climate.annualHumidity = 0.7f;
+    
+    // Test validation
+    assert(testData.IsValid());
+    assert(testData.geological.IsValid());
+    assert(testData.hydrological.IsValid());
+    assert(testData.climate.IsValid());
+    
+    // Test serialization/deserialization round-trip
+    std::vector<uint8_t> serializedData;
+    bool serializeSuccess = testData.SerializeToBinary(serializedData);
+    assert(serializeSuccess);
+    assert(!serializedData.empty());
+    
+    RegionalData deserializedData;
+    bool deserializeSuccess = deserializedData.DeserializeFromBinary(serializedData);
+    assert(deserializeSuccess);
+    
+    // Verify advanced data was preserved
+    assert(deserializedData.generationSeed == testData.generationSeed);
+    assert(deserializedData.generationTime == testData.generationTime);
+    assert(deserializedData.simulationLevel == testData.simulationLevel);
+    
+    assert(FloatEquals(deserializedData.geological.soilDepth, testData.geological.soilDepth));
+    assert(FloatEquals(deserializedData.geological.bedrockDepth, testData.geological.bedrockDepth));
+    assert(FloatEquals(deserializedData.geological.mineralRichness, testData.geological.mineralRichness));
+    assert(FloatEquals(deserializedData.geological.tectonicStability, testData.geological.tectonicStability));
+    
+    assert(FloatEquals(deserializedData.hydrological.drainageArea, testData.hydrological.drainageArea));
+    assert(FloatEquals(deserializedData.hydrological.runoffCoefficient, testData.hydrological.runoffCoefficient));
+    assert(FloatEquals(deserializedData.hydrological.infiltrationRate, testData.hydrological.infiltrationRate));
+    assert(FloatEquals(deserializedData.hydrological.groundwaterLevel, testData.hydrological.groundwaterLevel));
+    
+    assert(FloatEquals(deserializedData.climate.annualTemperature, testData.climate.annualTemperature));
+    assert(FloatEquals(deserializedData.climate.temperatureRange, testData.climate.temperatureRange));
+    assert(FloatEquals(deserializedData.climate.annualPrecipitation, testData.climate.annualPrecipitation));
+    assert(FloatEquals(deserializedData.climate.annualHumidity, testData.climate.annualHumidity));
+    
+    // Test validation on deserialized data
+    assert(deserializedData.IsValid());
+    assert(deserializedData.geological.IsValid());
+    assert(deserializedData.hydrological.IsValid());
+    assert(deserializedData.climate.IsValid());
+    
+    std::cout << "✓ Advanced data structures test passed" << std::endl;
+}
+
 int main() {
     std::cout << "=== RegionalData System Test Suite ===" << std::endl;
     
@@ -328,6 +405,7 @@ int main() {
         TestRegionalDatabaseBoundaryConditions();
         TestCorruptedDataHandling();
         TestRoundTripIntegrity();
+        TestAdvancedDataStructures();
         
         std::cout << "\n=== All tests passed! ===" << std::endl;
         std::cout << "RegionalData system is working correctly." << std::endl;

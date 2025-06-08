@@ -1,6 +1,9 @@
 #pragma once
 
 #include "biome/biome_types.h"
+#include "geological_data.h"
+#include "hydrological_data.h"
+#include "climate_data.h"
 #include <cstdint>
 #include <string>
 #include <vector>
@@ -15,11 +18,11 @@ namespace World {
  * This structure represents environmental data for a 1km² region and is
  * designed to be efficiently serialized to binary format.
  * 
- * Version 1.0 - Basic environmental data
- * Future versions will add geological, hydrological, and climate data.
+ * Version 2.0 - Added geological, hydrological, and climate data structures
+ * Compatible with advanced world generation simulation systems.
  */
 struct RegionalData {
-    static constexpr uint32_t CURRENT_VERSION = 1;
+    static constexpr uint32_t CURRENT_VERSION = 2;
     static constexpr uint32_t MAGIC_NUMBER = 0x52454743; // "REGC" 
     static constexpr int32_t REGION_SIZE = 1000; // Region size in world units (1km)
     
@@ -33,15 +36,25 @@ struct RegionalData {
     int32_t regionX;            // Region X coordinate
     int32_t regionZ;            // Region Z coordinate
     
-    // Basic environmental data
-    BiomeType primaryBiome;    // Primary biome type
-    float temperature;          // Average temperature (°C)
-    float humidity;             // Average humidity percentage (0-100)
+    // Basic environmental data (legacy compatibility)
+    BiomeType primaryBiome;     // Primary biome type
+    float temperature;          // Average temperature (°C) - superseded by climate data
+    float humidity;             // Average humidity percentage (0-100) - superseded by climate data
     float elevation;            // Average elevation (meters above sea level)
-    float precipitation;        // Annual precipitation (mm)
+    float precipitation;        // Annual precipitation (mm) - superseded by climate data
     
-    // Future expansion space (reserved for advanced features)
-    uint8_t reserved[32];       // Reserved for geological/hydrological data
+    // Advanced environmental data systems
+    GeologicalData geological;  // Comprehensive geological information
+    HydrologicalData hydrological; // Water systems and drainage
+    ClimateData climate;        // Detailed climate and weather patterns
+    
+    // Generation metadata
+    uint64_t generationSeed;    // Seed used for this region's generation
+    uint32_t generationTime;    // Time when this region was generated (unix timestamp)
+    uint8_t simulationLevel;    // Level of simulation detail applied (0-100)
+    
+    // Future expansion space (reduced due to advanced data)
+    uint8_t reserved[16];       // Reserved for future features
     
     // Constructors
     RegionalData();
