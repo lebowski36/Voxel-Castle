@@ -489,6 +489,12 @@ uint32_t TectonicSimulator::GetOptimalPlateCount(float worldSize) const {
 }
 
 float TectonicSimulator::InterpolateStress(glm::vec2 worldPos) const {
+    // Check if position is outside world bounds - return default stress
+    if (worldPos.x < 0.0f || worldPos.y < 0.0f || 
+        worldPos.x >= worldSize_ || worldPos.y >= worldSize_) {
+        return 0.0f; // Default stress for out-of-bounds positions
+    }
+    
     float cellSize = worldSize_ / mapResolution_;
     float x = worldPos.x / cellSize;
     float y = worldPos.y / cellSize;
@@ -497,6 +503,10 @@ float TectonicSimulator::InterpolateStress(glm::vec2 worldPos) const {
     uint32_t y0 = static_cast<uint32_t>(std::floor(y));
     uint32_t x1 = std::min(x0 + 1, mapResolution_ - 1);
     uint32_t y1 = std::min(y0 + 1, mapResolution_ - 1);
+    
+    // Additional safety check - ensure indices are within bounds
+    x0 = std::min(x0, mapResolution_ - 1);
+    y0 = std::min(y0, mapResolution_ - 1);
     
     float fx = x - x0;
     float fy = y - y0;
@@ -514,10 +524,17 @@ float TectonicSimulator::InterpolateStress(glm::vec2 worldPos) const {
 }
 
 TerrainType TectonicSimulator::InterpolateTerrainType(glm::vec2 worldPos) const {
+    // Check if position is outside world bounds - return default terrain type
+    if (worldPos.x < 0.0f || worldPos.y < 0.0f || 
+        worldPos.x >= worldSize_ || worldPos.y >= worldSize_) {
+        return TerrainType::STABLE; // Default terrain type for out-of-bounds positions
+    }
+    
     float cellSize = worldSize_ / mapResolution_;
     uint32_t x = static_cast<uint32_t>(worldPos.x / cellSize);
     uint32_t y = static_cast<uint32_t>(worldPos.y / cellSize);
     
+    // Ensure indices are within bounds
     x = std::min(x, mapResolution_ - 1);
     y = std::min(y, mapResolution_ - 1);
     
@@ -525,6 +542,12 @@ TerrainType TectonicSimulator::InterpolateTerrainType(glm::vec2 worldPos) const 
 }
 
 float TectonicSimulator::InterpolateElevationModifier(glm::vec2 worldPos) const {
+    // Check if position is outside world bounds - return default elevation modifier
+    if (worldPos.x < 0.0f || worldPos.y < 0.0f || 
+        worldPos.x >= worldSize_ || worldPos.y >= worldSize_) {
+        return 0.0f; // Default elevation modifier for out-of-bounds positions
+    }
+    
     float cellSize = worldSize_ / mapResolution_;
     float x = worldPos.x / cellSize;
     float y = worldPos.y / cellSize;
@@ -533,6 +556,10 @@ float TectonicSimulator::InterpolateElevationModifier(glm::vec2 worldPos) const 
     uint32_t y0 = static_cast<uint32_t>(std::floor(y));
     uint32_t x1 = std::min(x0 + 1, mapResolution_ - 1);
     uint32_t y1 = std::min(y0 + 1, mapResolution_ - 1);
+    
+    // Additional safety check - ensure indices are within bounds
+    x0 = std::min(x0, mapResolution_ - 1);
+    y0 = std::min(y0, mapResolution_ - 1);
     
     float fx = x - x0;
     float fy = y - y0;
