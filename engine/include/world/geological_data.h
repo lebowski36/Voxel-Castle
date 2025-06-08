@@ -3,6 +3,8 @@
 #include <cstdint>
 #include <vector>
 #include <string>
+#include <glm/glm.hpp>
+#include "tectonic_plate.h"
 
 namespace VoxelCastle {
 namespace World {
@@ -96,6 +98,13 @@ struct GeologicalData {
     float mineralRichness;      // Overall mineral richness (0.0-1.0)
     float oilReserves;          // Oil/petroleum reserves (cubic meters)
     float groundwaterDepth;     // Depth to groundwater table (meters)
+    
+    // Tectonic simulation results
+    uint32_t dominantPlateId;               // Primary plate for this region
+    float tectonicStress;                   // Accumulated tectonic stress (0.0-1.0)
+    TerrainType terrainType;                // MOUNTAIN, RIFT, STABLE, OCEANIC
+    float crustalThickness;                 // Affects elevation and stability (km)
+    glm::vec2 plateMovementVector;          // Local plate movement direction (km/My)
     
     // Constructors
     GeologicalData();

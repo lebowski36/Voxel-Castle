@@ -1,5 +1,6 @@
 #include "world/seed_world_generator.h"
 #include "world/biome/biome_types.h"
+#include "world/tectonic_simulator.h"
 #include "util/noise.h"
 #include "world/voxel_types.h"
 #include "world/voxel.h"
@@ -14,7 +15,7 @@ namespace VoxelCastle {
 namespace World {
 
 SeedWorldGenerator::SeedWorldGenerator(std::shared_ptr<WorldSeed> seed, std::shared_ptr<WorldParameters> parameters)
-    : worldSeed_(seed), worldParameters_(parameters), regionalDatabase_(nullptr), legacyCompatible_(false) {
+    : worldSeed_(seed), worldParameters_(parameters), regionalDatabase_(nullptr), tectonicSimulator_(nullptr), legacyCompatible_(false) {
     
     if (!worldSeed_) {
         throw std::invalid_argument("WorldSeed cannot be null");
@@ -30,7 +31,7 @@ SeedWorldGenerator::SeedWorldGenerator(std::shared_ptr<WorldSeed> seed, std::sha
 }
 
 SeedWorldGenerator::SeedWorldGenerator(std::shared_ptr<WorldSeed> seed, std::shared_ptr<WorldParameters> parameters, bool legacyCompatible)
-    : worldSeed_(seed), worldParameters_(parameters), regionalDatabase_(nullptr), legacyCompatible_(legacyCompatible) {
+    : worldSeed_(seed), worldParameters_(parameters), regionalDatabase_(nullptr), tectonicSimulator_(nullptr), legacyCompatible_(legacyCompatible) {
     
     if (!worldSeed_) {
         throw std::invalid_argument("WorldSeed cannot be null");
@@ -201,6 +202,23 @@ void SeedWorldGenerator::setRegionalDatabase(std::unique_ptr<RegionalDatabase> d
     std::cout << "[SeedWorldGenerator] Regional database " << (regionalDatabase_ ? "enabled" : "disabled") << std::endl;
 }
 
+void SeedWorldGenerator::initializeTectonicSimulation(float worldSizeKm) {
+    // Create tectonic simulator with world-specific seed
+    uint64_t tectonicSeed = worldSeed_->getTectonicSeed();
+    tectonicSimulator_ = std::make_unique<TectonicSimulator>(tectonicSeed);
+    
+    // Initialize with world size parameters
+    tectonicSimulator_->InitializeWorld(worldSizeKm, worldSizeKm);
+    
+    // Run the simulation
+    int simulationSteps = 100; // Adjust based on desired geological complexity
+    tectonicSimulator_->RunSimulation(simulationSteps);
+    
+    std::cout << "[SeedWorldGenerator] Tectonic simulation initialized with " 
+              << tectonicSimulator_->GetPlateCount() << " plates over " 
+              << worldSizeKm << "x" << worldSizeKm << " km world" << std::endl;
+}
+
 RegionalData SeedWorldGenerator::getRegionalData(int globalX, int globalZ) const {
     if (!regionalDatabase_) {
         // Return default regional data when no database is available
@@ -241,20 +259,93 @@ RegionalData SeedWorldGenerator::generateRegionalData(int regionX, int regionZ) 
     uint64_t regionSeed = getCoordinateSeed(regionX, 0, regionZ);
     std::mt19937_64 regionRng(regionSeed);
     
-    // For now, use simple random biome assignment
-    // This will be replaced with advanced geological simulation
-    std::uniform_int_distribution<int> biomeDist(0, static_cast<int>(BiomeType::COUNT) - 1);
-    data.primaryBiome = static_cast<BiomeType>(biomeDist(regionRng));
+    // Convert region coordinates to world coordinates (center of region in km)
+    float worldX = regionX * RegionalData::REGION_SIZE * 0.001f; // Convert to km
+    float worldZ = regionZ * RegionalData::REGION_SIZE * 0.001f; // Convert to km
     
-    // Generate basic environmental parameters
+    // Generate tectonic data if simulator is available
+    if (tectonicSimulator_) {
+        // Get tectonic properties for this region
+        glm::vec2 worldPos(worldX, worldZ);
+        
+        // Query tectonic simulator for geological properties
+        uint32_t dominantPlateId = tectonicSimulator_->GetDominantPlate(worldPos);
+        float tectonicStress = tectonicSimulator_->GetTectonicStress(worldPos);
+        TerrainType terrainType = tectonicSimulator_->GetTerrainTypeAtPosition(worldPos);
+        
+        // Populate GeologicalData with tectonic simulation results
+        data.geologicalData.dominantPlateId = dominantPlateId;
+        data.geologicalData.tectonicStress = tectonicStress;
+        data.geologicalData.terrainType = terrainType;
+        
+        // Set crustal thickness based on terrain type and tectonic stress
+        switch (terrainType) {
+            case TerrainType::MOUNTAIN:
+                data.geologicalData.crustalThickness = 45.0f + tectonicStress * 20.0f; // Thick continental crust
+                break;
+            case TerrainType::OCEANIC:
+                data.geologicalData.crustalThickness = 7.0f + tectonicStress * 3.0f; // Thin oceanic crust
+                break;
+            case TerrainType::RIFT:
+                data.geologicalData.crustalThickness = 20.0f - tectonicStress * 10.0f; // Thinned crust
+                break;
+            case TerrainType::STABLE:
+            default:
+                data.geologicalData.crustalThickness = 35.0f + tectonicStress * 5.0f; // Normal continental crust
+                break;
+        }
+        
+        // Get plate movement vector for this position
+        if (const TectonicPlate* plate = tectonicSimulator_->GetPlate(dominantPlateId)) {
+            data.geologicalData.plateMovementVector = plate->movementVector;
+        }
+        
+        // Set elevation based on terrain type and crustal thickness
+        float baseElevation = 64.0f; // Sea level
+        switch (terrainType) {
+            case TerrainType::MOUNTAIN:
+                data.elevation = baseElevation + 50.0f + tectonicStress * 100.0f;
+                break;
+            case TerrainType::OCEANIC:
+                data.elevation = baseElevation - 20.0f - tectonicStress * 30.0f;
+                break;
+            case TerrainType::RIFT:
+                data.elevation = baseElevation - 10.0f + tectonicStress * 20.0f;
+                break;
+            case TerrainType::STABLE:
+            default:
+                data.elevation = baseElevation + tectonicStress * 10.0f;
+                break;
+        }
+        
+        // Determine biome based on elevation and terrain type
+        if (data.elevation > 100.0f) {
+            data.primaryBiome = BiomeType::MOUNTAIN;
+        } else if (data.elevation < 50.0f) {
+            data.primaryBiome = BiomeType::OCEAN;
+        } else if (terrainType == TerrainType::RIFT) {
+            data.primaryBiome = BiomeType::DESERT; // Rift valleys tend to be dry
+        } else {
+            data.primaryBiome = BiomeType::PLAINS; // Default for stable terrain
+        }
+        
+    } else {
+        // Fallback to simple random biome assignment if no tectonic simulation
+        std::uniform_int_distribution<int> biomeDist(0, static_cast<int>(BiomeType::COUNT) - 1);
+        data.primaryBiome = static_cast<BiomeType>(biomeDist(regionRng));
+        
+        // Generate basic elevation
+        std::uniform_real_distribution<float> elevationDist(32.0f, 128.0f);
+        data.elevation = elevationDist(regionRng);
+    }
+    
+    // Generate basic environmental parameters (can be refined with climate simulation later)
     std::uniform_real_distribution<float> tempDist(-10.0f, 35.0f);
     std::uniform_real_distribution<float> humidityDist(0.0f, 100.0f);
-    std::uniform_real_distribution<float> elevationDist(32.0f, 128.0f);
     std::uniform_real_distribution<float> precipitationDist(200.0f, 2000.0f);
     
     data.temperature = tempDist(regionRng);
     data.humidity = humidityDist(regionRng);
-    data.elevation = elevationDist(regionRng);
     data.precipitation = precipitationDist(regionRng);
     
     // Clear reserved space
@@ -268,7 +359,9 @@ RegionalData SeedWorldGenerator::generateRegionalData(int regionX, int regionZ) 
         } else {
             std::cout << "[SeedWorldGenerator] Generated and saved regional data for region (" 
                       << regionX << ", " << regionZ << ") - Biome: " 
-                      << static_cast<int>(data.primaryBiome) << std::endl;
+                      << static_cast<int>(data.primaryBiome) 
+                      << ", PlateId: " << data.geologicalData.dominantPlateId
+                      << ", TerrainType: " << static_cast<int>(data.geologicalData.terrainType) << std::endl;
         }
     }
     

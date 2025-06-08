@@ -102,7 +102,11 @@ bool GeologicalData::SerializeToBinary(std::vector<uint8_t>& buffer) const {
     // Calculate total size
     size_t headerSize = sizeof(float) * 8 + // basic properties
                         sizeof(uint8_t) + // layerCount
-                        sizeof(float) * 3; // mineral, oil, groundwater
+                        sizeof(float) * 3 + // mineral, oil, groundwater
+                        sizeof(uint32_t) + // dominantPlateId
+                        sizeof(float) * 2 + // tectonicStress, crustalThickness
+                        sizeof(uint8_t) + // terrainType
+                        sizeof(glm::vec2); // plateMovementVector
     
     size_t layerDataSize = 0;
     for (uint8_t i = 0; i < layerCount; ++i) {
@@ -129,6 +133,14 @@ bool GeologicalData::SerializeToBinary(std::vector<uint8_t>& buffer) const {
     std::memcpy(ptr, &oilReserves, sizeof(oilReserves)); ptr += sizeof(oilReserves);
     std::memcpy(ptr, &groundwaterDepth, sizeof(groundwaterDepth)); ptr += sizeof(groundwaterDepth);
     
+    // Write tectonic simulation data
+    std::memcpy(ptr, &dominantPlateId, sizeof(dominantPlateId)); ptr += sizeof(dominantPlateId);
+    std::memcpy(ptr, &tectonicStress, sizeof(tectonicStress)); ptr += sizeof(tectonicStress);
+    uint8_t terrainTypeValue = static_cast<uint8_t>(terrainType);
+    std::memcpy(ptr, &terrainTypeValue, sizeof(terrainTypeValue)); ptr += sizeof(terrainTypeValue);
+    std::memcpy(ptr, &crustalThickness, sizeof(crustalThickness)); ptr += sizeof(crustalThickness);
+    std::memcpy(ptr, &plateMovementVector, sizeof(plateMovementVector)); ptr += sizeof(plateMovementVector);
+    
     // Write layer count
     std::memcpy(ptr, &layerCount, sizeof(layerCount)); ptr += sizeof(layerCount);
     
@@ -146,7 +158,11 @@ bool GeologicalData::SerializeToBinary(std::vector<uint8_t>& buffer) const {
 }
 
 bool GeologicalData::DeserializeFromBinary(const std::vector<uint8_t>& buffer, size_t& offset) {
-    size_t headerSize = sizeof(float) * 11 + sizeof(uint8_t);
+    size_t headerSize = sizeof(float) * 11 + sizeof(uint8_t) + // original fields
+                        sizeof(uint32_t) + // dominantPlateId
+                        sizeof(float) * 2 + // tectonicStress, crustalThickness
+                        sizeof(uint8_t) + // terrainType
+                        sizeof(glm::vec2); // plateMovementVector
     if (offset + headerSize > buffer.size()) {
         return false;
     }
@@ -169,6 +185,15 @@ bool GeologicalData::DeserializeFromBinary(const std::vector<uint8_t>& buffer, s
     std::memcpy(&mineralRichness, ptr, sizeof(mineralRichness)); ptr += sizeof(mineralRichness);
     std::memcpy(&oilReserves, ptr, sizeof(oilReserves)); ptr += sizeof(oilReserves);
     std::memcpy(&groundwaterDepth, ptr, sizeof(groundwaterDepth)); ptr += sizeof(groundwaterDepth);
+    
+    // Read tectonic simulation data
+    std::memcpy(&dominantPlateId, ptr, sizeof(dominantPlateId)); ptr += sizeof(dominantPlateId);
+    std::memcpy(&tectonicStress, ptr, sizeof(tectonicStress)); ptr += sizeof(tectonicStress);
+    uint8_t terrainTypeValue;
+    std::memcpy(&terrainTypeValue, ptr, sizeof(terrainTypeValue)); ptr += sizeof(terrainTypeValue);
+    terrainType = static_cast<TerrainType>(terrainTypeValue);
+    std::memcpy(&crustalThickness, ptr, sizeof(crustalThickness)); ptr += sizeof(crustalThickness);
+    std::memcpy(&plateMovementVector, ptr, sizeof(plateMovementVector)); ptr += sizeof(plateMovementVector);
     
     // Read layer count
     std::memcpy(&layerCount, ptr, sizeof(layerCount)); ptr += sizeof(layerCount);
@@ -223,6 +248,13 @@ void GeologicalData::SetDefaults() {
     mineralRichness = 0.3f;
     oilReserves = 0.0f;
     groundwaterDepth = 10.0f;
+    
+    // Tectonic simulation defaults
+    dominantPlateId = 0;                            // Unassigned plate
+    tectonicStress = 0.0f;                          // No stress initially
+    terrainType = TerrainType::STABLE;              // Default to stable terrain
+    crustalThickness = 35.0f;                       // Average continental crust thickness (km)
+    plateMovementVector = glm::vec2(0.0f, 0.0f);    // No movement initially
     
     layerCount = 3;
     
@@ -299,12 +331,21 @@ std::string GeologicalData::ToString() const {
         << ", bedrockDepth=" << bedrockDepth << "m"
         << ", soilDepth=" << soilDepth << "m"
         << ", stability=" << tectonicStability
-        << ", erosionResistance=" << erosionResistance << "}";
+        << ", erosionResistance=" << erosionResistance
+        << ", plateId=" << dominantPlateId
+        << ", tectonicStress=" << tectonicStress
+        << ", terrainType=" << static_cast<int>(terrainType)
+        << ", crustalThickness=" << crustalThickness << "km"
+        << ", plateMovement=(" << plateMovementVector.x << "," << plateMovementVector.y << ")}";
     return oss.str();
 }
 
 size_t GeologicalData::GetSerializedSize() const {
-    size_t size = sizeof(float) * 11 + sizeof(uint8_t); // Header
+    size_t size = sizeof(float) * 11 + sizeof(uint8_t) + // Original header
+                  sizeof(uint32_t) + // dominantPlateId
+                  sizeof(float) * 2 + // tectonicStress, crustalThickness
+                  sizeof(uint8_t) + // terrainType
+                  sizeof(glm::vec2); // plateMovementVector
     for (uint8_t i = 0; i < layerCount; ++i) {
         size += sizeof(uint8_t) + sizeof(float) * 3 + sizeof(layers[i].mineralContent);
     }

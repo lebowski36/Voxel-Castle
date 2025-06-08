@@ -4,6 +4,7 @@
 #include "world/world_parameters.h"
 #include "world/chunk_segment.h"
 #include "world/regional_data.h"
+#include "world/tectonic_simulator.h"
 #include <memory>
 #include <random>
 
@@ -78,6 +79,12 @@ public:
     void setRegionalDatabase(std::unique_ptr<RegionalDatabase> database);
 
     /**
+     * @brief Initialize the tectonic simulation system
+     * @param worldSize World size parameters for tectonic simulation
+     */
+    void initializeTectonicSimulation(float worldSizeKm = 2048.0f);
+
+    /**
      * @brief Get regional data for a specific coordinate
      * @param globalX Global X coordinate
      * @param globalZ Global Z coordinate
@@ -101,6 +108,9 @@ private:
     
     // Regional database for advanced world generation
     std::unique_ptr<RegionalDatabase> regionalDatabase_;
+    
+    // Tectonic simulation system
+    std::unique_ptr<TectonicSimulator> tectonicSimulator_;
     
     // Compatibility mode flag
     bool legacyCompatible_;
