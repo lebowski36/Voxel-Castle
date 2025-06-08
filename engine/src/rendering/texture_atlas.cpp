@@ -21,10 +21,10 @@ TextureAtlas::TextureAtlas() {
     
     initializeAllBlockTextures();
     
-    // Automatically load the multi-atlas system
-    loadMultiAtlas("assets/textures/atlas_main_16x16.png", 
-                   "assets/textures/atlas_side_3x3.png", 
-                   "assets/textures/atlas_bottom_1x1.png");
+    // Automatically load the multi-atlas system using the new atlas files
+    loadMultiAtlas("assets/textures/atlas_main.png", 
+                   "assets/textures/atlas_side.png", 
+                   "assets/textures/atlas_bottom.png");
 }
 
 void TextureAtlas::initializeAllBlockTextures() {

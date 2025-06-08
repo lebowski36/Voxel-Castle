@@ -13,31 +13,47 @@ from texture_generators.base_patterns import draw_brick_pattern, draw_speckled_p
 from texture_generators.color_palettes import get_palette, vary_color
 
 def generate_clay_brick(draw: ImageDraw.Draw, x0: int, y0: int, size: int) -> None:
-    """Traditional fired clay brick with mortar lines and texture."""
-    palette = {
-        'brick': (150, 80, 60, 255),      # Traditional brick red
-        'mortar': (200, 190, 180, 255),   # Light gray mortar
-        'light': (180, 110, 90, 255),     # Light brick areas
-        'dark': (120, 60, 40, 255)        # Dark brick areas
-    }
+    """Traditional fired clay brick with mortar lines and texture - red/orange like sandstone bricks."""
+    # Red/orange clay brick colors (like sandstone pattern but different colors)
+    brick_color = (180, 70, 40, 255)    # Deep red clay brick
+    mortar_color = (140, 120, 100, 255)  # Brown mortar
     
-    # Create brick pattern with new function
-    draw_brick_pattern(
-        draw, x0, y0, size, palette,
-        brick_width=size//2 - 1,
-        brick_height=size//4,
-        mortar_width=1
-    )
+    # Fill with mortar base
+    draw.rectangle([x0, y0, x0 + size - 1, y0 + size - 1], fill=mortar_color)
     
-    # Add surface texture to bricks only (skipping the complex mask logic for now)
-    for _ in range(size * size // 12):
-        tx = random.randint(x0, x0 + size - 1)
-        ty = random.randint(y0, y0 + size - 1)
+    # Calculate brick layout (same pattern as sandstone bricks)
+    mortar_thickness = max(1, size // 16)
+    brick_height = max(3, size // 4)
+    
+    y_offset = y0
+    row = 0
+    while y_offset < y0 + size:
+        brick_width = max(4, size // 2)
         
-        # Add texture speckles
-        if random.random() < 0.5:
-            color = vary_color(palette['brick'], variation=20, seed_offset=tx + ty)
-            draw.point((tx, ty), fill=color)
+        # Offset every other row for proper brick pattern
+        x_offset = (brick_width // 2) if row % 2 == 1 else 0
+        
+        x = x0 + x_offset
+        while x < x0 + size:
+            # Draw individual brick
+            brick_x1 = x
+            brick_y1 = y_offset + mortar_thickness
+            brick_x2 = min(x + brick_width - mortar_thickness, x0 + size - 1)
+            brick_y2 = min(y_offset + brick_height - mortar_thickness, y0 + size - 1)
+            
+            if brick_x2 > brick_x1 and brick_y2 > brick_y1:
+                # Add slight color variation to each brick (deterministic)
+                variation = 15 if (brick_x1 + brick_y1) % 3 == 0 else 0
+                varied_brick_color = tuple(
+                    max(0, min(255, c + variation)) for c in brick_color[:3]
+                ) + (255,)
+                draw.rectangle([brick_x1, brick_y1, brick_x2, brick_y2], 
+                             fill=varied_brick_color)
+            
+            x += brick_width
+        
+        y_offset += brick_height
+        row += 1
 
 def generate_terracotta(draw: ImageDraw.Draw, x0: int, y0: int, size: int) -> None:
     """Terracotta with earthy orange-brown color and natural texture."""
@@ -264,6 +280,52 @@ def generate_ceramic_tile(draw: ImageDraw.Draw, x0: int, y0: int, size: int) -> 
         elif random.random() < 0.7:
             draw.point((tx, ty), fill=palette['edge'])
 
+def generate_raw_clay(draw: ImageDraw.Draw, x0: int, y0: int, size: int) -> None:
+    """Generate raw clay texture - smooth, natural earth tones."""
+    # Clay color palette - natural earth tones
+    base_clay = (139, 90, 60, 255)  # Rich brown clay
+    light_clay = (165, 110, 80, 255)  # Lighter clay highlights
+    dark_clay = (115, 70, 45, 255)   # Darker clay shadows
+    
+    # Fill base with primary clay color
+    draw.rectangle([x0, y0, x0 + size - 1, y0 + size - 1], fill=base_clay)
+    
+    # Add organic clay variations with smooth blending
+    variation_size = max(2, size // 6)
+    
+    # Add natural clay color variations
+    clay_variations = [
+        (x0 + size // 4, y0 + size // 3, light_clay),
+        (x0 + size // 2, y0 + size // 6, dark_clay),
+        (x0 + 2 * size // 3, y0 + size // 2, light_clay),
+        (x0 + size // 6, y0 + 2 * size // 3, dark_clay),
+        (x0 + 3 * size // 4, y0 + 4 * size // 5, light_clay)
+    ]
+    
+    for var_x, var_y, var_color in clay_variations:
+        if var_x >= x0 and var_y >= y0 and var_x < x0 + size - variation_size and var_y < y0 + size - variation_size:
+            # Create soft, organic shapes
+            draw.ellipse([var_x, var_y, var_x + variation_size, var_y + variation_size], 
+                        fill=var_color)
+    
+    # Add subtle clay texture with tiny particles
+    particle_size = max(1, size // 16)
+    clay_particles = [
+        (x0 + size // 8, y0 + size // 4),
+        (x0 + size // 3, y0 + size // 8),
+        (x0 + size // 2, y0 + size // 3),
+        (x0 + 2 * size // 3, y0 + 3 * size // 4),
+        (x0 + 3 * size // 4, y0 + size // 6),
+        (x0 + size // 6, y0 + 5 * size // 6)
+    ]
+    
+    for part_x, part_y in clay_particles:
+        if part_x >= x0 and part_y >= y0 and part_x < x0 + size - particle_size and part_y < y0 + size - particle_size:
+            # Tiny clay particles for texture
+            particle_color = dark_clay if (part_x + part_y) % 3 == 0 else light_clay
+            draw.rectangle([part_x, part_y, part_x + particle_size, part_y + particle_size], 
+                          fill=particle_color)
+
 def generate_ceramic_texture(ceramic_type: str, size: int = 32):
     """Generate ceramic texture and return PIL Image."""
     from PIL import Image, ImageDraw
@@ -273,7 +335,9 @@ def generate_ceramic_texture(ceramic_type: str, size: int = 32):
     draw = ImageDraw.Draw(image)
     
     # Generate based on ceramic type
-    if ceramic_type == 'clay_brick':
+    if ceramic_type == 'clay':
+        generate_raw_clay(draw, 0, 0, size)
+    elif ceramic_type == 'clay_brick':
         generate_clay_brick(draw, 0, 0, size)
     elif ceramic_type == 'terracotta':
         generate_terracotta(draw, 0, 0, size)
@@ -287,6 +351,8 @@ def generate_ceramic_texture(ceramic_type: str, size: int = 32):
         generate_glazed_tile_green(draw, 0, 0, size)
     elif ceramic_type == 'porcelain':
         generate_porcelain(draw, 0, 0, size)
+    elif ceramic_type == 'raw_clay':
+        generate_raw_clay(draw, 0, 0, size)
     else:
         # Default to clay brick
         generate_clay_brick(draw, 0, 0, size)

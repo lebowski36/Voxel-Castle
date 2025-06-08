@@ -329,6 +329,152 @@ def generate_shadow_glass(draw: ImageDraw.Draw, x0: int, y0: int, size: int) -> 
         elif random.random() < 0.8:
             draw.point((gx, gy), fill=palette['light'])
 
+def generate_fancy_diamond(draw: ImageDraw.Draw, x0: int, y0: int, size: int) -> None:
+    """Fancy diamond with brilliant sparkles, refractions, and prismatic effects."""
+    # Enhanced diamond color palette with more vibrant prismatic effects
+    palette = {
+        'base': (252, 252, 255, 200),        # Ultra-pure white crystal base
+        'brilliant': (255, 255, 255, 255),   # Maximum brilliant white facets
+        'edge': (230, 230, 245, 255),        # Sharp crystal edges
+        'sparkle': (255, 255, 255, 255),     # Maximum bright sparkles
+        'prism_red': (255, 180, 180, 150),   # Stronger prismatic red
+        'prism_blue': (180, 180, 255, 150),  # Stronger prismatic blue
+        'prism_green': (180, 255, 180, 130), # Stronger prismatic green
+        'prism_yellow': (255, 255, 180, 120),# Prismatic yellow
+        'prism_purple': (255, 180, 255, 120),# Prismatic purple
+        'prism_cyan': (180, 255, 255, 110),  # Prismatic cyan
+        'core': (245, 245, 252, 220),        # Brilliant diamond core
+        'reflection': (255, 255, 255, 200),  # Strong surface reflections
+        'fire': (255, 240, 240, 180)         # Diamond fire effect
+    }
+    
+    # Base crystal with minimal transparency for maximum brilliance
+    draw.rectangle([x0, y0, x0 + size - 1, y0 + size - 1], fill=palette['base'])
+    
+    # Create enhanced diamond facet structure - brilliant cut pattern
+    center_x = x0 + size // 2
+    center_y = y0 + size // 2
+    
+    # Primary crown facets (8-sided brilliant cut)
+    facet_size = max(2, size // 4)
+    crown_facets = [
+        (center_x - facet_size, center_y - facet_size),     # Top-left main
+        (center_x, center_y - facet_size - 1),              # Top main
+        (center_x + facet_size, center_y - facet_size),     # Top-right main
+        (center_x + facet_size + 1, center_y),              # Right main
+        (center_x + facet_size, center_y + facet_size),     # Bottom-right main
+        (center_x, center_y + facet_size + 1),              # Bottom main
+        (center_x - facet_size, center_y + facet_size),     # Bottom-left main
+        (center_x - facet_size - 1, center_y)               # Left main
+    ]
+    
+    # Draw brilliant crown facets with alternating brightness
+    for i, (fx, fy) in enumerate(crown_facets):
+        if fx >= x0 and fy >= y0 and fx < x0 + size - 2 and fy < y0 + size - 2:
+            facet_color = palette['brilliant'] if i % 2 == 0 else palette['core']
+            facet_width = max(1, facet_size // 2)
+            draw.rectangle([fx, fy, fx + facet_width, fy + facet_width], fill=facet_color)
+    
+    # Secondary pavilion facets (smaller internal cuts)
+    pavilion_size = max(1, size // 6)
+    pavilion_facets = [
+        (center_x - pavilion_size//2, center_y - pavilion_size//2),
+        (center_x + pavilion_size//2, center_y - pavilion_size//2),
+        (center_x + pavilion_size//2, center_y + pavilion_size//2),
+        (center_x - pavilion_size//2, center_y + pavilion_size//2),
+    ]
+    
+    for px, py in pavilion_facets:
+        if px >= x0 and py >= y0 and px < x0 + size - 1 and py < y0 + size - 1:
+            draw.rectangle([px, py, px + pavilion_size, py + pavilion_size], fill=palette['fire'])
+    
+    # Enhanced prismatic light refractions with full spectrum
+    prism_effects = [
+        (x0 + size//5, y0 + size//7, palette['prism_red']),
+        (x0 + 4*size//5, y0 + size//6, palette['prism_blue']),
+        (x0 + size//7, y0 + 4*size//5, palette['prism_green']),
+        (x0 + 6*size//7, y0 + 3*size//4, palette['prism_yellow']),
+        (x0 + size//3, y0 + size//3, palette['prism_purple']),
+        (x0 + 2*size//3, y0 + 2*size//3, palette['prism_cyan']),
+        (x0 + size//4, y0 + 3*size//4, palette['prism_red']),
+        (x0 + 3*size//4, y0 + size//4, palette['prism_blue']),
+        (x0 + size//6, y0 + size//2, palette['prism_green']),
+        (x0 + 5*size//6, y0 + size//2, palette['prism_yellow'])
+    ]
+    
+    for px, py, prism_color in prism_effects:
+        if px >= x0 and py >= y0 and px < x0 + size - 1 and py < y0 + size - 1:
+            # Enhanced prismatic spots with variable sizes
+            spot_size = max(1, size // 20)
+            draw.rectangle([px, py, px + spot_size, py + spot_size], fill=prism_color)
+    
+    # Enhanced brilliant sparkles with star pattern
+    sparkle_positions = [
+        (x0 + size//8, y0 + size//8),        # Corner sparkles
+        (x0 + 7*size//8, y0 + size//8),
+        (x0 + size//8, y0 + 7*size//8),
+        (x0 + 7*size//8, y0 + 7*size//8),
+        (x0 + size//2, y0 + size//5),        # Edge sparkles
+        (x0 + size//2, y0 + 4*size//5),
+        (x0 + size//5, y0 + size//2),
+        (x0 + 4*size//5, y0 + size//2),
+        (x0 + size//2, y0 + size//2),        # Center sparkle
+        (x0 + size//3, y0 + size//3),        # Inner sparkles
+        (x0 + 2*size//3, y0 + size//3),
+        (x0 + size//3, y0 + 2*size//3),
+        (x0 + 2*size//3, y0 + 2*size//3)
+    ]
+    
+    for sx, sy in sparkle_positions:
+        if sx >= x0 and sy >= y0 and sx < x0 + size - 1 and sy < y0 + size - 1:
+            # Central brilliant point
+            draw.point((sx, sy), fill=palette['sparkle'])
+            
+            # Create 8-pointed star sparkle pattern
+            sparkle_reach = max(1, size // 16)
+            for reach in range(1, sparkle_reach + 1):
+                # Horizontal and vertical rays
+                for dx, dy in [(reach, 0), (-reach, 0), (0, reach), (0, -reach)]:
+                    ray_x, ray_y = sx + dx, sy + dy
+                    if x0 <= ray_x < x0 + size and y0 <= ray_y < y0 + size:
+                        intensity = 255 - (reach * 40)  # Fade sparkle
+                        ray_color = (255, 255, 255, max(100, intensity))
+                        draw.point((ray_x, ray_y), fill=ray_color)
+                
+                # Diagonal rays for 8-point star
+                for dx, dy in [(reach, reach), (-reach, reach), (reach, -reach), (-reach, -reach)]:
+                    ray_x, ray_y = sx + dx, sy + dy
+                    if x0 <= ray_x < x0 + size and y0 <= ray_y < y0 + size:
+                        intensity = 255 - (reach * 60)  # Fade diagonal rays more
+                        ray_color = (255, 255, 255, max(80, intensity))
+                        draw.point((ray_x, ray_y), fill=ray_color)
+    
+    # Enhanced sharp crystal edges with multiple layers
+    edge_thickness = max(1, size // 14)
+    for layer in range(edge_thickness):
+        edge_alpha = 255 - (layer * 30)  # Fade edge layers
+        edge_color = (230, 230, 245, max(180, edge_alpha))
+        
+        # Top and bottom edges
+        draw.line([(x0 + layer, y0 + layer), (x0 + size - 1 - layer, y0 + layer)], fill=edge_color)
+        draw.line([(x0 + layer, y0 + size - 1 - layer), (x0 + size - 1 - layer, y0 + size - 1 - layer)], fill=edge_color)
+        # Left and right edges  
+        draw.line([(x0 + layer, y0 + layer), (x0 + layer, y0 + size - 1 - layer)], fill=edge_color)
+        draw.line([(x0 + size - 1 - layer, y0 + layer), (x0 + size - 1 - layer, y0 + size - 1 - layer)], fill=edge_color)
+    
+    # Add overall diamond fire effect (subtle glow)
+    fire_positions = [
+        (x0 + size//4, y0 + size//4),
+        (x0 + 3*size//4, y0 + size//4),
+        (x0 + size//4, y0 + 3*size//4),
+        (x0 + 3*size//4, y0 + 3*size//4),
+        (x0 + size//2, y0 + size//2)
+    ]
+    
+    for fx, fy in fire_positions:
+        if fx >= x0 and fy >= y0 and fx < x0 + size - 1 and fy < y0 + size - 1:
+            draw.point((fx, fy), fill=palette['fire'])
+
 # Lookup table for crystal generators
 CRYSTAL_GENERATORS = {
     150: generate_crystal_clear,    # CRYSTAL_CLEAR
@@ -341,6 +487,7 @@ CRYSTAL_GENERATORS = {
     157: generate_void_stone,       # VOID_STONE
     158: generate_celestial_marble, # CELESTIAL_MARBLE
     159: generate_shadow_glass,     # SHADOW_GLASS
+    160: generate_fancy_diamond     # FANCY_DIAMOND
 }
 
 def generate_crystal_texture(crystal_type: str, size: int = 32):
@@ -360,7 +507,7 @@ def generate_crystal_texture(crystal_type: str, size: int = 32):
         'ruby': generate_crystal_red,
         'sapphire': generate_crystal_blue,
         'emerald': generate_crystal_green,
-        'diamond': generate_crystal_clear,
+        'diamond': generate_fancy_diamond,  # Use fancy diamond with sparkles and prismatic effects
         
         # Original crystal types
         'clear': generate_crystal_clear,

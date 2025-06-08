@@ -8,20 +8,33 @@
 #include <glm/vec4.hpp>
 #include <string>
 #include <unordered_map>
+#include <vector>
+#include <memory>
 
 namespace VoxelEngine {
 namespace Rendering {
 
-// Support for 256 block types: 16x16 grid on a 256x256 atlas with 16x16 pixel tiles.
-inline constexpr float ATLAS_WIDTH_PX = 256.0f;
-inline constexpr float ATLAS_HEIGHT_PX = 256.0f;
-inline constexpr float TILE_WIDTH_PX = 16.0f;
-inline constexpr float TILE_HEIGHT_PX = 16.0f;
-inline constexpr int TILES_PER_ROW = 16;
-inline constexpr int MAX_BLOCK_TYPES = 256;
+// Metadata-driven atlas configuration (replaces hardcoded constants)
+struct AtlasMetadata {
+    int tile_size_px = 32;
+    int max_grid_size = 16;
+    int total_blocks = 256;
+};
 
-inline constexpr float TILE_UV_WIDTH = TILE_WIDTH_PX / ATLAS_WIDTH_PX;
-inline constexpr float TILE_UV_HEIGHT = TILE_HEIGHT_PX / ATLAS_HEIGHT_PX;
+struct AtlasFileInfo {
+    std::string filename;
+    int grid_width = 16;
+    int grid_height = 16;
+    int total_slots = 256;
+    int used_slots = 256;
+    float efficiency = 100.0f;
+    std::unordered_map<int, std::pair<int, int>> block_to_slot; // block_id -> (slot_x, slot_y)
+};
+
+struct AtlasTypeInfo {
+    std::vector<AtlasFileInfo> files;
+    std::vector<GLuint> texture_ids;
+};
 
 struct TextureCoordinates {
     glm::vec2 uv_min; // Bottom-left
