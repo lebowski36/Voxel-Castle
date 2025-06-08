@@ -2,7 +2,7 @@
   "generation_info": {
     "tile_size_px": 32,
     "max_grid_size": 16,
-    "total_blocks": 256
+    "total_blocks": 257
   },
   "atlases": {
     "main": {
@@ -1810,9 +1810,28 @@
               ]
             }
           }
+        },
+        {
+          "filename": "atlas_main_2.png",
+          "grid_size": [
+            1,
+            1
+          ],
+          "total_slots": 1,
+          "used_slots": 1,
+          "efficiency": 100.0,
+          "blocks": {
+            "256": {
+              "slot_index": 0,
+              "slot_coords": [
+                0,
+                0
+              ]
+            }
+          }
         }
       ],
-      "total_blocks": 256
+      "total_blocks": 257
     },
     "side": {
       "files": [

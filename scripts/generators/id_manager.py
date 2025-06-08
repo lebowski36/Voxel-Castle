@@ -408,6 +408,74 @@ class BlockIDManager:
         reserved_ids = set(self.registry.get("permanently_reserved_ids", []))
         
         return block_id not in assignments.values() and block_id not in reserved_ids
+    
+    def _write_ids_back_to_json(self, assignments: Dict[str, int]):
+        """
+        Write block IDs back to their respective JSON files.
+        
+        This ensures that JSON files contain complete block definitions
+        and serve as the single source of truth for all block data.
+        
+        Args:
+            assignments: Dictionary mapping block names to IDs
+        """
+        print("\n=== Writing IDs Back to JSON Files ===")
+        
+        # Group blocks by category
+        category_updates = {category: {} for category in self.category_order}
+        
+        # Find which category each block belongs to
+        for block_name, block_id in assignments.items():
+            found_category = None
+            for category in self.category_order:
+                blocks = self._load_category_blocks(category)
+                if block_name in blocks:
+                    found_category = category
+                    break
+            
+            if found_category:
+                category_updates[found_category][block_name] = block_id
+            else:
+                print(f"WARNING: Block '{block_name}' not found in any category file")
+        
+        # Update each category file
+        for category, blocks_to_update in category_updates.items():
+            if not blocks_to_update:
+                continue
+                
+            category_file = os.path.join(self.data_dir, f"{category}.json")
+            
+            if not os.path.exists(category_file):
+                print(f"WARNING: Category file not found: {category_file}")
+                continue
+            
+            try:
+                # Load current JSON
+                with open(category_file, 'r') as f:
+                    data = json.load(f)
+                
+                # Update block IDs
+                updated_count = 0
+                for block_name, block_id in blocks_to_update.items():
+                    if "blocks" in data and block_name in data["blocks"]:
+                        current_id = data["blocks"][block_name].get("id")
+                        if current_id != block_id:
+                            data["blocks"][block_name]["id"] = block_id
+                            updated_count += 1
+                            print(f"  {category}: {block_name} → ID {block_id}")
+                
+                # Save updated JSON if changes were made
+                if updated_count > 0:
+                    with open(category_file, 'w') as f:
+                        json.dump(data, f, indent=2, ensure_ascii=False)
+                    print(f"  Updated {updated_count} blocks in {category}.json")
+                else:
+                    print(f"  No updates needed for {category}.json")
+                    
+            except (json.JSONDecodeError, FileNotFoundError) as e:
+                print(f"ERROR: Could not update {category_file}: {e}")
+        
+        print("✅ ID write-back complete")
 
 
 def main():
@@ -434,6 +502,7 @@ def main():
     parser.add_argument("--set-fallback", nargs=2, metavar=("DEPRECATED_BLOCK", "FALLBACK_BLOCK"),
                        help="Set fallback block for a deprecated block")
     parser.add_argument("--list-deprecated", action="store_true", help="List all deprecated blocks")
+    parser.add_argument("--write-back-ids", action="store_true", help="Write explicit IDs back to all JSON files")
     
     args = parser.parse_args()
     
@@ -478,6 +547,24 @@ def main():
                 print()
         return
     
+    if args.write_back_ids:
+        print("Writing explicit IDs back to JSON files...")
+        assignments = manager.generate_all_block_ids()
+        
+        # Validate first
+        if not manager.validate_assignments(assignments):
+            print("❌ Validation failed! Not writing back IDs.")
+            sys.exit(1)
+        
+        # Save to registry first
+        manager.save_assignments(assignments)
+        
+        # Write back to JSON files
+        manager._write_ids_back_to_json(assignments)
+        print("✅ Successfully wrote IDs back to all JSON files")
+        manager.print_summary()
+        return
+    
     # Default behavior: generate all IDs
     print("Generating block IDs...")
     assignments = manager.generate_all_block_ids()
@@ -501,6 +588,7 @@ def main():
     print(f"  --summary              Show current registry status")
     print(f"  --deprecate BLOCK      Safely remove a block")
     print(f"  --list-deprecated      Show all deprecated blocks")
+    print(f"  --write-back-ids       Write explicit IDs back to all JSON files")
 
 
 if __name__ == "__main__":

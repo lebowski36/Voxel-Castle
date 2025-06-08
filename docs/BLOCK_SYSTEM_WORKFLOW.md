@@ -106,391 +106,186 @@ create_atlas_official.py # Texture atlas generation
 
 ## ID Assignment System
 
+### Explicit ID Approach (Current Implementation)
+- **All blocks have explicit `"id"` fields in their JSON definitions**
+- **Block name serves as the unique identifier and dictionary key**
+- **ID registry serves as backup/validation and migration tracking**
+- **New blocks can be added without ID initially, system auto-assigns and writes back**
+
 ### Stability Guarantee
 - **Once assigned, block IDs NEVER change**
 - **Save game compatibility is preserved forever**
-- **New blocks get the next available ID**
+- **New blocks get the next available ID automatically**
 
 ### Assignment Algorithm
 ```python
 # IDs are assigned in category order:
 CATEGORY_ORDER = ["terrain", "fluids", "processed", "functional", "advanced", "placeholder"]
 
-# Within each category, IDs are assigned by declaration order in JSON
-# This is deterministic and repeatable
+# Within each category, blocks with explicit IDs keep them
+# Blocks without IDs get auto-assigned the next available ID
+# IDs are written back to JSON files for consistency
 ```
 
 ### ID Registry Format
 ```json
 {
-  "version": "1.0",
-  "last_generated": "2025-06-08T14:58:05.399912",
+  "version": "1.1",
+  "last_generated": "2025-06-08T15:59:43.875037",
   "assignments": {
     "AIR": 0,
     "STONE": 1,
     "DIRT": 2,
     "GRASS": 3
   },
-  "next_available_id": 256,
+  "next_available_id": 257,
+  "deprecated_blocks": {},
+  "permanently_reserved_ids": [100],
   "notes": {
     "AIR": "Reserved ID 0 - special air block"
   }
 }
 ```
 
-## Face Pattern System
-
-### Pattern Types
-
-#### `uniform` - All faces identical
+### Block Definition Format
 ```json
 {
   "STONE": {
+    "id": 1,
+    "name": "Stone",
+    "description": "Basic stone block",
+    "category": "terrain",
+    "tags": ["solid", "natural"],
     "face_pattern": "uniform",
-    "type": "stone",
-    "subtype": "granite"
+    "texture_info": {
+      "generation": {
+        "type": "stone",
+        "subtype": "granite"
+      }
+    }
   }
 }
 ```
-- All 6 faces use the same texture from `atlas_main.png`
 
-#### `grass` - Top/sides/bottom different
+## Developer Workflow
+
+### Adding a New Block
+
+#### Method 1: With Explicit ID (Recommended)
 ```json
 {
-  "GRASS": {
-    "face_pattern": "grass", 
-    "type": "organic",
-    "subtype": "grass"
+  "MY_NEW_BLOCK": {
+    "id": 999,  
+    "name": "My New Block",
+    "description": "A custom block for testing",
+    "category": "terrain",
+    "tags": ["solid", "custom"],
+    "physical_properties": {
+      "solid": true,
+      "transparent": false,
+      "hardness": 5.0
+    },
+    "texture_info": {
+      "face_pattern": "uniform",
+      "generation": {
+        "type": "stone",
+        "subtype": "granite"
+      }
+    },
+    "world_generation": {
+      "natural_generation": false
+    }
   }
 }
 ```
-- Top face: grass texture from `atlas_main.png`
-- Side faces: grass side texture from `atlas_side.png`  
-- Bottom face: dirt texture from `atlas_bottom.png`
 
-#### `log` - End caps and bark
+#### Method 2: Auto-Assigned ID (For Quick Testing)
 ```json
 {
-  "OAK_WOOD": {
-    "face_pattern": "log",
-    "type": "wood", 
-    "subtype": "oak"
+  "MY_TEST_BLOCK": {
+    "name": "My Test Block",
+    "description": "Quick test block - ID will be auto-assigned",
+    "category": "terrain",
+    "texture_info": {
+      "face_pattern": "uniform",
+      "generation": {
+        "type": "stone",
+        "subtype": "granite"
+      }
+    }
   }
 }
 ```
-- Top/bottom faces: wood rings from `atlas_main.png`
-- Side faces: bark texture from `atlas_side.png`
 
-#### `functional` - Custom per block
-```json
-{
-  "CHEST": {
-    "face_pattern": "functional",
-    "type": "special",
-    "subtype": "chest"
-  }
-}
-```
-- Each face can have different textures
-- Defined per-block in C++ property tables
+#### Steps to Add a Block:
 
-## Texture Generation System
+1. **Choose appropriate category file** (terrain, fluids, processed, functional, advanced, placeholder)
 
-### Type Mapping
-Each `type` and `subtype` combination maps to a texture generator:
+2. **Add block definition** to the chosen JSON file
+   - Include explicit `"id"` field if you want a specific ID
+   - Omit `"id"` field for auto-assignment (system will write it back)
 
-```python
-# Examples:
-("stone", "granite") → stone_textures_enhanced.generate_granite()
-("wood", "oak") → wood_textures_enhanced.generate_oak()
-("metal", "iron") → metal_textures.generate_iron()
-("organic", "grass") → organic_textures.generate_grass()
-```
-
-### Adding New Texture Types
-
-1. **Add generator function** in appropriate module:
-   ```python
-   # In texture_generators/stone_textures_enhanced.py
-   def generate_new_stone_type(size=32):
-       """Generate texture for new stone type"""
-       # Your texture generation logic
-       return texture_array
+3. **Run the migration command** (if you omitted the ID):
+   ```bash
+   python scripts/generators/id_manager.py --write-back-ids
    ```
 
-2. **Update type mapping** in the generator:
-   ```python
-   STONE_GENERATORS = {
-       'granite': generate_granite,
-       'new_stone': generate_new_stone_type,  # Add this
-   }
+4. **Generate all resources**:
+   ```bash
+   python scripts/generators/generate_all.py
    ```
 
-3. **Use in block definition**:
-   ```json
-   {
-     "NEW_STONE": {
-       "type": "stone",
-       "subtype": "new_stone"
-     }
-   }
+5. **Build and test**:
+   ```bash
+   cd build && make
+   ./bin/game
    ```
 
-## Generation Process
+### Editing Existing Blocks
 
-### Step-by-Step Workflow
+1. **Never change the `"id"` field** of existing blocks
+2. **Block name is the unique identifier** - changing it requires migration
+3. **All other fields can be freely modified**
+4. **Re-run generation after changes**
 
-1. **ID Management** (`id_manager.py`)
-   - Load existing ID registry
-   - Scan all JSON block definitions
-   - Assign IDs to new blocks (existing blocks keep their IDs)
-   - Save updated registry
+### Block Removal/Deprecation
 
-2. **C++ Code Generation** (`cpp_generator.py`)
-   - Generate `VoxelType` enum with all block IDs
-   - Create property lookup tables
-   - Generate type conversion functions
-
-3. **Python Code Generation** (`python_generator.py`)
-   - Generate `BLOCK_MAPPING` dictionary
-   - Create texture coordinate mappings
-   - Generate debugging utilities
-
-4. **Texture Atlas Generation** (`create_atlas_official.py`)
-   - Generate textures for all blocks
-   - Pack into efficient atlas layouts
-   - Create coordinate metadata
-   - Export debug atlases
-
-### Running Generation
-
-#### Full Generation
+#### Safe Removal (Recommended)
 ```bash
-python scripts/generators/generate_all.py
+# Mark block as deprecated with fallback
+python scripts/generators/id_manager.py --deprecate OLD_BLOCK --reason "Replaced by improved version" --fallback NEW_BLOCK
+
+# List all deprecated blocks
+python scripts/generators/id_manager.py --list-deprecated
 ```
 
-#### Individual Steps
-```bash
-python scripts/generators/id_manager.py          # Update IDs only
-python scripts/generators/cpp_generator.py       # Generate C++ only  
-python scripts/generators/python_generator.py    # Generate Python only
-python create_atlas_official.py                  # Generate atlas only
-```
+#### Direct Removal (Not Recommended)
+- Only for test blocks that never shipped
+- Can break save games if used in production
 
-#### Registry Summary
+### Registry Management
+
+#### Check Current Status
 ```bash
 python scripts/generators/id_manager.py --summary
 ```
 
-## Integration with Build System
-
-### Current Status
-- ✅ Manual generation via script
-- ⏳ CMake integration (planned)
-- ⏳ Watch mode for development (planned)
-
-### Planned CMake Integration
-```cmake
-# Planned CMake commands
-add_custom_command(
-  OUTPUT ${GENERATED_FILES}
-  COMMAND python scripts/generators/generate_all.py
-  DEPENDS ${JSON_BLOCK_FILES}
-  COMMENT "Generating block code and resources"
-)
-```
-
-## Safety and Validation
-
-### Pre-Generation Checks
-- JSON syntax validation
-- Required field validation  
-- Type/subtype compatibility checks
-- ID conflict detection
-
-### Post-Generation Validation
-- C++ compilation testing
-- Python import testing
-- Atlas generation verification
-- Save compatibility checks
-
-### Error Recovery
-- Generation is atomic (all succeed or all fail)
-- Previous generated files preserved on failure
-- Detailed error logging and reporting
-- Rollback capabilities for failed generations
-
-## Performance Considerations
-
-### Atlas Efficiency
-- Dynamic atlas sizing based on block count
-- 99.6% atlas space utilization
-- Automatic multi-file atlases for large block sets
-
-### Generation Speed
-- Typical full generation: ~1.2 seconds
-- ID assignment: ~0.6 seconds
-- Code generation: ~0.2 seconds combined
-- Atlas generation: ~0.4 seconds
-
-### Memory Usage
-- Efficient texture generation (one at a time)
-- Minimal memory footprint during generation
-- Generated atlases optimized for GPU memory
-
-## Development Workflow
-
-### Adding Simple Blocks
-1. Edit appropriate JSON file
-2. Run `python scripts/generators/generate_all.py`
-3. Build and test
-
-### Adding Complex Blocks
-1. Define block in JSON
-2. Add texture generator function (if needed)
-3. Test texture generation: `python create_atlas_official.py`
-4. Run full generation
-5. Add C++ game logic (if needed)
-6. Build and test
-
-### Debugging Generation Issues
-
-#### JSON Validation
+#### Write Back Missing IDs
 ```bash
-python -m json.tool data/blocks/terrain.json
+python scripts/generators/id_manager.py --write-back-ids
 ```
 
-#### Individual Component Testing
-```bash
-# Test ID assignment only
-python scripts/generators/id_manager.py
+### Best Practices
 
-# Test texture generation only  
-python create_atlas_official.py
+✅ **DO:**
+- Use descriptive block names (e.g., `OAK_PLANKS`, not `WOOD1`)
+- Include explicit IDs for production blocks
+- Test texture generation before committing
+- Run full generation before building
+- Use deprecation for removing blocks
 
-# Validate C++ generation
-python scripts/generators/cpp_generator.py
-```
-
-#### Common Issues
-- **Missing texture generator**: Add generator function for new type/subtype
-- **JSON syntax error**: Use `json.tool` to validate
-- **ID conflicts**: Check for duplicate block names
-- **Build errors**: Ensure generated C++ files are included in CMake
-
-## Future Enhancements
-
-### Planned Features
-- 🔄 **Hot Reload**: Runtime block definition updates
-- 🔧 **Visual Editor**: GUI for block definition editing
-- 📊 **Analytics**: Block usage statistics and optimization
-- 🌐 **Multi-Language**: Generation for additional languages (Rust, C#)
-- 🔍 **Advanced Validation**: Semantic and gameplay validation
-
-### Extension Points
-- Plugin system for custom generators
-- Template-based generation for flexibility
-- Custom property validation rules
-- Asset pipeline integration
-
----
-
-This system provides a robust foundation for managing hundreds of block types while maintaining development velocity and save game compatibility.
-
-## Block Removal Strategy 🗑️
-
-### Current Challenge
-When blocks are removed from JSON definitions, the current system:
-- ❌ **Immediately frees the ID** for reuse
-- ❌ **Breaks save compatibility** for worlds using removed blocks
-- ❌ **No migration path** for existing content
-
-### Recommended Solution: Tombstone + Fallback System
-
-#### Phase 1: Mark for Deprecation
-```bash
-# Mark a block as deprecated (keeps ID reserved)
-python scripts/generators/id_manager.py --deprecate BLOCK_NAME --fallback FALLBACK_BLOCK
-```
-
-#### Phase 2: Update ID Registry Format
-```json
-{
-  "assignments": {
-    "AIR": 0,
-    "STONE": 1,
-    // ... active blocks only
-  },
-  "deprecated_blocks": {
-    "DEPRECATED_OLD_BLOCK": {
-      "original_id": 42,
-      "original_name": "OLD_BLOCK", 
-      "deprecated_date": "2025-06-08T15:20:00Z",
-      "fallback_block": "STONE",
-      "removal_reason": "Superseded by improved block system"
-    }
-  },
-  "permanently_reserved_ids": [42, 67, 89],
-  "block_migrations": {
-    "OLD_BLOCK": "STONE",  // For save game loading
-    "LEGACY_WOOD": "OAK_WOOD"
-  }
-}
-```
-
-#### Phase 3: Engine Integration
-```cpp
-// In C++ game engine
-VoxelType loadBlockFromSave(int blockId) {
-    // Check if this is a deprecated block
-    if (isDeprecatedBlock(blockId)) {
-        VoxelType fallback = getFallbackBlock(blockId);
-        logBlockMigration(blockId, fallback);
-        return fallback;
-    }
-    return static_cast<VoxelType>(blockId);
-}
-```
-
-### Block Removal Workflow
-
-#### Step 1: Safe Deprecation
-```bash
-# Instead of directly removing from JSON:
-python scripts/generators/id_manager.py --deprecate TEST_BLOCK --fallback STONE
-```
-
-#### Step 2: Update Documentation
-- Add removal reason to changelog
-- Document migration path for modders
-- Update block reference documentation
-
-#### Step 3: Engine Compatibility
-- Implement fallback loading in save system
-- Add migration warnings to console
-- Test save game compatibility
-
-#### Step 4: Cleanup (Optional, After Grace Period)
-- Move deprecated blocks to archive
-- Keep ID permanently reserved
-- Maintain migration mappings
-
-### Benefits of This Approach
-
-✅ **Save Compatibility**: Old worlds continue to work
-✅ **ID Stability**: IDs never get reused inappropriately  
-✅ **Clear Migration**: Automatic fallback to replacement blocks
-✅ **Developer Friendly**: Clear deprecation workflow
-✅ **Debuggable**: Full audit trail of block changes
-✅ **Reversible**: Can un-deprecate if needed
-
-### Future Enhancements
-
-- **Batch deprecation** for major block system overhauls
-- **Version-based migrations** for gradual block evolution  
-- **Automatic save game upgrading** tools
-- **Block usage analytics** to identify safe removal candidates
-
----
-
-**Key Principle**: Never break existing save games. Always provide a migration path.
+❌ **DON'T:**
+- Change existing block IDs
+- Remove blocks without deprecation
+- Use auto-assigned IDs for production content
+- Forget to run generation after JSON changes

@@ -167,6 +167,7 @@ Voxel Fortress uses a **unified, metadata-driven block system** that automatical
    ```json
    {
      "NEW_BLOCK_NAME": {
+       "id": 999,                     // Explicit ID (recommended for production blocks)
        "name": "Display Name",
        "category": "terrain",
        "type": "stone",
@@ -180,14 +181,31 @@ Voxel Fortress uses a **unified, metadata-driven block system** that automatical
      }
    }
    ```
+   
+   **For quick testing**, you can omit the `"id"` field and it will be auto-assigned:
+   ```json
+   {
+     "TEST_BLOCK": {
+       "name": "Test Block",
+       "category": "terrain",
+       "type": "stone",
+       "subtype": "granite"
+     }
+   }
+   ```
 
-3. **Generate all code and resources**:
+3. **Write back auto-assigned IDs** (if you omitted the `"id"` field):
+   ```bash
+   python scripts/generators/id_manager.py --write-back-ids
+   ```
+
+4. **Generate all code and resources**:
    ```bash
    # This single command updates everything:
    python scripts/generators/generate_all.py
    ```
 
-4. **Build and test**:
+5. **Build and test**:
    ```bash
    cd build && make && cd .. && ./build/bin/VoxelFortressGame
    ```
@@ -195,7 +213,8 @@ Voxel Fortress uses a **unified, metadata-driven block system** that automatical
 ### What Gets Generated Automatically
 
 The generation system creates:
-- ✅ **Stable Block IDs** - Auto-assigned, never change (save compatibility)
+- ✅ **Explicit Block IDs** - All blocks have IDs in JSON (block name is unique identifier)
+- ✅ **Stable ID Registry** - Auto-assigned IDs never change (save compatibility)
 - ✅ **C++ Enums** - `VoxelType::NEW_BLOCK_NAME` in generated headers
 - ✅ **Python Mappings** - Updated `BLOCK_MAPPING` for texture generation
 - ✅ **Texture Atlas** - Automatically regenerated with new textures
@@ -237,10 +256,11 @@ Different blocks have different face requirements:
 
 ### Safety Features
 
-- 🔒 **Save Compatibility** - Block IDs never change once assigned
+- 🔒 **Save Compatibility** - Block IDs never change once assigned and written to JSON
 - 🔍 **Validation** - All JSON validated before code generation
 - 🔄 **Atomic Updates** - Generation either succeeds completely or fails safely
 - 📝 **Logging** - Full generation logs for debugging
+- 🆔 **Explicit IDs** - All blocks have visible IDs in JSON for transparency
 
 ### Troubleshooting
 
@@ -250,7 +270,8 @@ Different blocks have different face requirements:
 python -m json.tool data/blocks/terrain.json
 
 # Run individual steps
-python scripts/generators/id_manager.py
+python scripts/generators/id_manager.py --summary
+python scripts/generators/id_manager.py --write-back-ids
 python scripts/generators/cpp_generator.py
 python scripts/generators/python_generator.py
 python create_atlas_official.py

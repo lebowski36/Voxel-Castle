@@ -1791,13 +1791,18 @@
         "face_pattern": "UNIFORM",
         "generation": {
           "type": "solid_color",
-          "color": [128, 255, 128]
+          "color": [
+            128,
+            255,
+            128
+          ]
         }
       },
       "world_generation": {
         "natural_generation": false
       },
-      "face_pattern": "UNIFORM"
+      "face_pattern": "UNIFORM",
+      "id": 256
     }
   }
 }
