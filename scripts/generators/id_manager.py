@@ -193,6 +193,11 @@ class BlockIDManager:
         if high_ids:
             print(f"WARNING: Unusually high IDs found: {high_ids}")
         
+        # Check if we have any assignments at all
+        if not assignments:
+            print(f"❌ Validation failed: No blocks found in any category!")
+            return False
+        
         # Check AIR block has ID 0 (special requirement)
         if "AIR" in assignments and assignments["AIR"] != 0:
             print(f"ERROR: AIR block must have ID 0, but has ID {assignments['AIR']}")
@@ -269,8 +274,16 @@ def main():
     """Test the ID manager with current JSON data."""
     import sys
     
-    # Initialize manager
-    manager = BlockIDManager()
+    # Get project root (assume script is in scripts/generators/)
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    project_root = os.path.dirname(os.path.dirname(script_dir))
+    
+    # Use absolute paths
+    data_dir = os.path.join(project_root, "data", "blocks")
+    registry_path = os.path.join(project_root, "data", "id_registry.json")
+    
+    # Initialize manager with absolute paths
+    manager = BlockIDManager(data_dir=data_dir, registry_path=registry_path)
     
     if len(sys.argv) > 1 and sys.argv[1] == "--summary":
         # Just print current registry summary
