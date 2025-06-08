@@ -75,6 +75,15 @@ public:
      */
     void SetCompletionCallback(std::function<void(std::shared_ptr<VoxelCastle::World::SeedWorldGenerator>)> callback);
 
+    /**
+     * @brief Handle input events for the world generation UI
+     * @param mouseX Mouse X coordinate
+     * @param mouseY Mouse Y coordinate
+     * @param clicked Whether mouse was clicked
+     * @return true if input was handled
+     */
+    bool handleInput(float mouseX, float mouseY, bool clicked) override;
+
 private:
     // Generation state
     bool isGenerating_ = false;
@@ -101,6 +110,9 @@ private:
     // UI event handlers
     void OnStartClicked();
     void OnCancelClicked();
+    
+    // Helper methods
+    void removeAllChildren();
 };
 
 } // namespace VoxelCastle::UI

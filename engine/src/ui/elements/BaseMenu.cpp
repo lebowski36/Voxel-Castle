@@ -40,28 +40,67 @@ bool BaseMenu::handleInput(float mouseX, float mouseY, bool clicked) {
 }
 
 void BaseMenu::render() {
+    // Only render if the menu is visible
+    if (!isVisible() || !renderer_) {
+        return;
+    }
+
     // First render the main panel background
-    if (renderer_ && isVisible()) {
-        glm::vec2 pos = getAbsolutePosition();
-        renderer_->renderColoredQuad(pos.x, pos.y, size_.x, size_.y, color_);
+    glm::vec2 pos = getAbsolutePosition();
+
+    // Check for OpenGL errors before drawing - limit logging to avoid spam
+    static int errorCount = 0;
+    GLenum err = glGetError();
+    if (err != GL_NO_ERROR) {
+        if (errorCount++ < 5) { // Show first 5 errors instead of every 100th
+            std::cerr << "[BaseMenu] OpenGL error before rendering quad: 0x" << std::hex << err << std::dec 
+                      << " (error #" << errorCount << ")" << std::endl;
+        }
+        // Clear any further errors
+        while (glGetError() != GL_NO_ERROR) {}
     }
-    
-    // Render the title text directly on the menu background (centered properly)
-    if (!title_.empty() && renderer_) {
-        glm::vec2 pos = getAbsolutePosition();
+
+    // Draw main background
+    renderer_->renderColoredQuad(pos.x, pos.y, size_.x, size_.y, color_);
+
+    // Create title bar if there is a title
+    if (!title_.empty()) {
+        // Draw title background
+        glm::vec4 titleBgColor = {0.1f, 0.1f, 0.2f, 1.0f}; // Slightly lighter than menu background
+        renderer_->renderColoredQuad(pos.x, pos.y, size_.x, TITLE_HEIGHT, titleBgColor);
         
-        // Calculate title text centering using actual text measurements
-        float titleScale = 1.5f;
-        float actualTitleWidth = renderer_->getTextWidth(title_, titleScale);
-        float titleX = pos.x + (getSize().x - actualTitleWidth) / 2.0f; // Center horizontally
-        float titleY = pos.y + TITLE_HEIGHT / 2.0f + 12.0f; // Center in title area
-        
-        renderer_->drawText(title_, titleX, titleY, titleScale, glm::vec3(1.0f, 1.0f, 1.0f));
+        // Draw title text if text renderer is available
+        if (renderer_->isTextRendererAvailable()) {
+            // Calculate title text centering using actual text measurements
+            float titleScale = 1.5f;
+            float actualTitleWidth = renderer_->getTextWidth(title_, titleScale);
+            float titleX = pos.x + (getSize().x - actualTitleWidth) / 2.0f; // Center horizontally
+            float titleY = pos.y + TITLE_HEIGHT / 2.0f + 12.0f; // Center in title area
+            
+            renderer_->drawText(title_, titleX, titleY, titleScale, glm::vec3(1.0f, 1.0f, 1.0f));
+        }
     }
-    
+
     // Render all children (buttons, etc.)
+    // Debug child count once per 100 frames
+    static int frameCounter = 0;
+    if (frameCounter++ % 100 == 0 && !children_.empty()) {
+        std::cout << "[BaseMenu] Rendering " << children_.size() << " children for menu: " << title_ << std::endl;
+    }
+    
     for (auto& child : children_) {
         if (child && child->isVisible()) {
+            // Force children to be visible and update their absolute positions before rendering
+            child->setVisible(true);
+            
+            // Debug child rendering for WorldGenerationUI
+            if (title_ == "World Generation" && frameCounter % 100 == 1) {
+                auto childPos = child->getAbsolutePosition();
+                auto childSize = child->getSize();
+                std::cout << "[BaseMenu] Rendering child at pos: (" << childPos.x << ", " << childPos.y 
+                          << ") size: (" << childSize.x << ", " << childSize.y << ")" << std::endl;
+            }
+            
             child->render();
         }
     }

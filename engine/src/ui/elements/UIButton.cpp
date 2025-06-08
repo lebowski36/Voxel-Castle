@@ -50,6 +50,16 @@ void UIButton::render() {
         return;
     }
 
+    // Debug output for WorldGenerationUI buttons
+    static int debugCounter = 0;
+    if (text_.find("Start World") != std::string::npos || text_.find("Back to Main") != std::string::npos) {
+        if (debugCounter++ % 100 == 0) {
+            glm::vec2 pos = getAbsolutePosition();
+            std::cout << "[UIButton] Rendering button '" << text_ << "' at (" << pos.x << ", " << pos.y 
+                      << ") size: (" << size_.x << ", " << size_.y << ")" << std::endl;
+        }
+    }
+
     glm::vec2 pos = getAbsolutePosition();
     glm::vec4 bgColor = isPressed_ ? clickColor_ : (isHovered_ ? hoverColor_ : backgroundColor_);
 

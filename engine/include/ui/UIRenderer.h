@@ -50,6 +50,9 @@ public:
     int getScreenWidth() const { return screenWidth_; }
     int getScreenHeight() const { return screenHeight_; }
 
+    // Check if text renderer is available
+    bool isTextRendererAvailable() const { return textRenderer_ != nullptr; }
+
 private:
     GLuint shaderProgram_;
     GLuint vao_;

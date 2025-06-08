@@ -249,6 +249,9 @@ void UIRenderer::renderColoredQuad(float x, float y, float width, float height, 
 }
 
 void UIRenderer::renderQuad(float x, float y, float width, float height, const glm::vec4& color) {
+    // Clear any previous OpenGL errors before we start
+    while (glGetError() != GL_NO_ERROR) {}
+    
     // CRITICAL FIX: Ensure VAO is bound before rendering
     if (vao_ == 0) {
         std::cerr << "[UIRenderer] ERROR: VAO is 0, cannot render quad!" << std::endl;
@@ -257,6 +260,10 @@ void UIRenderer::renderQuad(float x, float y, float width, float height, const g
     
     // Bind VAO to ensure geometry is available
     glBindVertexArray(vao_);
+    GLenum err = glGetError();
+    if (err != GL_NO_ERROR) {
+        std::cerr << "[UIRenderer] ERROR after glBindVertexArray: 0x" << std::hex << err << std::dec << std::endl;
+    }
     
     // Ensure shader program is active
     if (shaderProgram_ == 0) {
@@ -265,19 +272,27 @@ void UIRenderer::renderQuad(float x, float y, float width, float height, const g
     }
     
     glUseProgram(shaderProgram_);
+    err = glGetError();
+    if (err != GL_NO_ERROR) {
+        std::cerr << "[UIRenderer] ERROR after glUseProgram: 0x" << std::hex << err << std::dec << std::endl;
+    }
     
     // Create model matrix for positioning and scaling
     glm::mat4 model = glm::mat4(1.0f);
     model = glm::translate(model, glm::vec3(x, y, 0.0f));
     model = glm::scale(model, glm::vec3(width, height, 1.0f));
     
-    // Set uniforms
+    // Set uniforms with error checking
     GLint modelLoc = glGetUniformLocation(shaderProgram_, "model");
     if (modelLoc == -1) {
         std::cerr << "[UIRenderer] ERROR: 'model' uniform not found in shader!" << std::endl;
         return;
     }
     glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
+    err = glGetError();
+    if (err != GL_NO_ERROR) {
+        std::cerr << "[UIRenderer] ERROR after setting model uniform: 0x" << std::hex << err << std::dec << std::endl;
+    }
     
     GLint colorLoc = glGetUniformLocation(shaderProgram_, "uColor");
     if (colorLoc == -1) {
@@ -285,6 +300,10 @@ void UIRenderer::renderQuad(float x, float y, float width, float height, const g
         return;
     }
     glUniform4fv(colorLoc, 1, glm::value_ptr(color));
+    err = glGetError();
+    if (err != GL_NO_ERROR) {
+        std::cerr << "[UIRenderer] ERROR after setting color uniform: 0x" << std::hex << err << std::dec << std::endl;
+    }
     
     GLint useTextureLoc = glGetUniformLocation(shaderProgram_, "uUseTexture");
     if (useTextureLoc == -1) {
@@ -292,11 +311,9 @@ void UIRenderer::renderQuad(float x, float y, float width, float height, const g
         return;
     }
     glUniform1i(useTextureLoc, 0); // Don't use texture, just color
-    
-    // Check for OpenGL errors before drawing
-    GLenum err = glGetError();
+    err = glGetError();
     if (err != GL_NO_ERROR) {
-        std::cerr << "[UIRenderer] OpenGL error before drawing quad: 0x" << std::hex << err << std::dec << std::endl;
+        std::cerr << "[UIRenderer] ERROR after setting useTexture uniform: 0x" << std::hex << err << std::dec << std::endl;
     }
     
     // Draw

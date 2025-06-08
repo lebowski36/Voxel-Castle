@@ -114,15 +114,22 @@ void MenuSystem::update(float deltaTime) {
 }
 
 void MenuSystem::render() {
-    std::cout << "[MenuSystem] render() called, menuState: " << static_cast<int>(menuState_) << std::endl;
+    // Only log once every 100 frames to reduce spam
+    static int frameCounter = 0;
+    if (frameCounter++ % 100 == 0) {
+        std::cout << "[MenuSystem] render() call " << frameCounter << ", menuState: " << static_cast<int>(menuState_) << std::endl;
+    }
     
     if (menuState_ == MenuState::WORLD_GENERATION && worldGenerationUI_) {
-        std::cout << "[MenuSystem] Rendering WorldGenerationUI" << std::endl;
+        // Only log occasionally
+        if (frameCounter % 100 == 0) {
+            std::cout << "[MenuSystem] Rendering WorldGenerationUI" << std::endl;
+        }
+        
         // Render world generation UI directly (it uses its own rendering)
         worldGenerationUI_->render();
         // Generation completion is handled via the completion callback
     } else {
-        std::cout << "[MenuSystem] Rendering normal UI system" << std::endl;
         // Render normal UI system (menus)
         UISystem::render();
     }
