@@ -71,33 +71,51 @@ public:
     // Face-based atlas selection
     AtlasType getAtlasForFace(VoxelEngine::World::VoxelType type, VoxelEngine::World::Face face) const;
     
-    // Multi-atlas texture ID management
+    // Metadata-driven atlas loading
+    bool loadFromMetadata(const std::string& metadataPath = "assets/textures/atlas_metadata.json");
+    
+    // Legacy compatibility methods (deprecated but maintained)
     bool loadTexture(const std::string& texturePath); // Loads main atlas (backward compatibility)
     bool loadMultiAtlas(const std::string& mainPath, const std::string& sidePath, const std::string& bottomPath);
-    GLuint getTextureID() const { return m_texture_ids[0]; } // Main atlas (backward compatibility)
-    GLuint getTextureID(AtlasType atlasType) const { return m_texture_ids[static_cast<int>(atlasType)]; }
-    void setTextureID(GLuint id) { m_texture_ids[0] = id; } // Main atlas (backward compatibility)
-    void setTextureID(AtlasType atlasType, GLuint id) { m_texture_ids[static_cast<int>(atlasType)] = id; }
-    bool isTextureLoaded() const { return m_texture_ids[0] != 0; } // Main atlas (backward compatibility)
-    bool isTextureLoaded(AtlasType atlasType) const { return m_texture_ids[static_cast<int>(atlasType)] != 0; }
+    GLuint getTextureID() const; // Main atlas (backward compatibility)
+    GLuint getTextureID(AtlasType atlasType) const;
+    void setTextureID(GLuint id); // Main atlas (backward compatibility)
+    void setTextureID(AtlasType atlasType, GLuint id);
+    bool isTextureLoaded() const; // Main atlas (backward compatibility)
+    bool isTextureLoaded(AtlasType atlasType) const;
     void releaseTexture(); // Clean up GPU resources
     
     // Atlas management
     void rebuildTextureMapping(); // Rebuild mapping for all 256 block types
     bool hasTexture(VoxelEngine::World::VoxelType type) const;
+    
+    // Metadata access
+    const AtlasMetadata& getMetadata() const { return metadata_; }
+    const AtlasTypeInfo& getAtlasInfo(AtlasType atlasType) const;
 
 private:
     std::unordered_map<VoxelEngine::World::VoxelType, TextureCoordinates> m_voxel_texture_coords;
-    GLuint m_texture_ids[3] = {0, 0, 0}; // [MAIN, SIDE, BOTTOM] atlas texture IDs
+    
+    // Metadata-driven atlas system
+    AtlasMetadata metadata_;
+    AtlasTypeInfo atlas_info_[3]; // [MAIN, SIDE, BOTTOM]
+    
+    // Legacy support
+    GLuint m_texture_ids[3] = {0, 0, 0}; // [MAIN, SIDE, BOTTOM] atlas texture IDs (deprecated)
+    
+    // Metadata loading and parsing
+    bool parseMetadataFile(const std::string& metadataPath);
+    bool loadAtlasFiles();
     
     void initializeAllBlockTextures(); // Initialize UV coordinates for all 256 blocks
     TextureCoordinates calculateTextureCoordinates(uint8_t block_id) const;
+    TextureCoordinates calculateMetadataBasedCoordinates(VoxelEngine::World::VoxelType type, AtlasType atlasType) const;
     
     // Helper functions for multi-atlas support
     bool loadSingleTexture(const std::string& texturePath, AtlasType atlasType);
     std::string getAtlasTypeName(AtlasType atlasType) const;
     
-    // Atlas-specific coordinate calculation helpers
+    // Atlas-specific coordinate calculation helpers (legacy)
     TextureCoordinates calculateSideAtlasCoordinates(VoxelEngine::World::VoxelType type) const;
     TextureCoordinates calculateBottomAtlasCoordinates(VoxelEngine::World::VoxelType type) const;
 };

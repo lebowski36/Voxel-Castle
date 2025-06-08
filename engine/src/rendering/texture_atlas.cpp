@@ -3,9 +3,14 @@
 #include "world/voxel_face_patterns.h"
 #include <filesystem>
 #include <iostream>
+#include <algorithm>
 
 // Include STB Image library for texture loading
 #include "../../external/stb_image.h"
+
+// Add JSON parsing support
+#include <fstream>
+#include <sstream>
 
 namespace VoxelEngine {
 namespace Rendering {
@@ -19,12 +24,17 @@ TextureAtlas::TextureAtlas() {
         m_texture_ids[i] = 0;
     }
     
-    initializeAllBlockTextures();
-    
-    // Automatically load the multi-atlas system using the new atlas files
-    loadMultiAtlas("assets/textures/atlas_main.png", 
-                   "assets/textures/atlas_side.png", 
-                   "assets/textures/atlas_bottom.png");
+    // Try to load from metadata first, fallback to legacy system if needed
+    if (!loadFromMetadata()) {
+        std::cout << "[TextureAtlas] Metadata loading failed, falling back to legacy system" << std::endl;
+        
+        initializeAllBlockTextures();
+        
+        // Fallback to hardcoded atlas loading  
+        loadMultiAtlas("assets/textures/atlas_main.png", 
+                       "assets/textures/atlas_side.png", 
+                       "assets/textures/atlas_bottom.png");
+    }
 }
 
 void TextureAtlas::initializeAllBlockTextures() {
@@ -333,6 +343,224 @@ AtlasType TextureAtlas::getAtlasForFace(VoxelEngine::World::VoxelType type, Voxe
     
     // Default fallback
     return AtlasType::MAIN;
+}
+
+// Simple JSON parsing for atlas metadata (using manual parsing for now)
+bool TextureAtlas::loadFromMetadata(const std::string& metadataPath) {
+    std::string resolvedPath;
+    if (std::filesystem::path(metadataPath).is_absolute()) {
+        resolvedPath = metadataPath;
+    } else {
+        resolvedPath = BASE_DIRECTORY + metadataPath;
+    }
+    
+    DEBUG_LOG("TextureAtlas", "Loading atlas metadata from: " + resolvedPath);
+    
+    if (!parseMetadataFile(resolvedPath)) {
+        std::cerr << "[TextureAtlas] Failed to parse metadata file: " << resolvedPath << std::endl;
+        return false;
+    }
+    
+    if (!loadAtlasFiles()) {
+        std::cerr << "[TextureAtlas] Failed to load atlas files from metadata" << std::endl;
+        return false;
+    }
+    
+    // Build texture coordinate mappings from metadata
+    initializeAllBlockTextures();
+    
+    std::cout << "[TextureAtlas] Successfully loaded metadata-driven atlas system" << std::endl;
+    std::cout << "[TextureAtlas] Tile size: " << metadata_.tile_size_px << "px" << std::endl;
+    std::cout << "[TextureAtlas] Total blocks: " << metadata_.total_blocks << std::endl;
+    
+    return true;
+}
+
+bool TextureAtlas::parseMetadataFile(const std::string& metadataPath) {
+    // For now, use the hardcoded values from the metadata we know exists
+    // TODO: Implement proper JSON parsing (could use nlohmann/json or manual parsing)
+    
+    // Read the metadata file to extract key information
+    std::ifstream file(metadataPath);
+    if (!file.is_open()) {
+        return false;
+    }
+    
+    std::string content((std::istreambuf_iterator<char>(file)),
+                        std::istreambuf_iterator<char>());
+    file.close();
+    
+    // Basic parsing to extract tile_size_px (look for "tile_size_px": 32)
+    size_t tile_size_pos = content.find("\"tile_size_px\":");
+    if (tile_size_pos != std::string::npos) {
+        size_t start = content.find_first_of("0123456789", tile_size_pos);
+        size_t end = content.find_first_not_of("0123456789", start);
+        if (start != std::string::npos && end != std::string::npos) {
+            metadata_.tile_size_px = std::stoi(content.substr(start, end - start));
+        }
+    }
+    
+    // Extract file information for each atlas type
+    const char* atlas_types[] = {"main", "side", "bottom"};
+    
+    for (int type_idx = 0; type_idx < 3; ++type_idx) {
+        AtlasType atlasType = static_cast<AtlasType>(type_idx);
+        AtlasTypeInfo& info = atlas_info_[type_idx];
+        
+        // Find the atlas type section
+        std::string search_str = "\"" + std::string(atlas_types[type_idx]) + "\":";
+        size_t atlas_section = content.find(search_str);
+        if (atlas_section == std::string::npos) continue;
+        
+        // Look for filename in this section
+        size_t filename_pos = content.find("\"filename\":", atlas_section);
+        if (filename_pos != std::string::npos) {
+            size_t quote_start = content.find("\"", filename_pos + 11);
+            size_t quote_end = content.find("\"", quote_start + 1);
+            if (quote_start != std::string::npos && quote_end != std::string::npos) {
+                AtlasFileInfo fileInfo;
+                fileInfo.filename = content.substr(quote_start + 1, quote_end - quote_start - 1);
+                
+                // Extract grid size
+                size_t grid_size_pos = content.find("\"grid_size\":", filename_pos);
+                if (grid_size_pos != std::string::npos && grid_size_pos < content.find("}", atlas_section)) {
+                    // Look for [width, height] pattern
+                    size_t bracket_start = content.find("[", grid_size_pos);
+                    size_t comma_pos = content.find(",", bracket_start);
+                    size_t bracket_end = content.find("]", comma_pos);
+                    
+                    if (bracket_start != std::string::npos && comma_pos != std::string::npos && bracket_end != std::string::npos) {
+                        std::string width_str = content.substr(bracket_start + 1, comma_pos - bracket_start - 1);
+                        std::string height_str = content.substr(comma_pos + 1, bracket_end - comma_pos - 1);
+                        
+                        // Remove whitespace
+                        width_str.erase(std::remove_if(width_str.begin(), width_str.end(), ::isspace), width_str.end());
+                        height_str.erase(std::remove_if(height_str.begin(), height_str.end(), ::isspace), height_str.end());
+                        
+                        fileInfo.grid_width = std::stoi(width_str);
+                        fileInfo.grid_height = std::stoi(height_str);
+                    }
+                }
+                
+                info.files.push_back(fileInfo);
+            }
+        }
+    }
+    
+    DEBUG_LOG("TextureAtlas", "Parsed metadata - tile size: " + std::to_string(metadata_.tile_size_px) + "px");
+    
+    return true;
+}
+
+bool TextureAtlas::loadAtlasFiles() {
+    bool success = true;
+    
+    for (int type_idx = 0; type_idx < 3; ++type_idx) {
+        AtlasType atlasType = static_cast<AtlasType>(type_idx);
+        AtlasTypeInfo& info = atlas_info_[type_idx];
+        
+        // Load all files for this atlas type
+        for (const auto& fileInfo : info.files) {
+            std::string atlasPath = "assets/textures/" + fileInfo.filename;
+            
+            GLuint textureId = 0;
+            if (loadSingleTexture(atlasPath, atlasType)) {
+                textureId = m_texture_ids[type_idx]; // Get the loaded texture ID
+                info.texture_ids.push_back(textureId);
+                
+                DEBUG_LOG("TextureAtlas", "Loaded " + getAtlasTypeName(atlasType) + " atlas: " + fileInfo.filename + 
+                         " (grid: " + std::to_string(fileInfo.grid_width) + "x" + std::to_string(fileInfo.grid_height) + ")");
+            } else {
+                success = false;
+                std::cerr << "[TextureAtlas] Failed to load atlas file: " << atlasPath << std::endl;
+            }
+        }
+    }
+    
+    return success;
+}
+
+TextureCoordinates TextureAtlas::calculateMetadataBasedCoordinates(VoxelEngine::World::VoxelType type, AtlasType atlasType) const {
+    int type_idx = static_cast<int>(atlasType);
+    const AtlasTypeInfo& info = atlas_info_[type_idx];
+    
+    if (info.files.empty()) {
+        // Fallback to legacy calculation
+        return calculateTextureCoordinates(static_cast<uint8_t>(type));
+    }
+    
+    // For now, use the first (and typically only) file
+    const AtlasFileInfo& fileInfo = info.files[0];
+    
+    // Calculate tile position using metadata-driven grid size
+    int block_id = static_cast<int>(type);
+    int tile_idx_x = block_id % fileInfo.grid_width;
+    int tile_idx_y = block_id / fileInfo.grid_width;
+    
+    // Calculate UV coordinates using actual tile size from metadata
+    float tile_uv_width = static_cast<float>(metadata_.tile_size_px) / 
+                         (fileInfo.grid_width * metadata_.tile_size_px);
+    float tile_uv_height = static_cast<float>(metadata_.tile_size_px) / 
+                          (fileInfo.grid_height * metadata_.tile_size_px);
+    
+    float u_min = static_cast<float>(tile_idx_x) * tile_uv_width;
+    float u_max = static_cast<float>(tile_idx_x + 1) * tile_uv_width;
+    
+    // Convert from image space (top-down) to OpenGL UV space (bottom-up)
+    float v_gl_min = 1.0f - (static_cast<float>(tile_idx_y + 1) * tile_uv_height);
+    float v_gl_max = 1.0f - (static_cast<float>(tile_idx_y) * tile_uv_height);
+    
+    TextureCoordinates coords;
+    coords.uv_min = glm::vec2(u_min, v_gl_min);
+    coords.uv_max = glm::vec2(u_max, v_gl_max);
+    
+    return coords;
+}
+
+// Implement backward compatibility methods using metadata when available
+GLuint TextureAtlas::getTextureID() const {
+    return getTextureID(AtlasType::MAIN);
+}
+
+GLuint TextureAtlas::getTextureID(AtlasType atlasType) const {
+    int type_idx = static_cast<int>(atlasType);
+    const AtlasTypeInfo& info = atlas_info_[type_idx];
+    
+    if (!info.texture_ids.empty()) {
+        return info.texture_ids[0]; // Return first texture ID for this type
+    }
+    
+    // Fallback to legacy array
+    return m_texture_ids[type_idx];
+}
+
+void TextureAtlas::setTextureID(GLuint id) {
+    setTextureID(AtlasType::MAIN, id);
+}
+
+void TextureAtlas::setTextureID(AtlasType atlasType, GLuint id) {
+    int type_idx = static_cast<int>(atlasType);
+    m_texture_ids[type_idx] = id;
+    
+    // Also update metadata structure if it exists
+    AtlasTypeInfo& info = atlas_info_[type_idx];
+    if (info.texture_ids.empty()) {
+        info.texture_ids.push_back(id);
+    } else {
+        info.texture_ids[0] = id;
+    }
+}
+
+bool TextureAtlas::isTextureLoaded() const {
+    return isTextureLoaded(AtlasType::MAIN);
+}
+
+bool TextureAtlas::isTextureLoaded(AtlasType atlasType) const {
+    return getTextureID(atlasType) != 0;
+}
+
+const AtlasTypeInfo& TextureAtlas::getAtlasInfo(AtlasType atlasType) const {
+    return atlas_info_[static_cast<int>(atlasType)];
 }
 
 } // namespace Rendering
