@@ -283,6 +283,46 @@ def generate_stone_texture(texture_size: int = 16, stone_type: str = 'granite') 
         }
         draw_speckled_pattern(draw, 0, 0, texture_size, palette_bedrock, density=15, variation=10)
         
+    # Handle brick/processed variants by delegating to base type
+    elif stone_type.endswith('_brick'):
+        base_type = stone_type.replace('_brick', '')
+        return generate_stone_texture(texture_size, base_type)
+        
+    elif stone_type.endswith('_tile'):
+        base_type = stone_type.replace('_tile', '')
+        return generate_stone_texture(texture_size, base_type)
+        
+    elif stone_type.startswith('polished_'):
+        base_type = stone_type.replace('polished_', '')
+        return generate_stone_texture(texture_size, base_type)
+        
+    elif stone_type == 'cobblestone':
+        # Use stone base but with more variation
+        palette_cobble = {
+            'base': (120, 120, 120, 255),
+            'dark_speckle': (80, 80, 80, 255),
+            'light_speckle': (160, 160, 160, 255)
+        }
+        draw_speckled_pattern(draw, 0, 0, texture_size, palette_cobble, density=4, variation=30)
+        
+    elif stone_type == 'smooth_stone':
+        # Smoother version of basic stone
+        palette_smooth = {
+            'base': (140, 140, 140, 255),
+            'dark_speckle': (120, 120, 120, 255),
+            'light_speckle': (160, 160, 160, 255)
+        }
+        draw_speckled_pattern(draw, 0, 0, texture_size, palette_smooth, density=12, variation=15)
+        
+    elif stone_type == 'flagstone':
+        # Large flat stones
+        palette_flag = {
+            'base': (130, 130, 125, 255),
+            'dark_speckle': (100, 100, 95, 255),
+            'light_speckle': (160, 160, 155, 255)
+        }
+        draw_speckled_pattern(draw, 0, 0, texture_size, palette_flag, density=8, variation=25)
+        
     else:
         # Default basic stone texture
         draw_speckled_pattern(draw, 0, 0, texture_size, palette, density=8, variation=20)

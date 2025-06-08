@@ -77,7 +77,7 @@
       },
       "face_pattern": "UNIFORM"
     },
-    "BLOCK_62": {
+    "MARBLE_TILE": {
       "id": 62,
       "name": "Marble Tile",
       "description": "Polished marble tiles for elegant construction",
@@ -112,7 +112,7 @@
       },
       "face_pattern": "UNIFORM"
     },
-    "BLOCK_63": {
+    "SANDSTONE_BRICK": {
       "id": 63,
       "name": "Sandstone Brick",
       "description": "Crafted sandstone brick for warm-toned construction",
@@ -147,7 +147,7 @@
       },
       "face_pattern": "UNIFORM"
     },
-    "BLOCK_64": {
+    "SLATE_TILE": {
       "id": 64,
       "name": "Slate Tile",
       "description": "Dark slate tiles for sophisticated construction",
@@ -182,7 +182,7 @@
       },
       "face_pattern": "UNIFORM"
     },
-    "BLOCK_65": {
+    "COBBLESTONE": {
       "id": 65,
       "name": "Cobblestone",
       "description": "Rough cobblestone for rustic construction",
@@ -217,7 +217,7 @@
       },
       "face_pattern": "UNIFORM"
     },
-    "BLOCK_66": {
+    "SMOOTH_STONE": {
       "id": 66,
       "name": "Smooth Stone",
       "description": "Smooth polished stone for clean construction",
@@ -252,7 +252,7 @@
       },
       "face_pattern": "UNIFORM"
     },
-    "BLOCK_67": {
+    "POLISHED_STONE": {
       "id": 67,
       "name": "Polished Granite",
       "description": "Smooth polished granite for premium construction",
@@ -287,7 +287,7 @@
       },
       "face_pattern": "UNIFORM"
     },
-    "BLOCK_68": {
+    "CHISELED_STONE": {
       "id": 68,
       "name": "Polished Marble",
       "description": "Luxurious polished marble for high-end construction",
@@ -322,7 +322,7 @@
       },
       "face_pattern": "UNIFORM"
     },
-    "BLOCK_69": {
+    "FLAGSTONE": {
       "id": 69,
       "name": "Flagstone",
       "description": "Natural flagstone for pathways and courtyards",
@@ -357,7 +357,7 @@
       },
       "face_pattern": "UNIFORM"
     },
-    "BLOCK_70": {
+    "OAK_PLANKS": {
       "id": 70,
       "name": "Oak Planks",
       "description": "Crafted oak planks for sturdy construction",
@@ -393,7 +393,7 @@
       },
       "face_pattern": "UNIFORM"
     },
-    "BLOCK_71": {
+    "PINE_PLANKS": {
       "id": 71,
       "name": "Pine Planks",
       "description": "Light-colored pine planks for versatile building",
@@ -429,7 +429,7 @@
       },
       "face_pattern": "UNIFORM"
     },
-    "BLOCK_72": {
+    "BIRCH_PLANKS": {
       "id": 72,
       "name": "Birch Planks",
       "description": "Pale birch planks for bright, clean construction",
@@ -465,7 +465,7 @@
       },
       "face_pattern": "UNIFORM"
     },
-    "BLOCK_73": {
+    "MAHOGANY_PLANKS": {
       "id": 73,
       "name": "Mahogany Planks",
       "description": "Rich mahogany planks for elegant construction",
@@ -501,7 +501,7 @@
       },
       "face_pattern": "UNIFORM"
     },
-    "BLOCK_74": {
+    "OAK_BEAM": {
       "id": 74,
       "name": "Oak Beam",
       "description": "Structural oak beam for framework construction",
@@ -537,7 +537,7 @@
       },
       "face_pattern": "TOP_BOTTOM_DIFFERENT"
     },
-    "BLOCK_75": {
+    "PINE_BEAM": {
       "id": 75,
       "name": "Pine Beam",
       "description": "Lightweight pine beam for construction framing",
@@ -573,7 +573,7 @@
       },
       "face_pattern": "TOP_BOTTOM_DIFFERENT"
     },
-    "BLOCK_76": {
+    "HARDWOOD_BEAM": {
       "id": 76,
       "name": "Hardwood Beam",
       "description": "Dense hardwood beam for heavy-duty construction",
@@ -609,7 +609,7 @@
       },
       "face_pattern": "TOP_BOTTOM_DIFFERENT"
     },
-    "BLOCK_77": {
+    "BAMBOO_PLANKS": {
       "id": 77,
       "name": "Bamboo Planks",
       "description": "Sustainable bamboo planks for eco-friendly building",
@@ -645,7 +645,7 @@
       },
       "face_pattern": "UNIFORM"
     },
-    "BLOCK_78": {
+    "CORK": {
       "id": 78,
       "name": "Cork",
       "description": "Natural cork material for insulation and decoration",
@@ -681,10 +681,10 @@
       },
       "face_pattern": "UNIFORM"
     },
-    "BLOCK_79": {
+    "CHARCOAL_BLOCK": {
       "id": 79,
-      "name": "Block 79",
-      "description": "Block 79 - migrated from working BLOCK_MAPPING",
+      "name": "Charcoal Block",
+      "description": "Compressed charcoal block for fuel and building",
       "category": "special",
       "tags": [
         "solid"
@@ -719,7 +719,7 @@
       "id": 80,
       "name": "Iron Block",
       "description": "Solid block of processed iron",
-      "category": "metal",
+      "category": "manufactured",
       "tags": [
         "solid"
       ],
@@ -749,11 +749,11 @@
       },
       "face_pattern": "UNIFORM"
     },
-    "BLOCK_81": {
+    "COPPER_BLOCK": {
       "id": 81,
       "name": "Copper Block",
       "description": "Solid block of processed copper",
-      "category": "metal",
+      "category": "manufactured",
       "tags": [
         "solid"
       ],
@@ -783,11 +783,11 @@
       },
       "face_pattern": "UNIFORM"
     },
-    "BLOCK_82": {
+    "BRONZE_BLOCK": {
       "id": 82,
       "name": "Bronze Block",
       "description": "Solid block of processed bronze alloy",
-      "category": "metal",
+      "category": "manufactured",
       "tags": [
         "solid"
       ],
@@ -817,11 +817,11 @@
       },
       "face_pattern": "UNIFORM"
     },
-    "BLOCK_83": {
+    "STEEL_BLOCK": {
       "id": 83,
       "name": "Steel Block",
       "description": "Solid block of processed steel",
-      "category": "metal",
+      "category": "manufactured",
       "tags": [
         "solid"
       ],
@@ -851,11 +851,11 @@
       },
       "face_pattern": "UNIFORM"
     },
-    "BLOCK_84": {
+    "SILVER_BLOCK": {
       "id": 84,
-      "name": "Block 84",
-      "description": "Block 84 - migrated from working BLOCK_MAPPING",
-      "category": "metal",
+      "name": "Silver Block",
+      "description": "Lustrous block of pure silver",
+      "category": "manufactured",
       "tags": [
         "solid"
       ],
@@ -885,11 +885,11 @@
       },
       "face_pattern": "UNIFORM"
     },
-    "BLOCK_85": {
+    "GOLD_BLOCK": {
       "id": 85,
-      "name": "Block 85",
-      "description": "Block 85 - migrated from working BLOCK_MAPPING",
-      "category": "metal",
+      "name": "Gold Block",
+      "description": "Precious block of pure gold",
+      "category": "manufactured",
       "tags": [
         "solid"
       ],
@@ -919,11 +919,11 @@
       },
       "face_pattern": "UNIFORM"
     },
-    "BLOCK_86": {
+    "BRASS_BLOCK": {
       "id": 86,
-      "name": "Block 86",
-      "description": "Block 86 - migrated from working BLOCK_MAPPING",
-      "category": "metal",
+      "name": "Brass Block",
+      "description": "Decorative block of polished brass",
+      "category": "manufactured",
       "tags": [
         "solid"
       ],
@@ -953,11 +953,11 @@
       },
       "face_pattern": "UNIFORM"
     },
-    "BLOCK_87": {
+    "PEWTER_BLOCK": {
       "id": 87,
-      "name": "Block 87",
-      "description": "Block 87 - migrated from working BLOCK_MAPPING",
-      "category": "metal",
+      "name": "Pewter Block",
+      "description": "Dull metallic pewter block",
+      "category": "manufactured",
       "tags": [
         "solid"
       ],
@@ -987,11 +987,11 @@
       },
       "face_pattern": "UNIFORM"
     },
-    "BLOCK_88": {
+    "MITHRIL_BLOCK": {
       "id": 88,
-      "name": "Block 88",
-      "description": "Block 88 - migrated from working BLOCK_MAPPING",
-      "category": "metal",
+      "name": "Mithril Block",
+      "description": "Rare and lightweight mithril block",
+      "category": "manufactured",
       "tags": [
         "solid"
       ],
@@ -1021,11 +1021,11 @@
       },
       "face_pattern": "UNIFORM"
     },
-    "BLOCK_89": {
+    "ADAMANTINE_BLOCK": {
       "id": 89,
-      "name": "Block 89",
-      "description": "Block 89 - migrated from working BLOCK_MAPPING",
-      "category": "metal",
+      "name": "Adamantine Block",
+      "description": "Incredibly hard adamantine block",
+      "category": "manufactured",
       "tags": [
         "solid"
       ],
@@ -1055,11 +1055,11 @@
       },
       "face_pattern": "UNIFORM"
     },
-    "BLOCK_90": {
+    "CLAY_BRICK": {
       "id": 90,
-      "name": "Block 90",
-      "description": "Block 90 - migrated from working BLOCK_MAPPING",
-      "category": "ceramic",
+      "name": "Clay Brick",
+      "description": "Traditional fired clay brick",
+      "category": "manufactured",
       "tags": [
         "solid"
       ],
@@ -1089,11 +1089,11 @@
       },
       "face_pattern": "UNIFORM"
     },
-    "BLOCK_91": {
+    "TERRACOTTA": {
       "id": 91,
-      "name": "Block 91",
-      "description": "Block 91 - migrated from working BLOCK_MAPPING",
-      "category": "ceramic",
+      "name": "Terracotta",
+      "description": "Natural terracotta ceramic block",
+      "category": "manufactured",
       "tags": [
         "solid"
       ],
@@ -1123,11 +1123,11 @@
       },
       "face_pattern": "UNIFORM"
     },
-    "BLOCK_92": {
+    "WHITE_GLAZED_CERAMIC": {
       "id": 92,
-      "name": "Block 92",
-      "description": "Block 92 - migrated from working BLOCK_MAPPING",
-      "category": "ceramic",
+      "name": "White Glazed Ceramic",
+      "description": "Glossy white glazed ceramic tile",
+      "category": "manufactured",
       "tags": [
         "solid"
       ],
@@ -1157,11 +1157,11 @@
       },
       "face_pattern": "UNIFORM"
     },
-    "BLOCK_93": {
+    "RED_GLAZED_CERAMIC": {
       "id": 93,
-      "name": "Block 93",
-      "description": "Block 93 - migrated from working BLOCK_MAPPING",
-      "category": "ceramic",
+      "name": "Red Glazed Ceramic",
+      "description": "Glossy red glazed ceramic tile",
+      "category": "manufactured",
       "tags": [
         "solid"
       ],
@@ -1191,11 +1191,11 @@
       },
       "face_pattern": "UNIFORM"
     },
-    "BLOCK_94": {
+    "BLUE_GLAZED_CERAMIC": {
       "id": 94,
-      "name": "Block 94",
-      "description": "Block 94 - migrated from working BLOCK_MAPPING",
-      "category": "ceramic",
+      "name": "Blue Glazed Ceramic",
+      "description": "Glossy blue glazed ceramic tile",
+      "category": "manufactured",
       "tags": [
         "solid"
       ],
@@ -1225,11 +1225,11 @@
       },
       "face_pattern": "UNIFORM"
     },
-    "BLOCK_95": {
+    "GREEN_GLAZED_CERAMIC": {
       "id": 95,
-      "name": "Block 95",
-      "description": "Block 95 - migrated from working BLOCK_MAPPING",
-      "category": "ceramic",
+      "name": "Green Glazed Ceramic",
+      "description": "Glossy green glazed ceramic tile",
+      "category": "manufactured",
       "tags": [
         "solid"
       ],
@@ -1259,11 +1259,11 @@
       },
       "face_pattern": "UNIFORM"
     },
-    "BLOCK_96": {
+    "PORCELAIN": {
       "id": 96,
-      "name": "Block 96",
-      "description": "Block 96 - migrated from working BLOCK_MAPPING",
-      "category": "ceramic",
+      "name": "Porcelain",
+      "description": "Fine white porcelain ceramic",
+      "category": "manufactured",
       "tags": [
         "solid"
       ],
@@ -1293,11 +1293,11 @@
       },
       "face_pattern": "UNIFORM"
     },
-    "BLOCK_97": {
+    "STONEWARE": {
       "id": 97,
-      "name": "Block 97",
-      "description": "Block 97 - migrated from working BLOCK_MAPPING",
-      "category": "ceramic",
+      "name": "Stoneware",
+      "description": "Durable stoneware ceramic",
+      "category": "manufactured",
       "tags": [
         "solid"
       ],
@@ -1327,11 +1327,11 @@
       },
       "face_pattern": "UNIFORM"
     },
-    "BLOCK_98": {
+    "EARTHENWARE": {
       "id": 98,
-      "name": "Block 98",
-      "description": "Block 98 - migrated from working BLOCK_MAPPING",
-      "category": "ceramic",
+      "name": "Earthenware",
+      "description": "Traditional earthenware ceramic",
+      "category": "manufactured",
       "tags": [
         "solid"
       ],
@@ -1361,11 +1361,11 @@
       },
       "face_pattern": "UNIFORM"
     },
-    "BLOCK_99": {
+    "CERAMIC_TILE": {
       "id": 99,
-      "name": "Block 99",
-      "description": "Block 99 - migrated from working BLOCK_MAPPING",
-      "category": "ceramic",
+      "name": "Ceramic Tile",
+      "description": "Standard ceramic floor tile",
+      "category": "manufactured",
       "tags": [
         "solid"
       ],

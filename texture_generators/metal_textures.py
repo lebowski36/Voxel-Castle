@@ -243,7 +243,30 @@ def generate_brass_block(draw: ImageDraw.Draw, x0: int, y0: int, size: int) -> N
         elif random.random() < 0.7:
             draw.point((bx, by), fill=palette['tarnish'])
 
-# Advanced/Magical metals
+def generate_pewter_block(draw: ImageDraw.Draw, x0: int, y0: int, size: int) -> None:
+    """Generate pewter block texture (dull grey metal)"""
+    import random
+    
+    palette = {
+        'base': (120, 120, 110, 255),   # Dull pewter
+        'light': (140, 140, 130, 255),  # Light pewter
+        'dark': (90, 90, 85, 255),      # Dark pewter
+        'edge': (110, 110, 100, 255)    # Edge pewter
+    }
+    
+    # Base pewter color
+    draw.rectangle([x0, y0, x0 + size - 1, y0 + size - 1], fill=palette['base'])
+    
+    # Add dull metallic texture
+    for _ in range(size * size // 8):
+        px = random.randint(x0, x0 + size - 1)
+        py = random.randint(y0, y0 + size - 1)
+        
+        if random.random() < 0.4:
+            draw.point((px, py), fill=palette['light'])
+        elif random.random() < 0.6:
+            draw.point((px, py), fill=palette['dark'])
+
 def generate_mithril_block(draw: ImageDraw.Draw, x0: int, y0: int, size: int) -> None:
     """Mithril block with silvery-blue magical metallic surface."""
     palette = {
@@ -327,6 +350,14 @@ def generate_metal_texture(metal_type: str, size: int = 32):
         generate_silver_block(draw, 0, 0, size)
     elif metal_type == 'gold':
         generate_gold_block(draw, 0, 0, size)
+    elif metal_type == 'brass':
+        generate_brass_block(draw, 0, 0, size)
+    elif metal_type == 'pewter':
+        generate_pewter_block(draw, 0, 0, size)
+    elif metal_type == 'mithril':
+        generate_mithril_block(draw, 0, 0, size)
+    elif metal_type == 'adamantine':
+        generate_adamantine_block(draw, 0, 0, size)
     else:
         # Default to iron
         generate_iron_block(draw, 0, 0, size)
