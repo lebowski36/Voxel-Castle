@@ -25,22 +25,39 @@ The engine is currently in **active development** with these working features:
 
 ## 5-Minute Setup
 
-If you have all dependencies installed:
+### Dependencies
+
+All external dependencies are included in the repository under the `external/` directory:
+
+- **SDL3**: Window management and input handling
+- **GLM**: Mathematics library for graphics
+- **GLAD**: OpenGL loader
+- **Flecs**: Entity Component System framework
+
+You don't need to download or install these separately.
+
+### Building the Project
 
 ```bash
 # 1. Navigate to project
 cd "/path/to/Voxel Castle"
 
-# 2. Build the engine
-cmake --build build
+# 2. Create build directory if it doesn't exist
+mkdir -p build && cd build
 
-# 3. Run the game
-./build/bin/VoxelFortressGame
+# 3. Configure with CMake
+cmake ..
+
+# 4. Build the engine
+cmake --build .
+
+# 5. Run the game
+./bin/VoxelFortressGame
 ```
 
 You should see a 3D world with terrain. Use the mouse to look around and WASD to fly!
 
-> **First time setup?** See [BUILD_GUIDE.md](BUILD_GUIDE.md) for detailed instructions on installing dependencies for your specific operating system.
+> **System Dependencies**: You'll still need a C++ compiler, CMake, and OpenGL development libraries installed on your system. See [BUILD_GUIDE.md](BUILD_GUIDE.md) for detailed instructions for your specific operating system.
 
 ## What You'll See
 

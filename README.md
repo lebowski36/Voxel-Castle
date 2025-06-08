@@ -38,6 +38,17 @@ Explore our design and development documentation:
 - [Technical Stack Documentation](docs/design_specifications/Voxel%20Fortress%20Tech%20Stack%20(C++%20Custom%20Engine%20Approach).md) - Detailed technical approach
 - [Colony Simulation Design](docs/design_specifications/Game%20Concept/Colony%20Simulation.md) - Future gameplay mechanics
 
+## 📦 External Dependencies
+
+The project includes several external libraries as part of the codebase:
+
+- **SDL3**: Window management, input handling, and platform abstraction
+- **GLM**: Mathematics library for graphics programming
+- **GLAD**: OpenGL loader
+- **Flecs**: Entity Component System (ECS) framework
+
+These dependencies are included directly in the repository under the `external/` directory, and you don't need to download or install them separately. The `.git` directories of these external libraries are excluded from version control using `.gitignore` to keep the repository clean.
+
 ## 🚧 Development Status
 
 **Current Phase: Core Engine Development (Active Development)**

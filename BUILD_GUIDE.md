@@ -12,7 +12,11 @@
 ### Software Requirements
 - **C++ Compiler**: GCC 9+, Clang 10+, or MSVC 2019+
 - **CMake**: Version 3.20 or higher
-- **Git**: For cloning dependencies
+- **Git**: For cloning the repository
+
+## External Dependencies
+
+All external libraries (SDL3, GLM, GLAD, and Flecs) are included in the repository under the `external/` directory. You don't need to download or install these separately.
 
 ## Platform-Specific Setup
 
