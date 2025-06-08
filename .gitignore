@@ -58,3 +58,11 @@ gamelog.txt
 
 # Save files - user specific game saves should not be in version control
 saves/
+
+# External libraries Git repositories
+# This prevents Git from tracking the Git metadata of external dependencies
+# while still allowing the code itself to be tracked
+external/**/.git
+external/**/.github
+external/**/.gitignore
+external/**/.gitattributes
