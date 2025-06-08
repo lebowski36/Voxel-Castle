@@ -48,6 +48,24 @@ This protocol outlines how the AI agent (GitHub Copilot) operates. Adherence to 
 
 ### II. Code Standards & Naming/Capitalization Protocol
 
+**🔥 CRITICAL: DUAL-PATH WORLD GENERATION ARCHITECTURE**
+
+The project maintains **TWO SEPARATE WORLD GENERATION SYSTEMS** to ensure stability:
+
+**Legacy System (Resume Game Path):**
+- File: `engine/src/world/world_generator.cpp`
+- Purpose: Maintain existing "Resume Game" functionality
+- Status: **PRESERVED** - Do not modify unless absolutely necessary
+- Used by: Main menu "Resume Game" button
+
+**New Advanced System (Create World Path):**
+- Files: `engine/src/world/seed_world_generator.cpp` + biome system
+- Purpose: Advanced world generation with biomes, climate, erosion, etc.
+- Status: **ACTIVE DEVELOPMENT** - Following BIOME_IMPLEMENTATION_PLAN.md
+- Used by: Main menu "Create World" button (future implementation)
+
+**CRITICAL RULE: Always maintain both systems. The legacy system provides a "working reference" while the new system is being developed.**
+
 **🔥 CRITICAL: STRICT NAMING/CAPITALIZATION STANDARD**
 
 This project enforces a **strict naming and capitalization standard** to prevent recurring build errors and maintain consistency. ALL code MUST follow these conventions:
