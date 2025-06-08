@@ -174,11 +174,8 @@ bool ClimateData::SerializeToBinary(std::vector<uint8_t>& buffer) const {
 
 bool ClimateData::DeserializeFromBinary(const std::vector<uint8_t>& buffer, size_t& offset) {
     size_t headerSize = sizeof(uint8_t) * 2 + sizeof(float) * 25 + sizeof(int) * 2;
-    std::cout << "DEBUG: ClimateData - offset: " << offset << ", headerSize: " << headerSize 
-              << ", buffer.size(): " << buffer.size() << ", needed: " << (offset + headerSize) << std::endl;
     
     if (offset + headerSize > buffer.size()) {
-        std::cout << "DEBUG: ClimateData - Header size check failed!" << std::endl;
         return false;
     }
     

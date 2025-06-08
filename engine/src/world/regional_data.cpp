@@ -153,9 +153,7 @@ bool RegionalData::DeserializeFromBinary(const std::vector<uint8_t>& buffer) {
     std::memcpy(&dataSize, ptr, sizeof(dataSize)); ptr += sizeof(dataSize);
     
     // Validate data size
-    std::cerr << "DEBUG: Buffer size: " << buffer.size() << ", Expected: " << (sizeof(uint32_t) * 4 + dataSize) << ", dataSize: " << dataSize << std::endl;
     if (buffer.size() != sizeof(uint32_t) * 4 + dataSize) {
-        std::cerr << "DEBUG: Size mismatch!" << std::endl;
         return false; // Size mismatch
     }
     
@@ -183,31 +181,21 @@ bool RegionalData::DeserializeFromBinary(const std::vector<uint8_t>& buffer) {
     
     // Deserialize advanced data structures
     size_t offset = ptr - buffer.data();
-    std::cout << "DEBUG: Starting advanced deserialization at offset: " << offset << std::endl;
     
     // Deserialize geological data
-    std::cout << "DEBUG: Deserializing geological data..." << std::endl;
     if (!geological.DeserializeFromBinary(buffer, offset)) {
-        std::cout << "DEBUG: Geological deserialization FAILED" << std::endl;
         return false;
     }
-    std::cout << "DEBUG: Geological deserialization OK, new offset: " << offset << std::endl;
     
     // Deserialize hydrological data
-    std::cout << "DEBUG: Deserializing hydrological data..." << std::endl;
     if (!hydrological.DeserializeFromBinary(buffer, offset)) {
-        std::cout << "DEBUG: Hydrological deserialization FAILED" << std::endl;
         return false;
     }
-    std::cout << "DEBUG: Hydrological deserialization OK, new offset: " << offset << std::endl;
     
     // Deserialize climate data
-    std::cout << "DEBUG: Deserializing climate data..." << std::endl;
     if (!climate.DeserializeFromBinary(buffer, offset)) {
-        std::cout << "DEBUG: Climate deserialization FAILED" << std::endl;
         return false;
     }
-    std::cout << "DEBUG: Climate deserialization OK, new offset: " << offset << std::endl;
     
     // Store version info
     magicNumber = readMagic;
