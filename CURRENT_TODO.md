@@ -46,7 +46,42 @@ This protocol outlines how the AI agent (GitHub Copilot) operates. Adherence to 
         * These timestamps apply only to task documentation files, not code files
 6.  **Progression:** Proceed to the next open sub-task. If any part of the process or a specific task is unclear, ask for clarification.
 
-### II. Problem Solving & Iteration
+### II. Code Standards & Naming/Capitalization Protocol
+
+**🔥 CRITICAL: STRICT NAMING/CAPITALIZATION STANDARD**
+
+This project enforces a **strict naming and capitalization standard** to prevent recurring build errors and maintain consistency. ALL code MUST follow these conventions:
+
+**C++ NAMING CONVENTIONS:**
+- **Classes/Structs/Enums:** `PascalCase` (e.g., `BiomeType`, `BiomeData`, `BiomeRegistry`)
+- **Functions/Methods:** `PascalCase` (e.g., `IsValidBiomeType()`, `BiomeTypeToString()`, `GetBiomeName()`)
+- **Variables/Parameters:** `camelCase` (e.g., `biomeType`, `biomeName`, `temperatureRange`)
+- **Constants/Enum Values:** `SCREAMING_SNAKE_CASE` (e.g., `GRASSLAND`, `DESERT`, `TAIGA`)
+- **File Names:** `snake_case` (e.g., `biome_types.h`, `biome_data.cpp`)
+- **Macros:** `SCREAMING_SNAKE_CASE` (e.g., `DEBUG_LOG`, `TEXTURE_ATLAS_SIZE`)
+
+**NAMESPACE CONVENTIONS:**
+- **Namespaces:** `PascalCase` (e.g., `VoxelCastle::World::Biome`)
+
+**STANDARD ENFORCEMENT PROTOCOL:**
+1. **Every function/method name MUST use `PascalCase`** - NO exceptions
+2. **Every class/struct/enum name MUST use `PascalCase`** - NO exceptions  
+3. **If you encounter inconsistent naming during development:**
+   - **STOP immediately** and raise the issue to the user
+   - **State exactly what naming inconsistency was found**
+   - **Ask for confirmation** before proceeding with fixes
+   - **Example:** "I found function `isValidBiomeType()` which should be `IsValidBiomeType()` per our standard. Should I fix this naming inconsistency?"
+4. **All new code MUST follow the standard from the start**
+5. **All existing code MUST be updated to follow the standard when touched**
+
+**ISSUE ESCALATION:**
+- If you find naming that doesn't match the standard: **ASK THE USER IMMEDIATELY**
+- If you're unsure about capitalization: **ASK THE USER IMMEDIATELY**  
+- If build errors occur due to naming: **CHECK THE STANDARD FIRST, THEN FIX**
+
+This standard is **NON-NEGOTIABLE** and prevents the recurring capitalization build errors we've experienced.
+
+### III. Problem Solving & Iteration
 *   **Focused Approach:** Address one problem or feature at a time. If issues are tightly coupled, they can be addressed together, but this should be explicitly stated.
 *   **Avoid Repetitive Fixes:** If a particular fix or approach is attempted multiple times without success, pause, re-evaluate the problem, and consider alternative diagnostic steps or solutions. State what has been tried and why it might not be working.
 *   **Persistence:** If a problem persists after initial attempts, search for solutions online before repeatedly asking for help or trying the same fix.
@@ -57,9 +92,13 @@ This protocol outlines how the AI agent (GitHub Copilot) operates. Adherence to 
 *   **🚨 CRITICAL: ALWAYS ask for output if not received** - Never try commands twice. If output isn't shown, explicitly ask "What was the output of that command?"
 *   **Direct Tool Usage:** Always execute necessary commands directly using the appropriate tool (e.g., `run_in_terminal`, `insert_edit_into_file`). Do not ask the user to run commands manually.
 *   **File Modifications:** Use `insert_edit_into_file` for all file changes, providing clear explanations.
+*   **🔤 NAMING/CAPITALIZATION STANDARD:**
+    *   **C++ Code**: PascalCase for classes/structs/enums (BiomeType, BiomeData, BiomeRegistry), camelCase for functions/variables (getBiomeName, temperatureRange), UPPER_SNAKE_CASE for constants/enum values (PLAINS, DESERT, FOREST)
+    *   **Files**: snake_case for all filenames (biome_types.h, biome_registry.cpp)
+    *   **Directories**: snake_case for directory names (world/biome/, engine/include/)
+    *   **🚨 ENFORCEMENT**: If you encounter code that doesn't follow this standard, immediately raise the issue and suggest corrections. This includes variable names, function names, class names, file names, and directory structures. Consistency is crucial for maintainability.
 *   **Logging Guidelines:** 
     *   **Log Files Only:** All detailed debugging information, error traces, and verbose output should be written to log files using the existing logging system (DEBUG_LOG(), VoxelCastle::Utils::logToFile(), etc.)
-    *   **Minimal Console Output:** Console output from the game should be kept minimal and show only high-level events (game starting, world loading complete, major state changes, critical errors)
     *   **Use Existing System:** Leverage the current logging infrastructure rather than std::cout for debugging information
 *   **Visual Testability Principle:** 
     *   **Immediate Feedback Requirement:** Every feature implementation must include visual feedback mechanisms that allow developers to see the effects of their changes immediately in-game
