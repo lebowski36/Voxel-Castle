@@ -19,6 +19,10 @@ add_library(VoxelEngine STATIC
     src/world/voxel_face_patterns.cpp # Added VoxelFacePatterns source
     src/world/block_properties.cpp # Added BlockProperties system source
     src/world/block_properties_generated.cpp # Generated unified block properties from JSON
+    # Biome system sources
+    src/world/biome/biome_types.cpp # Biome type definitions and utilities
+    src/world/biome/biome_data.cpp # Biome data structures and climate matching
+    src/world/biome/biome_registry.cpp # Central biome registry and management
     src/world/quadtree.cpp      # Added Quadtree source
     # src/world/test_quadtree.cpp # Removed Quadtree test source
     src/world/test_voxel_system.cpp # Added Voxel System test source
