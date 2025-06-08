@@ -13,6 +13,27 @@ This document outlines the comprehensive implementation plan for the Voxel Castl
 - [World Generation UI Specification](WORLD_GENERATION_UI_SPECIFICATION.md) - Player experience design
 - [Database Investigation Report](../development_tasks/04_essential_game_infrastructure/08c.4.1_world_database_format_investigation.md) - Storage format analysis
 
+## World Scale & Height Boundaries
+
+**Critical Scale Information:**
+- **Voxel Size:** 25cm × 25cm × 25cm (0.25m cubes) - NOT 1 meter blocks
+- **Chunk Size:** 32×32×32 voxels = 8m × 8m × 8m per chunk
+- **Current Terrain:** ~1-13 blocks high (25cm-3.25m) with 48-block amplitude (12m max height)
+
+**Height Boundaries for Advanced World Generation:**
+- **Underground Limit:** -128 chunks (-1024m depth) - Deep enough for extensive cave systems, multiple geological layers, underground rivers, crystal caverns, ancient ruins, and realistic mining operations
+- **Surface Level:** Chunk Y=0 at sea level (0m elevation)  
+- **Sky Limit:** +128 chunks (+1024m height) - Accommodates massive mountains, tall structures, flying mechanics, weather systems, atmospheric layers
+- **Total World Height:** 256 chunks (2048m) - perfectly balanced, symmetrical vertical exploration
+
+**Design Implications:**
+- **Geological Stratification**: 128 chunks underground allows for multiple distinct rock layers, ore distribution, and geological history
+- **Hydrological Systems**: Sufficient depth for aquifers, underground rivers, and complex water table simulation
+- **Biome Diversity**: Vertical range supports alpine zones, surface biomes, cave biomes, and deep underground ecosystems
+- **Mountain Systems**: 128 chunks above ground enables realistic mountain ranges, high-altitude biomes, and weather effects
+- **Symmetrical Balance**: Equal vertical exploration potential above and below ground
+- **Performance**: 256 total chunks manageable for LOD systems while providing extensive gameplay depth
+
 ## Vision & Goals
 
 **Advanced World Generation Philosophy:**

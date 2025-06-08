@@ -10,6 +10,31 @@ This document outlines the implementation plan for Voxel Castle's world generati
 - [Advanced Biome Implementation Plan](../../docs/BIOME_IMPLEMENTATION_PLAN.md) - Detailed biome system design
 - [Database Investigation](08c.4.1_world_database_format_investigation.md) - Storage format analysis
 
+## World Scale & Height Boundaries
+
+**Critical Scale Information:**
+- **Voxel Size:** 25cm × 25cm × 25cm (0.25m cubes) - NOT 1 meter blocks
+- **Chunk Size:** 32×32×32 voxels = 8m × 8m × 8m per chunk
+- **Current Terrain:** ~12m max height (temporary, will expand to full range)
+
+**Height Boundaries for Implementation:**
+- **Underground Limit:** Chunk Y = -128 (-1024m depth / -4096 blocks)
+- **Surface Level:** Chunk Y = 0 (0m elevation / sea level)
+- **Sky Limit:** Chunk Y = +128 (+1024m height / +4096 blocks)
+- **Total World Height:** 256 chunks (2048m / 8192 blocks) - perfectly symmetrical
+
+**Implementation Priority:**
+- **Phase 1:** Implement coordinate system and chunk loading for ±128 range
+- **Phase 2:** Expand terrain generation to use full vertical range
+- **Phase 3:** Implement altitude-based biome variations and underground systems
+- **Phase 4:** Add atmospheric/weather effects at high altitudes
+
+**Technical Notes:**
+- All world generation algorithms must support the full ±128 chunk range
+- Chunk coordinate system: `int32_t chunkY` ranges from -128 to +127
+- Block coordinate system: `int32_t blockY` ranges from -4096 to +4095
+- LOD systems must handle both deep underground and high-altitude chunks
+
 ## World Generation Philosophy
 
 **Inspired by Dwarf Fortress + Minecraft Hybrid:**

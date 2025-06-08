@@ -8,6 +8,19 @@ This file tracks our immediate high-level tasks and progress. Detailed sub-tasks
 
 ---
 
+## 🏗️ WORLD SCALE & HEIGHT BOUNDARIES
+
+**Essential Scale Reference:**
+- **Voxel Size:** 25cm × 25cm × 25cm (0.25m cubes) - NOT 1 meter blocks
+- **Chunk Size:** 32×32×32 voxels = 8m × 8m × 8m per chunk
+- **World Height:** ±128 chunks (±1024m) = 2048m total = 8192 blocks total
+- **Current Terrain:** ~12m max height (temporary, will expand to full range)
+
+**Detailed Specifications:** See `docs/BIOME_IMPLEMENTATION_PLAN.md` → World Scale & Height Boundaries
+**Implementation Tasks:** See `development_tasks/04_essential_game_infrastructure/08c_world_generation_system.md`
+
+---
+
 ## 🤖 AGENT OPERATIONAL PROTOCOL
 
 This protocol outlines how the AI agent (GitHub Copilot) operates. Adherence to these guidelines is crucial for effective collaboration.
