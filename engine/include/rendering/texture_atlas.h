@@ -14,6 +14,12 @@
 namespace VoxelEngine {
 namespace Rendering {
 
+// Fallback constants for legacy compatibility
+static constexpr int MAX_BLOCK_TYPES = 256;
+static constexpr int TILES_PER_ROW = 16;
+static constexpr float TILE_UV_WIDTH = 1.0f / 16.0f;
+static constexpr float TILE_UV_HEIGHT = 1.0f / 16.0f;
+
 // Metadata-driven atlas configuration (replaces hardcoded constants)
 struct AtlasMetadata {
     int tile_size_px = 32;

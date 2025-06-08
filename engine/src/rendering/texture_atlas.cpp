@@ -116,6 +116,18 @@ TextureCoordinates TextureAtlas::getTextureCoordinates(VoxelEngine::World::Voxel
             }
             break;
             
+        case FacePattern::ALL_FACES_DIFFERENT:
+            // Same as ALL_DIFFERENT for compatibility
+            switch (atlasType) {
+                case AtlasType::MAIN:
+                    return calculateTextureCoordinates(blockId);
+                case AtlasType::SIDE:
+                    return calculateSideAtlasCoordinates(type);
+                case AtlasType::BOTTOM:
+                    return calculateBottomAtlasCoordinates(type);
+            }
+            break;
+            
         case FacePattern::DIRECTIONAL:
             // Not implemented yet - use main atlas for now
             return calculateTextureCoordinates(blockId);
@@ -333,6 +345,21 @@ AtlasType TextureAtlas::getAtlasForFace(VoxelEngine::World::VoxelType type, Voxe
                 case Face::LEFT:
                 case Face::RIGHT:
                     return AtlasType::SIDE;    // Sides use side atlas
+            }
+            break;
+            
+        case FacePattern::ALL_FACES_DIFFERENT:
+            // Same as ALL_DIFFERENT for compatibility
+            switch (face) {
+                case Face::TOP:
+                    return AtlasType::MAIN;
+                case Face::BOTTOM:
+                    return AtlasType::BOTTOM;
+                case Face::FRONT:
+                case Face::BACK:
+                case Face::LEFT:
+                case Face::RIGHT:
+                    return AtlasType::SIDE;
             }
             break;
             
