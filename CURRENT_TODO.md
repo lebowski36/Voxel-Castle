@@ -63,21 +63,25 @@ This protocol outlines how the AI agent (GitHub Copilot) operates. Adherence to 
 
 **🔥 CRITICAL: DUAL-PATH WORLD GENERATION ARCHITECTURE**
 
-The project maintains **TWO SEPARATE WORLD GENERATION SYSTEMS** to ensure stability:
+The project maintains **TWO SEPARATE WORLD GENERATION SYSTEMS** to ensure stability and progressive development:
 
 **Legacy System (Resume Game Path):**
-- File: `engine/src/world/world_generator.cpp`
-- Purpose: Maintain existing "Resume Game" functionality
-- Status: **PRESERVED** - Do not modify unless absolutely necessary
-- Used by: Main menu "Resume Game" button
+- **File**: `engine/src/world/world_generator.cpp`
+- **What it does**: Simple noise-based terrain generation (~12m height max), basic caves, functional but limited
+- **Purpose**: Maintain existing "Resume Game" functionality as working reference
+- **Status**: **PRESERVED** - Do not modify unless absolutely necessary
+- **UI**: Main menu "Resume Game" button
+- **Rationale**: Provides stable, tested world generation that always works while new system is developed
 
-**New Advanced System (Create World Path):**
-- Files: `engine/src/world/seed_world_generator.cpp` + biome system
-- Purpose: Advanced world generation with biomes, climate, erosion, etc.
-- Status: **ACTIVE DEVELOPMENT** - Following BIOME_IMPLEMENTATION_PLAN.md
-- Used by: Main menu "Create World" button (future implementation)
+**New Advanced System (Create/Load World Path):**
+- **Files**: `engine/src/world/seed_world_generator.cpp` + biome system
+- **What it will do**: Advanced biome system, ±1024m terrain range, climate simulation, erosion, geological features
+- **Purpose**: Revolutionary world generation with realistic geological and ecological features
+- **Status**: **ACTIVE DEVELOPMENT** - Following BIOME_IMPLEMENTATION_PLAN.md
+- **UI**: Main menu "Create World" and "Load Game" buttons (future implementation)
+- **Rationale**: Independent development allows optimal design for advanced features without compatibility constraints
 
-**CRITICAL RULE: Always maintain both systems. The legacy system provides a "working reference" while the new system is being developed.**
+**DEVELOPMENT STRATEGY**: Build new system to feature parity, then surpass legacy with advanced features. Once complete, legacy system can be removed. No compatibility needed between systems - they are completely separate code paths.
 
 **🔥 CRITICAL: STRICT NAMING/CAPITALIZATION STANDARD**
 
