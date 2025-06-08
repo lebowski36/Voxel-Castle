@@ -203,19 +203,23 @@ void SeedWorldGenerator::setRegionalDatabase(std::unique_ptr<RegionalDatabase> d
 }
 
 void SeedWorldGenerator::initializeTectonicSimulation(float worldSizeKm) {
-    // Create tectonic simulator with world-specific seed
-    uint64_t tectonicSeed = worldSeed_->getTectonicSeed();
-    tectonicSimulator_ = std::make_unique<TectonicSimulator>(tectonicSeed);
+    // Create tectonic simulator
+    tectonicSimulator_ = std::make_unique<TectonicSimulator>();
     
-    // Initialize with world size parameters
-    tectonicSimulator_->InitializeWorld(worldSizeKm, worldSizeKm);
+    // Use the region-level seed with a specific feature type for tectonics
+    uint64_t tectonicSeed = worldSeed_->getRegionFeatureSeed(0, 0, 0, FeatureType::TERRAIN);
+    
+    // Initialize plates with world-specific parameters
+    uint32_t plateCount = 0; // Auto-determine plate count based on world size
+    tectonicSimulator_->InitializePlates(static_cast<uint32_t>(tectonicSeed), worldSizeKm, plateCount);
     
     // Run the simulation
-    int simulationSteps = 100; // Adjust based on desired geological complexity
-    tectonicSimulator_->RunSimulation(simulationSteps);
+    float simulationTime = 100.0f; // Million years
+    uint32_t timeSteps = 10;
+    tectonicSimulator_->SimulatePlateMovement(simulationTime, timeSteps);
     
     std::cout << "[SeedWorldGenerator] Tectonic simulation initialized with " 
-              << tectonicSimulator_->GetPlateCount() << " plates over " 
+              << tectonicSimulator_->GetPlates().size() << " plates over " 
               << worldSizeKm << "x" << worldSizeKm << " km world" << std::endl;
 }
 
@@ -269,35 +273,36 @@ RegionalData SeedWorldGenerator::generateRegionalData(int regionX, int regionZ) 
         glm::vec2 worldPos(worldX, worldZ);
         
         // Query tectonic simulator for geological properties
-        uint32_t dominantPlateId = tectonicSimulator_->GetDominantPlate(worldPos);
+        const TectonicPlate* dominantPlate = tectonicSimulator_->GetDominantPlate(worldPos);
+        uint32_t dominantPlateId = dominantPlate ? dominantPlate->plateId : 0;
         float tectonicStress = tectonicSimulator_->GetTectonicStress(worldPos);
         TerrainType terrainType = tectonicSimulator_->GetTerrainTypeAtPosition(worldPos);
         
         // Populate GeologicalData with tectonic simulation results
-        data.geologicalData.dominantPlateId = dominantPlateId;
-        data.geologicalData.tectonicStress = tectonicStress;
-        data.geologicalData.terrainType = terrainType;
+        data.geological.dominantPlateId = dominantPlateId;
+        data.geological.tectonicStress = tectonicStress;
+        data.geological.terrainType = terrainType;
         
         // Set crustal thickness based on terrain type and tectonic stress
         switch (terrainType) {
             case TerrainType::MOUNTAIN:
-                data.geologicalData.crustalThickness = 45.0f + tectonicStress * 20.0f; // Thick continental crust
+                data.geological.crustalThickness = 45.0f + tectonicStress * 20.0f; // Thick continental crust
                 break;
             case TerrainType::OCEANIC:
-                data.geologicalData.crustalThickness = 7.0f + tectonicStress * 3.0f; // Thin oceanic crust
+                data.geological.crustalThickness = 7.0f + tectonicStress * 3.0f; // Thin oceanic crust
                 break;
             case TerrainType::RIFT:
-                data.geologicalData.crustalThickness = 20.0f - tectonicStress * 10.0f; // Thinned crust
+                data.geological.crustalThickness = 20.0f - tectonicStress * 10.0f; // Thinned crust
                 break;
             case TerrainType::STABLE:
             default:
-                data.geologicalData.crustalThickness = 35.0f + tectonicStress * 5.0f; // Normal continental crust
+                data.geological.crustalThickness = 35.0f + tectonicStress * 5.0f; // Normal continental crust
                 break;
         }
         
         // Get plate movement vector for this position
-        if (const TectonicPlate* plate = tectonicSimulator_->GetPlate(dominantPlateId)) {
-            data.geologicalData.plateMovementVector = plate->movementVector;
+        if (dominantPlate) {
+            data.geological.plateMovementVector = dominantPlate->movementVector;
         }
         
         // Set elevation based on terrain type and crustal thickness
@@ -320,7 +325,7 @@ RegionalData SeedWorldGenerator::generateRegionalData(int regionX, int regionZ) 
         
         // Determine biome based on elevation and terrain type
         if (data.elevation > 100.0f) {
-            data.primaryBiome = BiomeType::MOUNTAIN;
+            data.primaryBiome = BiomeType::MOUNTAINS;
         } else if (data.elevation < 50.0f) {
             data.primaryBiome = BiomeType::OCEAN;
         } else if (terrainType == TerrainType::RIFT) {
@@ -360,8 +365,8 @@ RegionalData SeedWorldGenerator::generateRegionalData(int regionX, int regionZ) 
             std::cout << "[SeedWorldGenerator] Generated and saved regional data for region (" 
                       << regionX << ", " << regionZ << ") - Biome: " 
                       << static_cast<int>(data.primaryBiome) 
-                      << ", PlateId: " << data.geologicalData.dominantPlateId
-                      << ", TerrainType: " << static_cast<int>(data.geologicalData.terrainType) << std::endl;
+                      << ", PlateId: " << data.geological.dominantPlateId
+                      << ", TerrainType: " << static_cast<int>(data.geological.terrainType) << std::endl;
         }
     }
     
