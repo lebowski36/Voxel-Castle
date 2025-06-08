@@ -5,6 +5,7 @@
 #include "world/voxel_types.h"
 #include "world/voxel.h"
 #include "world/world_seed.h"
+#include "world/world_coordinates.h"
 #include <chrono>
 #include <iomanip>
 #include <sstream>
@@ -143,52 +144,151 @@ void SeedWorldGenerator::setWorldParameters(std::shared_ptr<WorldParameters> par
 }
 
 int SeedWorldGenerator::generateTerrainHeight(int globalX, int globalZ) const {
-    // Replicate exact legacy algorithm for feature parity
-    
-    // Legacy parameters - these MUST match WorldGenerator::generateChunkSegment exactly
-    constexpr float noiseInputScale = 0.02f;         // Horizontal frequency
-    constexpr float terrainAmplitude = ChunkSegment::CHUNK_HEIGHT * 1.5f;  // Vertical scale (48 for 32-height)
-    constexpr float baseTerrainOffset = static_cast<float>(ChunkSegment::CHUNK_HEIGHT) / 8.0f; // Base height offset (4)
-
-    // Calculate noise coordinates (exact legacy algorithm)
-    float nx = globalX * noiseInputScale;
-    float nz = globalZ * noiseInputScale;
-    
-    // Apply seed-based coordinate offsets only if NOT in legacy compatibility mode
-    if (!legacyCompatible_) {
-        // Use terrain-specific seed from WorldSeed for variation
-        uint64_t terrainSeed = worldSeed_->getFeatureSeed(0, 0, 0, VoxelCastle::World::FeatureType::TERRAIN);
+    if (legacyCompatible_) {
+        // Legacy algorithm for compatibility testing
+        constexpr float noiseInputScale = 0.02f;
+        constexpr float terrainAmplitude = ChunkSegment::CHUNK_HEIGHT * 1.5f;
+        constexpr float baseTerrainOffset = static_cast<float>(ChunkSegment::CHUNK_HEIGHT) / 8.0f;
         
-        // Create deterministic but varied coordinate offsets based on terrain seed
-        float seedOffsetX = static_cast<float>((terrainSeed & 0xFFFF) % 10000) * 0.001f; // Range [0, 10)
-        float seedOffsetZ = static_cast<float>(((terrainSeed >> 16) & 0xFFFF) % 10000) * 0.001f; // Range [0, 10)
-        
-        // Apply seed-based offsets to noise coordinates
-        nx += seedOffsetX;
-        nz += seedOffsetZ;
+        float nx = globalX * noiseInputScale;
+        float nz = globalZ * noiseInputScale;
+        float noise_val = VoxelEngine::Util::smoothValueNoise(nx, 0.0f, nz);
+        int columnHeight = static_cast<int>(noise_val * terrainAmplitude) + static_cast<int>(baseTerrainOffset);
+        return columnHeight;
     }
     
-    // Use the same noise function as legacy system
-    float noise_val = VoxelEngine::Util::smoothValueNoise(nx, 0.0f, nz);
+    // Enhanced terrain generation using full ±1024m vertical range
+    // Use world coordinate constants for proper scaling
+    using namespace VoxelCastle::World::WorldCoordinates;
     
-    // Convert to height using exact legacy formula
-    int columnHeight = static_cast<int>(noise_val * terrainAmplitude) + static_cast<int>(baseTerrainOffset);
+    // Enhanced terrain parameters for full vertical range
+    constexpr float baseNoiseScale = 0.005f;        // Large-scale continental features
+    constexpr float detailNoiseScale = 0.02f;       // Medium-scale terrain detail
+    constexpr float fineNoiseScale = 0.08f;         // Fine-scale surface variation
     
-    return columnHeight;
+    // Terrain generation uses world coordinate system
+    // Sea level is at Y=0, terrain can range from deep ocean floors to high mountains
+    const float seaLevel = 0.0f;                    // World Y = 0 (sea level)
+    const float maxMountainHeight = 500.0f;         // 500m above sea level
+    const float maxOceanDepth = -300.0f;            // 300m below sea level
+    const float terrainRange = maxMountainHeight - maxOceanDepth; // 800m total range
+    
+    // Get terrain-specific seed for consistent generation
+    uint64_t terrainSeed = worldSeed_->getFeatureSeed(globalX / 1000, 0, globalZ / 1000, VoxelCastle::World::FeatureType::TERRAIN);
+    
+    // Create deterministic coordinate offsets for terrain variation using world seed
+    uint64_t masterSeed = worldSeed_->getMasterSeed();
+    float seedOffsetX = static_cast<float>((masterSeed & 0xFFFFFFFF) % 1000000) * 0.00001f;
+    float seedOffsetZ = static_cast<float>(((masterSeed >> 32) & 0xFFFFFFFF) % 1000000) * 0.00001f;
+    
+    // Additional region-based variation using terrain seed
+    float regionOffsetX = static_cast<float>((terrainSeed & 0xFFFF) % 10000) * 0.0001f;
+    float regionOffsetZ = static_cast<float>(((terrainSeed >> 16) & 0xFFFF) % 10000) * 0.0001f;
+    
+    // Multi-scale noise generation for realistic terrain
+    float nx = globalX;
+    float nz = globalZ;
+    
+    // Large-scale continental structure (mountains, valleys, ocean basins)
+    float continentalNoise = VoxelEngine::Util::smoothValueNoise(
+        (nx + seedOffsetX + regionOffsetX) * baseNoiseScale, 
+        0.0f, 
+        (nz + seedOffsetZ + regionOffsetZ) * baseNoiseScale
+    );
+    
+    // Medium-scale terrain features (hills, ridges, local topography)
+    float terrainNoise = VoxelEngine::Util::smoothValueNoise(
+        (nx + seedOffsetX + regionOffsetX) * detailNoiseScale, 
+        1000.0f, // Different Y offset for different noise pattern
+        (nz + seedOffsetZ + regionOffsetZ) * detailNoiseScale
+    );
+    
+    // Fine-scale surface variation (small bumps, local detail)
+    float surfaceNoise = VoxelEngine::Util::smoothValueNoise(
+        (nx + seedOffsetX + regionOffsetX) * fineNoiseScale, 
+        2000.0f, // Different Y offset for different noise pattern
+        (nz + seedOffsetZ + regionOffsetZ) * fineNoiseScale
+    );
+    
+    // Combine noise layers with different weights
+    float combinedNoise = 
+        continentalNoise * 0.6f +      // 60% continental structure
+        terrainNoise * 0.3f +          // 30% terrain features  
+        surfaceNoise * 0.1f;           // 10% surface detail
+    
+    // Convert noise (-1 to 1) to terrain height in world coordinates
+    float terrainHeight = seaLevel + (combinedNoise * terrainRange * 0.5f);
+    
+    // Convert world coordinates to block coordinates (25cm blocks)
+    int columnHeightBlocks = static_cast<int>(terrainHeight / VoxelCastle::World::WorldCoordinates::VOXEL_SIZE_METERS);
+    
+    return columnHeightBlocks;
 }
 
 ::VoxelEngine::World::VoxelType SeedWorldGenerator::getVoxelType(int globalY, int terrainHeight) const {
-    // Replicate exact legacy block selection logic
-    if (globalY <= terrainHeight) {
-        if (globalY == terrainHeight) {
+    if (legacyCompatible_) {
+        // Legacy voxel assignment for compatibility
+        if (globalY <= terrainHeight) {
+            if (globalY == terrainHeight) {
+                return ::VoxelEngine::World::VoxelType::GRASS;
+            } else if (globalY > terrainHeight - 3) {
+                return ::VoxelEngine::World::VoxelType::DIRT;
+            } else {
+                return ::VoxelEngine::World::VoxelType::STONE;
+            }
+        } else {
+            return ::VoxelEngine::World::VoxelType::AIR;
+        }
+    }
+    
+    // Enhanced voxel type assignment for full vertical range
+    // Convert block coordinates to world coordinates for logic
+    const float worldY = globalY * VoxelCastle::World::WorldCoordinates::VOXEL_SIZE_METERS;
+    const float terrainWorldY = terrainHeight * VoxelCastle::World::WorldCoordinates::VOXEL_SIZE_METERS;
+    
+    // Above terrain: Air
+    if (worldY > terrainWorldY) {
+        return ::VoxelEngine::World::VoxelType::AIR;
+    }
+    
+    // At or below terrain: Determine material based on depth and elevation
+    const float depthBelowSurface = terrainWorldY - worldY;
+    const float seaLevel = 0.0f;
+    
+    // Surface layer (top block)
+    if (globalY == terrainHeight) {
+        if (terrainWorldY > 200.0f) {
+            // High altitude: Snow
+            return ::VoxelEngine::World::VoxelType::STONE; // TODO: Add SNOW when available
+        } else if (terrainWorldY > 100.0f) {
+            // Mountains: Stone exposure
+            return ::VoxelEngine::World::VoxelType::STONE;
+        } else if (terrainWorldY > seaLevel) {
+            // Above sea level: Grass
             return ::VoxelEngine::World::VoxelType::GRASS;
-        } else if (globalY > terrainHeight - 3) {
+        } else {
+            // Below sea level: Sand/underwater
+            return ::VoxelEngine::World::VoxelType::SAND;
+        }
+    }
+    
+    // Subsurface layers based on depth
+    if (depthBelowSurface <= 1.0f) { // 0-1m: Topsoil
+        if (terrainWorldY > seaLevel) {
             return ::VoxelEngine::World::VoxelType::DIRT;
         } else {
-            return ::VoxelEngine::World::VoxelType::STONE;
+            return ::VoxelEngine::World::VoxelType::SAND;
         }
+    } else if (depthBelowSurface <= 4.0f) { // 1-4m: Subsoil
+        return ::VoxelEngine::World::VoxelType::DIRT;
+    } else if (depthBelowSurface <= 20.0f) { // 4-20m: Weathered rock
+        return ::VoxelEngine::World::VoxelType::STONE;
+    } else if (depthBelowSurface <= 100.0f) { // 20-100m: Bedrock
+        return ::VoxelEngine::World::VoxelType::STONE;
     } else {
-        return ::VoxelEngine::World::VoxelType::AIR;
+        // Deep underground: Different rock types based on depth
+        // For now, use stone - future: implement geological layers
+        return ::VoxelEngine::World::VoxelType::STONE;
     }
 }
 
