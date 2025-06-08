@@ -1,6 +1,6 @@
 #include "ui/UISystem.h"
 #include "ui/UILogger.h"
-#include "../../game/include/utils/debug_logger.h"
+#include "utils/debug_logger_stub.h"
 #include <algorithm>
 #include <iostream> // Add this header for std::cout and std::cerr
 

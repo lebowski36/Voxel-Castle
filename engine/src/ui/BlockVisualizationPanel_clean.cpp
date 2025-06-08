@@ -1,6 +1,6 @@
 #include "ui/BlockVisualizationPanel.h"
 #include "rendering/TextureAtlas.h"
-#include "../../game/include/utils/debug_logger.h"
+#include "utils/debug_logger_stub.h"
 #include <glad/glad.h>
 #include <iostream>
 #include <algorithm>

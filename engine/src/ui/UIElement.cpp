@@ -1,5 +1,5 @@
 #include "ui/UIElement.h"
-#include "../../game/include/utils/debug_logger.h"
+#include "utils/debug_logger_stub.h"
 #include <algorithm>
 #include <iostream> // Added for std::cerr
 

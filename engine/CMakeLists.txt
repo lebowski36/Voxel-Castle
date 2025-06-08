@@ -45,6 +45,8 @@ add_library(VoxelEngine STATIC
     src/rendering/Shader.cpp # Added Shader source
     # Enhanced noise system
     src/util/enhanced_noise.cpp # Added EnhancedNoise source
+    # Utils system sources
+    src/utils/debug_logger_stub.cpp # Stub implementation for VoxelCastle::Utils logging (temporary until dual logging systems are merged)
     # UI System sources
     src/ui/UIElement.cpp # UI base element
     src/ui/UIRenderer.cpp # UI rendering system

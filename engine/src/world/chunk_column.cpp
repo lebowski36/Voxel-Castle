@@ -5,7 +5,7 @@
 #include <chrono>    // For timestamps
 #include <iomanip>   // For time formatting
 #include <sstream>   // For string streams
-#include "../../game/include/utils/debug_logger.h" // For debugging
+#include "utils/debug_logger_stub.h" // For debugging
 
 namespace VoxelCastle
 {

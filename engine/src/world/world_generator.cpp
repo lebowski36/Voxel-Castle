@@ -5,7 +5,7 @@
 #include "util/enhanced_noise.h"
 #include "world/voxel_types.h"
 #include "world/voxel.h"
-#include "../../game/include/utils/debug_logger.h"
+#include "utils/debug_logger_stub.h"
 #include <cmath>
 #include <iostream> // Added for logging
 #include <functional> // For std::hash

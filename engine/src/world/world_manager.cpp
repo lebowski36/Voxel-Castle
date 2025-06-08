@@ -16,7 +16,7 @@
 #include "rendering/mesh_builder.h"  // For VoxelEngine::Rendering::MeshBuilder
 #include "rendering/voxel_mesh.h"    // For VoxelEngine::Rendering::VoxelMesh
 #include "utils/logging_utils.h"
-#include "../../game/include/utils/debug_logger.h"
+#include "utils/debug_logger_stub.h"
 
 // Forward declaration to avoid circular dependency
 namespace VoxelCastle {

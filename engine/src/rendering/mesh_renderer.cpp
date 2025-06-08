@@ -1,6 +1,6 @@
 #include "rendering/mesh_renderer.h"
 #include "rendering/texture_atlas.h" // Added to access TILE_UV_WIDTH and TILE_UV_HEIGHT
-#include "../../game/include/utils/debug_logger.h"
+#include "utils/debug_logger_stub.h"
 #include <fstream>
 #include <sstream>
 #include <iostream>

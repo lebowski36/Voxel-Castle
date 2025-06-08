@@ -1,6 +1,6 @@
 #include "rendering/debug_utils.h"
 #include "rendering/render_utils.h" // For createShaderProgram
-#include "../../game/include/utils/debug_logger.h"
+#include "utils/debug_logger_stub.h"
 #include <glad/glad.h>
 #include <glm/gtc/matrix_transform.hpp>
 #include <iostream> // For std::cerr, std::cout

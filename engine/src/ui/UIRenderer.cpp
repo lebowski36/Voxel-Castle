@@ -1,7 +1,7 @@
 #include "ui/UIRenderer.h"
 #include "ui/TextRenderer.h"
 #include "ui/UILogger.h"
-#include "../../game/include/utils/debug_logger.h"
+#include "utils/debug_logger_stub.h"
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 #include <fstream>

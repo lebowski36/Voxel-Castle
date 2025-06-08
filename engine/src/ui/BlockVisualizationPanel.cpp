@@ -2,7 +2,7 @@
 #include "ui/UIRenderer.h"
 #include "ui/UILogger.h"
 #include "rendering/texture_atlas.h"
-#include "../../game/include/utils/debug_logger.h"
+#include "utils/debug_logger_stub.h"
 #include <algorithm>
 #include <sstream>
 #include <glad/glad.h>

@@ -6,7 +6,7 @@
 #include <iostream>
 #include <typeinfo>  // For typeid
 #include <algorithm> // For std::max
-#include "../../../../game/include/utils/debug_logger.h"
+#include "utils/debug_logger_stub.h"
 
 namespace VoxelEngine {
 namespace UI {

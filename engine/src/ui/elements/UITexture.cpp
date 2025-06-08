@@ -1,6 +1,6 @@
 #include "ui/elements/UITexture.h"
 #include "ui/UIRenderer.h"
-#include "../../../../game/include/utils/debug_logger.h"
+#include "utils/debug_logger_stub.h"
 #include <iostream> // Add this header for std::cout and std::cerr
 
 namespace VoxelEngine {

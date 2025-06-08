@@ -147,6 +147,11 @@ add_executable(test_tectonic_simulation tests/test_tectonic_simulation.cpp)
 target_link_libraries(test_tectonic_simulation PRIVATE VoxelEngine gtest gtest_main)
 target_include_directories(test_tectonic_simulation PRIVATE engine/include)
 
+# Add tectonic integration test executable
+add_executable(test_tectonic_integration test_tectonic_integration.cpp)
+target_link_libraries(test_tectonic_integration PRIVATE VoxelEngine glm::glm)
+target_include_directories(test_tectonic_integration PRIVATE engine/include)
+
 # Enable CTest (optional, if you add tests)
 enable_testing()
 # add_subdirectory(tests) # If you have a tests directory with CMakeLists.txt

@@ -5,7 +5,7 @@
 #include "world/chunk_segment.h"
 #include "rendering/texture_atlas.h"
 #include "world/voxel_face_patterns.h"
-#include "../../game/include/utils/debug_logger.h"
+#include "utils/debug_logger_stub.h"
 
 #include <glm/glm.hpp>
 #include <glm/gtc/type_ptr.hpp>

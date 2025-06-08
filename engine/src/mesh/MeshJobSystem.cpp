@@ -1,5 +1,5 @@
 #include <string>
-#include "game/include/utils/debug_logger.h"
+#include "utils/debug_logger_stub.h"
 
 // Redirect verbose logs to file-based logging
 DEBUG_LOG("MeshJobSystem", "Worker thread started");

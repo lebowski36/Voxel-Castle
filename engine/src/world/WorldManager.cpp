@@ -1,4 +1,4 @@
-#include "../../game/include/utils/debug_logger.h"
+#include "utils/debug_logger_stub.h"
 
 // Redirected dirty segment logs to a file-based logging system.
 

@@ -1,5 +1,5 @@
 #include "input/MouseCaptureManager.h"
-#include "../../game/include/utils/debug_logger.h"
+#include "utils/debug_logger_stub.h"
 #include <iostream>
 
 namespace VoxelEngine {

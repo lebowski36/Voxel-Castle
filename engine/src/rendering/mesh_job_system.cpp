@@ -1,6 +1,6 @@
 #include "rendering/mesh_job_system.h"
 #include "utils/logging_utils.h"
-#include "../../game/include/utils/debug_logger.h"
+#include "utils/debug_logger_stub.h"
 #include <iostream>
 
 namespace VoxelEngine {
