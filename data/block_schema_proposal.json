@@ -39,13 +39,13 @@
   "definitions": {
     "block": {
       "type": "object",
-      "required": ["id", "name", "category", "physical_properties", "texture_info"],
+      "required": ["name", "category", "physical_properties", "texture_info"],
       "properties": {
         "id": {
           "type": "integer",
           "minimum": 0,
-          "maximum": 255,
-          "description": "Unique 8-bit identifier for the block type"
+          "maximum": 65535,
+          "description": "Optional: Block ID for legacy/existing blocks. When present, this ID is preserved by the ID manager. When omitted, the ID manager auto-assigns a stable ID. New blocks should omit this field to use auto-assignment."
         },
         "name": {
           "type": "string",

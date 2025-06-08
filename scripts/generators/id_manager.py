@@ -39,6 +39,10 @@ class BlockIDManager:
         # Load existing registry for stability
         self.registry = self._load_registry()
         
+        # Migrate registry format if needed
+        self._migrate_registry_if_needed()
+        self._migrate_registry_if_needed()
+        
     def _load_registry(self) -> Dict:
         """Load existing ID registry or create new one."""
         if os.path.exists(self.registry_path):
@@ -51,15 +55,32 @@ class BlockIDManager:
         
         # Create new registry structure
         return {
-            "version": "1.0",
+            "version": "1.1",
             "last_generated": None,
             "assignments": {},
+            "deprecated_blocks": {},
+            "permanently_reserved_ids": [0],  # AIR block is permanently reserved
             "next_available_id": 0,
             "notes": {
                 "generation_order": " → ".join(self.category_order),
-                "AIR": "Reserved ID 0 - special air block"
+                "AIR": "Reserved ID 0 - special air block",
+                "deprecated_blocks": "Blocks removed from JSON but with IDs reserved for save compatibility",
+                "permanently_reserved_ids": "IDs that can never be reused (includes deprecated blocks)"
             }
         }
+    
+    def _migrate_registry_if_needed(self):
+        """Migrate registry from older versions to current format."""
+        current_version = self.registry.get("version", "1.0")
+        
+        if current_version == "1.0":
+            print("Migrating registry from v1.0 to v1.1...")
+            self.registry["version"] = "1.1"
+            self.registry["deprecated_blocks"] = {}
+            self.registry["permanently_reserved_ids"] = [0]  # AIR is always reserved
+            self.registry["notes"]["deprecated_blocks"] = "Blocks removed from JSON but with IDs reserved for save compatibility"
+            self.registry["notes"]["permanently_reserved_ids"] = "IDs that can never be reused (includes deprecated blocks)"
+            print("Registry migration complete.")
     
     def _save_registry(self):
         """Save updated registry to file."""
@@ -112,10 +133,11 @@ class BlockIDManager:
         """
         all_assignments = {}
         existing_assignments = self.registry.get("assignments", {})
+        reserved_ids = set(self.registry.get("permanently_reserved_ids", []))
         next_id = self.registry.get("next_available_id", 0)
         
         # Track which existing IDs are still valid
-        used_ids = set()
+        used_ids = set(existing_assignments.values()) | reserved_ids
         
         print("=== Block ID Generation ===")
         print(f"Processing categories: {' → '.join(self.category_order)}")
@@ -138,17 +160,16 @@ class BlockIDManager:
                     # Use existing ID for stability
                     assigned_id = existing_assignments[block_name]
                     existing_count += 1
-                    used_ids.add(assigned_id)
                 else:
-                    # Find next available ID (skip any that are already used)
-                    while next_id in used_ids or next_id in existing_assignments.values():
+                    # Find next available ID (skip reserved and used IDs)
+                    while next_id in used_ids:
                         next_id += 1
                     
                     assigned_id = next_id
                     new_blocks.append(f"{block_name}: {assigned_id}")
                     new_count += 1
-                    next_id += 1
                     used_ids.add(assigned_id)
+                    next_id += 1
                 
                 all_assignments[block_name] = assigned_id
                 category_assignments.append((block_name, assigned_id))
@@ -239,57 +260,160 @@ class BlockIDManager:
         return self.registry.get("assignments", {}).copy()
     
     def print_summary(self):
-        """Print a summary of current ID assignments."""
+        """Print a summary of current ID assignments and deprecated blocks."""
         assignments = self.get_all_assignments()
+        deprecated = self.get_deprecated_blocks()
+        reserved_ids = self.get_permanently_reserved_ids()
         
-        if not assignments:
-            print("No block ID assignments found.")
+        if not assignments and not deprecated:
+            print("No block ID assignments or deprecated blocks found.")
             return
         
         print(f"\n=== Block ID Registry Summary ===")
         print(f"Registry version: {self.registry.get('version', 'unknown')}")
         print(f"Last generated: {self.registry.get('last_generated', 'never')}")
-        print(f"Total blocks: {len(assignments)}")
-        print(f"ID range: {min(assignments.values())}-{max(assignments.values())}")
+        print(f"Active blocks: {len(assignments)}")
+        print(f"Deprecated blocks: {len(deprecated)}")
+        print(f"Reserved IDs: {len(reserved_ids)}")
+        
+        if assignments:
+            print(f"Active ID range: {min(assignments.values())}-{max(assignments.values())}")
         print(f"Next available: {self.registry.get('next_available_id', 'unknown')}")
         
-        # Group by category for display
-        category_blocks = {category: [] for category in self.category_order}
-        other_blocks = []
+        # Show deprecated blocks if any
+        if deprecated:
+            print(f"\n=== Deprecated Blocks ===")
+            for block_name, info in sorted(deprecated.items(), key=lambda x: x[1]['id']):
+                fallback = info.get('fallback_block', 'AIR')
+                reason = info.get('reason', 'No reason')
+                print(f"  {block_name} (ID {info['id']}) → fallback: {fallback}")
+                print(f"    Reason: {reason}")
         
-        for block_name, block_id in sorted(assignments.items(), key=lambda x: x[1]):
-            # Try to determine category based on which file contains the block
-            found_category = None
-            for category in self.category_order:
-                blocks = self._load_category_blocks(category)
-                if block_name in blocks:
-                    found_category = category
-                    break
+        # Group active blocks by category for display
+        if assignments:
+            category_blocks = {category: [] for category in self.category_order}
+            other_blocks = []
             
-            if found_category:
-                category_blocks[found_category].append((block_name, block_id))
-            else:
-                other_blocks.append((block_name, block_id))
+            for block_name, block_id in sorted(assignments.items(), key=lambda x: x[1]):
+                # Try to determine category based on which file contains the block
+                found_category = None
+                for category in self.category_order:
+                    blocks = self._load_category_blocks(category)
+                    if block_name in blocks:
+                        found_category = category
+                        break
+                
+                if found_category:
+                    category_blocks[found_category].append((block_name, block_id))
+                else:
+                    other_blocks.append((block_name, block_id))
+            
+            # Print category summary only (not detailed block list)
+            print(f"\n=== Active Blocks by Category ===")
+            for category in self.category_order:
+                if category_blocks[category]:
+                    block_count = len(category_blocks[category])
+                    min_id = min(block_id for _, block_id in category_blocks[category])
+                    max_id = max(block_id for _, block_id in category_blocks[category])
+                    print(f"  {category.upper()}: {block_count} blocks (IDs {min_id}-{max_id})")
+            
+            if other_blocks:
+                block_count = len(other_blocks)
+                min_id = min(block_id for _, block_id in other_blocks)
+                max_id = max(block_id for _, block_id in other_blocks)
+                print(f"  OTHER: {block_count} blocks (IDs {min_id}-{max_id})")
+    
+    def deprecate_block(self, block_name: str, reason: str = "Block removed") -> bool:
+        """
+        Safely deprecate a block by moving it from active assignments to deprecated.
         
-        # Print category summary only (not detailed block list)
-        print(f"\nCategory summary:")
-        for category in self.category_order:
-            if category_blocks[category]:
-                block_count = len(category_blocks[category])
-                min_id = min(block_id for _, block_id in category_blocks[category])
-                max_id = max(block_id for _, block_id in category_blocks[category])
-                print(f"  {category.upper()}: {block_count} blocks (IDs {min_id}-{max_id})")
+        Args:
+            block_name: Name of the block to deprecate
+            reason: Reason for deprecation (for documentation)
+            
+        Returns:
+            True if successfully deprecated, False if block not found
+        """
+        assignments = self.registry.get("assignments", {})
+        deprecated = self.registry.get("deprecated_blocks", {})
+        reserved_ids = set(self.registry.get("permanently_reserved_ids", []))
         
-        if other_blocks:
-            block_count = len(other_blocks)
-            min_id = min(block_id for _, block_id in other_blocks)
-            max_id = max(block_id for _, block_id in other_blocks)
-            print(f"  OTHER: {block_count} blocks (IDs {min_id}-{max_id})")
+        if block_name not in assignments:
+            print(f"ERROR: Block '{block_name}' not found in active assignments")
+            return False
+        
+        if block_name in deprecated:
+            print(f"WARNING: Block '{block_name}' is already deprecated")
+            return True
+        
+        # Move from assignments to deprecated
+        block_id = assignments[block_name]
+        del assignments[block_name]
+        
+        deprecated[block_name] = {
+            "id": block_id,
+            "deprecated_date": datetime.now().isoformat(),
+            "reason": reason,
+            "fallback_block": "AIR"  # Default fallback, can be customized
+        }
+        
+        # Add ID to permanently reserved list
+        reserved_ids.add(block_id)
+        self.registry["permanently_reserved_ids"] = sorted(list(reserved_ids))
+        
+        print(f"✅ Block '{block_name}' (ID {block_id}) deprecated successfully")
+        print(f"   Reason: {reason}")
+        print(f"   ID {block_id} is now permanently reserved")
+        
+        return True
+    
+    def set_fallback_block(self, deprecated_block: str, fallback_block: str) -> bool:
+        """
+        Set the fallback block for a deprecated block.
+        
+        Args:
+            deprecated_block: Name of the deprecated block
+            fallback_block: Name of the block to use as fallback
+            
+        Returns:
+            True if successful, False if deprecated block not found
+        """
+        deprecated = self.registry.get("deprecated_blocks", {})
+        assignments = self.registry.get("assignments", {})
+        
+        if deprecated_block not in deprecated:
+            print(f"ERROR: Block '{deprecated_block}' is not deprecated")
+            return False
+        
+        if fallback_block not in assignments and fallback_block != "AIR":
+            print(f"ERROR: Fallback block '{fallback_block}' does not exist")
+            return False
+        
+        deprecated[deprecated_block]["fallback_block"] = fallback_block
+        print(f"✅ Set fallback for '{deprecated_block}' to '{fallback_block}'")
+        
+        return True
+    
+    def get_deprecated_blocks(self) -> Dict[str, Dict]:
+        """Get all deprecated blocks with their metadata."""
+        return self.registry.get("deprecated_blocks", {}).copy()
+    
+    def get_permanently_reserved_ids(self) -> List[int]:
+        """Get all permanently reserved IDs."""
+        return self.registry.get("permanently_reserved_ids", []).copy()
+    
+    def is_id_available(self, block_id: int) -> bool:
+        """Check if a specific ID is available for assignment."""
+        assignments = self.registry.get("assignments", {})
+        reserved_ids = set(self.registry.get("permanently_reserved_ids", []))
+        
+        return block_id not in assignments.values() and block_id not in reserved_ids
 
 
 def main():
-    """Test the ID manager with current JSON data."""
+    """CLI interface for the ID manager with deprecation support."""
     import sys
+    import argparse
     
     # Get project root (assume script is in scripts/generators/)
     script_dir = os.path.dirname(os.path.abspath(__file__))
@@ -302,12 +426,60 @@ def main():
     # Initialize manager with absolute paths
     manager = BlockIDManager(data_dir=data_dir, registry_path=registry_path)
     
-    if len(sys.argv) > 1 and sys.argv[1] == "--summary":
-        # Just print current registry summary
+    # Set up argument parser
+    parser = argparse.ArgumentParser(description="Block ID Manager - Unified Block Resource System")
+    parser.add_argument("--summary", action="store_true", help="Print current registry summary")
+    parser.add_argument("--deprecate", type=str, help="Deprecate a block by name")
+    parser.add_argument("--reason", type=str, default="Block removed", help="Reason for deprecation")
+    parser.add_argument("--set-fallback", nargs=2, metavar=("DEPRECATED_BLOCK", "FALLBACK_BLOCK"),
+                       help="Set fallback block for a deprecated block")
+    parser.add_argument("--list-deprecated", action="store_true", help="List all deprecated blocks")
+    
+    args = parser.parse_args()
+    
+    # Handle specific commands
+    if args.summary:
         manager.print_summary()
         return
     
-    # Generate all IDs
+    if args.deprecate:
+        if manager.deprecate_block(args.deprecate, args.reason):
+            manager._save_registry()
+            print(f"✅ Successfully deprecated block '{args.deprecate}'")
+        else:
+            print(f"❌ Failed to deprecate block '{args.deprecate}'")
+            sys.exit(1)
+        return
+    
+    if args.set_fallback:
+        deprecated_block, fallback_block = args.set_fallback
+        if manager.set_fallback_block(deprecated_block, fallback_block):
+            manager._save_registry()
+            print(f"✅ Successfully set fallback for '{deprecated_block}' to '{fallback_block}'")
+        else:
+            print(f"❌ Failed to set fallback for '{deprecated_block}'")
+            sys.exit(1)
+        return
+    
+    if args.list_deprecated:
+        deprecated = manager.get_deprecated_blocks()
+        if not deprecated:
+            print("No deprecated blocks found.")
+        else:
+            print("=== Deprecated Blocks ===")
+            for block_name, info in sorted(deprecated.items(), key=lambda x: x[1]['id']):
+                fallback = info.get('fallback_block', 'AIR')
+                reason = info.get('reason', 'No reason')
+                date = info.get('deprecated_date', 'Unknown date')
+                print(f"  {block_name} (ID {info['id']})")
+                print(f"    Fallback: {fallback}")
+                print(f"    Reason: {reason}")
+                print(f"    Date: {date}")
+                print()
+        return
+    
+    # Default behavior: generate all IDs
+    print("Generating block IDs...")
     assignments = manager.generate_all_block_ids()
     
     # Validate
@@ -323,6 +495,12 @@ def main():
     
     print(f"\n✅ Block ID generation complete!")
     print(f"Registry saved to: {manager.registry_path}")
+    
+    # Show usage hints
+    print(f"\nUsage hints:")
+    print(f"  --summary              Show current registry status")
+    print(f"  --deprecate BLOCK      Safely remove a block")
+    print(f"  --list-deprecated      Show all deprecated blocks")
 
 
 if __name__ == "__main__":

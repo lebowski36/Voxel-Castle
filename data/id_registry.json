@@ -250,6 +250,7 @@
     "STONE_BRICK": 60,
     "SUBSOIL": 9,
     "TERRACOTTA": 91,
+    "TEST_AUTO_ID": 256,
     "TIN_ORE": 23,
     "TOPSOIL": 8,
     "TOXIC_GAS": 56,
@@ -257,11 +258,17 @@
     "WATER": 50,
     "WHITE_GLAZED_CERAMIC": 92
   },
-  "last_generated": "2025-06-08T15:13:44.942667",
-  "next_available_id": 256,
+  "deprecated_blocks": {},
+  "last_generated": "2025-06-08T15:40:49.002896",
+  "next_available_id": 257,
   "notes": {
     "AIR": "Reserved ID 0 - special air block",
-    "generation_order": "terrain \u2192 fluids \u2192 processed \u2192 functional \u2192 advanced \u2192 placeholder"
+    "deprecated_blocks": "Blocks removed from JSON but with IDs reserved for save compatibility",
+    "generation_order": "terrain \u2192 fluids \u2192 processed \u2192 functional \u2192 advanced \u2192 placeholder",
+    "permanently_reserved_ids": "IDs that can never be reused (includes deprecated blocks)"
   },
-  "version": "1.0"
+  "permanently_reserved_ids": [
+    0
+  ],
+  "version": "1.1"
 }

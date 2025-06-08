@@ -396,3 +396,101 @@ python scripts/generators/cpp_generator.py
 ---
 
 This system provides a robust foundation for managing hundreds of block types while maintaining development velocity and save game compatibility.
+
+## Block Removal Strategy 🗑️
+
+### Current Challenge
+When blocks are removed from JSON definitions, the current system:
+- ❌ **Immediately frees the ID** for reuse
+- ❌ **Breaks save compatibility** for worlds using removed blocks
+- ❌ **No migration path** for existing content
+
+### Recommended Solution: Tombstone + Fallback System
+
+#### Phase 1: Mark for Deprecation
+```bash
+# Mark a block as deprecated (keeps ID reserved)
+python scripts/generators/id_manager.py --deprecate BLOCK_NAME --fallback FALLBACK_BLOCK
+```
+
+#### Phase 2: Update ID Registry Format
+```json
+{
+  "assignments": {
+    "AIR": 0,
+    "STONE": 1,
+    // ... active blocks only
+  },
+  "deprecated_blocks": {
+    "DEPRECATED_OLD_BLOCK": {
+      "original_id": 42,
+      "original_name": "OLD_BLOCK", 
+      "deprecated_date": "2025-06-08T15:20:00Z",
+      "fallback_block": "STONE",
+      "removal_reason": "Superseded by improved block system"
+    }
+  },
+  "permanently_reserved_ids": [42, 67, 89],
+  "block_migrations": {
+    "OLD_BLOCK": "STONE",  // For save game loading
+    "LEGACY_WOOD": "OAK_WOOD"
+  }
+}
+```
+
+#### Phase 3: Engine Integration
+```cpp
+// In C++ game engine
+VoxelType loadBlockFromSave(int blockId) {
+    // Check if this is a deprecated block
+    if (isDeprecatedBlock(blockId)) {
+        VoxelType fallback = getFallbackBlock(blockId);
+        logBlockMigration(blockId, fallback);
+        return fallback;
+    }
+    return static_cast<VoxelType>(blockId);
+}
+```
+
+### Block Removal Workflow
+
+#### Step 1: Safe Deprecation
+```bash
+# Instead of directly removing from JSON:
+python scripts/generators/id_manager.py --deprecate TEST_BLOCK --fallback STONE
+```
+
+#### Step 2: Update Documentation
+- Add removal reason to changelog
+- Document migration path for modders
+- Update block reference documentation
+
+#### Step 3: Engine Compatibility
+- Implement fallback loading in save system
+- Add migration warnings to console
+- Test save game compatibility
+
+#### Step 4: Cleanup (Optional, After Grace Period)
+- Move deprecated blocks to archive
+- Keep ID permanently reserved
+- Maintain migration mappings
+
+### Benefits of This Approach
+
+✅ **Save Compatibility**: Old worlds continue to work
+✅ **ID Stability**: IDs never get reused inappropriately  
+✅ **Clear Migration**: Automatic fallback to replacement blocks
+✅ **Developer Friendly**: Clear deprecation workflow
+✅ **Debuggable**: Full audit trail of block changes
+✅ **Reversible**: Can un-deprecate if needed
+
+### Future Enhancements
+
+- **Batch deprecation** for major block system overhauls
+- **Version-based migrations** for gradual block evolution  
+- **Automatic save game upgrading** tools
+- **Block usage analytics** to identify safe removal candidates
+
+---
+
+**Key Principle**: Never break existing save games. Always provide a migration path.

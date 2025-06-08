@@ -429,8 +429,31 @@ This file tr**Current Focus:** ⚡ Unified Block Resource System (08d.3a) - Crea
 
 ---
 
-## 🚀 Current Focus: Building Custom C++ Engine Components
+## 🚨 **CRITICAL DISCOVERY: Block Removal Strategy Needed**
 
-This file tr**Current Focus:** ⚡ Unified Block Resource System (08d.3a) - Creating centralized data source for blockscks our immediate high-level tasks and progress. Detailed sub-tasks for each item are located in corresponding files within the `/home/system-x1/Projects/Voxel Castle/development_tasks/` directory.
+**Issue Identified**: Current system has **zero save compatibility protection** when blocks are removed:
+- ❌ Removed block IDs are immediately freed for reuse  
+- ❌ Old save games with removed blocks would crash/corrupt
+- ❌ No migration path for existing world content
+
+**Required Solution**: Implement **Tombstone + Fallback System** before production use:
+
+### Immediate Actions Needed:
+1. **🔧 Enhance ID Manager** - Add deprecation support instead of removal
+2. **📋 Update Registry Format** - Add deprecated_blocks and permanently_reserved_ids sections  
+3. **🎮 Engine Integration** - Implement fallback loading for deprecated blocks
+4. **🧪 Save Compatibility Testing** - Validate old saves work after block changes
+5. **📖 Document Workflow** - Safe block removal procedures for developers
+
+### Proposed Workflow:
+```bash
+# SAFE: Mark block as deprecated (preserves save compatibility)
+python scripts/generators/id_manager.py --deprecate OLD_BLOCK --fallback NEW_BLOCK
+
+# UNSAFE: Direct removal (current behavior - breaks saves)
+# Remove from JSON → ID gets reused → save corruption
+```
+
+**Priority**: 🔥 **CRITICAL** - Must implement before any production saves are created
 
 ---

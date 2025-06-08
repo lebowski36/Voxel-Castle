@@ -1770,6 +1770,34 @@
         }
       },
       "face_pattern": "UNIFORM"
+    },
+    "TEST_AUTO_ID": {
+      "name": "Test Auto ID Block",
+      "description": "A test block to verify auto-assignment of IDs",
+      "category": "terrain",
+      "tags": [
+        "solid",
+        "test"
+      ],
+      "physical_properties": {
+        "solid": true,
+        "transparent": false,
+        "fluid": false,
+        "walkable": false,
+        "hardness": 3.0,
+        "density": 2.5
+      },
+      "texture_info": {
+        "face_pattern": "UNIFORM",
+        "generation": {
+          "type": "solid_color",
+          "color": [128, 255, 128]
+        }
+      },
+      "world_generation": {
+        "natural_generation": false
+      },
+      "face_pattern": "UNIFORM"
     }
   }
 }
