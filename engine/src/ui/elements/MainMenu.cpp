@@ -63,7 +63,7 @@ void MainMenu::onWorldSelectionClicked() {
 
 void MainMenu::onCreateWorldClicked() {
     if (menuSystem_) {
-        menuSystem_->showWorldCreationDialog();
+        menuSystem_->showWorldGenerationUI();
     }
 }
 

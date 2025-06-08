@@ -14,6 +14,19 @@ class MainMenu;
 class SettingsMenu;
 class WorldCreationDialog;
 
+} // namespace UI
+} // namespace VoxelEngine
+
+// Forward declaration from VoxelCastle namespace
+namespace VoxelCastle {
+namespace UI {
+class WorldGenerationUI;
+}
+}
+
+namespace VoxelEngine {
+namespace UI {
+
 /**
  * @brief System for managing game menus
  * 
@@ -26,7 +39,8 @@ public:
         NONE,              // No menu is active
         MAIN_MENU,         // Main menu is active
         SETTINGS,          // Settings menu is active
-        WORLD_CREATION     // World creation dialog is active
+        WORLD_CREATION,    // World creation dialog is active
+        WORLD_GENERATION   // World generation UI is active
     };
 
     MenuSystem();
@@ -66,6 +80,11 @@ public:
      * @brief Show the world creation dialog
      */
     void showWorldCreationDialog();
+
+    /**
+     * @brief Show the world generation UI (Dwarf Fortress-style)
+     */
+    void showWorldGenerationUI();
 
     /**
      * @brief Close all menus
@@ -191,6 +210,7 @@ private:
     std::shared_ptr<MainMenu> mainMenu_;
     std::shared_ptr<SettingsMenu> settingsMenu_;
     std::shared_ptr<WorldCreationDialog> worldCreationDialog_;
+    std::shared_ptr<VoxelCastle::UI::WorldGenerationUI> worldGenerationUI_;
     std::function<void()> onMenuClosed_;
     std::function<bool(bool)> onFullscreenToggle_;
     std::function<void()> onExitRequest_;

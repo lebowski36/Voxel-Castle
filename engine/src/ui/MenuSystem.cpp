@@ -2,6 +2,7 @@
 #include "ui/elements/MainMenu.h"
 #include "ui/elements/SettingsMenu.h"
 #include "ui/elements/WorldCreationDialog.h"
+#include "ui/WorldGenerationUI.h"
 #include "world/world_seed.h"
 #include <iostream>
 #include <typeinfo>  // For typeid
@@ -47,6 +48,13 @@ bool MenuSystem::initialize(int screenWidth, int screenHeight, const std::string
         std::cerr << "[MenuSystem] Failed to initialize world creation dialog" << std::endl;
         return false;
     }
+
+    // Create world generation UI
+    worldGenerationUI_ = std::make_shared<VoxelCastle::UI::WorldGenerationUI>(renderer);
+    if (!worldGenerationUI_->initialize(this)) {
+        std::cerr << "[MenuSystem] Failed to initialize world generation UI" << std::endl;
+        return false;
+    }
     
     // Set up world creation dialog callbacks
     worldCreationDialog_->setOnWorldCreate([this](const VoxelCastle::World::WorldSeed& seed, WorldCreationDialog::WorldSize size) {
@@ -58,6 +66,17 @@ bool MenuSystem::initialize(int screenWidth, int screenHeight, const std::string
     
     worldCreationDialog_->setOnCancel([this]() {
         showMainMenu(); // Return to main menu
+    });
+
+    // Set up world generation UI completion callback
+    worldGenerationUI_->SetCompletionCallback([this](std::shared_ptr<VoxelCastle::World::SeedWorldGenerator> generatedWorld) {
+        // Convert the generated world to a WorldSeed for the existing callback system
+        // For now, we'll use a basic conversion - this can be enhanced later
+        VoxelCastle::World::WorldSeed seed; // Create with current timestamp
+        if (onWorldCreateRequest_) {
+            onWorldCreateRequest_(seed, 1); // Medium world size
+        }
+        closeMenus(); // Close UI after world generation complete
     });
     
     // Set widths only - preserve auto-calculated heights
@@ -71,13 +90,13 @@ bool MenuSystem::initialize(int screenWidth, int screenHeight, const std::string
     // Position menus after they auto-calculate their heights
     // Note: This will be called again in showMainMenu/showSettingsMenu to ensure proper centering
     centerMenus(screenWidth, screenHeight);
-    
-    // Hide all menus initially
+     // Hide all menus initially
     mainMenu_->setVisible(false);
     settingsMenu_->setVisible(false);
     worldCreationDialog_->setVisible(false);
-    
-    // Add menus to UI system
+    // WorldGenerationUI is not a UIElement, so it doesn't need setVisible
+
+    // Add menus to UI system (not WorldGenerationUI as it's rendered independently)
     addElement(mainMenu_);
     addElement(settingsMenu_);
     addElement(worldCreationDialog_);
@@ -87,10 +106,22 @@ bool MenuSystem::initialize(int screenWidth, int screenHeight, const std::string
 
 void MenuSystem::update(float deltaTime) {
     UISystem::update(deltaTime);
+    
+    // Update world generation UI if it's active
+    if (menuState_ == MenuState::WORLD_GENERATION && worldGenerationUI_) {
+        // WorldGenerationUI handles its own update logic during generation
+    }
 }
 
 void MenuSystem::render() {
-    UISystem::render();
+    if (menuState_ == MenuState::WORLD_GENERATION && worldGenerationUI_) {
+        // Render world generation UI directly (it uses its own rendering)
+        worldGenerationUI_->render();
+        // Generation completion is handled via the completion callback
+    } else {
+        // Render normal UI system (menus)
+        UISystem::render();
+    }
 }
 
 void MenuSystem::showMainMenu() {
@@ -178,10 +209,26 @@ void MenuSystem::showWorldCreationDialog() {
     );
 }
 
+void MenuSystem::showWorldGenerationUI() {
+    // Hide all traditional menus
+    mainMenu_->setVisible(false);
+    settingsMenu_->setVisible(false);
+    worldCreationDialog_->setVisible(false);
+    menuState_ = MenuState::WORLD_GENERATION;
+    
+    // Hide all other UI elements
+    for (const auto& element : elements_) {
+        element->setVisible(false);
+    }
+    
+    std::cout << "[MenuSystem] Switching to World Generation UI" << std::endl;
+}
+
 void MenuSystem::closeMenus() {
     mainMenu_->setVisible(false);
     settingsMenu_->setVisible(false);
     worldCreationDialog_->setVisible(false);
+    // WorldGenerationUI doesn't need setVisible as it's not a UIElement
     menuState_ = MenuState::NONE;
     
     // Call the onMenuClosed callback if it exists
