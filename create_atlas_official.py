@@ -108,12 +108,14 @@ def generate_modular_texture(block_id, block_info, size=32, face='all', seed=Non
                 return generate_stone_texture(size, subtype)
         
         elif block_type == 'wood':
-            print(f"Debug: Generating wood texture for {subtype}, size={size}")
+            print(f"Debug: Generating wood texture for {subtype}, size={size}, face={face}")
             if 'planks' in subtype or 'beam' in subtype:
                 wood_species = subtype.split('_')[0]  # oak, pine, etc.
                 return generate_plank_texture(size, wood_species)
             else:
-                return generate_wood_texture(size, subtype)
+                # For main atlas (top/bottom faces), show tree rings; for side atlas, show bark
+                face_type = 'top' if face in ['all', 'top', 'bottom'] else 'side'
+                return generate_wood_texture(size, subtype, face_type)
         
         elif block_type == 'organic':
             print(f"Debug: Generating organic texture for {subtype}, size={size}")
@@ -659,7 +661,7 @@ class DynamicAtlasGenerator:
                      fill=line_color, width=1)
     
     def _generate_debug_atlas(self, file_info: AtlasFileInfo, output_path: str) -> None:
-        """Generate debug version of atlas with block IDs and coordinates overlaid"""
+        """Generate debug version of atlas with 3x zoom, block names, IDs and coordinates overlaid"""
         debug_path = output_path.replace('.png', '_debug.png')
         
         # Load the original atlas
@@ -668,12 +670,20 @@ class DynamicAtlasGenerator:
             return
             
         atlas_image = Image.open(output_path).convert('RGBA')
-        draw = ImageDraw.Draw(atlas_image)
+        
+        # Create 3x zoomed version for better visibility
+        zoom_factor = 3
+        zoomed_size = (atlas_image.width * zoom_factor, atlas_image.height * zoom_factor)
+        zoomed_image = atlas_image.resize(zoomed_size, Image.NEAREST)
+        draw = ImageDraw.Draw(zoomed_image)
+        
+        # Adjust tile size for zoomed image
+        zoomed_tile_size = self.tile_size_px * zoom_factor
         
         # Try to load a font, fallback to default if not available
         try:
-            # Try to find a system font
-            font_size = max(8, self.tile_size_px // 4)
+            # Try to find a system font - smaller size for better visibility
+            font_size = max(6, self.tile_size_px // 4)
             font = ImageFont.truetype("/usr/share/fonts/dejavu/DejaVuSans-Bold.ttf", font_size)
         except:
             try:
@@ -681,31 +691,30 @@ class DynamicAtlasGenerator:
             except:
                 font = None
         
-        # Overlay block IDs and coordinates
+        # Get block name lookup from unified data
+        block_name_lookup = {}
+        for block_name, block_data in self.unified_data.items():
+            block_name_lookup[block_data["id"]] = block_name
+        
+        # Overlay block information (no grey overlay - just text with outlines)
         for block_id, slot_index in file_info.assigned_blocks:
             slot_x = slot_index % file_info.grid_width
             slot_y = slot_index // file_info.grid_width
-            x0 = slot_x * self.tile_size_px
-            y0 = slot_y * self.tile_size_px
+            x0 = slot_x * zoomed_tile_size
+            y0 = slot_y * zoomed_tile_size
             
-            # Create semi-transparent overlay for text background
-            overlay = Image.new('RGBA', (self.tile_size_px, self.tile_size_px), (0, 0, 0, 128))
-            atlas_image.paste(overlay, (x0, y0), overlay)
+            # Get block name
+            block_name = block_name_lookup.get(block_id, f"unknown_{block_id}")
             
-            # Add block ID in top-left corner
-            id_text = str(block_id)
-            if font:
-                bbox = draw.textbbox((0, 0), id_text, font=font)
-                text_width = bbox[2] - bbox[0]
-                text_height = bbox[3] - bbox[1]
-            else:
-                text_width, text_height = 20, 10  # Fallback estimate
+            # Add block ID and name in top-left corner
+            id_text = f"ID:{block_id}"
+            name_text = block_name
             
             # Position text with small margin
-            text_x = x0 + 2
-            text_y = y0 + 2
+            text_x = x0 + 4
+            text_y = y0 + 4
             
-            # Draw text with outline for visibility
+            # Draw ID text with outline for visibility
             if font:
                 # Black outline
                 for dx in [-1, 0, 1]:
@@ -714,9 +723,22 @@ class DynamicAtlasGenerator:
                             draw.text((text_x + dx, text_y + dy), id_text, fill=(0, 0, 0, 255), font=font)
                 # White text
                 draw.text((text_x, text_y), id_text, fill=(255, 255, 255, 255), font=font)
+                
+                # Get text height for positioning next line
+                bbox = draw.textbbox((0, 0), id_text, font=font)
+                text_height = bbox[3] - bbox[1]
+                
+                # Draw block name below ID
+                name_y = text_y + text_height + 2
+                for dx in [-1, 0, 1]:
+                    for dy in [-1, 0, 1]:
+                        if dx != 0 or dy != 0:
+                            draw.text((text_x + dx, name_y + dy), name_text, fill=(0, 0, 0, 255), font=font)
+                draw.text((text_x, name_y), name_text, fill=(255, 255, 255, 255), font=font)
             else:
                 # Fallback without font
                 draw.text((text_x, text_y), id_text, fill=(255, 255, 255, 255))
+                draw.text((text_x, text_y + 12), name_text, fill=(255, 255, 255, 255))
             
             # Add coordinate in bottom-right corner
             coord_text = f"({slot_x},{slot_y})"
@@ -725,10 +747,10 @@ class DynamicAtlasGenerator:
                 coord_width = bbox[2] - bbox[0]
                 coord_height = bbox[3] - bbox[1]
             else:
-                coord_width, coord_height = 30, 10  # Fallback estimate
+                coord_width, coord_height = 60, 15  # Fallback estimate for 3x zoom
             
-            coord_x = x0 + self.tile_size_px - coord_width - 2
-            coord_y = y0 + self.tile_size_px - coord_height - 2
+            coord_x = x0 + zoomed_tile_size - coord_width - 4
+            coord_y = y0 + zoomed_tile_size - coord_height - 4
             
             if font:
                 # Black outline
@@ -742,8 +764,8 @@ class DynamicAtlasGenerator:
                 # Fallback without font
                 draw.text((coord_x, coord_y), coord_text, fill=(255, 255, 255, 255))
         
-        atlas_image.save(debug_path)
-        print(f"🐛 Debug atlas saved: {debug_path}")
+        zoomed_image.save(debug_path)
+        print(f"🐛 Debug atlas saved (3x zoom): {debug_path}")
 
 def main():
     """Main function with command line argument support"""

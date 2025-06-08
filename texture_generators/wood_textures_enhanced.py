@@ -39,46 +39,86 @@ def generate_wood_texture(texture_size: int = 16, wood_type: str = 'oak', face_t
     return image
 
 def generate_end_grain_pattern(draw: ImageDraw.Draw, texture_size: int, palette: dict, wood_type: str) -> None:
-    """Generate end grain (top/bottom face) showing tree rings like Minecraft."""
+    """Generate realistic end grain (top/bottom face) showing multiple smooth concentric tree rings (Lebensringe)."""
+    import math
+    
     base_color = palette['base']
     ring_color = palette['grain_dark']
+    light_ring_color = palette['grain_light']
     
     # Fill base
     draw.rectangle([0, 0, texture_size-1, texture_size-1], fill=base_color)
     
-    # Draw concentric tree rings from center
+    # Center the rings for clean appearance
     center_x = texture_size // 2
     center_y = texture_size // 2
     
-    # Number of rings visible in cross-section (more rings for larger textures)
-    max_rings = max(4, texture_size // 4)
-    max_radius = min(center_x, center_y) - 1
+    # Calculate maximum radius to texture edge
+    max_radius = min(center_x, center_y, texture_size - center_x, texture_size - center_y)
     
-    for ring in range(1, max_rings + 1):
-        ring_radius = (ring * max_radius) // max_rings
-        ring_thickness = 1 if texture_size <= 16 else 2
-        
-        # Draw circular ring by scanning all pixels
-        for y in range(texture_size):
-            for x in range(texture_size):
-                # Calculate distance from center
-                dx = x - center_x
-                dy = y - center_y
-                distance = int((dx * dx + dy * dy) ** 0.5)
+    # Generate evenly spaced rings - completely deterministic
+    ring_radii = []
+    ring_spacing = max(2.0, texture_size / 10.0)  # Clean spacing for visibility
+    current_radius = ring_spacing * 0.7  # Start with a small inner ring
+    
+    while current_radius < max_radius:
+        ring_radii.append(current_radius)
+        # Fixed spacing - no randomness
+        current_radius += ring_spacing
+    
+    # Draw smooth concentric rings
+    for y in range(texture_size):
+        for x in range(texture_size):
+            dx = x - center_x
+            dy = y - center_y
+            distance = math.sqrt(dx * dx + dy * dy)
+            
+            # Very minimal organic distortion for naturalness - deterministic based on position
+            angle = math.atan2(dy, dx)
+            # Use deterministic pattern based on wood type and position
+            distortion_factor = {'oak': 0.1, 'pine': 0.05, 'birch': 0.15, 'mahogany': 0.08}.get(wood_type, 0.1)
+            distortion = distortion_factor * math.sin(angle * 8)  # Deterministic wobble
+            organic_distance = distance + distortion
+            
+            # Determine if we're on a ring boundary (dark line)
+            is_ring_line = False
+            ring_intensity = 0.0
+            
+            for radius in ring_radii:
+                # Distance from ring line
+                ring_distance = abs(organic_distance - radius)
                 
-                # Check if this pixel is part of the ring
-                if abs(distance - ring_radius) <= ring_thickness:
-                    # Add some randomness for organic look
-                    if random.random() < 0.7:  # Not every pixel for natural variation
-                        ring_draw_color = vary_color(ring_color, 20)
-                        draw.point((x, y), fill=ring_draw_color)
+                # Ring line thickness (1.0 pixels for clean appearance)
+                ring_thickness = 0.8
+                
+                if ring_distance <= ring_thickness:
+                    is_ring_line = True
+                    # Smooth falloff from ring center to edge
+                    ring_intensity = max(ring_intensity, 1.0 - (ring_distance / ring_thickness))
+                    break
+            
+            # Color the pixel
+            if is_ring_line:
+                # Smooth blend from base color to dark ring color
+                color = blend_colors(base_color, ring_color, ring_intensity * 0.7)
+            else:
+                # Base wood color with minimal variation
+                color = vary_color(base_color, 15, x + y)
+            
+            draw.point((x, y), fill=color)
     
-    # Add wood grain imperfections for realism
-    for _ in range(texture_size // 4):
-        grain_x = random.randint(0, texture_size - 1)
-        grain_y = random.randint(0, texture_size - 1)
-        grain_color = vary_color(palette['grain_light'], 10)
-        draw.point((grain_x, grain_y), fill=grain_color)
+    # Add very subtle wood grain texture that doesn't interfere with rings
+    grain_count = texture_size * texture_size // 64  # Minimal grain
+    # Fixed positions for deterministic grain
+    grain_positions = [(i * 7 + 3) % texture_size for i in range(grain_count)]
+    for i in range(grain_count):
+        grain_x = grain_positions[i]
+        grain_y = grain_positions[(i * 3 + 5) % grain_count] % texture_size
+        
+        # Deterministic grain pattern (every other grain)
+        if i % 2 == 0:
+            color = vary_color(base_color, 10, x + y * 2)
+            draw.point((grain_x, grain_y), fill=color)
 
 def generate_bark_pattern(draw: ImageDraw.Draw, texture_size: int, palette: dict, wood_type: str) -> None:
     """Generate species-specific bark patterns - COMPLETELY DIFFERENT per species."""
@@ -94,31 +134,32 @@ def generate_bark_pattern(draw: ImageDraw.Draw, texture_size: int, palette: dict
         
         # Deep vertical furrows characteristic of oak
         num_furrows = max(2, texture_size // 6)
+        furrow_offsets = [-2, 1, -1, 2, 0, -2, 1]  # Fixed offsets pattern
         for i in range(num_furrows):
             furrow_x = (texture_size // (num_furrows + 1)) * (i + 1)
-            furrow_x += random.randint(-2, 2)
+            furrow_x += furrow_offsets[i % len(furrow_offsets)]
             
             # Draw irregular vertical furrow
+            y_pattern = [0, -1, 1, 0, -1, 0, 1, -1, 0]  # Fixed pattern for irregularity
             for y in range(texture_size):
-                if random.random() < 0.8:  # Irregular furrow
-                    fx = furrow_x + random.randint(-1, 1)
+                if y % 5 != 2:  # Skip some pixels for irregular furrow (deterministic)
+                    fx = furrow_x + y_pattern[y % len(y_pattern)]
                     fx = max(0, min(texture_size-1, fx))
                     draw.point((fx, y), fill=furrow_color)
                     
                     # Add furrow depth
-                    if fx + 1 < texture_size and random.random() < 0.6:
-                        draw.point((fx + 1, y), fill=vary_color(furrow_color, -20))
+                    if fx + 1 < texture_size and y % 3 != 1:  # Deterministic depth pattern
+                        draw.point((fx + 1, y), fill=vary_color(furrow_color, -20, fx + y))
         
         # Add blocky ridge patterns
-        for _ in range(texture_size // 4):
-            ridge_x = random.randint(1, texture_size - 3)
-            ridge_y = random.randint(1, texture_size - 3)
-            ridge_size = random.randint(2, 4)
-            
-            draw.rectangle([ridge_x, ridge_y, 
-                          min(ridge_x + ridge_size, texture_size-1),
-                          min(ridge_y + ridge_size, texture_size-1)], 
-                         fill=ridge_color)
+        ridge_positions = [(3, 5, 3), (7, 2, 2), (12, 8, 4), (5, 12, 3), (10, 4, 2)]
+        for i in range(min(len(ridge_positions), texture_size // 4)):
+            ridge_x, ridge_y, ridge_size = ridge_positions[i]
+            if ridge_x < texture_size - 3 and ridge_y < texture_size - 3:
+                draw.rectangle([ridge_x, ridge_y, 
+                              min(ridge_x + ridge_size, texture_size-1),
+                              min(ridge_y + ridge_size, texture_size-1)], 
+                             fill=ridge_color)
     
     elif wood_type == 'pine':
         # Pine bark: Scaly, plated pattern, reddish-brown
@@ -144,7 +185,7 @@ def generate_bark_pattern(draw: ImageDraw.Draw, texture_size: int, palette: dict
                     scale_height = min(scale_size, texture_size - y)
                     
                     # Vary scale color
-                    varied_scale_color = vary_color(scale_color, 20)
+                    varied_scale_color = vary_color(scale_color, 20, x + y * 3)
                     draw.rectangle([scale_x, y, 
                                   scale_x + scale_width - 1, 
                                   y + scale_height - 1], 
@@ -165,24 +206,27 @@ def generate_bark_pattern(draw: ImageDraw.Draw, texture_size: int, palette: dict
         
         # Characteristic horizontal dark lines
         line_spacing = max(2, texture_size // 6)
-        for y in range(0, texture_size, line_spacing):
-            line_y = y + random.randint(-1, 1)
+        line_offsets = [-1, 0, 1, 0, -1, 1, 0]  # Fixed pattern for line variation
+        for i, y in enumerate(range(0, texture_size, line_spacing)):
+            line_y = y + line_offsets[i % len(line_offsets)]
             if 0 <= line_y < texture_size:
                 # Draw horizontal line with breaks
+                break_pattern = [True, True, False, True, True, True, False, True]  # Fixed break pattern
                 for x in range(texture_size):
-                    if random.random() < 0.7:  # Broken line pattern
+                    if break_pattern[x % len(break_pattern)]:  # Deterministic broken line pattern
                         draw.point((x, line_y), fill=line_color)
                         
-                        # Sometimes make line thicker
-                        if random.random() < 0.4 and line_y + 1 < texture_size:
+                        # Sometimes make line thicker (deterministic)
+                        if x % 5 == 2 and line_y + 1 < texture_size:
                             draw.point((x, line_y + 1), fill=line_color)
         
         # Add small dark spots/marks characteristic of birch
         spot_count = texture_size // 4
-        for _ in range(spot_count):
-            spot_x = random.randint(0, texture_size - 1)
-            spot_y = random.randint(0, texture_size - 1)
-            draw.point((spot_x, spot_y), fill=spot_color)
+        spot_positions = [(2, 3), (7, 1), (4, 8), (11, 5), (1, 11), (9, 2), (6, 9), (13, 7)]
+        for i in range(min(spot_count, len(spot_positions))):
+            spot_x, spot_y = spot_positions[i]
+            if spot_x < texture_size and spot_y < texture_size:
+                draw.point((spot_x, spot_y), fill=spot_color)
     
     elif wood_type == 'mahogany':
         # Mahogany bark: Dark reddish-brown, fine vertical striations
@@ -199,10 +243,12 @@ def generate_bark_pattern(draw: ImageDraw.Draw, texture_size: int, palette: dict
         
         # Add rich mahogany color variations
         variation_count = texture_size * texture_size // 8
-        for _ in range(variation_count):
-            vx = random.randint(0, texture_size - 1)
-            vy = random.randint(0, texture_size - 1)
-            variation_color = random.choice([highlight_color, vary_color(base_color, 15)])
+        variation_positions = [(i * 3 + 1, i * 5 + 2) for i in range(variation_count)]
+        variation_colors = [highlight_color, vary_color(base_color, 15, 42)]
+        for i in range(variation_count):
+            vx = variation_positions[i][0] % texture_size
+            vy = variation_positions[i][1] % texture_size
+            variation_color = variation_colors[i % len(variation_colors)]
             draw.point((vx, vy), fill=variation_color)
     
     else:
@@ -220,7 +266,7 @@ def generate_plank_texture(texture_size: int = 16, wood_type: str = 'oak') -> Im
     palette = get_palette(f'{wood_type}_wood')
     base_color = palette['base']
     grain_color = palette['grain_dark']
-    saw_mark_color = vary_color(base_color, -30)
+    saw_mark_color = vary_color(base_color, -30, 123)
     
     # Base plank color
     draw.rectangle([0, 0, texture_size-1, texture_size-1], fill=base_color)
@@ -231,23 +277,26 @@ def generate_plank_texture(texture_size: int = 16, wood_type: str = 'oak') -> Im
     
     # Add sawing marks (visible at 25cm scale)
     saw_mark_spacing = max(2, texture_size // 8)
-    for y in range(0, texture_size, saw_mark_spacing):
-        saw_y = y + random.randint(-1, 1)
+    saw_offsets = [-1, 0, 1, 0, -1, 1]  # Fixed pattern for saw mark variation
+    for i, y in enumerate(range(0, texture_size, saw_mark_spacing)):
+        saw_y = y + saw_offsets[i % len(saw_offsets)]
         if 0 <= saw_y < texture_size:
             # Subtle horizontal saw marks
+            mark_pattern = [False, False, True, False, False, False, True, False, True, False]
             for x in range(texture_size):
-                if random.random() < 0.3:  # Subtle marks
+                if mark_pattern[x % len(mark_pattern)]:  # Deterministic subtle marks
                     draw.point((x, saw_y), fill=saw_mark_color)
     
     # Add plank edge detail
-    edge_color = vary_color(base_color, -20)
-    # Top edge
+    edge_color = vary_color(base_color, -20, 456)
+    # Top edge - deterministic pattern
+    edge_pattern = [True, False, True, True, False, True]
     for x in range(texture_size):
-        if random.random() < 0.6:
+        if edge_pattern[x % len(edge_pattern)]:
             draw.point((x, 0), fill=edge_color)
     # Bottom edge  
     for x in range(texture_size):
-        if random.random() < 0.6:
+        if edge_pattern[(x + 2) % len(edge_pattern)]:  # Slightly offset pattern
             draw.point((x, texture_size-1), fill=edge_color)
     
     return image

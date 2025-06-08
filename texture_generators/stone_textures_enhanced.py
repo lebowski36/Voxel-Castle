@@ -37,15 +37,25 @@ def generate_stone_texture(texture_size: int = 16, stone_type: str = 'granite') 
         # Add larger feldspar crystals (visible at 25cm scale)
         crystal_palette = {
             'base': palette.get('crystal', (200, 180, 160, 255)),
-            'edge': vary_color(palette['crystal'], 20),
+            'edge': vary_color(palette['crystal'], 20, 42),
             'shine': (255, 255, 255, 100)
         }
         
         num_crystals = max(2, texture_size // 8)
-        for _ in range(num_crystals):
-            cx = random.randint(2, texture_size - 3)
-            cy = random.randint(2, texture_size - 3)
-            crystal_size = random.randint(1, max(1, texture_size // 6))
+        # Fixed crystal positions based on texture size and type
+        crystal_positions = [
+            (texture_size // 4, texture_size // 3),
+            (texture_size // 2, texture_size // 4),
+            (3 * texture_size // 4, 2 * texture_size // 3),
+            (texture_size // 6, 5 * texture_size // 6),
+            (5 * texture_size // 6, texture_size // 6)
+        ]
+        
+        for i in range(min(num_crystals, len(crystal_positions))):
+            cx, cy = crystal_positions[i]
+            cx = max(2, min(texture_size - 3, cx))  # Keep within bounds
+            cy = max(2, min(texture_size - 3, cy))
+            crystal_size = max(1, texture_size // 6)  # Fixed size
             
             # Draw angular crystal shape
             draw.rectangle([cx-1, cy-1, cx+crystal_size, cy+crystal_size], 
@@ -80,16 +90,17 @@ def generate_stone_texture(texture_size: int = 16, stone_type: str = 'granite') 
         draw_speckled_pattern(draw, 0, 0, texture_size, palette, density=8, variation=15)
         
         # Add sedimentary layering hints (visible at 25cm scale)
-        layer_color = vary_color(palette['base'], -20)
+        layer_color = vary_color(palette['base'], -20, 123)  # Fixed seed instead of undefined x + y
         num_layers = max(1, texture_size // 6)
+        layer_variations = [-1, 0, 1, -1, 0]  # Fixed pattern
         for i in range(num_layers):
-            y = (texture_size // (num_layers + 1)) * (i + 1)
-            y += random.randint(-1, 1)  # Slight variation
+            layer_y = (texture_size // (num_layers + 1)) * (i + 1)
+            layer_y += layer_variations[i % len(layer_variations)]  # Deterministic variation
             
             # Draw subtle horizontal layer line
-            for x in range(texture_size):
-                if random.random() < 0.7:  # Not continuous
-                    draw.point((x, y), fill=layer_color)
+            for layer_x in range(texture_size):
+                if (layer_x + i) % 3 != 0:  # Deterministic gaps instead of random
+                    draw.point((layer_x, layer_y), fill=layer_color)
     
     elif stone_type == 'sandstone':
         # Sandstone: cemented sand grains
@@ -98,30 +109,37 @@ def generate_stone_texture(texture_size: int = 16, stone_type: str = 'granite') 
         grain_colors = [
             palette['light'],
             palette['dark'],
-            vary_color(base_color, 10),
-            vary_color(base_color, -10)
+            vary_color(base_color, 10, 456),  # Fixed seed instead of undefined x + y
+            vary_color(base_color, -10, 789)  # Fixed seed instead of undefined x + y * 2
         ]
         
         # Fill with base
         draw.rectangle([0, 0, texture_size-1, texture_size-1], fill=base_color)
         
-        # Draw individual sand grains
+        # Draw individual sand grains - deterministic pattern
         grain_density = texture_size * texture_size // 4  # Dense grain pattern
-        for _ in range(grain_density):
-            gx = random.randint(0, texture_size - 1)
-            gy = random.randint(0, texture_size - 1)
-            grain_color = random.choice(grain_colors)
-            
-            # Vary grain size based on texture resolution
-            if texture_size >= 16 and random.random() < 0.3:
-                # Larger grains occasionally
-                grain_size = random.randint(1, 2)
-                draw.rectangle([gx, gy, 
-                              min(gx + grain_size, texture_size-1), 
-                              min(gy + grain_size, texture_size-1)], 
-                             fill=grain_color)
-            else:
-                draw.point((gx, gy), fill=grain_color)
+        grain_index = 0
+        for y in range(0, texture_size, 2):
+            for x in range(0, texture_size, 2):
+                if grain_index >= grain_density:
+                    break
+                # Use deterministic pattern for grain positions
+                gx = x + (grain_index % 2)
+                gy = y + ((grain_index // 2) % 2)
+                if gx < texture_size and gy < texture_size:
+                    grain_color = grain_colors[grain_index % len(grain_colors)]
+                    
+                    # Deterministic grain size based on position
+                    if texture_size >= 16 and (x + y) % 7 == 0:
+                        # Larger grains occasionally
+                        grain_size = 1 if texture_size < 32 else 2
+                        draw.rectangle([gx, gy, 
+                                      min(gx + grain_size, texture_size-1), 
+                                      min(gy + grain_size, texture_size-1)], 
+                                     fill=grain_color)
+                    else:
+                        draw.point((gx, gy), fill=grain_color)
+                grain_index += 1
     
     elif stone_type == 'slate':
         # Slate: metamorphic rock with pronounced layering
@@ -130,39 +148,56 @@ def generate_stone_texture(texture_size: int = 16, stone_type: str = 'granite') 
         
         # Strong horizontal layering characteristic of slate
         layer_spacing = max(2, texture_size // 8)
+        layer_variations = [-1, 0, 1, 0, -1]  # Fixed pattern
+        layer_colors = [palette['light'], palette['dark']]
+        
+        layer_index = 0
         for y in range(0, texture_size, layer_spacing):
-            layer_y = y + random.randint(-1, 1)
+            layer_y = y + layer_variations[layer_index % len(layer_variations)]
             if layer_y < 0 or layer_y >= texture_size:
+                layer_index += 1
                 continue
                 
-            layer_color = random.choice([palette['light'], palette['dark']])
+            layer_color = layer_colors[layer_index % len(layer_colors)]
             
-            # Draw layer line with some breaks
+            # Draw layer line with deterministic breaks
             for x in range(texture_size):
-                if random.random() < 0.8:
+                if (x + layer_index) % 5 != 0:  # Deterministic gaps
                     draw.point((x, layer_y), fill=layer_color)
                     
-                    # Sometimes draw thick layers
-                    if random.random() < 0.3 and layer_y + 1 < texture_size:
+                    # Sometimes draw thick layers - deterministic
+                    if (x + layer_index) % 11 == 0 and layer_y + 1 < texture_size:
                         draw.point((x, layer_y + 1), fill=layer_color)
+            layer_index += 1
     
     elif stone_type == 'obsidian':
         # Obsidian: volcanic glass
         # Base black/dark color
         draw.rectangle([0, 0, texture_size-1, texture_size-1], fill=palette['base'])
         
-        # Add glassy highlights and reflections
+        # Add glassy highlights and reflections - deterministic positions
         highlight_count = max(3, texture_size // 4)
-        for _ in range(highlight_count):
-            hx = random.randint(0, texture_size - 1)
-            hy = random.randint(0, texture_size - 1)
+        highlight_positions = [
+            (texture_size // 4, texture_size // 3),
+            (texture_size // 2, texture_size // 5),
+            (3 * texture_size // 4, 2 * texture_size // 3),
+            (texture_size // 6, 4 * texture_size // 5),
+            (5 * texture_size // 6, texture_size // 4),
+            (texture_size // 3, 3 * texture_size // 4)
+        ]
+        highlight_colors = [palette['shine'], palette['reflection']]
+        
+        for i in range(min(highlight_count, len(highlight_positions))):
+            hx, hy = highlight_positions[i]
+            hx = max(0, min(texture_size - 1, hx))
+            hy = max(0, min(texture_size - 1, hy))
             
-            highlight_color = random.choice([palette['shine'], palette['reflection']])
+            highlight_color = highlight_colors[i % len(highlight_colors)]
             draw.point((hx, hy), fill=highlight_color)
             
-            # Occasionally add larger reflective areas
-            if random.random() < 0.2 and texture_size >= 16:
-                reflection_size = random.randint(1, 2)
+            # Occasionally add larger reflective areas - deterministic
+            if i % 5 == 0 and texture_size >= 16:
+                reflection_size = 1 if texture_size < 32 else 2
                 draw.rectangle([hx, hy, 
                               min(hx + reflection_size, texture_size-1),
                               min(hy + reflection_size, texture_size-1)], 
@@ -185,9 +220,19 @@ def generate_stone_texture(texture_size: int = 16, stone_type: str = 'granite') 
             'shine': (255, 255, 255, 255)
         }
         draw_speckled_pattern(draw, 0, 0, texture_size, palette_quartzite, density=8, variation=15)
-        # Add crystalline sparkles
-        for _ in range(texture_size // 4):
-            sx, sy = random.randint(0, texture_size-1), random.randint(0, texture_size-1)
+        # Add crystalline sparkles - deterministic positions
+        sparkle_positions = [
+            (texture_size // 4, texture_size // 6),
+            (texture_size // 2, texture_size // 3),
+            (3 * texture_size // 4, texture_size // 2),
+            (texture_size // 6, 5 * texture_size // 6),
+            (5 * texture_size // 6, texture_size // 4)
+        ]
+        sparkle_count = min(texture_size // 4, len(sparkle_positions))
+        for i in range(sparkle_count):
+            sx, sy = sparkle_positions[i]
+            sx = max(0, min(texture_size-1, sx))
+            sy = max(0, min(texture_size-1, sy))
             draw.point((sx, sy), fill=(255, 255, 255, 200))
             
     elif stone_type == 'pumice':
@@ -208,7 +253,7 @@ def generate_stone_texture(texture_size: int = 16, stone_type: str = 'granite') 
         }
         # Create layered appearance with horizontal patterns
         for y in range(0, texture_size, max(1, texture_size // 8)):
-            layer_color = vary_color(palette_shale['base'], 15)
+            layer_color = vary_color(palette_shale['base'], 15, 234 + y * 3)  # Fixed seed instead of undefined x
             draw.line([(0, y), (texture_size-1, y)], fill=layer_color)
         draw_speckled_pattern(draw, 0, 0, texture_size, palette_shale, density=10, variation=20)
         
@@ -283,7 +328,7 @@ def generate_processed_stone_texture(texture_size: int = 16, processed_type: str
                 
                 if brick_x2 > brick_x1 and brick_y2 > brick_y1:
                     # Add slight color variation to each brick
-                    varied_brick_color = vary_color(brick_color, 10)
+                    varied_brick_color = vary_color(brick_color, 10, brick_x1 + brick_y1)
                     draw.rectangle([brick_x1, brick_y1, brick_x2, brick_y2], 
                                  fill=varied_brick_color)
                 
@@ -306,13 +351,32 @@ def generate_processed_stone_texture(texture_size: int = 16, processed_type: str
             (110, 115, 125, 255)
         ]
         
-        for _ in range(num_stones):
-            # Random stone position and size
-            stone_x = random.randint(0, texture_size - 2)
-            stone_y = random.randint(0, texture_size - 2)
-            stone_size = random.randint(2, max(2, texture_size // 4))
+        # Generate irregular stone shapes - deterministic positions
+        num_stones = max(4, texture_size // 3)
+        stone_colors = [
+            (140, 140, 140, 255),
+            (100, 100, 100, 255),
+            (130, 125, 120, 255),
+            (110, 115, 125, 255)
+        ]
+        
+        stone_positions = [
+            (texture_size // 6, texture_size // 4),
+            (texture_size // 2, texture_size // 6),
+            (2 * texture_size // 3, texture_size // 3),
+            (texture_size // 4, 2 * texture_size // 3),
+            (5 * texture_size // 6, 5 * texture_size // 6),
+            (texture_size // 8, 7 * texture_size // 8)
+        ]
+        
+        for i in range(min(num_stones, len(stone_positions))):
+            # Deterministic stone position and size
+            stone_x, stone_y = stone_positions[i]
+            stone_x = max(0, min(texture_size - 2, stone_x))
+            stone_y = max(0, min(texture_size - 2, stone_y))
+            stone_size = max(2, texture_size // 4) if i % 2 == 0 else max(2, texture_size // 6)
             
-            stone_color = random.choice(stone_colors)
+            stone_color = stone_colors[i % len(stone_colors)]
             
             # Draw irregular stone shape
             draw.rectangle([stone_x, stone_y, 

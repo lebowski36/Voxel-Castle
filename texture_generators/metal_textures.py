@@ -24,35 +24,57 @@ def generate_iron_block(draw: ImageDraw.Draw, x0: int, y0: int, size: int) -> No
     # Base iron color
     draw.rectangle([x0, y0, x0 + size - 1, y0 + size - 1], fill=palette['base'])
     
-    # Add metallic surface texture
-    for _ in range(size * size // 8):
-        mx = random.randint(x0, x0 + size - 1)
-        my = random.randint(y0, y0 + size - 1)
+    # Add metallic surface texture - deterministic positions
+    texture_count = size * size // 8
+    
+    # Create fixed pattern for surface variations
+    for i in range(texture_count):
+        # Deterministic positions using grid pattern with offset
+        grid_x = i % (size // 2)
+        grid_y = i // (size // 2)
+        mx = x0 + (grid_x * 2) + (i % 2)
+        my = y0 + (grid_y * 2) + ((i // 2) % 2)
         
-        # Surface variations
-        if random.random() < 0.3:
+        # Clamp to bounds
+        mx = max(x0, min(x0 + size - 1, mx))
+        my = max(y0, min(y0 + size - 1, my))
+        
+        # Surface variations based on position
+        variation_type = (i + mx + my) % 10
+        if variation_type < 3:
             draw.point((mx, my), fill=palette['light'])
-        elif random.random() < 0.5:
+        elif variation_type < 5:
             draw.point((mx, my), fill=palette['dark'])
     
-    # Add subtle shine lines (metallic reflections)
-    for _ in range(size // 4):
-        # Random shine line
-        sx = random.randint(x0, x0 + size - 1)
-        sy = random.randint(y0, y0 + size - 1)
-        line_length = random.randint(2, size // 3)
-        
-        # Horizontal or vertical shine lines
-        if random.choice([True, False]):
-            # Horizontal
-            for i in range(line_length):
-                px = max(x0, min(x0 + size - 1, sx + i))
+    # Add subtle shine lines (metallic reflections) - deterministic
+    shine_count = size // 4
+    for i in range(shine_count):
+        # Fixed shine line positions
+        if i < shine_count // 2:
+            # Horizontal lines
+            sx = x0 + (i * size // shine_count) * 2
+            sy = y0 + size // 4 + (i * size // 8)
+            line_length = size // 4 + (i % 3)
+            
+            sx = max(x0, min(x0 + size - 1, sx))
+            sy = max(y0, min(y0 + size - 1, sy))
+            
+            for j in range(line_length):
+                px = max(x0, min(x0 + size - 1, sx + j))
                 if x0 <= px < x0 + size and y0 <= sy < y0 + size:
                     draw.point((px, sy), fill=palette['shine'])
         else:
-            # Vertical
-            for i in range(line_length):
-                py = max(y0, min(y0 + size - 1, sy + i))
+            # Vertical lines
+            idx = i - shine_count // 2
+            sx = x0 + size // 3 + (idx * size // 6)
+            sy = y0 + (idx * size // shine_count) * 2
+            line_length = size // 5 + (idx % 2)
+            
+            sx = max(x0, min(x0 + size - 1, sx))
+            sy = max(y0, min(y0 + size - 1, sy))
+            
+            for j in range(line_length):
+                py = max(y0, min(y0 + size - 1, sy + j))
                 if x0 <= sx < x0 + size and y0 <= py < y0 + size:
                     draw.point((sx, py), fill=palette['shine'])
 

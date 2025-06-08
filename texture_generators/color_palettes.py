@@ -95,6 +95,20 @@ HARDWOOD_WOOD = {
     'rich_tone': (110, 60, 40, 255)
 }
 
+BAMBOO_PLANK_WOOD = {
+    'base': (220, 200, 140, 255),
+    'grain_dark': (180, 160, 100, 255),
+    'grain_light': (240, 220, 160, 255),
+    'segment': (200, 180, 120, 255)
+}
+
+CORK_WOOD = {
+    'base': (180, 160, 120, 255),
+    'grain_dark': (140, 120, 80, 255),
+    'grain_light': (200, 180, 140, 255),
+    'texture': (160, 140, 100, 255)
+}
+
 # ========== ORE & MINERAL PALETTES ==========
 
 COAL_ORE = {
@@ -251,6 +265,8 @@ def get_palette(material_name: str) -> ColorPalette:
         'birch_wood': BIRCH_WOOD,
         'mahogany_wood': MAHOGANY_WOOD,
         'hardwood_wood': HARDWOOD_WOOD,
+        'bamboo_plank_wood': BAMBOO_PLANK_WOOD,
+        'cork_wood': CORK_WOOD,
         'coal_ore': COAL_ORE,
         'iron_ore': IRON_ORE,
         'copper_ore': COPPER_ORE,
@@ -284,16 +300,21 @@ def blend_colors(color1: Color, color2: Color, ratio: float = 0.5) -> Color:
         int(color1[3] * (1 - ratio) + color2[3] * ratio)
     )
 
-def vary_color(color: Color, variation: int = 20) -> Color:
-    """Add random variation to a color within specified range."""
+def vary_color(color: Color, variation: int = 20, seed_offset: int = 0) -> Color:
+    """Add deterministic variation to a color within specified range."""
     # Ensure variation is positive
     abs_variation = abs(variation)
     if abs_variation == 0:
         return color
     
+    # Use deterministic variation based on color values and seed offset
+    r_var = ((color[0] * 17 + seed_offset * 23) % (2 * abs_variation + 1)) - abs_variation
+    g_var = ((color[1] * 19 + seed_offset * 29) % (2 * abs_variation + 1)) - abs_variation
+    b_var = ((color[2] * 13 + seed_offset * 31) % (2 * abs_variation + 1)) - abs_variation
+    
     return (
-        max(0, min(255, color[0] + random.randint(-abs_variation, abs_variation))),
-        max(0, min(255, color[1] + random.randint(-abs_variation, abs_variation))),
-        max(0, min(255, color[2] + random.randint(-abs_variation, abs_variation))),
+        max(0, min(255, color[0] + r_var)),
+        max(0, min(255, color[1] + g_var)),
+        max(0, min(255, color[2] + b_var)),
         color[3]  # Keep alpha unchanged
     )

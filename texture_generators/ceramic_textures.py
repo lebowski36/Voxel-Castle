@@ -36,7 +36,7 @@ def generate_clay_brick(draw: ImageDraw.Draw, x0: int, y0: int, size: int) -> No
         
         # Add texture speckles
         if random.random() < 0.5:
-            color = vary_color(palette['brick'], variation=20)
+            color = vary_color(palette['brick'], variation=20, seed_offset=tx + ty)
             draw.point((tx, ty), fill=color)
 
 def generate_terracotta(draw: ImageDraw.Draw, x0: int, y0: int, size: int) -> None:

@@ -19,12 +19,26 @@ def generate_coal_ore(draw: ImageDraw.Draw, x0: int, y0: int, size: int) -> None
     stone_palette = get_palette('stone_basic')
     draw_speckled_pattern(draw, x0, y0, size, stone_palette, density=8, variation=20)
     
-    # Coal chunks
+    # Coal chunks - deterministic positions based on tile coordinates
     coal_palette = get_palette('coal_ore')
-    for _ in range(size // 3):
-        cx = random.randint(x0, x0 + size - 2)
-        cy = random.randint(y0, y0 + size - 2)
-        chunk_size = random.randint(1, max(1, size // 4))
+    coal_chunk_count = size // 3
+    
+    # Fixed positions for coal chunks based on tile coordinates
+    coal_positions = [
+        (x0 + size // 4, y0 + size // 6),
+        (x0 + 3 * size // 4, y0 + 2 * size // 3),
+        (x0 + size // 6, y0 + 4 * size // 5),
+        (x0 + 2 * size // 3, y0 + size // 3),
+        (x0 + size // 2, y0 + size // 8)
+    ]
+    
+    for i in range(min(coal_chunk_count, len(coal_positions))):
+        cx, cy = coal_positions[i]
+        cx = max(x0, min(x0 + size - 2, cx))
+        cy = max(y0, min(y0 + size - 2, cy))
+        
+        # Fixed chunk sizes based on position index
+        chunk_size = max(1, (size // 4) - (i % 2))
         
         # Draw coal chunk
         draw.rectangle([
@@ -33,8 +47,8 @@ def generate_coal_ore(draw: ImageDraw.Draw, x0: int, y0: int, size: int) -> None
             min(y0 + size - 1, cy + chunk_size)
         ], fill=coal_palette['coal'])
         
-        # Add some shine
-        if random.random() < 0.3:
+        # Add shine to first and third chunks (deterministic)
+        if i % 3 == 0:
             shine_x = cx + chunk_size // 2
             shine_y = cy + chunk_size // 2
             if x0 <= shine_x < x0 + size and y0 <= shine_y < y0 + size:
@@ -49,35 +63,38 @@ def generate_iron_ore(draw: ImageDraw.Draw, x0: int, y0: int, size: int) -> None
     # Iron veins and deposits
     iron_palette = get_palette('iron_ore')
     
-    # Draw prominent iron veins
-    vein_palette = {
-        'base': stone_palette['base'],  # Use for vein pattern background (not actually used)
-        'vein_dark': iron_palette['iron_rust']  # Use for the actual veins
-    }
+    # Draw 2-3 rusty iron veins - fixed count
+    vein_count = 2 if size < 16 else 3
     
-    # Draw 2-3 rusty iron veins
-    for _ in range(random.randint(2, 3)):
-        # Choose random start and end points
-        start_x = x0 + random.randint(0, size // 4)
-        start_y = y0 + random.randint(0, size - 1)
-        end_x = x0 + random.randint(3 * size // 4, size - 1)
-        end_y = y0 + random.randint(0, size - 1)
+    # Fixed vein paths
+    vein_configs = [
+        {'start': (x0, y0 + size // 4), 'end': (x0 + size - 1, y0 + 3 * size // 4), 'width': 1},
+        {'start': (x0 + size // 8, y0), 'end': (x0 + 7 * size // 8, y0 + size - 1), 'width': 2},
+        {'start': (x0 + size // 3, y0 + size // 6), 'end': (x0 + 2 * size // 3, y0 + 5 * size // 6), 'width': 1}
+    ]
+    
+    for vein_idx in range(min(vein_count, len(vein_configs))):
+        config = vein_configs[vein_idx]
+        start_x, start_y = config['start']
+        end_x, end_y = config['end']
+        vein_width = config['width']
         
         # Draw curved vein
         steps = max(size // 2, 5)
-        vein_width = random.randint(1, 2)
         
         for i in range(steps + 1):
             t = i / steps
             
-            # Linear interpolation with some randomness for natural look
+            # Linear interpolation with fixed variation pattern
             vx = int(start_x + t * (end_x - start_x))
             vy = int(start_y + t * (end_y - start_y))
             
-            # Add some curve variation
+            # Add fixed curve variation based on step and vein index
             variation = size // 8
-            vx += random.randint(-variation, variation)
-            vy += random.randint(-variation, variation)
+            var_x = int(variation * math.sin(i * 0.5 + vein_idx)) // 2
+            var_y = int(variation * math.cos(i * 0.3 + vein_idx)) // 2
+            vx += var_x
+            vy += var_y
             
             # Ensure we're in bounds
             vx = max(x0, min(x0 + size - 1, vx))
@@ -88,17 +105,17 @@ def generate_iron_ore(draw: ImageDraw.Draw, x0: int, y0: int, size: int) -> None
                 wx = max(x0, min(x0 + size - 1, vx + w))
                 wy = max(y0, min(y0 + size - 1, vy + w))
                 
-                # Iron color varies between metallic and rusty
-                iron_color = random.choice([iron_palette['iron'], iron_palette['iron_rust']])
+                # Iron color alternates deterministically
+                iron_color = iron_palette['iron'] if (i + w) % 3 == 0 else iron_palette['iron_rust']
                 draw.point((wx, wy), fill=iron_color)
                 
-                # Add some clusters around points
-                if random.random() < 0.3:
+                # Add clusters at specific intervals
+                if i % 4 == 0:
                     for dx in [-1, 0, 1]:
                         for dy in [-1, 0, 1]:
                             px = max(x0, min(x0 + size - 1, wx + dx))
                             py = max(y0, min(y0 + size - 1, wy + dy))
-                            if random.random() < 0.3:
+                            if (dx + dy) % 2 == 0:  # Checkered pattern
                                 draw.point((px, py), fill=iron_color)
 
 def generate_copper_ore(draw: ImageDraw.Draw, x0: int, y0: int, size: int) -> None:
@@ -115,17 +132,28 @@ def generate_copper_ore(draw: ImageDraw.Draw, x0: int, y0: int, size: int) -> No
     }
     draw_vein_pattern(draw, x0, y0, size, vein_palette, vein_count=2)
     
-    # Add copper oxidation spots
-    for _ in range(size // 4):
-        ox = random.randint(x0, x0 + size - 1)
-        oy = random.randint(y0, y0 + size - 1)
+    # Add copper oxidation spots - deterministic positions
+    oxidation_count = size // 4
+    oxidation_positions = [
+        (x0 + size // 5, y0 + size // 3),
+        (x0 + 3 * size // 4, y0 + size // 8),
+        (x0 + size // 2, y0 + 4 * size // 5),
+        (x0 + size // 8, y0 + 2 * size // 3),
+        (x0 + 5 * size // 6, y0 + size // 2)
+    ]
+    
+    for i in range(min(oxidation_count, len(oxidation_positions))):
+        ox, oy = oxidation_positions[i]
+        ox = max(x0, min(x0 + size - 1, ox))
+        oy = max(y0, min(y0 + size - 1, oy))
+        
         draw.point((ox, oy), fill=copper_palette['copper_oxide'])
         
-        # Sometimes add a small oxidation cluster for more visibility
-        if random.random() < 0.3:
+        # Add oxidation cluster for first and third spots
+        if i % 2 == 0:
             for dx in [-1, 0, 1]:
                 for dy in [-1, 0, 1]:
-                    if random.random() < 0.4:
+                    if (dx + dy) % 2 == 0:  # Checkered pattern
                         px = max(x0, min(x0 + size - 1, ox + dx))
                         py = max(y0, min(y0 + size - 1, oy + dy))
                         draw.point((px, py), fill=copper_palette['copper_oxide'])
@@ -138,34 +166,38 @@ def generate_gold_ore(draw: ImageDraw.Draw, x0: int, y0: int, size: int) -> None
     
     # Gold veins
     gold_palette = get_palette('gold_ore')
-    vein_palette = {
-        'base': stone_palette['base'],  # Use stone as background
-        'vein_dark': gold_palette['gold']  # Gold veins
-    }
     
-    # Draw 1-2 gold veins
-    for _ in range(random.randint(1, 2)):
-        # Choose random start and end points
-        start_x = x0 + random.randint(0, size // 4)
-        start_y = y0 + random.randint(0, size - 1)
-        end_x = x0 + random.randint(3 * size // 4, size - 1)
-        end_y = y0 + random.randint(0, size - 1)
+    # Draw 1-2 gold veins - deterministic count
+    vein_count = 1 if size < 16 else 2
+    
+    # Fixed vein configurations
+    vein_configs = [
+        {'start': (x0, y0 + size // 3), 'end': (x0 + size - 1, y0 + 2 * size // 3)},
+        {'start': (x0 + size // 4, y0), 'end': (x0 + 3 * size // 4, y0 + size - 1)}
+    ]
+    
+    for vein_idx in range(min(vein_count, len(vein_configs))):
+        config = vein_configs[vein_idx]
+        start_x, start_y = config['start']
+        end_x, end_y = config['end']
         
         # Draw curved vein
         steps = max(size // 2, 5)
-        vein_width = random.randint(1, 2)
+        vein_width = 1 if vein_idx == 0 else 2
         
         for i in range(steps + 1):
             t = i / steps
             
-            # Linear interpolation with some randomness for natural look
+            # Linear interpolation with fixed variation pattern
             vx = int(start_x + t * (end_x - start_x))
             vy = int(start_y + t * (end_y - start_y))
             
-            # Add some curve variation
+            # Add fixed curve variation
             variation = size // 8
-            vx += random.randint(-variation, variation)
-            vy += random.randint(-variation, variation)
+            var_x = int(variation * math.sin(i * 0.4 + vein_idx * 1.5)) // 2
+            var_y = int(variation * math.cos(i * 0.2 + vein_idx)) // 2
+            vx += var_x
+            vy += var_y
             
             # Ensure we're in bounds
             vx = max(x0, min(x0 + size - 1, vx))
@@ -176,25 +208,35 @@ def generate_gold_ore(draw: ImageDraw.Draw, x0: int, y0: int, size: int) -> None
                 wx = max(x0, min(x0 + size - 1, vx + w))
                 wy = max(y0, min(y0 + size - 1, vy + w))
                 
-                # Gold color varies between standard and bright
-                gold_color = random.choice([gold_palette['gold'], gold_palette['gold_bright']])
+                # Gold color alternates deterministically
+                gold_color = gold_palette['gold'] if (i + w + vein_idx) % 2 == 0 else gold_palette['gold_bright']
                 draw.point((wx, wy), fill=gold_color)
                 
-                # Add some clusters around points
-                if random.random() < 0.4:
+                # Add clusters at specific intervals
+                if i % 3 == 0:
                     for dx in [-1, 0, 1]:
                         for dy in [-1, 0, 1]:
                             px = max(x0, min(x0 + size - 1, wx + dx))
                             py = max(y0, min(y0 + size - 1, wy + dy))
-                            if random.random() < 0.3:
+                            if (dx * dy) == 0:  # Cross pattern
                                 draw.point((px, py), fill=gold_color)
     
-    # Add additional gold flakes for sparkle
-    for _ in range(size // 4):
-        gx = random.randint(x0, x0 + size - 1)
-        gy = random.randint(y0, y0 + size - 1)
+    # Add additional gold flakes for sparkle - deterministic positions
+    flake_count = size // 4
+    flake_positions = [
+        (x0 + size // 6, y0 + size // 4),
+        (x0 + 4 * size // 5, y0 + size // 6),
+        (x0 + size // 3, y0 + 5 * size // 6),
+        (x0 + 2 * size // 3, y0 + size // 8),
+        (x0 + size // 8, y0 + 3 * size // 4)
+    ]
+    
+    for i in range(min(flake_count, len(flake_positions))):
+        gx, gy = flake_positions[i]
+        gx = max(x0, min(x0 + size - 1, gx))
+        gy = max(y0, min(y0 + size - 1, gy))
         
-        gold_color = random.choice([gold_palette['gold'], gold_palette['gold_bright']])
+        gold_color = gold_palette['gold'] if i % 2 == 0 else gold_palette['gold_bright']
         draw.point((gx, gy), fill=gold_color)
 
 def generate_silver_ore(draw: ImageDraw.Draw, x0: int, y0: int, size: int) -> None:
@@ -216,13 +258,19 @@ def generate_silver_ore(draw: ImageDraw.Draw, x0: int, y0: int, size: int) -> No
         'vein_dark': silver_palette['base']  # Silver veins
     }
     
-    # Draw 1-2 silver veins
-    for _ in range(random.randint(1, 2)):
-        # Choose random start and end points
-        start_x = x0 + random.randint(0, size // 3)
-        start_y = y0 + random.randint(0, size - 1)
-        end_x = x0 + random.randint(2 * size // 3, size - 1)
-        end_y = y0 + random.randint(0, size - 1)
+    # Draw 1-2 silver veins - deterministic count
+    vein_count = 1 if size < 16 else 2
+    
+    # Fixed vein configurations
+    vein_configs = [
+        {'start': (x0, y0 + size // 3), 'end': (x0 + size - 1, y0 + 2 * size // 3)},
+        {'start': (x0 + size // 4, y0), 'end': (x0 + 3 * size // 4, y0 + size - 1)}
+    ]
+    
+    for vein_idx in range(min(vein_count, len(vein_configs))):
+        config = vein_configs[vein_idx]
+        start_x, start_y = config['start']
+        end_x, end_y = config['end']
         
         # Draw curved vein
         steps = max(size // 2, 5)
@@ -230,41 +278,58 @@ def generate_silver_ore(draw: ImageDraw.Draw, x0: int, y0: int, size: int) -> No
         for i in range(steps + 1):
             t = i / steps
             
-            # Linear interpolation with some randomness for natural look
+            # Linear interpolation with fixed variation pattern
             vx = int(start_x + t * (end_x - start_x))
             vy = int(start_y + t * (end_y - start_y))
             
-            # Add some curve variation
+            # Add fixed curve variation
             variation = size // 8
-            vx += random.randint(-variation, variation)
-            vy += random.randint(-variation, variation)
+            var_x = int(variation * math.sin(i * 0.3 + vein_idx * 2)) // 2
+            var_y = int(variation * math.cos(i * 0.5 + vein_idx)) // 2
+            vx += var_x
+            vy += var_y
             
             # Ensure we're in bounds
             vx = max(x0, min(x0 + size - 1, vx))
             vy = max(y0, min(y0 + size - 1, vy))
             
-            # Draw vein segment with varying silver colors
-            silver_color = random.choice([silver_palette['base'], silver_palette['bright']])
+            # Draw vein segment with alternating silver colors
+            color_index = (i + vein_idx) % 2
+            silver_color = silver_palette['base'] if color_index == 0 else silver_palette['bright']
             draw.point((vx, vy), fill=silver_color)
             
-            # Add some clusters around points
-            if random.random() < 0.3:
+            # Add clusters at specific intervals
+            if i % 4 == 0:
                 for dx in [-1, 0, 1]:
                     for dy in [-1, 0, 1]:
                         px = max(x0, min(x0 + size - 1, vx + dx))
                         py = max(y0, min(y0 + size - 1, vy + dy))
-                        if random.random() < 0.3:
-                            silver_color = random.choice([silver_palette['base'], 
-                                                       silver_palette['bright'],
-                                                       silver_palette['dark']])
-                            draw.point((px, py), fill=silver_color)
+                        if (dx + dy) % 2 == 0:  # Checkered pattern
+                            cluster_color_index = (dx + dy + i) % 3
+                            if cluster_color_index == 0:
+                                cluster_color = silver_palette['base']
+                            elif cluster_color_index == 1:
+                                cluster_color = silver_palette['bright']
+                            else:
+                                cluster_color = silver_palette['dark']
+                            draw.point((px, py), fill=cluster_color)
     
-    # Add additional silver deposits
-    for _ in range(size // 5):
-        sx = random.randint(x0, x0 + size - 1)
-        sy = random.randint(y0, y0 + size - 1)
+    # Add additional silver deposits - deterministic positions
+    deposit_count = size // 5
+    deposit_positions = [
+        (x0 + size // 8, y0 + size // 4),
+        (x0 + 3 * size // 4, y0 + size // 8),
+        (x0 + size // 2, y0 + 5 * size // 6),
+        (x0 + size // 6, y0 + 2 * size // 3),
+        (x0 + 4 * size // 5, y0 + size // 2)
+    ]
+    
+    for i in range(min(deposit_count, len(deposit_positions))):
+        sx, sy = deposit_positions[i]
+        sx = max(x0, min(x0 + size - 1, sx))
+        sy = max(y0, min(y0 + size - 1, sy))
         
-        silver_color = random.choice([silver_palette['base'], silver_palette['bright']])
+        silver_color = silver_palette['base'] if i % 2 == 0 else silver_palette['bright']
         draw.point((sx, sy), fill=silver_color)
 
 def generate_tin_ore(draw: ImageDraw.Draw, x0: int, y0: int, size: int) -> None:
@@ -281,23 +346,29 @@ def generate_tin_ore(draw: ImageDraw.Draw, x0: int, y0: int, size: int) -> None:
         'dark': (120, 120, 120, 255)
     }
     
-    # Draw tin veins
-    for _ in range(random.randint(1, 2)):
-        # Create a branching vein pattern
-        start_x = x0 + random.randint(0, size // 3)
-        start_y = y0 + random.randint(0, size - 1)
+    # Draw tin veins - deterministic count and patterns
+    vein_count = 1 if size < 16 else 2
+    
+    # Fixed vein configurations
+    vein_configs = [
+        {'start': (x0, y0 + size // 4), 'angle': 0.7854},  # 45 degrees
+        {'start': (x0 + size // 3, y0), 'angle': 1.5708}   # 90 degrees
+    ]
+    
+    for vein_idx in range(min(vein_count, len(vein_configs))):
+        config = vein_configs[vein_idx]
+        start_x, start_y = config['start']
+        base_angle = config['angle']
         
-        # Draw main vein
-        vein_length = random.randint(size // 2, size)
-        angle = random.random() * 2 * 3.14159
+        # Draw main vein with fixed length
+        vein_length = size // 2 + size // 4
         
         # Create unique tin vein look with crystalline formations
         for i in range(vein_length):
             vein_progress = i / vein_length
             
-            # Curve the vein
-            curve_factor = random.random() * 0.2 - 0.1
-            angle += curve_factor
+            # Fixed curve pattern
+            angle = base_angle + 0.1 * math.sin(i * 0.3)
             
             dx = int(math.cos(angle) * i * size / vein_length)
             dy = int(math.sin(angle) * i * size / vein_length)
@@ -307,13 +378,19 @@ def generate_tin_ore(draw: ImageDraw.Draw, x0: int, y0: int, size: int) -> None:
             
             # Ensure we're in bounds
             if x0 <= vx < x0 + size and y0 <= vy < y0 + size:
-                # Vary color along the vein
-                tin_color = random.choice([tin_palette['base'], tin_palette['dull'], tin_palette['light']])
+                # Color varies along the vein deterministically
+                color_index = i % 3
+                if color_index == 0:
+                    tin_color = tin_palette['base']
+                elif color_index == 1:
+                    tin_color = tin_palette['dull']
+                else:
+                    tin_color = tin_palette['light']
                 draw.point((vx, vy), fill=tin_color)
                 
-                # Add crystal formations along the vein
-                if random.random() < 0.3:
-                    crystal_size = random.randint(1, 3)
+                # Add crystal formations at specific intervals
+                if i % 5 == 0:
+                    crystal_size = 1 + (i % 3)
                     for cx in range(-crystal_size, crystal_size + 1):
                         for cy in range(-crystal_size, crystal_size + 1):
                             if cx*cx + cy*cy <= crystal_size*crystal_size:
@@ -329,12 +406,22 @@ def generate_tin_ore(draw: ImageDraw.Draw, x0: int, y0: int, size: int) -> None:
                                     crystal_color = tin_palette['dull']
                                 draw.point((px, py), fill=crystal_color)
     
-    # Add some scattered tin deposits
-    for _ in range(size // 6):
-        tx = random.randint(x0, x0 + size - 1)
-        ty = random.randint(y0, y0 + size - 1)
+    # Add some scattered tin deposits - deterministic positions
+    deposit_count = size // 6
+    deposit_positions = [
+        (x0 + size // 7, y0 + size // 3),
+        (x0 + 4 * size // 5, y0 + size // 6),
+        (x0 + size // 2, y0 + 5 * size // 6),
+        (x0 + size // 4, y0 + 2 * size // 3),
+        (x0 + 3 * size // 4, y0 + size // 8)
+    ]
+    
+    for i in range(min(deposit_count, len(deposit_positions))):
+        tx, ty = deposit_positions[i]
+        tx = max(x0, min(x0 + size - 1, tx))
+        ty = max(y0, min(y0 + size - 1, ty))
         
-        tin_color = random.choice([tin_palette['base'], tin_palette['dull']])
+        tin_color = tin_palette['base'] if i % 2 == 0 else tin_palette['dull']
         draw.point((tx, ty), fill=tin_color)
 
 def generate_ruby_gem(draw: ImageDraw.Draw, x0: int, y0: int, size: int) -> None:
@@ -350,20 +437,29 @@ def generate_ruby_gem(draw: ImageDraw.Draw, x0: int, y0: int, size: int) -> None
         'shine': (255, 120, 140, 255)    # Bright highlight
     }
     
-    # Draw larger distinct ruby crystals embedded in stone
-    crystal_count = random.randint(2, 3)
-    for i in range(crystal_count):
-        # Create a central larger crystal structure
-        cx = x0 + random.randint(size//4, 3*size//4)
-        cy = y0 + random.randint(size//4, 3*size//4)
-        crystal_size = random.randint(size//5, size//3)
+    # Draw larger distinct ruby crystals embedded in stone - deterministic
+    crystal_count = 2 if size < 16 else 3
+    
+    # Fixed crystal positions
+    crystal_configs = [
+        {'center': (x0 + size//3, y0 + size//3), 'size': size//5},
+        {'center': (x0 + 2*size//3, y0 + 2*size//3), 'size': size//4},
+        {'center': (x0 + size//2, y0 + 3*size//4), 'size': size//6}
+    ]
+    
+    for i in range(min(crystal_count, len(crystal_configs))):
+        config = crystal_configs[i]
+        cx, cy = config['center']
+        crystal_size = config['size']
         
-        # Draw faceted ruby crystal - hexagonal shape
+        # Draw faceted ruby crystal - hexagonal shape with fixed vertices
         points = []
-        sides = random.randint(6, 8)  # Ruby-specific facet count
+        sides = 6 + (i % 3)  # Ruby-specific facet count (6, 7, or 8)
         for j in range(sides):
             angle = (2 * math.pi * j) / sides
-            radius = crystal_size * (0.8 + 0.2 * random.random())
+            # Fixed radius variation based on vertex index
+            radius_variation = 0.8 + 0.2 * (j % 2)
+            radius = crystal_size * radius_variation
             px = cx + int(radius * math.cos(angle))
             py = cy + int(radius * math.sin(angle))
             
@@ -376,8 +472,8 @@ def generate_ruby_gem(draw: ImageDraw.Draw, x0: int, y0: int, size: int) -> None
         if len(points) >= 3:
             draw.polygon(points, fill=ruby_palette['base'])
             
-            # Add internal facets for depth
-            if random.random() < 0.7:
+            # Add internal facets for depth - deterministic
+            if i % 2 == 0:  # Add inner facets to every other crystal
                 inner_points = []
                 inner_scale = 0.7
                 for px, py in points:
@@ -387,9 +483,11 @@ def generate_ruby_gem(draw: ImageDraw.Draw, x0: int, y0: int, size: int) -> None
                 
                 draw.polygon(inner_points, fill=ruby_palette['edge'])
             
-            # Add bright highlight
-            highlight_x = cx + random.randint(-crystal_size//4, crystal_size//4)
-            highlight_y = cy + random.randint(-crystal_size//4, crystal_size//4)
+            # Add bright highlight - fixed position relative to center
+            highlight_offset_x = crystal_size // 4 if i % 2 == 0 else -crystal_size // 4
+            highlight_offset_y = crystal_size // 4 if i % 3 == 0 else -crystal_size // 4
+            highlight_x = cx + highlight_offset_x
+            highlight_y = cy + highlight_offset_y
             highlight_size = max(1, crystal_size // 5)
             draw.ellipse([
                 highlight_x - highlight_size, highlight_y - highlight_size,
@@ -409,18 +507,22 @@ def generate_sapphire_gem(draw: ImageDraw.Draw, x0: int, y0: int, size: int) -> 
         'shine': (100, 150, 255, 200)    # Bright highlight
     }
     
-    # Draw larger distinct sapphire crystals embedded in stone
-    crystal_count = random.randint(1, 3)
+    # Draw larger distinct sapphire crystals embedded in stone - deterministic
+    crystal_count = 1 if size < 12 else (2 if size < 20 else 3)
     
-    for i in range(crystal_count):
-        # Create rectangular crystal structures (sapphires often have rectangular/prismatic crystal habit)
-        cx = x0 + random.randint(size//5, 4*size//5)
-        cy = y0 + random.randint(size//5, 4*size//5)
-        
-        # Determine crystal dimensions
-        width = random.randint(size//6, size//3)
-        height = random.randint(size//6, size//3)
-        rotation = random.random() * math.pi / 4  # Slight rotation
+    # Fixed crystal configurations
+    crystal_configs = [
+        {'center': (x0 + 2*size//5, y0 + 2*size//5), 'width': size//6, 'height': size//4, 'rotation': 0.2},
+        {'center': (x0 + 3*size//5, y0 + 3*size//5), 'width': size//4, 'height': size//6, 'rotation': 0.8},
+        {'center': (x0 + size//4, y0 + 3*size//4), 'width': size//5, 'height': size//5, 'rotation': 0.5}
+    ]
+    
+    for i in range(min(crystal_count, len(crystal_configs))):
+        config = crystal_configs[i]
+        cx, cy = config['center']
+        width = config['width']
+        height = config['height']
+        rotation = config['rotation']
         
         # Create points for rotated rectangle
         points = []
@@ -445,19 +547,19 @@ def generate_sapphire_gem(draw: ImageDraw.Draw, x0: int, y0: int, size: int) -> 
         if len(points) >= 3:
             draw.polygon(points, fill=sapphire_palette['base'])
             
-            # Add internal structure lines for depth and clarity
+            # Add internal structure lines for depth and clarity - deterministic
             if width > 3 and height > 3:
-                # Horizontal lines
+                # Horizontal lines at fixed intervals
                 for j in range(1, 3):
                     y_pos = cy - height//2 + j*height//3
                     for x_pos in range(cx - width//2, cx + width//2):
                         if x0 <= x_pos < x0 + size and y0 <= y_pos < y0 + size:
-                            if random.random() < 0.7:  # Some randomness in lines
+                            if (x_pos + j) % 2 == 0:  # Deterministic pattern
                                 draw.point((x_pos, y_pos), fill=sapphire_palette['edge'])
             
-            # Add bright highlight
-            highlight_x = cx + random.randint(-width//4, width//4)
-            highlight_y = cy + random.randint(-height//4, height//4)
+            # Add bright highlight - fixed position
+            highlight_x = cx + width//4 if i % 2 == 0 else cx - width//4
+            highlight_y = cy + height//4 if i % 3 == 0 else cy - height//4
             highlight_size = max(1, min(width, height) // 6)
             draw.ellipse([
                 highlight_x - highlight_size, highlight_y - highlight_size,
