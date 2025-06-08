@@ -40,14 +40,15 @@ Explore our design and development documentation:
 
 ## 📦 External Dependencies
 
-The project includes several external libraries as part of the codebase:
+The project uses the following external libraries:
 
 - **SDL3**: Window management, input handling, and platform abstraction
 - **GLM**: Mathematics library for graphics programming
 - **GLAD**: OpenGL loader
 - **Flecs**: Entity Component System (ECS) framework
+- **GoogleTest**: For unit testing
 
-These dependencies are included directly in the repository under the `external/` directory, and you don't need to download or install them separately. The `.git` directories of these external libraries are excluded from version control using `.gitignore` to keep the repository clean.
+These dependencies are automatically downloaded and configured using CMake's FetchContent module during the build process. You don't need to manually download or install them.
 
 ## 🚧 Development Status
 

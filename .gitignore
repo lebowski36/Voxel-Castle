@@ -59,10 +59,8 @@ gamelog.txt
 # Save files - user specific game saves should not be in version control
 saves/
 
-# External libraries Git repositories
-# This prevents Git from tracking the Git metadata of external dependencies
-# while still allowing the code itself to be tracked
-external/**/.git
-external/**/.github
-external/**/.gitignore
-external/**/.gitattributes
+# FetchContent Dependencies
+# CMake's FetchContent will download these libraries automatically
+# so we don't need to include them in version control
+external/
+_deps/

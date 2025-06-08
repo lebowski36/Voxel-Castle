@@ -67,22 +67,22 @@ target_include_directories(VoxelEngine
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
         $<INSTALL_INTERFACE:include>
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src>
-        $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/external/glad/include> 
-        $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/external/glm> 
+        $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/external/glad/include>
+        # Use the fetched GLM path instead of the local one
+        $<BUILD_INTERFACE:${glm_SOURCE_DIR}>
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/external> # For stb_image.h
     PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/src
 )
 
-# Explicitly include SDL3 directories 
+# Explicitly include SDL3 directories - use the fetched path
 target_include_directories(VoxelEngine PRIVATE 
-    ${CMAKE_BINARY_DIR}/external/SDL3/include-revision
-    ${CMAKE_SOURCE_DIR}/external/SDL3/include
+    ${SDL3_SOURCE_DIR}/include
 )
 
 # Link against SDL3 (static) and OpenGL
 target_link_libraries(VoxelEngine PRIVATE 
-    SDL3::SDL3-static
+    SDL3::SDL3
     OpenGL::GL # Standard CMake target for OpenGL
     glad
     flecs::flecs # Link against the Flecs library
@@ -90,7 +90,7 @@ target_link_libraries(VoxelEngine PRIVATE
 
 # Link VoxelEngine against its dependencies
 target_link_libraries(VoxelEngine PUBLIC
-    SDL3::SDL3-static # Link against SDL3 static library
+    SDL3::SDL3 # Link against SDL3 
     glad            # Link against GLAD
     OpenGL::GL      # Link against OpenGL
     Threads::Threads # Link against pthreads

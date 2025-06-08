@@ -18,20 +18,36 @@ set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 
+# --- Use FetchContent for external libraries ---
+include(FetchContent)
+
 # --- SDL Configuration ---
 # Build SDL as a static library
 set(SDL_STATIC ON CACHE BOOL "Build SDL as a static library")
 set(SDL_SHARED OFF CACHE BOOL "Build SDL as a shared library")
-# You might need to set other SDL options here if defaults are not suitable
-# e.g., disabling certain features if not needed:
-# set(SDL_VIDEO OFF CACHE BOOL "") # Example: if you only need SDL_timer or SDL_audio
-
-# Add subdirectory for SDL (vendored)
-add_subdirectory(external/SDL3)
+# Fetch SDL3 from repository
+FetchContent_Declare(
+  SDL3
+  URL https://github.com/libsdl-org/SDL/archive/refs/tags/release-3.0.0.zip
+)
+FetchContent_MakeAvailable(SDL3)
 # --- End SDL Configuration ---
 
+# --- GLM Configuration ---
+FetchContent_Declare(
+  glm
+  URL https://github.com/g-truc/glm/archive/refs/tags/1.0.1.zip
+)
+FetchContent_MakeAvailable(glm)
+# --- End GLM Configuration ---
+
 # --- GLAD Configuration ---
-add_subdirectory(external/glad)
+FetchContent_Declare(
+  glad
+  GIT_REPOSITORY https://github.com/Dav1dde/glad.git
+  GIT_TAG master
+)
+FetchContent_MakeAvailable(glad)
 # --- End GLAD Configuration ---
 
 # --- Flecs Configuration ---
@@ -49,7 +65,12 @@ add_subdirectory(external/glad)
 #   FLECS_INSTALL_CMAKE (ON): Install Flecs CMake config files
 #   FLECS_C99 (OFF): Enforce C99 standard (Flecs is C99 but can be compiled as C++)
 # We will use the defaults for now, which should build a static library.
-add_subdirectory(external/flecs)
+FetchContent_Declare(
+  flecs
+  GIT_REPOSITORY https://github.com/SanderMertens/flecs.git
+  GIT_TAG master
+)
+FetchContent_MakeAvailable(flecs)
 # --- End Flecs Configuration ---
 
 # --- GoogleTest Configuration ---

@@ -27,14 +27,7 @@ The engine is currently in **active development** with these working features:
 
 ### Dependencies
 
-All external dependencies are included in the repository under the `external/` directory:
-
-- **SDL3**: Window management and input handling
-- **GLM**: Mathematics library for graphics
-- **GLAD**: OpenGL loader
-- **Flecs**: Entity Component System framework
-
-You don't need to download or install these separately.
+The project uses several external libraries (SDL3, GLM, GLAD, Flecs, and GoogleTest) which are automatically downloaded and configured through CMake's FetchContent module. You don't need to manually download or install these libraries.
 
 ### Building the Project
 
@@ -46,6 +39,7 @@ cd "/path/to/Voxel Castle"
 mkdir -p build && cd build
 
 # 3. Configure with CMake
+# (This will automatically download all required dependencies)
 cmake ..
 
 # 4. Build the engine
@@ -57,7 +51,7 @@ cmake --build .
 
 You should see a 3D world with terrain. Use the mouse to look around and WASD to fly!
 
-> **System Dependencies**: You'll still need a C++ compiler, CMake, and OpenGL development libraries installed on your system. See [BUILD_GUIDE.md](BUILD_GUIDE.md) for detailed instructions for your specific operating system.
+> **System Dependencies**: You'll still need a C++ compiler, CMake, Git, and OpenGL development libraries installed on your system. See [BUILD_GUIDE.md](BUILD_GUIDE.md) for detailed instructions for your specific operating system.
 
 ## What You'll See
 

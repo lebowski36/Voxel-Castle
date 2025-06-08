@@ -7,16 +7,16 @@
 - **CPU**: 64-bit processor with SSE4.1 support
 - **RAM**: 4GB minimum, 8GB recommended
 - **GPU**: OpenGL 3.3+ compatible graphics card
-- **Storage**: 2GB free space for build
+- **Storage**: 2GB free space for build and dependencies
 
 ### Software Requirements
 - **C++ Compiler**: GCC 9+, Clang 10+, or MSVC 2019+
 - **CMake**: Version 3.20 or higher
-- **Git**: For cloning the repository
+- **Git**: Required for dependency downloading
 
 ## External Dependencies
 
-All external libraries (SDL3, GLM, GLAD, and Flecs) are included in the repository under the `external/` directory. You don't need to download or install these separately.
+All external libraries (SDL3, GLM, GLAD, Flecs, and GoogleTest) are downloaded automatically during the CMake configuration process using CMake's FetchContent module. You do not need to download or install these separately, but you will need an internet connection during the first build.
 
 ## Platform-Specific Setup
 
