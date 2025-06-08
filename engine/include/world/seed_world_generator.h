@@ -3,6 +3,7 @@
 #include "world/world_seed.h"
 #include "world/world_parameters.h"
 #include "world/chunk_segment.h"
+#include "world/regional_data.h"
 #include <memory>
 #include <random>
 
@@ -70,11 +71,36 @@ public:
      */
     void setWorldParameters(std::shared_ptr<WorldParameters> parameters);
 
+    /**
+     * @brief Set the regional database for advanced world generation
+     * @param database The regional database instance
+     */
+    void setRegionalDatabase(std::unique_ptr<RegionalDatabase> database);
+
+    /**
+     * @brief Get regional data for a specific coordinate
+     * @param globalX Global X coordinate
+     * @param globalZ Global Z coordinate
+     * @return RegionalData for the region containing this coordinate, or default if no database
+     */
+    RegionalData getRegionalData(int globalX, int globalZ) const;
+
+    /**
+     * @brief Generate and store regional data for a region (used in world creation)
+     * @param regionX Region X coordinate
+     * @param regionZ Region Z coordinate
+     * @return Generated RegionalData
+     */
+    RegionalData generateRegionalData(int regionX, int regionZ);
+
 private:
     // Core systems
     std::shared_ptr<WorldSeed> worldSeed_;
     std::shared_ptr<WorldParameters> worldParameters_;
     std::mt19937_64 rng_;
+    
+    // Regional database for advanced world generation
+    std::unique_ptr<RegionalDatabase> regionalDatabase_;
     
     // Compatibility mode flag
     bool legacyCompatible_;

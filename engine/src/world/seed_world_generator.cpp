@@ -1,4 +1,5 @@
 #include "world/seed_world_generator.h"
+#include "world/biome/biome_types.h"
 #include "util/noise.h"
 #include "world/voxel_types.h"
 #include "world/voxel.h"
@@ -7,12 +8,13 @@
 #include <iomanip>
 #include <sstream>
 #include <iostream>
+#include <cstring>
 
 namespace VoxelCastle {
 namespace World {
 
 SeedWorldGenerator::SeedWorldGenerator(std::shared_ptr<WorldSeed> seed, std::shared_ptr<WorldParameters> parameters)
-    : worldSeed_(seed), worldParameters_(parameters), legacyCompatible_(false) {
+    : worldSeed_(seed), worldParameters_(parameters), regionalDatabase_(nullptr), legacyCompatible_(false) {
     
     if (!worldSeed_) {
         throw std::invalid_argument("WorldSeed cannot be null");
@@ -28,7 +30,7 @@ SeedWorldGenerator::SeedWorldGenerator(std::shared_ptr<WorldSeed> seed, std::sha
 }
 
 SeedWorldGenerator::SeedWorldGenerator(std::shared_ptr<WorldSeed> seed, std::shared_ptr<WorldParameters> parameters, bool legacyCompatible)
-    : worldSeed_(seed), worldParameters_(parameters), legacyCompatible_(legacyCompatible) {
+    : worldSeed_(seed), worldParameters_(parameters), regionalDatabase_(nullptr), legacyCompatible_(legacyCompatible) {
     
     if (!worldSeed_) {
         throw std::invalid_argument("WorldSeed cannot be null");
@@ -192,6 +194,85 @@ int SeedWorldGenerator::generateTerrainHeight(int globalX, int globalZ) const {
 uint64_t SeedWorldGenerator::getCoordinateSeed(int64_t x, int64_t y, int64_t z) const {
     // Use the WorldSeed to generate a coordinate-specific seed
     return worldSeed_->getBlockSeed(x, y, z);
+}
+
+void SeedWorldGenerator::setRegionalDatabase(std::unique_ptr<RegionalDatabase> database) {
+    regionalDatabase_ = std::move(database);
+    std::cout << "[SeedWorldGenerator] Regional database " << (regionalDatabase_ ? "enabled" : "disabled") << std::endl;
+}
+
+RegionalData SeedWorldGenerator::getRegionalData(int globalX, int globalZ) const {
+    if (!regionalDatabase_) {
+        // Return default regional data when no database is available
+        RegionalData defaultData;
+        defaultData.primaryBiome = BiomeType::PLAINS;
+        defaultData.temperature = 20.0f;
+        defaultData.humidity = 50.0f;
+        defaultData.elevation = 64.0f;
+        defaultData.precipitation = 800.0f; // mm per year
+        return defaultData;
+    }
+    
+    // Convert world coordinates to region coordinates
+    int regionX = globalX / RegionalData::REGION_SIZE;
+    int regionZ = globalZ / RegionalData::REGION_SIZE;
+    
+    // Try to load existing regional data
+    RegionalData data;
+    if (regionalDatabase_->GetRegionalData(regionX, regionZ, data)) {
+        return data;
+    }
+    
+    // Generate new regional data if not found
+    return const_cast<SeedWorldGenerator*>(this)->generateRegionalData(regionX, regionZ);
+}
+
+RegionalData SeedWorldGenerator::generateRegionalData(int regionX, int regionZ) {
+    RegionalData data;
+    
+    // Initialize header information
+    data.magicNumber = RegionalData::MAGIC_NUMBER;
+    data.version = RegionalData::CURRENT_VERSION;
+    data.flags = 0;
+    data.regionX = regionX;
+    data.regionZ = regionZ;
+    
+    // Use coordinate-based seeding for consistent generation
+    uint64_t regionSeed = getCoordinateSeed(regionX, 0, regionZ);
+    std::mt19937_64 regionRng(regionSeed);
+    
+    // For now, use simple random biome assignment
+    // This will be replaced with advanced geological simulation
+    std::uniform_int_distribution<int> biomeDist(0, static_cast<int>(BiomeType::COUNT) - 1);
+    data.primaryBiome = static_cast<BiomeType>(biomeDist(regionRng));
+    
+    // Generate basic environmental parameters
+    std::uniform_real_distribution<float> tempDist(-10.0f, 35.0f);
+    std::uniform_real_distribution<float> humidityDist(0.0f, 100.0f);
+    std::uniform_real_distribution<float> elevationDist(32.0f, 128.0f);
+    std::uniform_real_distribution<float> precipitationDist(200.0f, 2000.0f);
+    
+    data.temperature = tempDist(regionRng);
+    data.humidity = humidityDist(regionRng);
+    data.elevation = elevationDist(regionRng);
+    data.precipitation = precipitationDist(regionRng);
+    
+    // Clear reserved space
+    std::memset(data.reserved, 0, sizeof(data.reserved));
+    
+    // Save to database if available
+    if (regionalDatabase_) {
+        if (!regionalDatabase_->SetRegionalData(regionX, regionZ, data)) {
+            std::cerr << "[SeedWorldGenerator] Warning: Failed to save regional data for region (" 
+                      << regionX << ", " << regionZ << ")" << std::endl;
+        } else {
+            std::cout << "[SeedWorldGenerator] Generated and saved regional data for region (" 
+                      << regionX << ", " << regionZ << ") - Biome: " 
+                      << static_cast<int>(data.primaryBiome) << std::endl;
+        }
+    }
+    
+    return data;
 }
 
 } // namespace World

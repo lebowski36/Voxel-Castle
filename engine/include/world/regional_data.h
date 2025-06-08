@@ -21,6 +21,7 @@ namespace World {
 struct RegionalData {
     static constexpr uint32_t CURRENT_VERSION = 1;
     static constexpr uint32_t MAGIC_NUMBER = 0x52454743; // "REGC" 
+    static constexpr int32_t REGION_SIZE = 1000; // Region size in world units (1km)
     
     // Header information
     uint32_t magicNumber;       // File format validation

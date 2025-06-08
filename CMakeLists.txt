@@ -131,6 +131,17 @@ add_executable(test_regional_data tests/test_regional_data.cpp)
 target_link_libraries(test_regional_data PRIVATE VoxelEngine gtest gtest_main)
 target_include_directories(test_regional_data PRIVATE engine/include)
 
+# Add seed world generator regional integration test
+add_executable(test_seed_world_generator_regional 
+    tests/test_seed_world_generator_regional.cpp
+    game/src/utils/debug_logger.cpp  # Include debug utilities
+)
+target_link_libraries(test_seed_world_generator_regional PRIVATE VoxelEngine gtest gtest_main)
+target_include_directories(test_seed_world_generator_regional PRIVATE 
+    engine/include
+    game/include  # Include game headers for debug utilities
+)
+
 # Enable CTest (optional, if you add tests)
 enable_testing()
 # add_subdirectory(tests) # If you have a tests directory with CMakeLists.txt
