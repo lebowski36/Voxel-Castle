@@ -68,22 +68,22 @@ void WorldParameters::initializeDefaults() {
     biomes.altitudeEffect = 0.5f;
     biomes.enableSeasons = true;
     
-    // Cave defaults
+    // Cave defaults (updated for ±128 chunk range)
     caves.caveFrequency = 0.03f;
     caves.tunnelWidth = 3.0f;
     caves.cavernFrequency = 0.01f;
     caves.cavernSize = 15.0f;
-    caves.minCaveDepth = 8;
-    caves.maxCaveDepth = 120;
+    caves.minCaveDepth = 32;        // Start caves 8m below surface (32 blocks)
+    caves.maxCaveDepth = 3200;      // Extend caves to -800m depth (3200 blocks from surface)
     
-    // Resource defaults
+    // Resource defaults (updated for ±128 chunk range)
     resources.oreAbundance = 1.0f;
     resources.coalFrequency = 0.05f;
     resources.ironFrequency = 0.03f;
     resources.goldFrequency = 0.01f;
     resources.diamondFrequency = 0.002f;
-    resources.minOreDepth = 5;
-    resources.maxOreDepth = 100;
+    resources.minOreDepth = 16;      // Start ores 4m below surface (16 blocks)
+    resources.maxOreDepth = 3840;    // Extend ores to -960m depth (3840 blocks from surface)
     
     // Structure defaults
     structures.ruinFrequency = 0.001f;

@@ -41,12 +41,15 @@ namespace World {
          *
          * A ChunkColumn manages a stack of ChunkSegments at a specific XZ world coordinate.
          * It is responsible for creating, accessing, and managing these segments.
+         * 
+         * Updated to support ±128 chunk range (-1024m to +1024m) as defined in world_coordinates.h
          */
         class ChunkColumn
         {
         public:
-            // Define how many segments are stacked vertically in a column
-            static constexpr uint8_t CHUNKS_PER_COLUMN = 16;
+            // Legacy compatibility: some code may still use this constant
+            // However, the actual implementation now supports unlimited vertical range via std::map
+            static constexpr uint8_t CHUNKS_PER_COLUMN = 16;  // DEPRECATED: Use getOrCreateSegment() for new code
 
             /**
              * @brief Returns the base X coordinate of this chunk column.

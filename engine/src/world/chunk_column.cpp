@@ -1,5 +1,6 @@
 #include "world/chunk_column.h"
 #include "world/chunk_segment.h" // For dimension constants
+#include "world/world_coordinates.h" // For new coordinate system
 #include <stdexcept> // For std::out_of_range
 #include <cmath>     // For std::floor
 #include <chrono>    // For timestamps
@@ -15,10 +16,9 @@ namespace VoxelCastle
         ChunkColumn::ChunkColumn(int_fast64_t worldX, int_fast64_t worldZ)
             : m_coordinates{worldX, worldZ}
         {
-            // Pre-initialize segments for the defined column height
-            for (uint8_t i = 0; i < CHUNKS_PER_COLUMN; ++i) {
-                m_segments[i] = std::make_unique<ChunkSegment>();
-            }
+            // No longer pre-initialize all segments due to the large ±128 chunk range (256 total chunks).
+            // Segments are now created on-demand via getOrCreateSegment() for better memory efficiency.
+            // This supports the new coordinate system defined in world_coordinates.h.
             
             // Debug: Log chunk column creation with timestamp
             auto now = std::chrono::system_clock::now();
@@ -29,7 +29,7 @@ namespace VoxelCastle
             ss << '.' << std::setfill('0') << std::setw(3) << ms.count();
             
             VoxelCastle::Utils::logToFile("[" + ss.str() + "] [CHUNK_CREATE] ChunkColumn created at coordinates (" + 
-                std::to_string(worldX) + ", " + std::to_string(worldZ) + ")");
+                std::to_string(worldX) + ", " + std::to_string(worldZ) + ") - supports ±128 chunk range");
         }
 
         ChunkColumnCoord ChunkColumn::getCoordinates() const
@@ -38,82 +38,98 @@ namespace VoxelCastle
         }
 
         ::VoxelEngine::World::Voxel ChunkColumn::getVoxel(int_fast64_t worldX, int_fast64_t worldY, int_fast64_t worldZ) const {
-            // Calculate segment Y index and local Y coordinate
-            int_fast64_t segmentYIndex = worldY / ChunkSegment::CHUNK_HEIGHT;
-            uint8_t localY = static_cast<uint8_t>(worldY % ChunkSegment::CHUNK_HEIGHT);
-
-            if (segmentYIndex < 0 || segmentYIndex >= CHUNKS_PER_COLUMN) {
-                // Y-coordinate is outside the vertical bounds of this column
+            // Use new coordinate system with ±128 chunk range
+            using namespace VoxelCastle::World::WorldCoordinates;
+            
+            // Validate coordinates are within world bounds
+            if (!IsValidBlockY(static_cast<int32_t>(worldY))) {
                 return ::VoxelEngine::World::Voxel{static_cast<uint8_t>(::VoxelEngine::World::VoxelType::AIR)};
             }
+            
+            // Calculate segment Y index using new coordinate system
+            int32_t segmentYIndex = BlockYToChunkY(static_cast<int32_t>(worldY));
+            int32_t localY = BlockYToLocalY(static_cast<int32_t>(worldY));
 
-            const ChunkSegment* segment = getSegmentByIndex(static_cast<uint8_t>(segmentYIndex));
+            const ChunkSegment* segment = getSegment(segmentYIndex);
             if (segment) {
                 // Calculate local X and Z coordinates
-                uint8_t localX = static_cast<uint8_t>(worldX - m_coordinates.x); // Changed m_baseX
-                uint8_t localZ = static_cast<uint8_t>(worldZ - m_coordinates.z); // Changed m_baseZ
-                auto voxel = segment->getVoxel(localX, localY, localZ);
+                int32_t localX = static_cast<int32_t>(worldX - m_coordinates.x);
+                int32_t localZ = static_cast<int32_t>(worldZ - m_coordinates.z);
                 
-                // Debug: Log first few voxel reads per chunk to detect data corruption
-                static int getCount = 0;
-                if (getCount < 10) {
-                    auto now = std::chrono::system_clock::now();
-                    auto time_t = std::chrono::system_clock::to_time_t(now);
-                    auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(now.time_since_epoch()) % 1000;
-                    std::stringstream ss;
-                    ss << std::put_time(std::localtime(&time_t), "%H:%M:%S");
-                    ss << '.' << std::setfill('0') << std::setw(3) << ms.count();
+                // Ensure local coordinates are within valid chunk bounds
+                if (localX >= 0 && localX < CHUNK_SIZE_VOXELS && 
+                    localZ >= 0 && localZ < CHUNK_SIZE_VOXELS) {
+                    auto voxel = segment->getVoxel(localX, localY, localZ);
                     
-                    VoxelCastle::Utils::logToFile("[" + ss.str() + "] [CHUNK_GET] Chunk(" + std::to_string(m_coordinates.x) + "," + 
-                        std::to_string(m_coordinates.z) + ") world(" + std::to_string(worldX) + "," + 
-                        std::to_string(worldY) + "," + std::to_string(worldZ) + ") local(" + 
-                        std::to_string(localX) + "," + std::to_string(localY) + "," + std::to_string(localZ) + 
-                        ") voxel=" + std::to_string(voxel.id));
-                    getCount++;
+                    // Debug: Log first few voxel reads per chunk to detect data corruption
+                    static int getCount = 0;
+                    if (getCount < 10) {
+                        auto now = std::chrono::system_clock::now();
+                        auto time_t = std::chrono::system_clock::to_time_t(now);
+                        auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(now.time_since_epoch()) % 1000;
+                        std::stringstream ss;
+                        ss << std::put_time(std::localtime(&time_t), "%H:%M:%S");
+                        ss << '.' << std::setfill('0') << std::setw(3) << ms.count();
+                        
+                        VoxelCastle::Utils::logToFile("[" + ss.str() + "] [CHUNK_GET] Chunk(" + std::to_string(m_coordinates.x) + "," + 
+                            std::to_string(m_coordinates.z) + ") world(" + std::to_string(worldX) + "," + 
+                            std::to_string(worldY) + "," + std::to_string(worldZ) + ") chunkY=" + std::to_string(segmentYIndex) +
+                            " local(" + std::to_string(localX) + "," + std::to_string(localY) + "," + std::to_string(localZ) + 
+                            ") voxel=" + std::to_string(voxel.id));
+                        getCount++;
+                    }
+                    
+                    return voxel;
                 }
-                
-                return voxel;
             }
-            // Segment doesn't exist (should not happen if constructor pre-allocates all)
+            // Segment doesn't exist or coordinates are out of bounds
             return ::VoxelEngine::World::Voxel{static_cast<uint8_t>(::VoxelEngine::World::VoxelType::AIR)};
         }
 
         void ChunkColumn::setVoxel(int_fast64_t worldX, int_fast64_t worldY, int_fast64_t worldZ, const VoxelEngine::World::Voxel& voxel) {
-            // Calculate segment Y index and local Y coordinate
-            int_fast64_t segmentYIndex = worldY / ChunkSegment::CHUNK_HEIGHT;
-            uint8_t localY = static_cast<uint8_t>(worldY % ChunkSegment::CHUNK_HEIGHT);
-
-            if (segmentYIndex < 0 || segmentYIndex >= CHUNKS_PER_COLUMN) {
-                // Y-coordinate is outside the vertical bounds of this column, do nothing or log error
-                return;
+            // Use new coordinate system with ±128 chunk range
+            using namespace VoxelCastle::World::WorldCoordinates;
+            
+            // Validate coordinates are within world bounds
+            if (!IsValidBlockY(static_cast<int32_t>(worldY))) {
+                return; // Silently ignore out-of-bounds coordinates
             }
+            
+            // Calculate segment Y index using new coordinate system
+            int32_t segmentYIndex = BlockYToChunkY(static_cast<int32_t>(worldY));
+            int32_t localY = BlockYToLocalY(static_cast<int32_t>(worldY));
 
-            ChunkSegment* segment = getSegmentByIndex(static_cast<uint8_t>(segmentYIndex));
+            // Get or create the segment for this Y level
+            ChunkSegment* segment = getOrCreateSegment(segmentYIndex);
             if (segment) {
                 // Calculate local X and Z coordinates
-                uint8_t localX = static_cast<uint8_t>(worldX - m_coordinates.x); // Changed m_baseX
-                uint8_t localZ = static_cast<uint8_t>(worldZ - m_coordinates.z); // Changed m_baseZ
+                int32_t localX = static_cast<int32_t>(worldX - m_coordinates.x);
+                int32_t localZ = static_cast<int32_t>(worldZ - m_coordinates.z);
                 
-                // Debug: Log voxel setting to track terrain generation
-                static int setCount = 0;
-                if (setCount < 50) {  // Log more sets since this is where terrain is generated
-                    auto now = std::chrono::system_clock::now();
-                    auto time_t = std::chrono::system_clock::to_time_t(now);
-                    auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(now.time_since_epoch()) % 1000;
-                    std::stringstream ss;
-                    ss << std::put_time(std::localtime(&time_t), "%H:%M:%S");
-                    ss << '.' << std::setfill('0') << std::setw(3) << ms.count();
+                // Ensure local coordinates are within valid chunk bounds
+                if (localX >= 0 && localX < CHUNK_SIZE_VOXELS && 
+                    localZ >= 0 && localZ < CHUNK_SIZE_VOXELS) {
                     
-                    VoxelCastle::Utils::logToFile("[" + ss.str() + "] [CHUNK_SET] Chunk(" + std::to_string(m_coordinates.x) + "," + 
-                        std::to_string(m_coordinates.z) + ") world(" + std::to_string(worldX) + "," + 
-                        std::to_string(worldY) + "," + std::to_string(worldZ) + ") local(" + 
-                        std::to_string(localX) + "," + std::to_string(localY) + "," + std::to_string(localZ) + 
-                        ") voxel=" + std::to_string(voxel.id));
-                    setCount++;
+                    // Debug: Log voxel setting to track terrain generation
+                    static int setCount = 0;
+                    if (setCount < 50) {  // Log more sets since this is where terrain is generated
+                        auto now = std::chrono::system_clock::now();
+                        auto time_t = std::chrono::system_clock::to_time_t(now);
+                        auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(now.time_since_epoch()) % 1000;
+                        std::stringstream ss;
+                        ss << std::put_time(std::localtime(&time_t), "%H:%M:%S");
+                        ss << '.' << std::setfill('0') << std::setw(3) << ms.count();
+                        
+                        VoxelCastle::Utils::logToFile("[" + ss.str() + "] [CHUNK_SET] Chunk(" + std::to_string(m_coordinates.x) + "," + 
+                            std::to_string(m_coordinates.z) + ") world(" + std::to_string(worldX) + "," + 
+                            std::to_string(worldY) + "," + std::to_string(worldZ) + ") chunkY=" + std::to_string(segmentYIndex) +
+                            " local(" + std::to_string(localX) + "," + std::to_string(localY) + "," + std::to_string(localZ) + 
+                            ") voxel=" + std::to_string(voxel.id));
+                        setCount++;
+                    }
+                    segment->setVoxel(localX, localY, localZ, voxel);
                 }
-                segment->setVoxel(localX, localY, localZ, voxel);
             }
-            // Else: Segment doesn't exist (should not happen if constructor pre-allocates all), do nothing or log error
         }
 
         ChunkSegment* ChunkColumn::getSegmentByIndex(uint8_t segmentYIndex) {
@@ -177,8 +193,9 @@ namespace VoxelCastle
 
         int_fast32_t ChunkColumn::worldYToSegmentYIndex(int_fast64_t worldY)
         {
-            int_fast32_t index = static_cast<int_fast32_t>(std::floor(static_cast<double>(worldY) / ::VoxelCastle::World::SEGMENT_HEIGHT));
-            return index;
+            // Use new coordinate system for ±128 chunk range
+            using namespace VoxelCastle::World::WorldCoordinates;
+            return BlockYToChunkY(static_cast<int32_t>(worldY));
         }
 
         void ChunkColumn::worldToLocalSegmentCoords(
@@ -186,17 +203,19 @@ namespace VoxelCastle
             int_fast32_t& segmentX, int_fast32_t& segmentY, int_fast32_t& segmentZ,
             int_fast64_t columnWorldX, int_fast64_t columnWorldZ)
         {
+            // Use new coordinate system for ±128 chunk range
+            using namespace VoxelCastle::World::WorldCoordinates;
+            
             int_fast64_t relativeX = worldX - columnWorldX;
             int_fast64_t relativeZ = worldZ - columnWorldZ;
 
-            segmentX = static_cast<int_fast32_t>(relativeX % ::VoxelCastle::World::SEGMENT_WIDTH);
-            if (segmentX < 0) segmentX += ::VoxelCastle::World::SEGMENT_WIDTH;
+            segmentX = static_cast<int_fast32_t>(relativeX % CHUNK_SIZE_VOXELS);
+            if (segmentX < 0) segmentX += CHUNK_SIZE_VOXELS;
 
-            segmentY = static_cast<int_fast32_t>(worldY % ::VoxelCastle::World::SEGMENT_HEIGHT);
-            if (segmentY < 0) segmentY += ::VoxelCastle::World::SEGMENT_HEIGHT;
+            segmentY = BlockYToLocalY(static_cast<int32_t>(worldY));
 
-            segmentZ = static_cast<int_fast32_t>(relativeZ % ::VoxelCastle::World::SEGMENT_DEPTH);
-            if (segmentZ < 0) segmentZ += ::VoxelCastle::World::SEGMENT_DEPTH;
+            segmentZ = static_cast<int_fast32_t>(relativeZ % CHUNK_SIZE_VOXELS);
+            if (segmentZ < 0) segmentZ += CHUNK_SIZE_VOXELS;
         }
 
         void ChunkColumn::markAllSegmentsDirty() {

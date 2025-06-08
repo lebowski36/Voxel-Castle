@@ -75,8 +75,8 @@ struct CaveParameters {
     float tunnelWidth = 3.0f;           // Average tunnel width
     float cavernFrequency = 0.01f;      // Large cavern frequency
     float cavernSize = 15.0f;           // Average cavern size
-    int minCaveDepth = 8;               // Minimum depth for caves
-    int maxCaveDepth = 120;             // Maximum depth for caves
+    int minCaveDepth = 32;              // Minimum depth for caves (32 blocks = 8m below surface)
+    int maxCaveDepth = 3200;            // Maximum depth for caves (3200 blocks = -800m depth)
 };
 
 /**
@@ -88,8 +88,8 @@ struct ResourceParameters {
     float ironFrequency = 0.03f;        // Iron ore frequency
     float goldFrequency = 0.01f;        // Gold ore frequency
     float diamondFrequency = 0.002f;    // Diamond frequency
-    int minOreDepth = 5;                // Minimum depth for ore generation
-    int maxOreDepth = 100;              // Maximum depth for ore generation
+    int minOreDepth = 16;               // Minimum depth for ore generation (16 blocks = 4m below surface)
+    int maxOreDepth = 3840;             // Maximum depth for ore generation (3840 blocks = -960m depth)
 };
 
 /**
