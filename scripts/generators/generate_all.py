@@ -110,10 +110,8 @@ def main():
         print("  - engine/include/generated/voxel_types_generated.h")
         print("  - engine/src/generated/voxel_types_generated.cpp")
         print("  - block_mapping_generated.py")
-        print("\nNext steps:")
-        print("  1. Build the project to compile new C++ code")
-        print("  2. Update imports in existing Python scripts")
-        print("  3. Gradually migrate legacy hardcoded IDs")
+        print("  - assets/textures/block_atlas.png")
+        print("  - assets/textures/debug_atlas.png")
         return 0
     else:
         print("\n💥 SOME GENERATORS FAILED!")

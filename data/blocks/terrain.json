@@ -11,7 +11,7 @@
       "id": 0,
       "name": "Air",
       "description": "Air - migrated from working BLOCK_MAPPING",
-      "category": "special",
+      "category": "terrain",
       "tags": [
         "transparent",
         "walkable",
@@ -41,7 +41,7 @@
       "id": 1,
       "name": "Stone",
       "description": "Stone - migrated from working BLOCK_MAPPING",
-      "category": "stone",
+      "category": "terrain",
       "tags": [
         "solid",
         "natural"
@@ -76,7 +76,7 @@
       "id": 2,
       "name": "Dirt",
       "description": "Dirt - migrated from working BLOCK_MAPPING",
-      "category": "organic",
+      "category": "terrain",
       "tags": [
         "solid",
         "organic",
@@ -112,7 +112,7 @@
       "id": 3,
       "name": "Grass",
       "description": "Grass - migrated from working BLOCK_MAPPING",
-      "category": "organic",
+      "category": "terrain",
       "tags": [
         "solid",
         "organic",
@@ -148,7 +148,7 @@
       "id": 4,
       "name": "Sand",
       "description": "Sand - migrated from working BLOCK_MAPPING",
-      "category": "organic",
+      "category": "terrain",
       "tags": [
         "solid",
         "organic",
@@ -184,7 +184,7 @@
       "id": 5,
       "name": "Gravel",
       "description": "Gravel - migrated from working BLOCK_MAPPING",
-      "category": "stone",
+      "category": "terrain",
       "tags": [
         "solid",
         "natural"
@@ -219,7 +219,7 @@
       "id": 6,
       "name": "Clay",
       "description": "Clay - migrated from working BLOCK_MAPPING",
-      "category": "ceramic",
+      "category": "terrain",
       "tags": [
         "solid"
       ],
@@ -253,7 +253,7 @@
       "id": 7,
       "name": "Bedrock",
       "description": "Bedrock - migrated from working BLOCK_MAPPING",
-      "category": "stone",
+      "category": "terrain",
       "tags": [
         "solid",
         "natural"
@@ -288,7 +288,7 @@
       "id": 8,
       "name": "Topsoil",
       "description": "Topsoil - migrated from working BLOCK_MAPPING",
-      "category": "organic",
+      "category": "terrain",
       "tags": [
         "solid",
         "organic",
@@ -324,7 +324,7 @@
       "id": 9,
       "name": "Subsoil",
       "description": "Subsoil - migrated from working BLOCK_MAPPING",
-      "category": "organic",
+      "category": "terrain",
       "tags": [
         "solid",
         "organic",
@@ -360,7 +360,7 @@
       "id": 10,
       "name": "Granite",
       "description": "Granite - migrated from working BLOCK_MAPPING",
-      "category": "stone",
+      "category": "terrain",
       "tags": [
         "solid",
         "natural"
@@ -395,7 +395,7 @@
       "id": 11,
       "name": "Limestone",
       "description": "Limestone - migrated from working BLOCK_MAPPING",
-      "category": "stone",
+      "category": "terrain",
       "tags": [
         "solid",
         "natural"
@@ -430,7 +430,7 @@
       "id": 12,
       "name": "Marble",
       "description": "Marble - migrated from working BLOCK_MAPPING",
-      "category": "stone",
+      "category": "terrain",
       "tags": [
         "solid",
         "natural"
@@ -465,7 +465,7 @@
       "id": 13,
       "name": "Sandstone",
       "description": "Sandstone - migrated from working BLOCK_MAPPING",
-      "category": "stone",
+      "category": "terrain",
       "tags": [
         "solid",
         "natural"
@@ -500,7 +500,7 @@
       "id": 14,
       "name": "Slate",
       "description": "Slate - migrated from working BLOCK_MAPPING",
-      "category": "stone",
+      "category": "terrain",
       "tags": [
         "solid",
         "natural"
@@ -535,7 +535,7 @@
       "id": 15,
       "name": "Basalt",
       "description": "Basalt - migrated from working BLOCK_MAPPING",
-      "category": "stone",
+      "category": "terrain",
       "tags": [
         "solid",
         "natural"
@@ -570,7 +570,7 @@
       "id": 16,
       "name": "Quartzite",
       "description": "Quartzite - migrated from working BLOCK_MAPPING",
-      "category": "stone",
+      "category": "terrain",
       "tags": [
         "solid",
         "natural"
@@ -605,7 +605,7 @@
       "id": 17,
       "name": "Obsidian",
       "description": "Obsidian - migrated from working BLOCK_MAPPING",
-      "category": "stone",
+      "category": "terrain",
       "tags": [
         "solid",
         "natural"
@@ -640,7 +640,7 @@
       "id": 18,
       "name": "Pumice",
       "description": "Pumice - migrated from working BLOCK_MAPPING",
-      "category": "stone",
+      "category": "terrain",
       "tags": [
         "solid",
         "natural"
@@ -675,7 +675,7 @@
       "id": 19,
       "name": "Shale",
       "description": "Shale - migrated from working BLOCK_MAPPING",
-      "category": "stone",
+      "category": "terrain",
       "tags": [
         "solid",
         "natural"
@@ -710,7 +710,7 @@
       "id": 20,
       "name": "Coal Ore",
       "description": "Coal Ore - migrated from working BLOCK_MAPPING",
-      "category": "ore",
+      "category": "terrain",
       "tags": [
         "solid",
         "natural",
@@ -746,7 +746,7 @@
       "id": 21,
       "name": "Iron Ore",
       "description": "Iron Ore - migrated from working BLOCK_MAPPING",
-      "category": "ore",
+      "category": "terrain",
       "tags": [
         "solid",
         "natural",
@@ -782,7 +782,7 @@
       "id": 22,
       "name": "Copper Ore",
       "description": "Copper Ore - migrated from working BLOCK_MAPPING",
-      "category": "ore",
+      "category": "terrain",
       "tags": [
         "solid",
         "natural",
@@ -818,7 +818,7 @@
       "id": 23,
       "name": "Tin Ore",
       "description": "Tin Ore - migrated from working BLOCK_MAPPING",
-      "category": "ore",
+      "category": "terrain",
       "tags": [
         "solid",
         "natural",
@@ -854,7 +854,7 @@
       "id": 24,
       "name": "Silver Ore",
       "description": "Silver Ore - migrated from working BLOCK_MAPPING",
-      "category": "ore",
+      "category": "terrain",
       "tags": [
         "solid",
         "natural",
@@ -890,7 +890,7 @@
       "id": 25,
       "name": "Gold Ore",
       "description": "Gold Ore - migrated from working BLOCK_MAPPING",
-      "category": "ore",
+      "category": "terrain",
       "tags": [
         "solid",
         "natural",
@@ -926,7 +926,7 @@
       "id": 26,
       "name": "Ruby",
       "description": "Ruby - migrated from working BLOCK_MAPPING",
-      "category": "crystal",
+      "category": "terrain",
       "tags": [
         "solid"
       ],
@@ -960,7 +960,7 @@
       "id": 27,
       "name": "Sapphire",
       "description": "Sapphire - migrated from working BLOCK_MAPPING",
-      "category": "crystal",
+      "category": "terrain",
       "tags": [
         "solid"
       ],
@@ -994,7 +994,7 @@
       "id": 28,
       "name": "Emerald",
       "description": "Emerald - migrated from working BLOCK_MAPPING",
-      "category": "crystal",
+      "category": "terrain",
       "tags": [
         "solid"
       ],
@@ -1028,7 +1028,7 @@
       "id": 29,
       "name": "Diamond",
       "description": "Diamond - migrated from working BLOCK_MAPPING",
-      "category": "crystal",
+      "category": "terrain",
       "tags": [
         "solid"
       ],
@@ -1062,7 +1062,7 @@
       "id": 30,
       "name": "Oak Wood",
       "description": "Oak Wood - migrated from working BLOCK_MAPPING",
-      "category": "wood",
+      "category": "terrain",
       "tags": [
         "solid",
         "organic",
@@ -1098,7 +1098,7 @@
       "id": 31,
       "name": "Pine Wood",
       "description": "Pine Wood - migrated from working BLOCK_MAPPING",
-      "category": "wood",
+      "category": "terrain",
       "tags": [
         "solid",
         "organic",
@@ -1134,7 +1134,7 @@
       "id": 32,
       "name": "Birch Wood",
       "description": "Birch Wood - migrated from working BLOCK_MAPPING",
-      "category": "wood",
+      "category": "terrain",
       "tags": [
         "solid",
         "organic",
@@ -1170,7 +1170,7 @@
       "id": 33,
       "name": "Mahogany Wood",
       "description": "Mahogany Wood - migrated from working BLOCK_MAPPING",
-      "category": "wood",
+      "category": "terrain",
       "tags": [
         "solid",
         "organic",
@@ -1206,7 +1206,7 @@
       "id": 34,
       "name": "Oak Leaves",
       "description": "Oak Leaves - migrated from working BLOCK_MAPPING",
-      "category": "organic",
+      "category": "terrain",
       "tags": [
         "solid",
         "organic",
@@ -1242,7 +1242,7 @@
       "id": 35,
       "name": "Pine Leaves",
       "description": "Pine Leaves - migrated from working BLOCK_MAPPING",
-      "category": "organic",
+      "category": "terrain",
       "tags": [
         "solid",
         "organic",
@@ -1278,7 +1278,7 @@
       "id": 36,
       "name": "Birch Leaves",
       "description": "Birch Leaves - migrated from working BLOCK_MAPPING",
-      "category": "organic",
+      "category": "terrain",
       "tags": [
         "solid",
         "organic",
@@ -1314,7 +1314,7 @@
       "id": 37,
       "name": "Palm Leaves",
       "description": "Palm Leaves - migrated from working BLOCK_MAPPING",
-      "category": "organic",
+      "category": "terrain",
       "tags": [
         "solid",
         "organic",
@@ -1350,7 +1350,7 @@
       "id": 38,
       "name": "Brown Mushroom",
       "description": "Brown Mushroom - migrated from working BLOCK_MAPPING",
-      "category": "organic",
+      "category": "terrain",
       "tags": [
         "solid",
         "organic",
@@ -1386,7 +1386,7 @@
       "id": 39,
       "name": "Red Mushroom",
       "description": "Red Mushroom - migrated from working BLOCK_MAPPING",
-      "category": "organic",
+      "category": "terrain",
       "tags": [
         "solid",
         "organic",
@@ -1422,7 +1422,7 @@
       "id": 40,
       "name": "Snow",
       "description": "Snow - migrated from working BLOCK_MAPPING",
-      "category": "special",
+      "category": "terrain",
       "tags": [
         "solid"
       ],
@@ -1456,7 +1456,7 @@
       "id": 41,
       "name": "Ice",
       "description": "Ice - migrated from working BLOCK_MAPPING",
-      "category": "special",
+      "category": "terrain",
       "tags": [
         "solid"
       ],
@@ -1490,7 +1490,7 @@
       "id": 42,
       "name": "Packed Ice",
       "description": "Packed Ice - migrated from working BLOCK_MAPPING",
-      "category": "special",
+      "category": "terrain",
       "tags": [
         "solid"
       ],
@@ -1524,7 +1524,7 @@
       "id": 43,
       "name": "Cactus",
       "description": "Cactus - migrated from working BLOCK_MAPPING",
-      "category": "organic",
+      "category": "terrain",
       "tags": [
         "solid",
         "organic",
@@ -1560,7 +1560,7 @@
       "id": 44,
       "name": "Jungle Vine",
       "description": "Jungle Vine - migrated from working BLOCK_MAPPING",
-      "category": "organic",
+      "category": "terrain",
       "tags": [
         "solid",
         "organic",
@@ -1596,7 +1596,7 @@
       "id": 45,
       "name": "Pink Coral",
       "description": "Pink Coral - migrated from working BLOCK_MAPPING",
-      "category": "organic",
+      "category": "terrain",
       "tags": [
         "solid",
         "organic",
@@ -1632,7 +1632,7 @@
       "id": 46,
       "name": "Blue Coral",
       "description": "Blue Coral - migrated from working BLOCK_MAPPING",
-      "category": "organic",
+      "category": "terrain",
       "tags": [
         "solid",
         "organic",
@@ -1668,7 +1668,7 @@
       "id": 47,
       "name": "Seaweed",
       "description": "Seaweed - migrated from working BLOCK_MAPPING",
-      "category": "organic",
+      "category": "terrain",
       "tags": [
         "solid",
         "organic",
@@ -1704,7 +1704,7 @@
       "id": 48,
       "name": "Tundra Moss",
       "description": "Tundra Moss - migrated from working BLOCK_MAPPING",
-      "category": "organic",
+      "category": "terrain",
       "tags": [
         "solid",
         "organic",
@@ -1740,7 +1740,7 @@
       "id": 49,
       "name": "Desert Rock",
       "description": "Desert Rock - migrated from working BLOCK_MAPPING",
-      "category": "stone",
+      "category": "terrain",
       "tags": [
         "solid",
         "natural"
