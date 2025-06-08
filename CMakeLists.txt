@@ -126,6 +126,11 @@ add_executable(test_voxel_face_patterns tests/world/test_voxel_face_patterns.cpp
 target_link_libraries(test_voxel_face_patterns PRIVATE VoxelEngine gtest gtest_main)
 target_include_directories(test_voxel_face_patterns PRIVATE engine/include)
 
+# Add regional data test executable
+add_executable(test_regional_data tests/test_regional_data.cpp)
+target_link_libraries(test_regional_data PRIVATE VoxelEngine gtest gtest_main)
+target_include_directories(test_regional_data PRIVATE engine/include)
+
 # Enable CTest (optional, if you add tests)
 enable_testing()
 # add_subdirectory(tests) # If you have a tests directory with CMakeLists.txt

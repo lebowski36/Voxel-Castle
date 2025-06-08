@@ -4,6 +4,7 @@
 #include <chrono>
 #include <sstream>
 #include <iostream>
+#include <filesystem>
 
 namespace VoxelCastle {
 namespace World {
@@ -335,9 +336,19 @@ void RegionalDatabase::ClearCache() {
 }
 
 bool RegionalDatabase::CreateWorldDirectory(const std::string& worldPath) const {
-    // For now, assume directories exist. In a full implementation,
-    // this would create the directory structure.
-    return true;
+    try {
+        // Create the world directory
+        std::filesystem::create_directories(worldPath);
+        
+        // Create the regions subdirectory
+        std::string regionsDir = worldPath + "/regions";
+        std::filesystem::create_directories(regionsDir);
+        
+        return true;
+    } catch (const std::exception& e) {
+        std::cerr << "Failed to create world directory: " << e.what() << std::endl;
+        return false;
+    }
 }
 
 std::string RegionalDatabase::GetRegionFilePath(int32_t x, int32_t z) const {
