@@ -69,7 +69,7 @@ bool MenuSystem::initialize(int screenWidth, int screenHeight, const std::string
     });
 
     // Set up world generation UI completion callback
-    worldGenerationUI_->SetCompletionCallback([this](std::shared_ptr<VoxelCastle::World::SeedWorldGenerator> generatedWorld) {
+    worldGenerationUI_->SetCompletionCallback([this](std::shared_ptr<VoxelCastle::World::SeedWorldGenerator> /*generatedWorld*/) {
         // Convert the generated world to a WorldSeed for the existing callback system
         // For now, we'll use a basic conversion - this can be enhanced later
         VoxelCastle::World::WorldSeed seed; // Create with current timestamp
@@ -126,8 +126,16 @@ void MenuSystem::render() {
             std::cout << "[MenuSystem] Rendering WorldGenerationUI" << std::endl;
         }
         
-        // Render world generation UI directly (it uses its own rendering)
+        // CRITICAL FIX: WorldGenerationUI needs proper OpenGL state setup
+        // Set up OpenGL state like UISystem::render() does
+        getRenderer().beginFrame();
+        
+        // Render world generation UI
         worldGenerationUI_->render();
+        
+        // Clean up OpenGL state
+        getRenderer().endFrame();
+        
         // Generation completion is handled via the completion callback
     } else {
         // Render normal UI system (menus)
