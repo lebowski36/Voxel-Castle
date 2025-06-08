@@ -682,8 +682,8 @@ class DynamicAtlasGenerator:
         
         # Try to load a font, fallback to default if not available
         try:
-            # Try to find a system font - smaller size for better visibility
-            font_size = max(6, self.tile_size_px // 4)
+            # Try to find a system font - 20% bigger than standard size for better readability
+            font_size = int(max(6, self.tile_size_px // 4) * 1.2)
             font = ImageFont.truetype("/usr/share/fonts/dejavu/DejaVuSans-Bold.ttf", font_size)
         except:
             try:
