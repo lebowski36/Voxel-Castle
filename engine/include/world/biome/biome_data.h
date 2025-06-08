@@ -114,7 +114,6 @@ struct BiomeData {
     void setRoughness(float roughnessValue) { terrainScale = roughnessValue; }
     
     // Getters for biome properties
-    BiomeType getType() const { return type; }
     float getMinTemperature() const { return minTemperature; }
     float getMaxTemperature() const { return maxTemperature; }
     float getMinHumidity() const { return minHumidity; }
