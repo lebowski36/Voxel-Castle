@@ -148,3 +148,116 @@ This technology stack provides the foundation for complex simulation systems whi
 ---
 
 *More details coming soon as development progresses!*
+
+## 📦 Adding New Blocks - Developer Workflow
+
+Voxel Fortress uses a **unified, metadata-driven block system** that automatically generates all necessary code from JSON definitions. Adding new blocks is streamlined and safe.
+
+### Quick Start: Adding a New Block
+
+1. **Define the block** in the appropriate JSON file:
+   ```bash
+   # Edit the relevant category file
+   vim data/blocks/terrain.json        # Natural blocks (stone, dirt, etc.)
+   vim data/blocks/processed.json      # Crafted blocks (bricks, planks, etc.)
+   vim data/blocks/functional.json     # Functional blocks (doors, chests, etc.)
+   ```
+
+2. **Add your block definition**:
+   ```json
+   {
+     "NEW_BLOCK_NAME": {
+       "name": "Display Name",
+       "category": "terrain",
+       "type": "stone",
+       "subtype": "granite",
+       "face_pattern": "uniform",
+       "properties": {
+         "solid": true,
+         "transparent": false,
+         "hardness": 3
+       }
+     }
+   }
+   ```
+
+3. **Generate all code and resources**:
+   ```bash
+   # This single command updates everything:
+   python scripts/generators/generate_all.py
+   ```
+
+4. **Build and test**:
+   ```bash
+   cd build && make && cd .. && ./build/bin/VoxelFortressGame
+   ```
+
+### What Gets Generated Automatically
+
+The generation system creates:
+- ✅ **Stable Block IDs** - Auto-assigned, never change (save compatibility)
+- ✅ **C++ Enums** - `VoxelType::NEW_BLOCK_NAME` in generated headers
+- ✅ **Python Mappings** - Updated `BLOCK_MAPPING` for texture generation
+- ✅ **Texture Atlas** - Automatically regenerated with new textures
+- ✅ **Block Properties** - C++ property tables for game logic
+
+### Texture Atlas Regeneration
+
+**When does the texture atlas update?**
+- ✅ **New blocks added** - Atlas expands automatically
+- ✅ **Block properties changed** - Textures regenerate to match
+- ✅ **Manual trigger** - Run `python create_atlas_official.py`
+
+**Atlas Files Generated:**
+- `assets/textures/atlas_main.png` - Primary block faces (256 slots)
+- `assets/textures/atlas_side.png` - Side faces for logs/beams
+- `assets/textures/atlas_bottom.png` - Bottom faces for grass
+- `assets/textures/atlas_metadata.json` - Coordinate mappings
+
+### Advanced: Face Patterns
+
+Different blocks have different face requirements:
+
+```json
+{
+  "GRASS": {
+    "face_pattern": "grass",        // Top=grass, sides=dirt, bottom=dirt
+    "properties": {"type": "organic", "subtype": "grass"}
+  },
+  "LOG": {
+    "face_pattern": "log",          // Top/bottom=rings, sides=bark
+    "properties": {"type": "wood", "subtype": "oak"}
+  },
+  "STONE": {
+    "face_pattern": "uniform",      // All faces identical
+    "properties": {"type": "stone", "subtype": "granite"}
+  }
+}
+```
+
+### Safety Features
+
+- 🔒 **Save Compatibility** - Block IDs never change once assigned
+- 🔍 **Validation** - All JSON validated before code generation
+- 🔄 **Atomic Updates** - Generation either succeeds completely or fails safely
+- 📝 **Logging** - Full generation logs for debugging
+
+### Troubleshooting
+
+**Generation fails?**
+```bash
+# Check JSON syntax
+python -m json.tool data/blocks/terrain.json
+
+# Run individual steps
+python scripts/generators/id_manager.py
+python scripts/generators/cpp_generator.py
+python scripts/generators/python_generator.py
+python create_atlas_official.py
+```
+
+**Missing textures?** Check that your `type` and `subtype` have corresponding texture generators in `texture_generators/`.
+
+For detailed technical information, see: [docs/BLOCK_SYSTEM_WORKFLOW.md](docs/BLOCK_SYSTEM_WORKFLOW.md)
+
+---

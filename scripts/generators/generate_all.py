@@ -69,6 +69,7 @@ def main():
         (script_dir / "id_manager.py", "ID Registry Management"),
         (script_dir / "cpp_generator.py", "C++ Code Generation"),
         (script_dir / "python_generator.py", "Python Code Generation"),
+        (project_root / "create_atlas_official.py", "Texture Atlas Generation"),
     ]
     
     # Track results

@@ -129,12 +129,15 @@ class BlockIDManager:
                 continue
             
             category_assignments = []
+            existing_count = 0
+            new_count = 0
+            new_blocks = []
             
             for block_name in blocks.keys():
                 if block_name in existing_assignments:
                     # Use existing ID for stability
                     assigned_id = existing_assignments[block_name]
-                    print(f"  {block_name}: {assigned_id} (existing)")
+                    existing_count += 1
                     used_ids.add(assigned_id)
                 else:
                     # Find next available ID (skip any that are already used)
@@ -142,12 +145,23 @@ class BlockIDManager:
                         next_id += 1
                     
                     assigned_id = next_id
-                    print(f"  {block_name}: {assigned_id} (new)")
+                    new_blocks.append(f"{block_name}: {assigned_id}")
+                    new_count += 1
                     next_id += 1
                     used_ids.add(assigned_id)
                 
                 all_assignments[block_name] = assigned_id
                 category_assignments.append((block_name, assigned_id))
+            
+            # Print summary instead of every block
+            if existing_count > 0:
+                print(f"  {existing_count} existing blocks")
+            if new_count > 0:
+                print(f"  {new_count} new blocks:")
+                for new_block in new_blocks:
+                    print(f"    {new_block}")
+            if existing_count == 0 and new_count == 0:
+                print(f"  No blocks found")
             
             print(f"  Category {category}: {len(category_assignments)} blocks")
         
@@ -257,17 +271,20 @@ class BlockIDManager:
             else:
                 other_blocks.append((block_name, block_id))
         
-        # Print by category
+        # Print category summary only (not detailed block list)
+        print(f"\nCategory summary:")
         for category in self.category_order:
             if category_blocks[category]:
-                print(f"\n{category.upper()}:")
-                for block_name, block_id in category_blocks[category]:
-                    print(f"  {block_id:3d}: {block_name}")
+                block_count = len(category_blocks[category])
+                min_id = min(block_id for _, block_id in category_blocks[category])
+                max_id = max(block_id for _, block_id in category_blocks[category])
+                print(f"  {category.upper()}: {block_count} blocks (IDs {min_id}-{max_id})")
         
         if other_blocks:
-            print(f"\nOTHER:")
-            for block_name, block_id in other_blocks:
-                print(f"  {block_id:3d}: {block_name}")
+            block_count = len(other_blocks)
+            min_id = min(block_id for _, block_id in other_blocks)
+            max_id = max(block_id for _, block_id in other_blocks)
+            print(f"  OTHER: {block_count} blocks (IDs {min_id}-{max_id})")
 
 
 def main():

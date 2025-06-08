@@ -21,12 +21,16 @@ This protocol outlines how the AI agent (GitHub Copilot) operates. Adherence to 
     *   Maintain small, focused files.
 3.  **Execution & Testing:**
     *   Run necessary commands (e.g., build, run application) using the `run_in_terminal` tool, providing an explanation.
-    *   **CRITICAL COMMAND EXECUTION:** Always prepend `clear &&` to commands producing significant output (e.g., `clear && cmake --build ...`). State that the console is being cleared.
+    *   **🔥 CRITICAL COMMAND EXECUTION PROTOCOL:** 
+        *   **ALWAYS use `clear &&` prefix** for commands producing significant output (e.g., `clear && cmake --build ...`, `clear && python script.py`). 
+        *   **State explicitly that the console is being cleared** in the explanation.
+        *   **This improves context window management and output readability.**
     *   Test thoroughly after each significant change to verify outcomes and check for regressions by running the application or specific tests.
 4.  **User Confirmation & Decision Making:**
+    *   **🔥 CRITICAL OUTPUT PROTOCOL:** If command output is incomplete, cut off, or not received, **ALWAYS ask the user for the complete output** instead of re-running commands or making assumptions.
+    *   **Example: "I didn't receive the complete output from the build command. Could you please share the full output?"**
     *   Pause and explicitly await user confirmation of build/test results (success, failure, observations).
     *   **CRUCIAL DECISIONS:** Discuss and confirm ALL crucial decisions (e.g., library choices, major architectural changes), unrecoverable errors, or blocking questions with the user BEFORE proceeding.
-    *   If command output is incomplete or unclear, await user clarification before proceeding.
     *   **TASK COMPLETION CONFIRMATION: The agent MUST NOT mark any task or sub-task as complete in ANY `.md` file (including `development_tasks` files or `CURRENT_TODO.md`) without first proposing the completion to the user and receiving an explicit affirmative response (e.g., "yes", "okay", "confirmed"). The agent should state what it believes is complete and ask "Is it okay to mark this as complete?".**
 5.  **Task & Documentation Update (Post-User Confirmation):**
     *   **Only after explicit user confirmation (see point 4 above),** use `insert_edit_into_file` to mark the sub-task as complete in the `development_tasks/*.md` file.
@@ -49,6 +53,8 @@ This protocol outlines how the AI agent (GitHub Copilot) operates. Adherence to 
 *   **Integrate Changes:** After each logical fix or feature increment, ensure changes are metaphorically "submitted" (i.e., confirmed and integrated).
 
 ### III. Key Reminders & Tool Usage
+*   **🚨 CRITICAL: ALWAYS use `clear &&` before terminal commands** - This is ESSENTIAL for maintaining context window and improving output readability. NEVER run commands without clearing first.
+*   **🚨 CRITICAL: ALWAYS ask for output if not received** - Never try commands twice. If output isn't shown, explicitly ask "What was the output of that command?"
 *   **Direct Tool Usage:** Always execute necessary commands directly using the appropriate tool (e.g., `run_in_terminal`, `insert_edit_into_file`). Do not ask the user to run commands manually.
 *   **File Modifications:** Use `insert_edit_into_file` for all file changes, providing clear explanations.
 *   **Logging Guidelines:** 
@@ -64,6 +70,116 @@ This protocol outlines how the AI agent (GitHub Copilot) operates. Adherence to 
     *   Project Root: `/home/system-x1/Projects/Voxel Castle/`
     *   Build: `clear && cmake --build "/home/system-x1/Projects/Voxel Castle/build"`
     *   Run: `clear && "/home/system-x1/Projects/Voxel Castle/build/bin/VoxelFortressGame"`
+
+---
+
+## 📦 Quick Reference: Adding New Blocks
+
+**Unified Block System Active** - Single command generates all code and resources:
+
+```bash
+# 1. Edit JSON block definition
+vim data/blocks/terrain.json
+
+# 2. Generate everything (IDs, C++, Python, textures)  
+python scripts/generators/generate_all.py
+
+# 3. Build and test
+cd build && make && cd .. && ./build/bin/VoxelFortressGame
+```
+
+**Key Features:**
+- ✅ Auto-assigned stable block IDs (save compatibility guaranteed)
+- ✅ C++ enums and property tables generated automatically
+- ✅ Python texture mappings synchronized automatically  
+- ✅ Texture atlas regenerated with new blocks
+- 🔒 Safe: Generation atomic (all succeed or all fail)
+
+**Documentation:** [README.md](README.md#-adding-new-blocks---developer-workflow) | [Technical Details](docs/BLOCK_SYSTEM_WORKFLOW.md)
+
+---
+
+## 🔄 Active Tasks (New C++ Phase)
+
+### 1. Core Engine Foundation (C++)
+*Detailed sub-tasks in `/home/system-x1/Projects/Voxel Castle/development_tasks/01_core_engine_foundation/`. A main task in this section is marked `[x]` ONLY if ALL its detailed sub-tasks in the corresponding file are complete.*
+- [x] Set up new C++ project structure
+- [x] Implement window management
+- [x] Set up rendering API
+- [x] Select/Implement C++ Math Library
+
+
+### 2. Implement Core Systems (C++)
+*Detailed sub-tasks in `/home/system-x1/Projects/Voxel Castle/development_tasks/02_core_systems/`. A main task in this section is marked `[x]` ONLY if ALL its detailed sub-tasks in the corresponding file are complete.*
+- [x] Choose and implement ECS
+- [x] Create voxel data structures
+- [x] Build mesh generation system  
+
+### 3. Create Basic Game Structure (C++)
+*Detailed sub-tasks in `/home/system-x1/Projects/Voxel Castle/development_tasks/03_basic_game_structure/`. A main task in this section is marked `[x]` ONLY if ALL its detailed sub-tasks in the corresponding file are complete.*
+- [x] Implement camera system
+- [x] Set up basic game loop
+- [x] Add simple world generation
+- [x] Implement basic lighting model
+
+### 4. Essential Game Infrastructure (C++)
+*Detailed sub-tasks in `/home/system-x1/Projects/Voxel Castle/development_tasks/04_essential_game_infrastructure/`. A main task in this section is marked `[x]` ONLY if ALL its detailed sub-tasks in the corresponding file are complete.*
+- [x] Implement Physics System
+- [x] Develop UI Framework
+- [x] Clean Up Console Output and Logging System
+- [ ] **URGENT: Merge Dual Logging Systems** - Fix inconsistency between DEBUG_LOG() (writes to debug_logs/) and VoxelCastle::Utils::logToFile() (writes to debug_log.txt) 
+- [ ] Implement Game State Management
+- [x] Implement Block Placement System
+- [ ] Implement Modular UI System
+- [ ] Implement Menu System
+- [x] **Add World Seed System** - Enhanced world generation system (08c) in development with comprehensive design requirements integration. Core seed system (08c.1) officially COMPLETED ✅ 2025-06-06. Generation parameters system (08c.2) officially COMPLETED ✅ 2025-06-06. Feature parity (08c.3) basic implementation COMPLETED ✅ 2025-06-06. See `08c_world_generation_system.md` and subtasks 08c.1-08c.10 for detailed implementation plan
+- [x] **🚨 URGENT BUG: Grass Side Texture Atlas Sampling Error** - ✅ **RESOLVED**: Fixed critical visual bug where grass side faces displayed incorrect textures. Root causes fixed: atlas_id integer attribute binding, flipped V coordinates in side atlas UV calculation, normalized quad UVs for proper tiling, corrected shader tile span (1/16 vs 1/32), and implemented proper face culling for transparent blocks. Grass blocks now render correctly with proper texturing and water transparency works as expected.
+- [ ] **🚀 ACTIVE: Unified Block Resource System (08d.3)** - Creating centralized data source for both texture generation (Python) and game logic (C++). Implementing dynamic atlas expansion (main_2, side_2, etc.) and single-source-of-truth for block properties. Will eliminate manual synchronization between texture and logic systems. **CURRENT FOCUS**
+- [ ] **Comprehensive Block System** - Define and implement complete block taxonomy (256 block types) with properties system before expanding world generation. Implementation broken into modular subtasks: 08d.1 (✅ **COMPLETE** - face-based atlas system), 08d.2 (✅ **COMPLETE** - texture generator fixes), 08d.3 (🔄 **ACTIVE** - unified resource system), 08d.4 (integration pending). **Key Achievement**: 65.5% atlas space savings, formal FacePattern system, texture generator bugfixes, transparency system. See `08d_comprehensive_block_system.md` for overview and subtask files for detailed implementation plans (HIGH PRIORITY - Required before 08c.3 detailed expansion)
+- [ ] **Research and Decide on Open Source Licensing** - Analyze project dependencies, research appropriate open source licenses (MIT, GPL, Apache, etc.), and determine what licensing obligations and requirements apply to this project
+- [x] **Fix TextureAtlas Texture ID Management** - ✅ RESOLVED: Added texture_atlas.cpp to CMakeLists.txt, fixed duplicate constant definitions, all TextureAtlas methods now properly linked and functional
+
+### 5. Advanced Engine Features & Game Systems (C++)
+*Detailed sub-tasks in `/home/system-x1/Projects/Voxel Castle/development_tasks/05_advanced_engine_features/`. A main task in this section is marked `[x]` ONLY if ALL its detailed sub-tasks in the corresponding file are complete.*
+- [ ] Implement Level of Detail (LOD) System
+- [ ] Implement Save/Load System
+- [ ] Performance Profiling and Optimization
+- [ ] Implement Advanced World Generation System (see `/home/system-x1/Projects/Voxel Castle/development_tasks/04_essential_game_infrastructure/08c_world_generation_system.md` and additional details in `/home/system-x1/Projects/Voxel Castle/development_tasks/05_advanced_engine_features/05_advanced_world_generation.md`)
+- [ ] Implement Proper Game Versioning System
+- [ ] (Optional) Implement Advanced Asynchronous Mesh Generation (see `/home/system-x1/Projects/Voxel Castle/development_tasks/05_advanced_engine_features/04_optional_async_mesh_generation.md`)
+
+## 📝 Near-Term Priority Tasks
+*This section should be updated regularly with the most immediate goals, typically pointing to the current high-level task from the list above.*
+
+**Current Focus:** 🎯 **ELIMINATE ALL REMAINING RANDOMNESS IN TEXTURE GENERATORS**
+
+**URGENT:** Multiple texture generator modules still contain random/random.seed calls that must be converted to deterministic, tweakable values:
+
+**Remaining Random Usage Found:**
+- **ore_textures.py**: Emerald and diamond fire effects still use random.randint, random.random, random.choice
+- **metal_textures.py**: Iron block rust/oxidation/scratches/reflections use heavy random placement 
+- **fluid_textures.py**: Water/lava ripples and bubble patterns use random positioning
+- **wood_textures.py**: Legacy functions still contain random.randint calls (not in enhanced version)
+
+**Debug Atlas Status:**
+✅ Debug PNG improvements implemented: 3x zoom, block name display, grey overlay removed
+✅ Major texture generation errors fixed (limestone, sandstone, shale, bamboo_plank, cork)
+✅ Debug atlases generated successfully with improved visibility
+
+**Next Actions:**
+1. Fix remaining random usage in ore_textures.py (emerald/diamond crystals)
+2. Fix random usage in metal_textures.py (iron block patterns) 
+3. Fix random usage in fluid_textures.py (water/lava effects)
+4. Verify wood_textures.py vs wood_textures_enhanced.py usage
+5. Search for any missed random calls in other modules
+6. Generate final debug atlas to visually confirm all textures are deterministic
+7. Plan integration of game engine with new JSON-managed block system
+
+---
+
+## 🚀 Current Focus: Building Custom C++ Engine Components
+
+This file tr**Current Focus:** ⚡ Unified Block Resource System (08d.3a) - Creating centralized data source for blockscks our immediate high-level tasks and progress. Detailed sub-tasks for each item are located in corresponding files within the `/home/system-x1/Projects/Voxel Castle/development_tasks/` directory.
 
 ---
 
