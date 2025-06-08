@@ -17,7 +17,7 @@ public:
     void shutdown();
     
     void update(float deltaTime);
-    void render();
+    virtual void render();
     
     void setScreenSize(int width, int height);
     

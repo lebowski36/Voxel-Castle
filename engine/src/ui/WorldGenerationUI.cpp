@@ -27,16 +27,25 @@ bool WorldGenerationUI::initialize(VoxelEngine::UI::MenuSystem* menuSystem) {
     
     menuSystem_ = menuSystem;
     
+    std::cout << "[WorldGenerationUI] Initializing with size: " << getSize().x << "x" << getSize().y << std::endl;
+    std::cout << "[WorldGenerationUI] Position: " << getPosition().x << ", " << getPosition().y << std::endl;
+    
     // Create simple UI elements for now
     auto startButton = createStyledButton("Start World Generation", getNextElementY());
     startButton->setOnClick([this]() { OnStartClicked(); });
-    addChild(startButton);
     addElementSpacing();
     
     auto cancelButton = createStyledButton("Cancel", getNextElementY());
     cancelButton->setOnClick([this]() { OnCancelClicked(); });
-    addChild(cancelButton);
     addElementSpacing();
+    
+    std::cout << "[WorldGenerationUI] After button creation, size: " << getSize().x << "x" << getSize().y << std::endl;
+    std::cout << "[WorldGenerationUI] Visibility: " << (isVisible() ? "VISIBLE" : "HIDDEN") << std::endl;
+    
+    // Ensure the menu is visible
+    setVisible(true);
+    
+    std::cout << "[WorldGenerationUI] Initialization complete, visibility: " << (isVisible() ? "VISIBLE" : "HIDDEN") << std::endl;
     
     return true;
 }
@@ -47,6 +56,14 @@ void WorldGenerationUI::update(float deltaTime) {
     if (isGenerating_) {
         UpdateGeneration(deltaTime);
     }
+}
+
+void WorldGenerationUI::render() {
+    std::cout << "[WorldGenerationUI] render() called - Position: " << getPosition().x << ", " << getPosition().y 
+              << " Size: " << getSize().x << "x" << getSize().y << " Visible: " << (isVisible() ? "YES" : "NO") << std::endl;
+    
+    // Call the parent render method
+    BaseMenu::render();
 }
 
 bool WorldGenerationUI::IsGenerationComplete() const {

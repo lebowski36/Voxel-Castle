@@ -114,11 +114,15 @@ void MenuSystem::update(float deltaTime) {
 }
 
 void MenuSystem::render() {
+    std::cout << "[MenuSystem] render() called, menuState: " << static_cast<int>(menuState_) << std::endl;
+    
     if (menuState_ == MenuState::WORLD_GENERATION && worldGenerationUI_) {
+        std::cout << "[MenuSystem] Rendering WorldGenerationUI" << std::endl;
         // Render world generation UI directly (it uses its own rendering)
         worldGenerationUI_->render();
         // Generation completion is handled via the completion callback
     } else {
+        std::cout << "[MenuSystem] Rendering normal UI system" << std::endl;
         // Render normal UI system (menus)
         UISystem::render();
     }
@@ -210,6 +214,8 @@ void MenuSystem::showWorldCreationDialog() {
 }
 
 void MenuSystem::showWorldGenerationUI() {
+    std::cout << "[MenuSystem] showWorldGenerationUI() called" << std::endl;
+    
     // Hide all traditional menus
     mainMenu_->setVisible(false);
     settingsMenu_->setVisible(false);
@@ -221,7 +227,17 @@ void MenuSystem::showWorldGenerationUI() {
         element->setVisible(false);
     }
     
-    std::cout << "[MenuSystem] Switching to World Generation UI" << std::endl;
+    // Make sure WorldGenerationUI is properly centered
+    centerMenus(getRenderer().getScreenWidth(), getRenderer().getScreenHeight());
+    
+    std::cout << "[MenuSystem] Switching to World Generation UI - WorldGenerationUI size: " 
+              << getWorldGenerationUISize().x << "x" << getWorldGenerationUISize().y << std::endl;
+    
+    if (worldGenerationUI_) {
+        std::cout << "[MenuSystem] WorldGenerationUI position: " << worldGenerationUI_->getPosition().x 
+                  << ", " << worldGenerationUI_->getPosition().y << std::endl;
+        std::cout << "[MenuSystem] WorldGenerationUI visibility: " << (worldGenerationUI_->isVisible() ? "VISIBLE" : "HIDDEN") << std::endl;
+    }
 }
 
 void MenuSystem::closeMenus() {
@@ -468,6 +484,27 @@ void MenuSystem::centerMenus(int screenWidth, int screenHeight) {
         
         worldCreationDialog_->setPosition(worldCreationX, worldCreationY);
     }
+    
+    // Center world generation UI with similar constraints
+    if (worldGenerationUI_) {
+        glm::vec2 worldGenSize = worldGenerationUI_->getSize();
+        
+        // Default to centered position
+        float idealWorldGenX = screenWidth / 2.0f - worldGenSize.x / 2.0f;
+        float idealWorldGenY = screenHeight / 2.0f - worldGenSize.y / 2.0f;
+        
+        // Constrain to visible area with 10px margins
+        float worldGenX = std::max(10.0f, std::min(idealWorldGenX, screenWidth - worldGenSize.x - 10.0f));
+        float worldGenY = std::max(10.0f, std::min(idealWorldGenY, screenHeight - worldGenSize.y - 10.0f));
+        
+        // If screen is too small for the menu, prioritize showing top-left
+        if (screenWidth < worldGenSize.x + 20.0f || screenHeight < worldGenSize.y + 20.0f) {
+            worldGenX = 10.0f; // Pin to left with margin
+            worldGenY = 10.0f; // Pin to top with margin
+        }
+        
+        worldGenerationUI_->setPosition(worldGenX, worldGenY);
+    }
 }
 
 glm::vec2 MenuSystem::getMainMenuSize() const {
@@ -487,6 +524,13 @@ glm::vec2 MenuSystem::getSettingsMenuSize() const {
 glm::vec2 MenuSystem::getWorldCreationDialogSize() const {
     if (worldCreationDialog_) {
         return worldCreationDialog_->getSize();
+    }
+    return glm::vec2(0.0f, 0.0f);
+}
+
+glm::vec2 MenuSystem::getWorldGenerationUISize() const {
+    if (worldGenerationUI_) {
+        return worldGenerationUI_->getSize();
     }
     return glm::vec2(0.0f, 0.0f);
 }

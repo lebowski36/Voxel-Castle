@@ -40,6 +40,11 @@ public:
     void update(float deltaTime) override;
 
     /**
+     * @brief Render the world generation UI
+     */
+    void render() override;
+
+    /**
      * @brief Check if generation is complete and ready to start game
      * @return true if generation is complete
      */
