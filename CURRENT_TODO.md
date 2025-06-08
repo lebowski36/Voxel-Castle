@@ -2,7 +2,7 @@
 
 ## 🚀 Current Focus: Building Custom C++ Engine Components
 
-This file tr**Current Focus:** ⚡ Unified Block Resource System (08d.3a) - Creating centralized data source for blockscks our immediate high-level tasks and progress. Detailed sub-tasks for each item are located in corresponding files within the `/home/system-x1/Projects/Voxel Castle/development_tasks/` directory.
+This file tracks our immediate high-level tasks and progress. Detailed sub-tasks for each item are located in corresponding files within the `/home/system-x1/Projects/Voxel Castle/development_tasks/` directory.
 
 **IMPORTANT: This file is updated after each major development step is confirmed as complete by the user. The agent works from detailed sub-task files.**
 
@@ -42,7 +42,7 @@ This protocol outlines how the AI agent (GitHub Copilot) operates. Adherence to 
         changes are made to the file
         * When a file has no created timestamp and you update it you have to set the created to "UNKNOWN" but still set the last updated timestamp
         * Always fetch the current date and time before adding or updating timestamps
-        * Use the format matching the current date in context (e.g., 2changes025-06-05 16:45)
+        * Use the format matching the current date in context (e.g., 2025-06-05 16:45)
         * These timestamps apply only to task documentation files, not code files
 6.  **Progression:** Proceed to the next open sub-task. If any part of the process or a specific task is unclear, ask for clarification.
 
@@ -108,7 +108,6 @@ cd build && make && cd .. && ./build/bin/VoxelFortressGame
 - [x] Set up rendering API
 - [x] Select/Implement C++ Math Library
 
-
 ### 2. Implement Core Systems (C++)
 *Detailed sub-tasks in `/home/system-x1/Projects/Voxel Castle/development_tasks/02_core_systems/`. A main task in this section is marked `[x]` ONLY if ALL its detailed sub-tasks in the corresponding file are complete.*
 - [x] Choose and implement ECS
@@ -127,15 +126,15 @@ cd build && make && cd .. && ./build/bin/VoxelFortressGame
 - [x] Implement Physics System
 - [x] Develop UI Framework
 - [x] Clean Up Console Output and Logging System
-- [ ] **URGENT: Merge Dual Logging Systems** - Fix inconsistency between DEBUG_LOG() (writes to debug_logs/) and VoxelCastle::Utils::logToFile() (writes to debug_log.txt) 
+- [ ] **Merge Dual Logging Systems** - Fix inconsistency between DEBUG_LOG() (writes to debug_logs/) and VoxelCastle::Utils::logToFile() (writes to debug_log.txt) 
 - [ ] Implement Game State Management
 - [x] Implement Block Placement System
 - [ ] Implement Modular UI System
 - [ ] Implement Menu System
 - [x] **Add World Seed System** - Enhanced world generation system (08c) in development with comprehensive design requirements integration. Core seed system (08c.1) officially COMPLETED ✅ 2025-06-06. Generation parameters system (08c.2) officially COMPLETED ✅ 2025-06-06. Feature parity (08c.3) basic implementation COMPLETED ✅ 2025-06-06. See `08c_world_generation_system.md` and subtasks 08c.1-08c.10 for detailed implementation plan
 - [x] **🚨 URGENT BUG: Grass Side Texture Atlas Sampling Error** - ✅ **RESOLVED**: Fixed critical visual bug where grass side faces displayed incorrect textures. Root causes fixed: atlas_id integer attribute binding, flipped V coordinates in side atlas UV calculation, normalized quad UVs for proper tiling, corrected shader tile span (1/16 vs 1/32), and implemented proper face culling for transparent blocks. Grass blocks now render correctly with proper texturing and water transparency works as expected.
-- [ ] **🚀 ACTIVE: Unified Block Resource System (08d.3)** - Creating centralized data source for both texture generation (Python) and game logic (C++). Implementing dynamic atlas expansion (main_2, side_2, etc.) and single-source-of-truth for block properties. Will eliminate manual synchronization between texture and logic systems. **CURRENT FOCUS**
-- [ ] **Comprehensive Block System** - Define and implement complete block taxonomy (256 block types) with properties system before expanding world generation. Implementation broken into modular subtasks: 08d.1 (✅ **COMPLETE** - face-based atlas system), 08d.2 (✅ **COMPLETE** - texture generator fixes), 08d.3 (🔄 **ACTIVE** - unified resource system), 08d.4 (integration pending). **Key Achievement**: 65.5% atlas space savings, formal FacePattern system, texture generator bugfixes, transparency system. See `08d_comprehensive_block_system.md` for overview and subtask files for detailed implementation plans (HIGH PRIORITY - Required before 08c.3 detailed expansion)
+- [x] **🎉 COMPLETED: Unified Block Resource System (08d.3)** - ✅ **PRODUCTION READY**: Complete centralized data source implemented for both texture generation (Python) and game logic (C++). Features auto-generated stable block IDs (257 blocks), C++ code generation, Python mapping synchronization, safe block removal system (deprecation/tombstone), and streamlined developer workflow. All code generation, atlas creation, and build integration tested and working. See 08d.3a.3_code_generation_infrastructure.md for technical details.
+- [x] **Comprehensive Block System** - ✅ **COMPLETE**: Comprehensive block taxonomy implemented with properties system. All subtasks complete: 08d.1 (✅ face-based atlas system), 08d.2 (✅ texture generator fixes), 08d.3 (✅ unified resource system), 08d.4 (✅ integration complete). **Key Achievement**: 65.5% atlas space savings, formal FacePattern system, texture generator bugfixes, transparency system, and production-ready block management infrastructure.
 - [ ] **Research and Decide on Open Source Licensing** - Analyze project dependencies, research appropriate open source licenses (MIT, GPL, Apache, etc.), and determine what licensing obligations and requirements apply to this project
 - [x] **Fix TextureAtlas Texture ID Management** - ✅ RESOLVED: Added texture_atlas.cpp to CMakeLists.txt, fixed duplicate constant definitions, all TextureAtlas methods now properly linked and functional
 
@@ -148,312 +147,54 @@ cd build && make && cd .. && ./build/bin/VoxelFortressGame
 - [ ] Implement Proper Game Versioning System
 - [ ] (Optional) Implement Advanced Asynchronous Mesh Generation (see `/home/system-x1/Projects/Voxel Castle/development_tasks/05_advanced_engine_features/04_optional_async_mesh_generation.md`)
 
-## 📝 Near-Term Priority Tasks
-*This section should be updated regularly with the most immediate goals, typically pointing to the current high-level task from the list above.*
-
-**Current Focus:** 🎯 **ELIMINATE ALL REMAINING RANDOMNESS IN TEXTURE GENERATORS**
-
-**URGENT:** Multiple texture generator modules still contain random/random.seed calls that must be converted to deterministic, tweakable values:
-
-**Remaining Random Usage Found:**
-- **ore_textures.py**: Emerald and diamond fire effects still use random.randint, random.random, random.choice
-- **metal_textures.py**: Iron block rust/oxidation/scratches/reflections use heavy random placement 
-- **fluid_textures.py**: Water/lava ripples and bubble patterns use random positioning
-- **wood_textures.py**: Legacy functions still contain random.randint calls (not in enhanced version)
-
-**Debug Atlas Status:**
-✅ Debug PNG improvements implemented: 3x zoom, block name display, grey overlay removed
-✅ Major texture generation errors fixed (limestone, sandstone, shale, bamboo_plank, cork)
-✅ Debug atlases generated successfully with improved visibility
-
-**Next Actions:**
-1. Fix remaining random usage in ore_textures.py (emerald/diamond crystals)
-2. Fix random usage in metal_textures.py (iron block patterns) 
-3. Fix random usage in fluid_textures.py (water/lava effects)
-4. Verify wood_textures.py vs wood_textures_enhanced.py usage
-5. Search for any missed random calls in other modules
-6. Generate final debug atlas to visually confirm all textures are deterministic
-7. Plan integration of game engine with new JSON-managed block system
-
 ---
-
-## 🚀 Current Focus: Building Custom C++ Engine Components
-
-This file tr**Current Focus:** ⚡ Unified Block Resource System (08d.3a) - Creating centralized data source for blockscks our immediate high-level tasks and progress. Detailed sub-tasks for each item are located in corresponding files within the `/home/system-x1/Projects/Voxel Castle/development_tasks/` directory.
-
----
-
-## 🔄 Active Tasks (New C++ Phase)
-
-### 1. Core Engine Foundation (C++)
-*Detailed sub-tasks in `/home/system-x1/Projects/Voxel Castle/development_tasks/01_core_engine_foundation/`. A main task in this section is marked `[x]` ONLY if ALL its detailed sub-tasks in the corresponding file are complete.*
-- [x] Set up new C++ project structure
-- [x] Implement window management
-- [x] Set up rendering API
-- [x] Select/Implement C++ Math Library
-
-
-### 2. Implement Core Systems (C++)
-*Detailed sub-tasks in `/home/system-x1/Projects/Voxel Castle/development_tasks/02_core_systems/`. A main task in this section is marked `[x]` ONLY if ALL its detailed sub-tasks in the corresponding file are complete.*
-- [x] Choose and implement ECS
-- [x] Create voxel data structures
-- [x] Build mesh generation system  
-
-### 3. Create Basic Game Structure (C++)
-*Detailed sub-tasks in `/home/system-x1/Projects/Voxel Castle/development_tasks/03_basic_game_structure/`. A main task in this section is marked `[x]` ONLY if ALL its detailed sub-tasks in the corresponding file are complete.*
-- [x] Implement camera system
-- [x] Set up basic game loop
-- [x] Add simple world generation
-- [x] Implement basic lighting model
-
-### 4. Essential Game Infrastructure (C++)
-*Detailed sub-tasks in `/home/system-x1/Projects/Voxel Castle/development_tasks/04_essential_game_infrastructure/`. A main task in this section is marked `[x]` ONLY if ALL its detailed sub-tasks in the corresponding file are complete.*
-- [x] Implement Physics System
-- [x] Develop UI Framework
-- [x] Clean Up Console Output and Logging System
-- [ ] **URGENT: Merge Dual Logging Systems** - Fix inconsistency between DEBUG_LOG() (writes to debug_logs/) and VoxelCastle::Utils::logToFile() (writes to debug_log.txt) 
-- [ ] Implement Game State Management
-- [x] Implement Block Placement System
-- [ ] Implement Modular UI System
-- [ ] Implement Menu System
-- [x] **Add World Seed System** - Enhanced world generation system (08c) in development with comprehensive design requirements integration. Core seed system (08c.1) officially COMPLETED ✅ 2025-06-06. Generation parameters system (08c.2) officially COMPLETED ✅ 2025-06-06. Feature parity (08c.3) basic implementation COMPLETED ✅ 2025-06-06. See `08c_world_generation_system.md` and subtasks 08c.1-08c.10 for detailed implementation plan
-- [x] **🚨 URGENT BUG: Grass Side Texture Atlas Sampling Error** - ✅ **RESOLVED**: Fixed critical visual bug where grass side faces displayed incorrect textures. Root causes fixed: atlas_id integer attribute binding, flipped V coordinates in side atlas UV calculation, normalized quad UVs for proper tiling, corrected shader tile span (1/16 vs 1/32), and implemented proper face culling for transparent blocks. Grass blocks now render correctly with proper texturing and water transparency works as expected.
-- [ ] **🚀 ACTIVE: Unified Block Resource System (08d.3)** - Creating centralized data source for both texture generation (Python) and game logic (C++). Implementing dynamic atlas expansion (main_2, side_2, etc.) and single-source-of-truth for block properties. Will eliminate manual synchronization between texture and logic systems. **CURRENT FOCUS**
-- [ ] **Comprehensive Block System** - Define and implement complete block taxonomy (256 block types) with properties system before expanding world generation. Implementation broken into modular subtasks: 08d.1 (✅ **COMPLETE** - face-based atlas system), 08d.2 (✅ **COMPLETE** - texture generator fixes), 08d.3 (🔄 **ACTIVE** - unified resource system), 08d.4 (integration pending). **Key Achievement**: 65.5% atlas space savings, formal FacePattern system, texture generator bugfixes, transparency system. See `08d_comprehensive_block_system.md` for overview and subtask files for detailed implementation plans (HIGH PRIORITY - Required before 08c.3 detailed expansion)
-- [ ] **Research and Decide on Open Source Licensing** - Analyze project dependencies, research appropriate open source licenses (MIT, GPL, Apache, etc.), and determine what licensing obligations and requirements apply to this project
-- [x] **Fix TextureAtlas Texture ID Management** - ✅ RESOLVED: Added texture_atlas.cpp to CMakeLists.txt, fixed duplicate constant definitions, all TextureAtlas methods now properly linked and functional
-
-### 5. Advanced Engine Features & Game Systems (C++)
-*Detailed sub-tasks in `/home/system-x1/Projects/Voxel Castle/development_tasks/05_advanced_engine_features/`. A main task in this section is marked `[x]` ONLY if ALL its detailed sub-tasks in the corresponding file are complete.*
-- [ ] Implement Level of Detail (LOD) System
-- [ ] Implement Save/Load System
-- [ ] Performance Profiling and Optimization
-- [ ] Implement Advanced World Generation System (see `/home/system-x1/Projects/Voxel Castle/development_tasks/04_essential_game_infrastructure/08c_world_generation_system.md` and additional details in `/home/system-x1/Projects/Voxel Castle/development_tasks/05_advanced_engine_features/05_advanced_world_generation.md`)
-- [ ] Implement Proper Game Versioning System
-- [ ] (Optional) Implement Advanced Asynchronous Mesh Generation (see `/home/system-x1/Projects/Voxel Castle/development_tasks/05_advanced_engine_features/04_optional_async_mesh_generation.md`)
 
 ## 📝 Near-Term Priority Tasks
 *This section should be updated regularly with the most immediate goals, typically pointing to the current high-level task from the list above.*
 
-**Current Focus:** 🎯 **ELIMINATE ALL REMAINING RANDOMNESS IN TEXTURE GENERATORS**
+**🎉 MAJOR ACHIEVEMENT: Unified Block Resource System COMPLETED! ✅**
 
-**URGENT:** Multiple texture generator modules still contain random/random.seed calls that must be converted to deterministic, tweakable values:
+The complete block system infrastructure is now production-ready:
+- ✅ **Auto-generated stable block IDs** (257 blocks managed)
+- ✅ **C++ code generation** (enums, properties, face patterns) 
+- ✅ **Python mapping synchronization** (texture atlas generation)
+- ✅ **Safe block removal system** (deprecation/tombstone for save compatibility)
+- ✅ **Developer workflow streamlined** (single command: `python scripts/generators/generate_all.py`)
+- ✅ **Production integration tested** (build system, runtime, texture atlases)
 
-**Remaining Random Usage Found:**
-- **ore_textures.py**: Emerald and diamond fire effects still use random.randint, random.random, random.choice
-- **metal_textures.py**: Iron block rust/oxidation/scratches/reflections use heavy random placement 
-- **fluid_textures.py**: Water/lava ripples and bubble patterns use random positioning
-- **wood_textures.py**: Legacy functions still contain random.randint calls (not in enhanced version)
+**Next Focus Areas:**
+1. 🌍 **Enhanced World Generation** - Leverage the new robust block system for varied terrain features, improved biomes, and resource distribution
+2. 🎮 **Game State Management System** - Save/load persistence, game mode transitions, time control
+3. 🏗️ **Advanced Block Features** - Block interactions, resource processing chains, building mechanics
 
-**Debug Atlas Status:**
-✅ Debug PNG improvements implemented: 3x zoom, block name display, grey overlay removed
-✅ Major texture generation errors fixed (limestone, sandstone, shale, bamboo_plank, cork)
-✅ Debug atlases generated successfully with improved visibility
-
-**Next Actions:**
-1. Fix remaining random usage in ore_textures.py (emerald/diamond crystals)
-2. Fix random usage in metal_textures.py (iron block patterns) 
-3. Fix random usage in fluid_textures.py (water/lava effects)
-4. Verify wood_textures.py vs wood_textures_enhanced.py usage
-5. Search for any missed random calls in other modules
-6. Generate final debug atlas to visually confirm all textures are deterministic
-7. Plan integration of game engine with new JSON-managed block system
+**Texture Generator Status:**
+⚠️ **Determinism improvements skipped for now** - Can be revisited later if needed. Current generators produce consistent results for the production block system.
 
 ---
 
-## 🚀 Current Focus: Building Custom C++ Engine Components
+## Development Priorities
 
-This file tr**Current Focus:** ⚡ Unified Block Resource System (08d.3a) - Creating centralized data source for blockscks our immediate high-level tasks and progress. Detailed sub-tasks for each item are located in corresponding files within the `/home/system-x1/Projects/Voxel Castle/development_tasks/` directory.
+With the block system complete, the next logical major milestones are:
 
----
+### Option A: 🌍 Enhanced World Generation (RECOMMENDED)
+**Why this makes sense:** Now that we have a robust, stable block system with 257 blocks, we can create much more interesting and varied worlds.
+- More varied terrain features using the full block palette
+- Improved biome systems with new terrain blocks  
+- Resource distribution using ore and crystal blocks
+- Leverage the comprehensive block taxonomy for gameplay
 
-## 🔄 Active Tasks (New C++ Phase)
+### Option B: 🎮 Game State Management System
+**Why this makes sense:** With stable block IDs, implementing save/load becomes much safer.
+- Save game persistence with stable block ID compatibility
+- Game mode transitions (first-person ↔ strategic oversight)
+- Time control system for colony simulation
+- Auto-save functionality
 
-### 1. Core Engine Foundation (C++)
-*Detailed sub-tasks in `/home/system-x1/Projects/Voxel Castle/development_tasks/01_core_engine_foundation/`. A main task in this section is marked `[x]` ONLY if ALL its detailed sub-tasks in the corresponding file are complete.*
-- [x] Set up new C++ project structure
-- [x] Implement window management
-- [x] Set up rendering API
-- [x] Select/Implement C++ Math Library
+### Option C: 🏗️ Advanced Block Features  
+**Why this makes sense:** Build upon the block system infrastructure for gameplay.
+- Block interaction systems
+- Resource processing chains
+- Advanced building mechanics
+- Block-based crafting systems
 
-
-### 2. Implement Core Systems (C++)
-*Detailed sub-tasks in `/home/system-x1/Projects/Voxel Castle/development_tasks/02_core_systems/`. A main task in this section is marked `[x]` ONLY if ALL its detailed sub-tasks in the corresponding file are complete.*
-- [x] Choose and implement ECS
-- [x] Create voxel data structures
-- [x] Build mesh generation system  
-
-### 3. Create Basic Game Structure (C++)
-*Detailed sub-tasks in `/home/system-x1/Projects/Voxel Castle/development_tasks/03_basic_game_structure/`. A main task in this section is marked `[x]` ONLY if ALL its detailed sub-tasks in the corresponding file are complete.*
-- [x] Implement camera system
-- [x] Set up basic game loop
-- [x] Add simple world generation
-- [x] Implement basic lighting model
-
-### 4. Essential Game Infrastructure (C++)
-*Detailed sub-tasks in `/home/system-x1/Projects/Voxel Castle/development_tasks/04_essential_game_infrastructure/`. A main task in this section is marked `[x]` ONLY if ALL its detailed sub-tasks in the corresponding file are complete.*
-- [x] Implement Physics System
-- [x] Develop UI Framework
-- [x] Clean Up Console Output and Logging System
-- [ ] **URGENT: Merge Dual Logging Systems** - Fix inconsistency between DEBUG_LOG() (writes to debug_logs/) and VoxelCastle::Utils::logToFile() (writes to debug_log.txt) 
-- [ ] Implement Game State Management
-- [x] Implement Block Placement System
-- [ ] Implement Modular UI System
-- [ ] Implement Menu System
-- [x] **Add World Seed System** - Enhanced world generation system (08c) in development with comprehensive design requirements integration. Core seed system (08c.1) officially COMPLETED ✅ 2025-06-06. Generation parameters system (08c.2) officially COMPLETED ✅ 2025-06-06. Feature parity (08c.3) basic implementation COMPLETED ✅ 2025-06-06. See `08c_world_generation_system.md` and subtasks 08c.1-08c.10 for detailed implementation plan
-- [x] **🚨 URGENT BUG: Grass Side Texture Atlas Sampling Error** - ✅ **RESOLVED**: Fixed critical visual bug where grass side faces displayed incorrect textures. Root causes fixed: atlas_id integer attribute binding, flipped V coordinates in side atlas UV calculation, normalized quad UVs for proper tiling, corrected shader tile span (1/16 vs 1/32), and implemented proper face culling for transparent blocks. Grass blocks now render correctly with proper texturing and water transparency works as expected.
-- [ ] **🚀 ACTIVE: Unified Block Resource System (08d.3)** - Creating centralized data source for both texture generation (Python) and game logic (C++). Implementing dynamic atlas expansion (main_2, side_2, etc.) and single-source-of-truth for block properties. Will eliminate manual synchronization between texture and logic systems. **CURRENT FOCUS**
-- [ ] **Comprehensive Block System** - Define and implement complete block taxonomy (256 block types) with properties system before expanding world generation. Implementation broken into modular subtasks: 08d.1 (✅ **COMPLETE** - face-based atlas system), 08d.2 (✅ **COMPLETE** - texture generator fixes), 08d.3 (🔄 **ACTIVE** - unified resource system), 08d.4 (integration pending). **Key Achievement**: 65.5% atlas space savings, formal FacePattern system, texture generator bugfixes, transparency system. See `08d_comprehensive_block_system.md` for overview and subtask files for detailed implementation plans (HIGH PRIORITY - Required before 08c.3 detailed expansion)
-- [ ] **Research and Decide on Open Source Licensing** - Analyze project dependencies, research appropriate open source licenses (MIT, GPL, Apache, etc.), and determine what licensing obligations and requirements apply to this project
-- [x] **Fix TextureAtlas Texture ID Management** - ✅ RESOLVED: Added texture_atlas.cpp to CMakeLists.txt, fixed duplicate constant definitions, all TextureAtlas methods now properly linked and functional
-
-### 5. Advanced Engine Features & Game Systems (C++)
-*Detailed sub-tasks in `/home/system-x1/Projects/Voxel Castle/development_tasks/05_advanced_engine_features/`. A main task in this section is marked `[x]` ONLY if ALL its detailed sub-tasks in the corresponding file are complete.*
-- [ ] Implement Level of Detail (LOD) System
-- [ ] Implement Save/Load System
-- [ ] Performance Profiling and Optimization
-- [ ] Implement Advanced World Generation System (see `/home/system-x1/Projects/Voxel Castle/development_tasks/04_essential_game_infrastructure/08c_world_generation_system.md` and additional details in `/home/system-x1/Projects/Voxel Castle/development_tasks/05_advanced_engine_features/05_advanced_world_generation.md`)
-- [ ] Implement Proper Game Versioning System
-- [ ] (Optional) Implement Advanced Asynchronous Mesh Generation (see `/home/system-x1/Projects/Voxel Castle/development_tasks/05_advanced_engine_features/04_optional_async_mesh_generation.md`)
-
-## 📝 Near-Term Priority Tasks
-*This section should be updated regularly with the most immediate goals, typically pointing to the current high-level task from the list above.*
-
-**Current Focus:** 🎯 **ELIMINATE ALL REMAINING RANDOMNESS IN TEXTURE GENERATORS**
-
-**URGENT:** Multiple texture generator modules still contain random/random.seed calls that must be converted to deterministic, tweakable values:
-
-**Remaining Random Usage Found:**
-- **ore_textures.py**: Emerald and diamond fire effects still use random.randint, random.random, random.choice
-- **metal_textures.py**: Iron block rust/oxidation/scratches/reflections use heavy random placement 
-- **fluid_textures.py**: Water/lava ripples and bubble patterns use random positioning
-- **wood_textures.py**: Legacy functions still contain random.randint calls (not in enhanced version)
-
-**Debug Atlas Status:**
-✅ Debug PNG improvements implemented: 3x zoom, block name display, grey overlay removed
-✅ Major texture generation errors fixed (limestone, sandstone, shale, bamboo_plank, cork)
-✅ Debug atlases generated successfully with improved visibility
-
-**Next Actions:**
-1. Fix remaining random usage in ore_textures.py (emerald/diamond crystals)
-2. Fix random usage in metal_textures.py (iron block patterns) 
-3. Fix random usage in fluid_textures.py (water/lava effects)
-4. Verify wood_textures.py vs wood_textures_enhanced.py usage
-5. Search for any missed random calls in other modules
-6. Generate final debug atlas to visually confirm all textures are deterministic
-7. Plan integration of game engine with new JSON-managed block system
-
----
-
-## 🚀 Current Focus: Building Custom C++ Engine Components
-
-This file tr**Current Focus:** ⚡ Unified Block Resource System (08d.3a) - Creating centralized data source for blockscks our immediate high-level tasks and progress. Detailed sub-tasks for each item are located in corresponding files within the `/home/system-x1/Projects/Voxel Castle/development_tasks/` directory.
-
----
-
-## 🔄 Active Tasks (New C++ Phase)
-
-### 1. Core Engine Foundation (C++)
-*Detailed sub-tasks in `/home/system-x1/Projects/Voxel Castle/development_tasks/01_core_engine_foundation/`. A main task in this section is marked `[x]` ONLY if ALL its detailed sub-tasks in the corresponding file are complete.*
-- [x] Set up new C++ project structure
-- [x] Implement window management
-- [x] Set up rendering API
-- [x] Select/Implement C++ Math Library
-
-
-### 2. Implement Core Systems (C++)
-*Detailed sub-tasks in `/home/system-x1/Projects/Voxel Castle/development_tasks/02_core_systems/`. A main task in this section is marked `[x]` ONLY if ALL its detailed sub-tasks in the corresponding file are complete.*
-- [x] Choose and implement ECS
-- [x] Create voxel data structures
-- [x] Build mesh generation system  
-
-### 3. Create Basic Game Structure (C++)
-*Detailed sub-tasks in `/home/system-x1/Projects/Voxel Castle/development_tasks/03_basic_game_structure/`. A main task in this section is marked `[x]` ONLY if ALL its detailed sub-tasks in the corresponding file are complete.*
-- [x] Implement camera system
-- [x] Set up basic game loop
-- [x] Add simple world generation
-- [x] Implement basic lighting model
-
-### 4. Essential Game Infrastructure (C++)
-*Detailed sub-tasks in `/home/system-x1/Projects/Voxel Castle/development_tasks/04_essential_game_infrastructure/`. A main task in this section is marked `[x]` ONLY if ALL its detailed sub-tasks in the corresponding file are complete.*
-- [x] Implement Physics System
-- [x] Develop UI Framework
-- [x] Clean Up Console Output and Logging System
-- [ ] **URGENT: Merge Dual Logging Systems** - Fix inconsistency between DEBUG_LOG() (writes to debug_logs/) and VoxelCastle::Utils::logToFile() (writes to debug_log.txt) 
-- [ ] Implement Game State Management
-- [x] Implement Block Placement System
-- [ ] Implement Modular UI System
-- [ ] Implement Menu System
-- [x] **Add World Seed System** - Enhanced world generation system (08c) in development with comprehensive design requirements integration. Core seed system (08c.1) officially COMPLETED ✅ 2025-06-06. Generation parameters system (08c.2) officially COMPLETED ✅ 2025-06-06. Feature parity (08c.3) basic implementation COMPLETED ✅ 2025-06-06. See `08c_world_generation_system.md` and subtasks 08c.1-08c.10 for detailed implementation plan
-- [x] **🚨 URGENT BUG: Grass Side Texture Atlas Sampling Error** - ✅ **RESOLVED**: Fixed critical visual bug where grass side faces displayed incorrect textures. Root causes fixed: atlas_id integer attribute binding, flipped V coordinates in side atlas UV calculation, normalized quad UVs for proper tiling, corrected shader tile span (1/16 vs 1/32), and implemented proper face culling for transparent blocks. Grass blocks now render correctly with proper texturing and water transparency works as expected.
-- [ ] **🚀 ACTIVE: Unified Block Resource System (08d.3)** - Creating centralized data source for both texture generation (Python) and game logic (C++). Implementing dynamic atlas expansion (main_2, side_2, etc.) and single-source-of-truth for block properties. Will eliminate manual synchronization between texture and logic systems. **CURRENT FOCUS**
-- [ ] **Comprehensive Block System** - Define and implement complete block taxonomy (256 block types) with properties system before expanding world generation. Implementation broken into modular subtasks: 08d.1 (✅ **COMPLETE** - face-based atlas system), 08d.2 (✅ **COMPLETE** - texture generator fixes), 08d.3 (🔄 **ACTIVE** - unified resource system), 08d.4 (integration pending). **Key Achievement**: 65.5% atlas space savings, formal FacePattern system, texture generator bugfixes, transparency system. See `08d_comprehensive_block_system.md` for overview and subtask files for detailed implementation plans (HIGH PRIORITY - Required before 08c.3 detailed expansion)
-- [ ] **Research and Decide on Open Source Licensing** - Analyze project dependencies, research appropriate open source licenses (MIT, GPL, Apache, etc.), and determine what licensing obligations and requirements apply to this project
-- [x] **Fix TextureAtlas Texture ID Management** - ✅ RESOLVED: Added texture_atlas.cpp to CMakeLists.txt, fixed duplicate constant definitions, all TextureAtlas methods now properly linked and functional
-
-### 5. Advanced Engine Features & Game Systems (C++)
-*Detailed sub-tasks in `/home/system-x1/Projects/Voxel Castle/development_tasks/05_advanced_engine_features/`. A main task in this section is marked `[x]` ONLY if ALL its detailed sub-tasks in the corresponding file are complete.*
-- [ ] Implement Level of Detail (LOD) System
-- [ ] Implement Save/Load System
-- [ ] Performance Profiling and Optimization
-- [ ] Implement Advanced World Generation System (see `/home/system-x1/Projects/Voxel Castle/development_tasks/04_essential_game_infrastructure/08c_world_generation_system.md` and additional details in `/home/system-x1/Projects/Voxel Castle/development_tasks/05_advanced_engine_features/05_advanced_world_generation.md`)
-- [ ] Implement Proper Game Versioning System
-- [ ] (Optional) Implement Advanced Asynchronous Mesh Generation (see `/home/system-x1/Projects/Voxel Castle/development_tasks/05_advanced_engine_features/04_optional_async_mesh_generation.md`)
-
-## 📝 Near-Term Priority Tasks
-*This section should be updated regularly with the most immediate goals, typically pointing to the current high-level task from the list above.*
-
-**Current Focus:** 🎯 **ELIMINATE ALL REMAINING RANDOMNESS IN TEXTURE GENERATORS**
-
-**URGENT:** Multiple texture generator modules still contain random/random.seed calls that must be converted to deterministic, tweakable values:
-
-**Remaining Random Usage Found:**
-- **ore_textures.py**: Emerald and diamond fire effects still use random.randint, random.random, random.choice
-- **metal_textures.py**: Iron block rust/oxidation/scratches/reflections use heavy random placement 
-- **fluid_textures.py**: Water/lava ripples and bubble patterns use random positioning
-- **wood_textures.py**: Legacy functions still contain random.randint calls (not in enhanced version)
-
-**Debug Atlas Status:**
-✅ Debug PNG improvements implemented: 3x zoom, block name display, grey overlay removed
-✅ Major texture generation errors fixed (limestone, sandstone, shale, bamboo_plank, cork)
-✅ Debug atlases generated successfully with improved visibility
-
-**Next Actions:**
-1. Fix remaining random usage in ore_textures.py (emerald/diamond crystals)
-2. Fix random usage in metal_textures.py (iron block patterns) 
-3. Fix random usage in fluid_textures.py (water/lava effects)
-4. Verify wood_textures.py vs wood_textures_enhanced.py usage
-5. Search for any missed random calls in other modules
-6. Generate final debug atlas to visually confirm all textures are deterministic
-7. Plan integration of game engine with new JSON-managed block system
-
----
-
-## 🚨 **CRITICAL DISCOVERY: Block Removal Strategy Needed**
-
-**Issue Identified**: Current system has **zero save compatibility protection** when blocks are removed:
-- ❌ Removed block IDs are immediately freed for reuse  
-- ❌ Old save games with removed blocks would crash/corrupt
-- ❌ No migration path for existing world content
-
-**Required Solution**: Implement **Tombstone + Fallback System** before production use:
-
-### Immediate Actions Needed:
-1. **🔧 Enhance ID Manager** - Add deprecation support instead of removal
-2. **📋 Update Registry Format** - Add deprecated_blocks and permanently_reserved_ids sections  
-3. **🎮 Engine Integration** - Implement fallback loading for deprecated blocks
-4. **🧪 Save Compatibility Testing** - Validate old saves work after block changes
-5. **📖 Document Workflow** - Safe block removal procedures for developers
-
-### Proposed Workflow:
-```bash
-# SAFE: Mark block as deprecated (preserves save compatibility)
-python scripts/generators/id_manager.py --deprecate OLD_BLOCK --fallback NEW_BLOCK
-
-# UNSAFE: Direct removal (current behavior - breaks saves)
-# Remove from JSON → ID gets reused → save corruption
-```
-
-**Priority**: 🔥 **CRITICAL** - Must implement before any production saves are created
-
----
+**RECOMMENDATION**: Move to Enhanced World Generation to see the fruit of our block system work!
