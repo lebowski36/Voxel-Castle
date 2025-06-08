@@ -1,12 +1,16 @@
 # Advanced Biome System Implementation Plan
 
 *Created: 2025-06-08 17:45*  
-*Last Updated: 2025-06-08 20:30*  
+*Last Updated: 2025-06-08 21:15*  
 *Status: ACTIVE - REDESIGNED FOR ADVANCED WORLD GENERATION*
 
 ## Overview
 
 This document outlines the comprehensive implementation plan for the Voxel Castle advanced biome system, designed from day 1 to support realistic geological and ecological features including hydraulic erosion, river networks, climate simulation, and geological processes. This plan merges concepts from the legacy advanced world generation system with our current biome implementation to create a future-ready architecture.
+
+**Related Documentation:**
+- [World Generation Architecture](WORLD_GENERATION_ARCHITECTURE.md) - Dual-path system overview
+- [Database Investigation Report](../development_tasks/04_essential_game_infrastructure/08c.4.1_world_database_format_investigation.md) - Storage format analysis
 
 ## Vision & Goals
 
@@ -52,12 +56,12 @@ This document outlines the comprehensive implementation plan for the Voxel Castl
 #### 1.2 World Database Architecture
 **Goal**: Design database system capable of storing complex environmental data
 
-- **Investigate advanced database formats**: SQLite, HDF5, or custom binary format
-- **Design schema for geological/hydrological/climate data**
-- **Implement regional data streaming for massive worlds**
-- **Create efficient spatial indexing for environmental queries**
+- **Implement custom chunked binary format**: Spatial file organization for optimal streaming
+- **Design schema for geological/hydrological/climate data**: Future-ready environmental structures
+- **Implement regional data streaming for massive worlds**: Efficient spatial indexing and file management
+- **Create efficient spatial indexing for environmental queries**: 2D coordinate-based file access
 
-*Reference: [08c.4.1_world_database_format_investigation.md] - TO BE UPDATED*
+*Reference: [08c.4.1_world_database_format_investigation.md] - UPDATED WITH CUSTOM FORMAT DECISION*
 
 #### 1.3 Noise and Simulation Foundation
 **Goal**: Implement advanced noise techniques and basic simulation framework

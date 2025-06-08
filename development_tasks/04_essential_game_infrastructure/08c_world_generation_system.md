@@ -1,9 +1,14 @@
 # World Generation System
 *Created: 2025-06-05 22:59*
-*Last Updated: 2025-06-05 23:30*
+*Last Updated: 2025-06-08 21:15*
 
 ## Overview
 This document outlines the implementation plan for Voxel Castle's world generation system. The goal is to transition from the current legacy world generation to a more flexible, feature-rich seed-based generation system that supports both small detailed worlds and massive continent-scale worlds.
+
+**Related Documentation:**
+- [World Generation Architecture](../../docs/WORLD_GENERATION_ARCHITECTURE.md) - Dual-path system overview
+- [Advanced Biome Implementation Plan](../../docs/BIOME_IMPLEMENTATION_PLAN.md) - Detailed biome system design
+- [Database Investigation](08c.4.1_world_database_format_investigation.md) - Storage format analysis
 
 ## World Generation Philosophy
 
