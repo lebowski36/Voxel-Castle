@@ -1,4 +1,4 @@
-#include "../../include/world/biome/biome_types.h"
+#include "world/biome/biome_types.h"
 #include <unordered_map>
 #include <algorithm>
 #include <cctype>

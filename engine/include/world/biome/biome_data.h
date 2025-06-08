@@ -1,7 +1,11 @@
 #pragma once
 
+#include <string>
 #include "biome_types.h"
-#include "../voxel_types.h"
+#include "world/voxel_types.h"
+
+// Use VoxelType from VoxelEngine namespace
+using VoxelEngine::World::VoxelType;
 
 namespace VoxelCastle {
 namespace World {
@@ -14,6 +18,8 @@ namespace World {
  */
 struct BiomeData {
     BiomeType type;                ///< The biome type this data represents
+    std::string name;              ///< Human-readable name of the biome
+    std::string description;       ///< Description of the biome
     
     // Climate parameters
     float baseTemperature;         ///< Base temperature for this biome (-1.0 to 1.0)
@@ -26,12 +32,12 @@ struct BiomeData {
     int heightVariation;          ///< Maximum variation from base height (0 to 100)
     
     // Block type assignments
-    BlockType surfaceBlock;       ///< Primary surface block (grass, sand, etc.)
-    BlockType subsurfaceBlock;    ///< Block beneath surface (dirt, sandstone, etc.)
-    BlockType deepBlock;          ///< Deep underground block (stone, etc.)
+    VoxelType surfaceBlock;       ///< Primary surface block (grass, sand, etc.)
+    VoxelType subsurfaceBlock;    ///< Block beneath surface (dirt, sandstone, etc.)
+    VoxelType deepBlock;          ///< Deep underground block (stone, etc.)
     
     // Special feature blocks (up to 4 per biome initially)
-    BlockType featureBlocks[4];   ///< Blocks for vegetation, decorations, etc.
+    VoxelType featureBlocks[4];   ///< Blocks for vegetation, decorations, etc.
     
     // Climate thresholds for biome selection
     float minTemperature;         ///< Minimum temperature for this biome
@@ -45,13 +51,18 @@ struct BiomeData {
     BiomeData();
     
     /**
+     * @brief Constructor with biome type, name, and description only
+     */
+    BiomeData(BiomeType biomeType, const std::string& biomeName, const std::string& biomeDescription);
+    
+    /**
      * @brief Constructor with full parameters
      */
     BiomeData(BiomeType biomeType, 
               float temp, float humidity,
               float roughness, float scale,
               int height, int heightVar,
-              BlockType surface, BlockType subsurface, BlockType deep,
+              VoxelType surface, VoxelType subsurface, VoxelType deep,
               float minTemp, float maxTemp, float minHum, float maxHum);
     
     /**
@@ -67,6 +78,47 @@ struct BiomeData {
      * @return true if the climate values match this biome
      */
     bool matchesClimate(float temperature, float humidity) const;
+    
+    // Accessors
+    const std::string& getName() const { return name; }
+    const std::string& getDescription() const { return description; }
+    BiomeType getType() const { return type; }
+    
+    // Block assignment methods
+    void setSurfaceBlock(VoxelType block) { surfaceBlock = block; }
+    void setSubSurfaceBlock(VoxelType block) { subsurfaceBlock = block; }
+    void setDeepBlock(VoxelType block) { deepBlock = block; }
+    void setFillerBlock(VoxelType block) { 
+        // Use the first feature block slot for filler block
+        featureBlocks[0] = block; 
+    }
+    
+    // Climate range setters
+    void setTemperatureRange(float minTemp, float maxTemp) {
+        minTemperature = minTemp;
+        maxTemperature = maxTemp;
+    }
+    
+    void setHumidityRange(float minHum, float maxHum) {
+        minHumidity = minHum;
+        maxHumidity = maxHum;
+    }
+    
+    // Terrain parameter setters
+    void setElevationRange(int minElev, int maxElev) {
+        baseHeight = (minElev + maxElev) / 2;
+        heightVariation = (maxElev - minElev) / 2;
+    }
+    
+    void setSlope(float slopeValue) { terrainRoughness = slopeValue; }
+    void setRoughness(float roughnessValue) { terrainScale = roughnessValue; }
+    
+    // Getters for biome properties
+    BiomeType getType() const { return type; }
+    float getMinTemperature() const { return minTemperature; }
+    float getMaxTemperature() const { return maxTemperature; }
+    float getMinHumidity() const { return minHumidity; }
+    float getMaxHumidity() const { return maxHumidity; }
 };
 
 } // namespace World

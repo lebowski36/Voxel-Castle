@@ -4,6 +4,9 @@
 #include <algorithm>
 #include <cmath>
 
+// Use VoxelType from VoxelEngine namespace
+using VoxelEngine::World::VoxelType;
+
 namespace VoxelCastle {
 namespace World {
 
