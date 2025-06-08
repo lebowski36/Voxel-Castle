@@ -28,7 +28,7 @@ set(SDL_SHARED OFF CACHE BOOL "Build SDL as a shared library")
 # Fetch SDL3 from repository
 FetchContent_Declare(
   SDL3
-  URL https://github.com/libsdl-org/SDL/archive/refs/tags/release-3.0.0.zip
+  URL https://github.com/libsdl-org/SDL/releases/download/release-3.2.16/SDL3-3.2.16.zip
 )
 FetchContent_MakeAvailable(SDL3)
 # --- End SDL Configuration ---

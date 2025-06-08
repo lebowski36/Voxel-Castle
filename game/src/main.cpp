@@ -4,8 +4,8 @@
 #include <iostream>
 #include <vector>
 #include <string>
-#include <fstream> // Added
-#include <sstream> // Added
+#include <fstream>
+#include <sstream>
 #include <glad/glad.h>
 #include "rendering/render_utils.h" // Added for shader loading utilities
 #include "rendering/debug_utils.h" // Added for debug drawing utilities
@@ -45,7 +45,6 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 #include <glm/gtx/string_cast.hpp> // Ensure this is included after enabling experimental extensions
-#include <fstream>
 
 const int SCREEN_WIDTH = 2400; // 3x original width
 const int SCREEN_HEIGHT = 1800; // 3x original height

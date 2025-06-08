@@ -5,6 +5,7 @@
 #include <fstream>
 #include <glm/vec3.hpp>
 #include <chrono>
+#include <vector>
 
 namespace VoxelCastle {
 namespace Core {

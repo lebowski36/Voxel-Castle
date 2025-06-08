@@ -3,6 +3,7 @@
 #include <iomanip>
 #include <iostream>
 #include <filesystem>
+#include <vector>
 
 namespace VoxelCastle {
 namespace Core {
