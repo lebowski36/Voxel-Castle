@@ -424,7 +424,219 @@ def generate_processed_stone_texture(texture_size: int = 16, processed_type: str
                           min(stone_y + stone_size, texture_size-1)], 
                          fill=stone_color)
     
+    # Handle specific stone type bricks/tiles/processed variants
+    elif 'brick' in processed_type:
+        # Extract base stone type (granite_brick -> granite)
+        base_stone = processed_type.replace('_brick', '')
+        return generate_brick_texture(texture_size, base_stone)
+    
+    elif 'tile' in processed_type:
+        # Extract base stone type (marble_tile -> marble)
+        base_stone = processed_type.replace('_tile', '')
+        return generate_tile_texture(texture_size, base_stone)
+    
+    elif 'polished' in processed_type:
+        # Extract base stone type (polished_stone -> stone)
+        base_stone = processed_type.replace('polished_', '')
+        return generate_polished_texture(texture_size, base_stone)
+    
+    elif 'smooth' in processed_type:
+        # Extract base stone type (smooth_stone -> stone)
+        base_stone = processed_type.replace('smooth_', '')
+        return generate_smooth_texture(texture_size, base_stone)
+    
+    elif 'chiseled' in processed_type:
+        # Extract base stone type (chiseled_stone -> stone)
+        base_stone = processed_type.replace('chiseled_', '')
+        return generate_chiseled_texture(texture_size, base_stone)
+    
     return image
+
+def generate_brick_texture(texture_size: int, base_stone: str) -> Image.Image:
+    """Generate brick texture based on stone type"""
+    image = Image.new('RGBA', (texture_size, texture_size), (0, 0, 0, 0))
+    draw = ImageDraw.Draw(image)
+    
+    # Get base stone colors
+    palette = get_stone_base_colors(base_stone)
+    brick_color = palette['base']
+    mortar_color = vary_color(brick_color, -30, 42)
+    
+    # Fill with mortar base
+    draw.rectangle([0, 0, texture_size-1, texture_size-1], fill=mortar_color)
+    
+    # Calculate brick layout
+    mortar_thickness = max(1, texture_size // 16)
+    brick_height = max(3, texture_size // 4)
+    
+    y_offset = 0
+    row = 0
+    while y_offset < texture_size:
+        brick_width = max(4, texture_size // 2)
+        
+        # Offset every other row for proper brick pattern
+        x_offset = (brick_width // 2) if row % 2 == 1 else 0
+        
+        x = x_offset
+        while x < texture_size:
+            # Draw individual brick
+            brick_x1 = x
+            brick_y1 = y_offset + mortar_thickness
+            brick_x2 = min(x + brick_width - mortar_thickness, texture_size - 1)
+            brick_y2 = min(y_offset + brick_height - mortar_thickness, texture_size - 1)
+            
+            if brick_x2 > brick_x1 and brick_y2 > brick_y1:
+                # Add slight color variation to each brick
+                varied_brick_color = vary_color(brick_color, 10, brick_x1 + brick_y1)
+                draw.rectangle([brick_x1, brick_y1, brick_x2, brick_y2], 
+                             fill=varied_brick_color)
+            
+            x += brick_width
+        
+        y_offset += brick_height
+        row += 1
+    
+    return image
+
+def generate_tile_texture(texture_size: int, base_stone: str) -> Image.Image:
+    """Generate tile texture based on stone type"""
+    image = Image.new('RGBA', (texture_size, texture_size), (0, 0, 0, 0))
+    draw = ImageDraw.Draw(image)
+    
+    # Get base stone colors
+    palette = get_stone_base_colors(base_stone)
+    tile_color = palette['base']
+    grout_color = vary_color(tile_color, -40, 42)
+    
+    # Fill with grout base
+    draw.rectangle([0, 0, texture_size-1, texture_size-1], fill=grout_color)
+    
+    # Calculate tile layout - square tiles
+    grout_thickness = max(1, texture_size // 20)
+    tile_size = max(3, texture_size // 3)
+    
+    y = 0
+    while y < texture_size:
+        x = 0
+        while x < texture_size:
+            # Draw individual tile
+            tile_x1 = x + grout_thickness
+            tile_y1 = y + grout_thickness
+            tile_x2 = min(x + tile_size - grout_thickness, texture_size - 1)
+            tile_y2 = min(y + tile_size - grout_thickness, texture_size - 1)
+            
+            if tile_x2 > tile_x1 and tile_y2 > tile_y1:
+                # Add slight color variation to each tile
+                varied_tile_color = vary_color(tile_color, 8, x + y)
+                draw.rectangle([tile_x1, tile_y1, tile_x2, tile_y2], 
+                             fill=varied_tile_color)
+            
+            x += tile_size
+        y += tile_size
+    
+    return image
+
+def generate_polished_texture(texture_size: int, base_stone: str) -> Image.Image:
+    """Generate polished stone texture - smooth with subtle reflection"""
+    image = Image.new('RGBA', (texture_size, texture_size), (0, 0, 0, 0))
+    draw = ImageDraw.Draw(image)
+    
+    # Get base stone colors
+    palette = get_stone_base_colors(base_stone)
+    base_color = palette['base']
+    
+    # Fill with base color
+    draw.rectangle([0, 0, texture_size-1, texture_size-1], fill=base_color)
+    
+    # Add subtle polished highlights
+    highlight_color = tuple(min(255, c + 20) for c in base_color[:3]) + (128,)
+    
+    # Diagonal highlights for polished effect
+    for i in range(0, texture_size, 4):
+        if i < texture_size - 1:
+            draw.line([(i, 0), (i+1, 0)], fill=highlight_color)
+            draw.line([(0, i), (0, i+1)], fill=highlight_color)
+    
+    return image
+
+def generate_smooth_texture(texture_size: int, base_stone: str) -> Image.Image:
+    """Generate smooth stone texture - very uniform color"""
+    image = Image.new('RGBA', (texture_size, texture_size), (0, 0, 0, 0))
+    draw = ImageDraw.Draw(image)
+    
+    # Get base stone colors
+    palette = get_stone_base_colors(base_stone)
+    base_color = palette['base']
+    
+    # Fill with very uniform color with minimal variation
+    for y in range(texture_size):
+        for x in range(texture_size):
+            # Very subtle variation for texture
+            variation = 3 if (x + y) % 4 == 0 else 0
+            varied_color = vary_color(base_color, variation, x * y)
+            draw.point((x, y), fill=varied_color)
+    
+    return image
+
+def generate_chiseled_texture(texture_size: int, base_stone: str) -> Image.Image:
+    """Generate chiseled stone texture with carved patterns"""
+    image = Image.new('RGBA', (texture_size, texture_size), (0, 0, 0, 0))
+    draw = ImageDraw.Draw(image)
+    
+    # Get base stone colors
+    palette = get_stone_base_colors(base_stone)
+    base_color = palette['base']
+    shadow_color = vary_color(base_color, -40, 42)
+    highlight_color = vary_color(base_color, 20, 42)
+    
+    # Fill with base color
+    draw.rectangle([0, 0, texture_size-1, texture_size-1], fill=base_color)
+    
+    # Add chiseled border pattern
+    border_width = max(1, texture_size // 8)
+    
+    # Outer border - darker
+    for i in range(border_width):
+        draw.rectangle([i, i, texture_size-1-i, texture_size-1-i], 
+                      outline=shadow_color)
+    
+    # Inner border - lighter
+    inner_start = border_width + 1
+    for i in range(max(1, border_width // 2)):
+        if inner_start + i < texture_size // 2:
+            draw.rectangle([inner_start + i, inner_start + i, 
+                          texture_size-1-(inner_start + i), 
+                          texture_size-1-(inner_start + i)], 
+                         outline=highlight_color)
+    
+    return image
+
+def get_stone_base_colors(stone_type: str) -> dict:
+    """Get color palette for different stone types"""
+    palettes = {
+        'granite': {
+            'base': (180, 160, 140, 255),
+            'accent': (200, 180, 160, 255)
+        },
+        'marble': {
+            'base': (240, 235, 230, 255),
+            'accent': (250, 245, 240, 255)
+        },
+        'sandstone': {
+            'base': (210, 180, 140, 255),
+            'accent': (230, 200, 160, 255)
+        },
+        'slate': {
+            'base': (70, 80, 90, 255),
+            'accent': (90, 100, 110, 255)
+        },
+        'stone': {
+            'base': (150, 150, 150, 255),
+            'accent': (170, 170, 170, 255)
+        }
+    }
+    
+    return palettes.get(stone_type, palettes['stone'])
 
 # Export the main functions
 __all__ = ['generate_stone_texture', 'generate_processed_stone_texture']
