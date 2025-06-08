@@ -10,6 +10,7 @@ This document outlines the comprehensive implementation plan for the Voxel Castl
 
 **Related Documentation:**
 - [World Generation Architecture](WORLD_GENERATION_ARCHITECTURE.md) - Dual-path system overview
+- [World Generation UI Specification](WORLD_GENERATION_UI_SPECIFICATION.md) - Player experience design
 - [Database Investigation Report](../development_tasks/04_essential_game_infrastructure/08c.4.1_world_database_format_investigation.md) - Storage format analysis
 
 ## Vision & Goals
