@@ -6,10 +6,17 @@
 #include <chrono>
 #include <deque>
 #include <string>
+#include <thread>
 
 namespace VoxelEngine::UI {
     class UIButton;
     class UIRenderer;
+}
+
+namespace VoxelCastle::World {
+    class SeedWorldGenerator;
+    class WorldSeed;
+    class WorldParameters;
 }
 
 class WorldSimulationUI : public VoxelEngine::UI::BaseMenu {
@@ -75,7 +82,7 @@ public:
     using OnBackCallback = std::function<void()>;
 
     WorldSimulationUI(VoxelEngine::UI::UIRenderer* renderer);
-    virtual ~WorldSimulationUI() = default;
+    virtual ~WorldSimulationUI();
 
     /**
      * @brief Initialize the world simulation UI
@@ -122,6 +129,10 @@ private:
     
     // Simulation management
     void updateSimulation(float deltaTime);
+    void startGenerationThread();
+    void generationWorker();
+    std::string getPhaseDisplayName(GenerationPhase phase) const;
+    void updateFinalStatistics();
     void advancePhase();
     void simulatePhase(GenerationPhase phase, float deltaTime);
     void completeSimulation();
@@ -157,6 +168,12 @@ private:
     // UI state
     VisualizationMode visualizationMode_;
     float generationSpeed_ = 1.0f;
+    
+    // World generation
+    std::shared_ptr<VoxelCastle::World::SeedWorldGenerator> worldGenerator_;
+    std::shared_ptr<VoxelCastle::World::WorldSeed> worldSeed_;
+    std::shared_ptr<VoxelCastle::World::WorldParameters> worldParameters_;
+    std::thread generationThread_;
     
     // Callbacks
     OnSimulationCompleteCallback onSimulationComplete_;

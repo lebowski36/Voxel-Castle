@@ -1,12 +1,15 @@
 #include "ui/WorldSimulationUI.h"
 #include "ui/elements/UIButton.h"
+#include "world/seed_world_generator.h"
+#include "world/world_seed.h"
+#include "world/world_parameters.h"
 #include <iostream>
 #include <sstream>
 #include <iomanip>
+#include <thread>
 
 WorldSimulationUI::WorldSimulationUI(VoxelEngine::UI::UIRenderer* renderer) 
     : BaseMenu(renderer)
-    , currentY_(TITLE_HEIGHT + PANEL_MARGIN)
     , currentPhase_(GenerationPhase::TECTONICS)
     , currentProgress_(0.0f)
     , phaseProgress_(0.0f)
@@ -14,7 +17,16 @@ WorldSimulationUI::WorldSimulationUI(VoxelEngine::UI::UIRenderer* renderer)
     , isRunning_(false)
     , visualizationMode_(VisualizationMode::ELEVATION)
     , onSimulationComplete_(nullptr)
-    , onBack_(nullptr) {
+    , onBack_(nullptr)
+    , currentY_(TITLE_HEIGHT + PANEL_MARGIN) {
+}
+
+WorldSimulationUI::~WorldSimulationUI() {
+    // Stop generation and join thread
+    isRunning_ = false;
+    if (generationThread_.joinable()) {
+        generationThread_.join();
+    }
 }
 
 bool WorldSimulationUI::initialize(int screenWidth, int screenHeight) {
@@ -291,7 +303,36 @@ void WorldSimulationUI::startSimulation(const WorldConfig& config) {
     // Initialize log
     generationLog_.clear();
     addLogEntry("Beginning world generation...", 0);
-    addLogEntry("Initializing tectonic simulation", 1);
+    
+    // Create world seed and parameters from config
+    try {
+        // Create WorldSeed - use custom seed if provided, otherwise generate random
+        if (config.customSeed != 0) {
+            worldSeed_ = std::make_shared<VoxelCastle::World::WorldSeed>(config.customSeed);
+            addLogEntry("Using custom seed: " + std::to_string(config.customSeed), 1);
+        } else {
+            worldSeed_ = std::make_shared<VoxelCastle::World::WorldSeed>(); // Random seed
+            addLogEntry("Generated random seed: " + std::to_string(worldSeed_->getMasterSeed()), 1);
+        }
+        
+        // Create WorldParameters from config
+        worldParameters_ = std::make_shared<VoxelCastle::World::WorldParameters>();
+        // TODO: Set parameters based on config (worldSize, climateType, etc.)
+        
+        // Create SeedWorldGenerator
+        worldGenerator_ = std::make_shared<VoxelCastle::World::SeedWorldGenerator>(worldSeed_, worldParameters_);
+        
+        addLogEntry("Initializing tectonic simulation", 2);
+        addLogEntry("World size: " + std::to_string(config.worldSize) + "x" + std::to_string(config.worldSize), 3);
+        
+        // Start generation in background thread
+        startGenerationThread();
+        
+    } catch (const std::exception& e) {
+        addLogEntry("ERROR: Failed to initialize world generation: " + std::string(e.what()), 0);
+        isRunning_ = false;
+        return;
+    }
     
     createUIElements();
 }
@@ -312,6 +353,12 @@ void WorldSimulationUI::stopSimulation() {
     isRunning_ = false;
     isPaused_ = false;
     addLogEntry("Simulation stopped by user", stats_.simulationYears);
+    
+    // Join generation thread if it's running
+    if (generationThread_.joinable()) {
+        generationThread_.join();
+    }
+    
     if (onBack_) {
         onBack_();
     }
@@ -567,4 +614,112 @@ float WorldSimulationUI::calculateTimeRemaining() {
     }
     
     return currentPhaseRemaining + remainingPhasesTime;
+}
+
+void WorldSimulationUI::startGenerationThread() {
+    // Start generation in background thread
+    generationThread_ = std::thread(&WorldSimulationUI::generationWorker, this);
+}
+
+void WorldSimulationUI::generationWorker() {
+    try {
+        addLogEntry("Starting tectonic simulation...", 0);
+        currentPhase_ = GenerationPhase::TECTONICS;
+        
+        // Simulate each generation phase
+        for (int phase = static_cast<int>(GenerationPhase::TECTONICS); 
+             phase < static_cast<int>(GenerationPhase::COMPLETE) && isRunning_; 
+             ++phase) {
+            
+            currentPhase_ = static_cast<GenerationPhase>(phase);
+            phaseProgress_ = 0.0f;
+            
+            std::string phaseName = getPhaseDisplayName(currentPhase_);
+            addLogEntry("Starting " + phaseName + "...", stats_.simulationYears);
+            
+            // Simulate this phase (each takes some time)
+            float phaseDuration = 3.0f; // 3 seconds per phase for demo
+            float phaseSteps = 100.0f;
+            
+            for (int step = 0; step <= phaseSteps && isRunning_; ++step) {
+                // Wait for pause/resume
+                while (isPaused_ && isRunning_) {
+                    std::this_thread::sleep_for(std::chrono::milliseconds(100));
+                }
+                
+                if (!isRunning_) break;
+                
+                // Update progress
+                phaseProgress_ = static_cast<float>(step) / phaseSteps;
+                currentProgress_ = (static_cast<float>(phase - static_cast<int>(GenerationPhase::TECTONICS)) + phaseProgress_) / 
+                                 (static_cast<int>(GenerationPhase::COMPLETE) - static_cast<int>(GenerationPhase::TECTONICS));
+                
+                // Add occasional log entries
+                if (step % 25 == 0 && step > 0) {
+                    addLogEntry(phaseName + " " + std::to_string((step * 100) / static_cast<int>(phaseSteps)) + "% complete", 
+                              stats_.simulationYears + step);
+                }
+                
+                // Sleep to simulate work
+                std::this_thread::sleep_for(std::chrono::milliseconds(static_cast<int>(phaseDuration * 1000.0f / phaseSteps)));
+            }
+            
+            if (!isRunning_) break;
+            
+            addLogEntry(phaseName + " complete!", stats_.simulationYears);
+            stats_.simulationYears += 10; // Each phase represents ~10 years
+        }
+        
+        if (isRunning_) {
+            // Generation complete
+            currentPhase_ = GenerationPhase::COMPLETE;
+            currentProgress_ = 1.0f;
+            isRunning_ = false;
+            
+            addLogEntry("World generation complete!", stats_.simulationYears);
+            addLogEntry("Generated world ready for exploration", stats_.simulationYears);
+            
+            // Update final statistics
+            updateFinalStatistics();
+            
+            // Notify completion
+            if (onSimulationComplete_) {
+                onSimulationComplete_(stats_);
+            }
+        }
+        
+    } catch (const std::exception& e) {
+        addLogEntry("ERROR: Generation failed: " + std::string(e.what()), stats_.simulationYears);
+        isRunning_ = false;
+    }
+}
+
+std::string WorldSimulationUI::getPhaseDisplayName(GenerationPhase phase) const {
+    switch (phase) {
+        case GenerationPhase::TECTONICS: return "Tectonic Simulation";
+        case GenerationPhase::EROSION: return "Erosion Modeling";
+        case GenerationPhase::HYDROLOGY: return "Hydrology Simulation";
+        case GenerationPhase::CLIMATE: return "Climate Modeling";
+        case GenerationPhase::BIOMES: return "Biome Assignment";
+        case GenerationPhase::CIVILIZATION: return "Civilization Development";
+        case GenerationPhase::COMPLETE: return "Complete";
+        default: return "Unknown Phase";
+    }
+}
+
+void WorldSimulationUI::updateFinalStatistics() {
+    // Generate some example statistics
+    stats_.mountainRanges = 5 + (worldSeed_->getMasterSeed() % 10);
+    stats_.majorRivers = 3 + (worldSeed_->getMasterSeed() % 7);
+    stats_.biomesIdentified = 8 + (worldSeed_->getMasterSeed() % 12);
+    stats_.highestPeak = 800.0f + (worldSeed_->getMasterSeed() % 400);
+    stats_.deepestValley = -50.0f - (worldSeed_->getMasterSeed() % 100);
+    stats_.largestLakeSize = 10.0f + (worldSeed_->getMasterSeed() % 50);
+    stats_.longestRiverLength = 100.0f + (worldSeed_->getMasterSeed() % 200);
+    
+    // Generate some names based on seed
+    stats_.highestPeakName = "Mt. Voxel";
+    stats_.deepestValleyName = "Shadow Valley";
+    stats_.largestLakeName = "Crystal Lake";
+    stats_.longestRiverName = "Serpent River";
 }

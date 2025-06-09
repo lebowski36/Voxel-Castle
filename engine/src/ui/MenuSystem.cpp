@@ -78,8 +78,20 @@ bool MenuSystem::initialize(int screenWidth, int screenHeight, const std::string
     // Set up new split world generation UI callbacks
     worldConfigurationUI_->setOnConfigurationCompleteCallback([this](const WorldConfigurationUI::WorldConfig& config) {
         std::cout << "[MenuSystem] World configuration complete, switching to simulation" << std::endl;
-        // TODO: Convert config to proper world parameters and start simulation
+        
+        // Convert WorldConfigurationUI::WorldConfig to WorldSimulationUI::WorldConfig
+        WorldSimulationUI::WorldConfig simConfig;
+        simConfig.worldSize = config.worldSize;
+        simConfig.simulationDepth = config.simulationDepth;
+        simConfig.climateType = config.climateType;
+        simConfig.geologicalActivity = config.geologicalActivity;
+        simConfig.hydrologyLevel = config.hydrologyLevel;
+        simConfig.customSeed = config.customSeed;
+        simConfig.enableCivilizations = config.enableCivilizations;
+        
+        // Switch to simulation UI and start the simulation
         showWorldSimulationUI();
+        worldSimulationUI_->startSimulation(simConfig);
     });
     
     worldConfigurationUI_->setOnBackCallback([this]() {
