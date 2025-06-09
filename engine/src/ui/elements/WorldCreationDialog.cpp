@@ -10,13 +10,12 @@ namespace UI {
 WorldCreationDialog::WorldCreationDialog(UIRenderer* renderer) 
     : BaseMenu(renderer, "Create New World")
     , currentWorldSize_(WorldSize::REGIONAL)
+    , seedInitialized_(false)
 {
     // Set initial dialog width to accommodate longer button text
     setSize(700.0f, 100.0f); // Width for long buttons, height will auto-resize
     
-    // Generate an initial random seed
-    currentSeed_ = VoxelCastle::World::WorldSeed(); // Default constructor generates random seed
-    updateSeedDisplay();
+    // Don't generate seed until dialog is actually shown
 }
 
 bool WorldCreationDialog::initialize(MenuSystem* menuSystem) {
@@ -99,6 +98,7 @@ void WorldCreationDialog::addActionButtons() {
 
 void WorldCreationDialog::onRandomSeedClicked() {
     currentSeed_ = VoxelCastle::World::WorldSeed(); // Default constructor generates random seed
+    seedInitialized_ = true;
     updateSeedDisplay();
     
     std::cout << "[WorldCreationDialog] Generated new random seed: " << currentSeed_.getMasterSeed() << std::endl;
@@ -118,6 +118,11 @@ void WorldCreationDialog::onSizeButtonClicked(WorldSize size) {
 }
 
 void WorldCreationDialog::onCreateWorldClicked() {
+    // Ensure seed is initialized before creating world
+    if (!seedInitialized_) {
+        updateSeedDisplay(); // This will initialize the seed
+    }
+    
     if (onWorldCreate_) {
         std::cout << "[WorldCreationDialog] Creating world with seed: " << currentSeed_.getMasterSeed() 
                   << ", size: " << getWorldSizeDescription(currentWorldSize_) << std::endl;
@@ -133,6 +138,13 @@ void WorldCreationDialog::onCancelClicked() {
 }
 
 void WorldCreationDialog::updateSeedDisplay() {
+    // Initialize seed lazily when first needed
+    if (!seedInitialized_) {
+        currentSeed_ = VoxelCastle::World::WorldSeed(); // Default constructor generates random seed
+        seedInitialized_ = true;
+        std::cout << "[WorldCreationDialog] Lazily initialized random seed: " << currentSeed_.getMasterSeed() << std::endl;
+    }
+    
     std::ostringstream oss;
     oss << "Seed: " << currentSeed_.getMasterSeed();
     seedDisplayText_ = oss.str();

@@ -157,18 +157,9 @@ void MenuSystem::update(float deltaTime) {
 }
 
 void MenuSystem::render() {
-    // Only log once every 100 frames to reduce spam
-    static int frameCounter = 0;
-    if (frameCounter++ % 100 == 0) {
-        std::cout << "[MenuSystem] render() call " << frameCounter << ", menuState: " << static_cast<int>(menuState_) << std::endl;
-    }
-    
+    // Logging disabled to reduce console spam
     if (menuState_ == MenuState::WORLD_CONFIGURATION || menuState_ == MenuState::WORLD_SIMULATION) {
         // New split UIs are UIElements, so they're rendered by UISystem::render()
-        if (frameCounter % 100 == 0) {
-            std::cout << "[MenuSystem] Rendering new split world generation UI (state: " 
-                     << static_cast<int>(menuState_) << ")" << std::endl;
-        }
         UISystem::render();
     } else {
         // Render normal UI system (menus)

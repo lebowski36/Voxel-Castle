@@ -27,8 +27,8 @@ public:
     static uint64_t staticGetBlockSeed(int64_t x, int64_t y, int64_t z);
     
     // Enhanced seed system access
-    const WorldSeed& getWorldSeed() const { return *worldSeed_; }
-    WorldSeed& getWorldSeed() { return *worldSeed_; }
+    const WorldSeed& getWorldSeed() const;
+    WorldSeed& getWorldSeed();
     
     // Get enhanced seeds for specific features and scales
     uint64_t getFeatureSeed(int64_t x, int64_t y, int64_t z, FeatureType feature) const;
@@ -44,6 +44,9 @@ private:
     uint64_t legacySeed_;  // Legacy seed storage for compatibility
     std::mt19937_64 rng_; // Legacy RNG for compatibility
     std::unique_ptr<WorldSeed> worldSeed_; // Enhanced seed system
+    
+    // Helper method to ensure worldSeed_ is initialized
+    void ensureWorldSeedInitialized() const;
 };
 
 } // namespace World

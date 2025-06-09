@@ -82,11 +82,7 @@ void BaseMenu::render() {
     }
 
     // Render all children (buttons, etc.)
-    // Debug child count once per 100 frames
-    static int frameCounter = 0;
-    if (frameCounter++ % 100 == 0 && !children_.empty()) {
-        std::cout << "[BaseMenu] Rendering " << children_.size() << " children for menu: " << title_ << std::endl;
-    }
+    // Debug logging disabled to reduce console spam
     
     for (auto& child : children_) {
         if (child && child->isVisible()) {

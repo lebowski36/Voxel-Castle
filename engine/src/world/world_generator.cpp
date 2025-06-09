@@ -18,10 +18,11 @@ namespace World {
 
 // Constructor initializes with a default random seed
 WorldGenerator::WorldGenerator() : legacySeed_(0) {
-    // Set a default random seed
+    // Don't create WorldSeed at construction - use lazy initialization
     std::random_device rd;
-    uint64_t seed = rd();
-    setSeed(seed);
+    legacySeed_ = rd();
+    rng_.seed(legacySeed_);
+    // worldSeed_ will be created when first needed
 }
 
 // Set world seed from a numeric value
@@ -43,6 +44,15 @@ void WorldGenerator::setSeedFromString(const std::string& seedString) {
     DEBUG_LOG("WorldGenerator", "World seed generated from string: '" + seedString + "' = " + std::to_string(seed));
 }
 
+// Helper method to ensure worldSeed_ is initialized lazily
+void WorldGenerator::ensureWorldSeedInitialized() const {
+    if (!worldSeed_) {
+        // Cast away const since this is a lazy initialization pattern
+        const_cast<WorldGenerator*>(this)->worldSeed_ = std::make_unique<WorldSeed>(legacySeed_);
+        DEBUG_LOG("WorldGenerator", "WorldSeed lazily initialized with seed: " + std::to_string(legacySeed_));
+    }
+}
+
 // Static version of getBlockSeed - uses a default seed for consistent results
 uint64_t WorldGenerator::staticGetBlockSeed(int64_t x, int64_t y, int64_t z) {
     // Fixed default seed for static contexts - will be used when no instance is available
@@ -62,11 +72,24 @@ uint64_t WorldGenerator::getBlockSeed(int64_t x, int64_t y, int64_t z) const {
 
 // Get enhanced seeds for specific features and scales
 uint64_t WorldGenerator::getFeatureSeed(int64_t x, int64_t y, int64_t z, FeatureType feature) const {
+    ensureWorldSeedInitialized();
     return worldSeed_->getFeatureSeed(x, y, z, feature);
 }
 
 uint64_t WorldGenerator::getScaleSeed(int64_t x, int64_t y, int64_t z, ScaleLevel scale, FeatureType feature) const {
+    ensureWorldSeedInitialized();
     return worldSeed_->getScaleSeed(x, y, z, scale, feature);
+}
+
+// Enhanced seed system access implementations
+const WorldSeed& WorldGenerator::getWorldSeed() const {
+    ensureWorldSeedInitialized();
+    return *worldSeed_;
+}
+
+WorldSeed& WorldGenerator::getWorldSeed() {
+    ensureWorldSeedInitialized();
+    return *worldSeed_;
 }
 
 // Generate chunk segment with the current world seed
@@ -181,7 +204,7 @@ void WorldGenerator::generateChunkSegmentEnhanced(ChunkSegment& segment, int wor
         
     // Show world loading progress only for the first segment
     if (worldX == 0 && worldY == 0 && worldZ == 0) {
-        std::cout << "[INFO] Enhanced world generation started with seed: " << worldSeed_->getSeedString() << std::endl;
+        std::cout << "[INFO] Enhanced world generation started with seed: " << (worldSeed_ ? worldSeed_->getSeedString() : std::to_string(legacySeed_)) << std::endl;
     }
     
     DEBUG_LOG("WorldGenerator", "Enhanced generation at indices: (" + std::to_string(worldX) + 
@@ -304,6 +327,7 @@ void WorldGenerator::generateChunkSegmentEnhanced(ChunkSegment& segment, int wor
                 // Enhanced logging for key positions
                 if (worldX == 0 && worldY == 0 && worldZ == 0 && ((x == 0 && z == 0) || (x == 15 && z == 15))) {
                     if (y == 0 || y == 15 || y == columnHeight || y == columnHeight + 1) {
+                         ensureWorldSeedInitialized();
                          DEBUG_LOG("WorldGenerator", "Enhanced Local (" + std::to_string(x) + "," + std::to_string(y) + "," + std::to_string(z) + "): globalY=" + std::to_string(globalY) + ", type=" + std::to_string(static_cast<int>(type)) + ", seed=" + std::to_string(worldSeed_->getBlockSeed(globalX, globalY, globalZ)));
                     }
                 }

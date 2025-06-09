@@ -70,6 +70,7 @@ private:
     VoxelCastle::World::WorldSeed currentSeed_;
     WorldSize currentWorldSize_;
     std::string seedDisplayText_;
+    bool seedInitialized_;  // Track if seed has been initialized yet
     
     // UI Elements
     std::shared_ptr<UIButton> randomSeedButton_;
