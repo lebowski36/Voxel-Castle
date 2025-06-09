@@ -292,8 +292,22 @@ void WorldConfigurationUI::createParameterControls() {
 
 void WorldConfigurationUI::createPreviewSection() {
     float panelWidth = getSize().x - (PANEL_MARGIN * 2);
-    float rightColumnWidth = panelWidth * 0.35f;
-    float rightColumnX = PANEL_MARGIN + panelWidth * 0.6f + PANEL_MARGIN;
+    
+    // Calculate right column position based on parameter controls layout
+    // Need to account for: label + spacing + value + spacing + two buttons (- and +)
+    float maxLabelWidth = calculateMaxParameterLabelWidth();
+    float maxValueWidth = calculateMaxParameterValueWidth();
+    float buttonColumnX = PANEL_MARGIN + maxLabelWidth + ELEMENT_SPACING + maxValueWidth + ELEMENT_SPACING;
+    float rightmostButtonX = buttonColumnX + 30.0f + TEXT_HEIGHT; // Position of + button + its width
+    
+    // Start right column with adequate spacing after the rightmost button
+    float rightColumnX = rightmostButtonX + ELEMENT_SPACING * 2; // Extra spacing for visual separation
+    float rightColumnWidth = panelWidth - (rightColumnX - PANEL_MARGIN);
+    
+    // Make sure we don't exceed panel bounds
+    if (rightColumnX + rightColumnWidth > PANEL_MARGIN + panelWidth) {
+        rightColumnWidth = PANEL_MARGIN + panelWidth - rightColumnX;
+    }
     
     // Preview label
     auto previewLabel = std::make_shared<VoxelEngine::UI::UIButton>(renderer_);
