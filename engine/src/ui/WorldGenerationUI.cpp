@@ -94,10 +94,11 @@ void WorldGenerationUI::createConfigurationUI() {
     // Left column - World Parameters with automatic alignment
     float paramY = currentY_;
     
-    // Calculate the maximum label width for proper alignment
+    // Calculate the maximum label width and value width for proper alignment
     float maxLabelWidth = calculateMaxParameterLabelWidth();
+    float maxValueWidth = calculateMaxParameterValueWidth();
     float valueColumnX = PANEL_MARGIN + maxLabelWidth + 10.0f; // 10px spacing between label and value
-    float buttonColumnX = valueColumnX + 220.0f; // Space for values + spacing (increased for longer value texts)
+    float buttonColumnX = valueColumnX + maxValueWidth + 10.0f; // 10px spacing between value and buttons
     
     // World Size with controls
     auto sizeLabel = std::make_shared<VoxelEngine::UI::UIButton>(renderer_);
@@ -633,6 +634,46 @@ float WorldGenerationUI::calculateMaxParameterLabelWidth() {
     for (const std::string& label : parameterLabels) {
         float textWidth = renderer_->getTextWidth(label);
         float buttonWidth = textWidth + 16.0f; // 8px padding on each side
+        maxWidth = std::max(maxWidth, buttonWidth);
+    }
+    
+    return maxWidth;
+}
+
+// Helper method to calculate maximum width of parameter values
+float WorldGenerationUI::calculateMaxParameterValueWidth() {
+    std::vector<std::string> parameterValues;
+    
+    // World size values (all possible values)
+    parameterValues.push_back("256x256 regions");
+    parameterValues.push_back("512x512 regions");
+    parameterValues.push_back("1024x1024 regions");
+    parameterValues.push_back("2048x2048 regions");
+    
+    // Climate values
+    parameterValues.push_back("Arctic");
+    parameterValues.push_back("Temperate");
+    parameterValues.push_back("Tropical");
+    parameterValues.push_back("Desert");
+    
+    // Simulation depth values
+    parameterValues.push_back("Fast");
+    parameterValues.push_back("Normal");
+    parameterValues.push_back("Epic");
+    
+    // Geological activity values
+    parameterValues.push_back("Stable");
+    parameterValues.push_back("Moderate");
+    parameterValues.push_back("Highly Active");
+    
+    // Civilization values
+    parameterValues.push_back("Enabled");
+    parameterValues.push_back("Disabled");
+    
+    float maxWidth = 0.0f;
+    for (const std::string& value : parameterValues) {
+        float textWidth = renderer_->getTextWidth(value);
+        float buttonWidth = textWidth + 20.0f; // 10px padding on each side
         maxWidth = std::max(maxWidth, buttonWidth);
     }
     

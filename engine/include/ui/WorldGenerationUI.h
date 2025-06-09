@@ -212,6 +212,7 @@ private:
     float GetPhaseExpectedDuration(GenerationPhase phase);
     float CalculateTimeRemaining();
     float calculateMaxParameterLabelWidth();  // Calculate max width for parameter alignment
+    float calculateMaxParameterValueWidth();  // Calculate max width for parameter values
     
     // Constants for layout
     static constexpr float PANEL_MARGIN = 15.0f;           // Increased from 10.0f
