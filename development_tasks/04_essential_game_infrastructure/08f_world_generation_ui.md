@@ -10,17 +10,49 @@ This document tracks the implementation of the Dwarf Fortress-inspired World Gen
 **Current Phase**: Fixing visual issues and connecting generation logic
 
 ## Related Files
+
+### Documentation & Specifications
 - **Design Specification**: `/docs/WORLD_GENERATION_UI_SPECIFICATION.md`
 - **Base UI Integration**: `/development_tasks/04_essential_game_infrastructure/08c.8_ui_integration.md`
 - **Architecture**: `/docs/WORLD_GENERATION_ARCHITECTURE.md`
 - **Biome Implementation Plan**: `/docs/BIOME_IMPLEMENTATION_PLAN.md`
 - **World Generation Next Steps**: `/WORLD_GENERATION_NEXT_STEPS.md`
 - **Current TODO Tracking**: `/CURRENT_TODO.md`
+
+### Core World Generation Tasks
+- **World Generation System Overview**: `/development_tasks/04_essential_game_infrastructure/08c_world_generation_system.md`
 - **Core Seed System**: `/development_tasks/04_essential_game_infrastructure/08c.1_core_seed_system.md`
 - **Generation Parameters**: `/development_tasks/04_essential_game_infrastructure/08c.2_generation_parameters.md`
 - **Feature Parity**: `/development_tasks/04_essential_game_infrastructure/08c.3_feature_parity.md`
+
+### Biome & Terrain Systems
 - **Biome System Tasks**: `/development_tasks/04_essential_game_infrastructure/08c.4_biome_system.md`
-- **World Generation System Overview**: `/development_tasks/04_essential_game_infrastructure/08c_world_generation_system.md`
+- **Biome Core Types**: `/development_tasks/04_essential_game_infrastructure/08c.4.2_biome_core_types_implementation.md`
+- **Biome Regional Storage**: `/development_tasks/04_essential_game_infrastructure/08c.4.3_biome_regional_storage_implementation.md`
+- **Biome Visualization Tools**: `/development_tasks/04_essential_game_infrastructure/08c.4.4_biome_visualization_tools.md`
+- **Biome Block Assignments**: `/development_tasks/04_essential_game_infrastructure/08c.4.6_biome_block_assignments.md`
+- **Tectonic Simulation**: `/development_tasks/04_essential_game_infrastructure/08c.5_tectonic_simulation_system.md`
+
+### Generation Features
+- **Structure Generation**: `/development_tasks/04_essential_game_infrastructure/08c.5_structure_generation.md`
+- **Cave Generation**: `/development_tasks/04_essential_game_infrastructure/08c.6_cave_generation.md`
+- **Ore Generation**: `/development_tasks/04_essential_game_infrastructure/08c.7_ore_generation.md`
+
+### UI Integration & Performance
+- **Base UI Integration**: `/development_tasks/04_essential_game_infrastructure/08c.8_ui_integration.md`
+- **Performance Optimization**: `/development_tasks/04_essential_game_infrastructure/08c.9_performance_optimization.md`
+- **Legacy Transition**: `/development_tasks/04_essential_game_infrastructure/08c.10_legacy_transition.md`
+
+### Database & Storage
+- **World Database Format**: `/development_tasks/04_essential_game_infrastructure/08c.4.1_world_database_format_investigation.md`
+- **Regional Database**: `/development_tasks/04_essential_game_infrastructure/08c.4.3_regional_database_implementation.md`
+
+### Source Code Files
+- **UI Implementation**: `/engine/src/ui/WorldGenerationUI.cpp`
+- **UI Header**: `/engine/include/ui/WorldGenerationUI.h`
+- **Menu System Integration**: `/engine/src/ui/MenuSystem.cpp`
+- **Seed World Generator**: `/engine/src/world/generation/seed_world_generator.cpp`
+- **World Parameters**: `/engine/include/world/generation/world_parameters.h`
 
 ## Implementation Phases
 

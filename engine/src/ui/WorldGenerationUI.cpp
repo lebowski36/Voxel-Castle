@@ -42,10 +42,16 @@ bool WorldGenerationUI::initialize(VoxelEngine::UI::MenuSystem* menuSystem) {
     
     menuSystem_ = menuSystem;
     
-    // Set large size for comprehensive UI
-    setSize(900.0f, 700.0f);
+    // Use most of the screen space for better visibility
+    float screenWidth = renderer_->getScreenWidth();
+    float screenHeight = renderer_->getScreenHeight();
+    float uiWidth = screenWidth * 0.95f;  // Use 95% of screen width
+    float uiHeight = screenHeight * 0.90f; // Use 90% of screen height
     
-    std::cout << "[WorldGenerationUI] Initializing with size: " << getSize().x << "x" << getSize().y << std::endl;
+    setSize(uiWidth, uiHeight);
+    
+    std::cout << "[WorldGenerationUI] Initializing with size: " << getSize().x << "x" << getSize().y 
+              << " (screen: " << screenWidth << "x" << screenHeight << ")" << std::endl;
     
     createUIElements();
     setVisible(true);
@@ -76,38 +82,38 @@ void WorldGenerationUI::createConfigurationUI() {
     float rightColumnWidth = panelWidth * 0.35f;
     float rightColumnX = PANEL_MARGIN + leftColumnWidth + PANEL_MARGIN;
     
-    // Title
+    // Title with improved spacing
     auto titleLabel = std::make_shared<VoxelEngine::UI::UIButton>(renderer_);
     titleLabel->setText("World Configuration");
     titleLabel->setPosition(PANEL_MARGIN, currentY_);
-    titleLabel->setSize(panelWidth, 30.0f);
+    titleLabel->setSize(panelWidth, BUTTON_HEIGHT);
     titleLabel->setBackgroundColor({0.2f, 0.2f, 0.2f, 0.8f});
     addChild(titleLabel);
-    currentY_ += 40.0f;
+    currentY_ += VERTICAL_SPACING;
     
-    // Left column - World Parameters with interactive controls
+    // Left column - World Parameters with improved spacing
     float paramY = currentY_;
     
     // World Size with controls
     auto sizeLabel = std::make_shared<VoxelEngine::UI::UIButton>(renderer_);
     sizeLabel->setText("World Size:");
     sizeLabel->setPosition(PANEL_MARGIN, paramY);
-    sizeLabel->setSize(200.0f, 25.0f);
+    sizeLabel->setSize(200.0f, TEXT_HEIGHT);
     sizeLabel->setBackgroundColor({0.1f, 0.1f, 0.1f, 0.6f});
     addChild(sizeLabel);
     
     auto sizeValueLabel = std::make_shared<VoxelEngine::UI::UIButton>(renderer_);
     sizeValueLabel->setText(std::to_string(config_.worldSize) + "x" + std::to_string(config_.worldSize) + " regions");
     sizeValueLabel->setPosition(PANEL_MARGIN + 220.0f, paramY);
-    sizeValueLabel->setSize(140.0f, 25.0f);
+    sizeValueLabel->setSize(140.0f, TEXT_HEIGHT);
     sizeValueLabel->setBackgroundColor({0.1f, 0.1f, 0.1f, 0.6f});
     addChild(sizeValueLabel);
     
-    // Size adjustment buttons with debug output
+    // Size adjustment buttons with improved spacing
     auto sizeDecButton = std::make_shared<VoxelEngine::UI::UIButton>(renderer_);
     sizeDecButton->setText("-");
     sizeDecButton->setPosition(PANEL_MARGIN + 370.0f, paramY);
-    sizeDecButton->setSize(25.0f, 25.0f);
+    sizeDecButton->setSize(TEXT_HEIGHT, TEXT_HEIGHT);
     sizeDecButton->setBackgroundColor({0.3f, 0.2f, 0.2f, 0.8f});
     sizeDecButton->setOnClick([this, sizeValueLabel]() { 
         std::cout << "[WorldGenerationUI] Decreasing world size from " << config_.worldSize << std::endl;
@@ -125,7 +131,7 @@ void WorldGenerationUI::createConfigurationUI() {
     auto sizeIncButton = std::make_shared<VoxelEngine::UI::UIButton>(renderer_);
     sizeIncButton->setText("+");
     sizeIncButton->setPosition(PANEL_MARGIN + 400.0f, paramY);
-    sizeIncButton->setSize(25.0f, 25.0f);
+    sizeIncButton->setSize(TEXT_HEIGHT, TEXT_HEIGHT);
     sizeIncButton->setBackgroundColor({0.2f, 0.3f, 0.2f, 0.8f});
     sizeIncButton->setOnClick([this, sizeValueLabel]() { 
         std::cout << "[WorldGenerationUI] Increasing world size from " << config_.worldSize << std::endl;
@@ -139,7 +145,7 @@ void WorldGenerationUI::createConfigurationUI() {
         }
     });
     addChild(sizeIncButton);
-    paramY += 35.0f;
+    paramY += VERTICAL_SPACING;  // Use consistent spacing
     
     // Climate Type with controls
     auto climateLabel = std::make_shared<VoxelEngine::UI::UIButton>(renderer_);

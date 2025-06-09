@@ -213,10 +213,12 @@ private:
     float CalculateTimeRemaining();
     
     // Constants for layout
-    static constexpr float PANEL_MARGIN = 10.0f;
-    static constexpr float ELEMENT_SPACING = 8.0f;
-    static constexpr float BUTTON_HEIGHT = 30.0f;
-    static constexpr float PROGRESS_BAR_HEIGHT = 20.0f;
+    static constexpr float PANEL_MARGIN = 15.0f;           // Increased from 10.0f
+    static constexpr float ELEMENT_SPACING = 12.0f;        // Increased from 8.0f
+    static constexpr float BUTTON_HEIGHT = 35.0f;          // Increased from 30.0f
+    static constexpr float TEXT_HEIGHT = 25.0f;            // New constant for text elements
+    static constexpr float PROGRESS_BAR_HEIGHT = 25.0f;    // Increased from 20.0f
+    static constexpr float VERTICAL_SPACING = 40.0f;       // New constant for section spacing
     static constexpr int MAX_LOG_ENTRIES = 50;
     
     // UI positioning
