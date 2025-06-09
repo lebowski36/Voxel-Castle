@@ -1,8 +1,10 @@
 #include "ui/MenuSystem.h"
 #include "ui/elements/MainMenu.h"
-#include "ui/elements/SettingsMenu.h"
+#include "ui/elements/SettingsMenu.h" 
 #include "ui/elements/WorldCreationDialog.h"
 #include "ui/WorldGenerationUI.h"
+#include "ui/WorldConfigurationUI.h"
+#include "ui/WorldSimulationUI.h"
 #include "world/world_seed.h"
 #include <iostream>
 #include <typeinfo>  // For typeid
@@ -56,6 +58,19 @@ bool MenuSystem::initialize(int screenWidth, int screenHeight, const std::string
         return false;
     }
     
+    // Create new split world generation UIs
+    worldConfigurationUI_ = std::make_shared<WorldConfigurationUI>(renderer);
+    if (!worldConfigurationUI_->initialize(getRenderer().getScreenWidth(), getRenderer().getScreenHeight())) {
+        std::cerr << "[MenuSystem] Failed to initialize world configuration UI" << std::endl;
+        return false;
+    }
+    
+    worldSimulationUI_ = std::make_shared<WorldSimulationUI>(renderer);
+    if (!worldSimulationUI_->initialize(getRenderer().getScreenWidth(), getRenderer().getScreenHeight())) {
+        std::cerr << "[MenuSystem] Failed to initialize world simulation UI" << std::endl;
+        return false;
+    }
+    
     // Set up world creation dialog callbacks
     worldCreationDialog_->setOnWorldCreate([this](const VoxelCastle::World::WorldSeed& seed, WorldCreationDialog::WorldSize size) {
         if (onWorldCreateRequest_) {
@@ -79,6 +94,33 @@ bool MenuSystem::initialize(int screenWidth, int screenHeight, const std::string
         closeMenus(); // Close UI after world generation complete
     });
     
+    // Set up new split world generation UI callbacks
+    worldConfigurationUI_->setOnConfigurationCompleteCallback([this](const WorldConfigurationUI::WorldConfig& config) {
+        std::cout << "[MenuSystem] World configuration complete, switching to simulation" << std::endl;
+        // TODO: Convert config to proper world parameters and start simulation
+        showWorldSimulationUI();
+    });
+    
+    worldConfigurationUI_->setOnBackCallback([this]() {
+        std::cout << "[MenuSystem] World configuration cancelled, returning to main menu" << std::endl;
+        showMainMenu();
+    });
+    
+    worldSimulationUI_->setOnSimulationCompleteCallback([this](const WorldSimulationUI::WorldStats& stats) {
+        std::cout << "[MenuSystem] World simulation complete!" << std::endl;
+        // TODO: Convert simulation results to WorldSeed and trigger world creation
+        VoxelCastle::World::WorldSeed seed; // Create with current timestamp
+        if (onWorldCreateRequest_) {
+            onWorldCreateRequest_(seed, 1); // Medium world size
+        }
+        closeMenus();
+    });
+    
+    worldSimulationUI_->setOnBackCallback([this]() {
+        std::cout << "[MenuSystem] World simulation cancelled, returning to configuration" << std::endl;
+        showWorldConfigurationUI();
+    });
+    
     // Set widths only - preserve auto-calculated heights
     glm::vec2 mainSize = mainMenu_->getSize();
     glm::vec2 settingsSize = settingsMenu_->getSize();
@@ -94,12 +136,16 @@ bool MenuSystem::initialize(int screenWidth, int screenHeight, const std::string
     mainMenu_->setVisible(false);
     settingsMenu_->setVisible(false);
     worldCreationDialog_->setVisible(false);
+    worldConfigurationUI_->setVisible(false);
+    worldSimulationUI_->setVisible(false);
     // WorldGenerationUI is not a UIElement, so it doesn't need setVisible
 
     // Add menus to UI system (not WorldGenerationUI as it's rendered independently)
     addElement(mainMenu_);
     addElement(settingsMenu_);
     addElement(worldCreationDialog_);
+    addElement(worldConfigurationUI_);
+    addElement(worldSimulationUI_);
     
     return true;
 }
@@ -110,6 +156,16 @@ void MenuSystem::update(float deltaTime) {
     // Update world generation UI if it's active
     if (menuState_ == MenuState::WORLD_GENERATION && worldGenerationUI_) {
         // WorldGenerationUI handles its own update logic during generation
+    }
+    
+    // Update new split UIs if they're active
+    if (menuState_ == MenuState::WORLD_CONFIGURATION && worldConfigurationUI_) {
+        // WorldConfigurationUI is a UIElement, so it's updated by UISystem::update()
+    }
+    
+    if (menuState_ == MenuState::WORLD_SIMULATION && worldSimulationUI_) {
+        // WorldSimulationUI is a UIElement, so it's updated by UISystem::update()
+        // But we can add simulation-specific update logic here if needed
     }
 }
 
@@ -137,6 +193,13 @@ void MenuSystem::render() {
         getRenderer().endFrame();
         
         // Generation completion is handled via the completion callback
+    } else if (menuState_ == MenuState::WORLD_CONFIGURATION || menuState_ == MenuState::WORLD_SIMULATION) {
+        // New split UIs are UIElements, so they're rendered by UISystem::render()
+        if (frameCounter % 100 == 0) {
+            std::cout << "[MenuSystem] Rendering new split world generation UI (state: " 
+                     << static_cast<int>(menuState_) << ")" << std::endl;
+        }
+        UISystem::render();
     } else {
         // Render normal UI system (menus)
         UISystem::render();
@@ -153,7 +216,8 @@ bool MenuSystem::handleInput(float mouseX, float mouseY, bool clicked) {
         // Forward input to WorldGenerationUI
         return worldGenerationUI_->handleInput(mouseX, mouseY, clicked);
     } else {
-        // Use default UISystem input handling for other menus
+        // Use default UISystem input handling for other menus (including new split UIs)
+        // New split UIs are UIElements, so they're handled by UISystem::handleInput()
         return UISystem::handleInput(mouseX, mouseY, clicked);
     }
 }
@@ -244,30 +308,62 @@ void MenuSystem::showWorldCreationDialog() {
 }
 
 void MenuSystem::showWorldGenerationUI() {
-    std::cout << "[MenuSystem] showWorldGenerationUI() called" << std::endl;
+    std::cout << "[MenuSystem] showWorldGenerationUI() called - redirecting to new WorldConfigurationUI" << std::endl;
     
-    // Hide all traditional menus
+    // Redirect to the new split UI system
+    showWorldConfigurationUI();
+}
+
+void MenuSystem::showWorldConfigurationUI() {
+    std::cout << "[MenuSystem] showWorldConfigurationUI() called" << std::endl;
+    
+    // Hide all other menus
     mainMenu_->setVisible(false);
     settingsMenu_->setVisible(false);
     worldCreationDialog_->setVisible(false);
-    menuState_ = MenuState::WORLD_GENERATION;
+    worldSimulationUI_->setVisible(false);
+    
+    // Show world configuration UI
+    worldConfigurationUI_->setVisible(true);
+    menuState_ = MenuState::WORLD_CONFIGURATION;
     
     // Hide all other UI elements
     for (const auto& element : elements_) {
-        element->setVisible(false);
+        if (element.get() != worldConfigurationUI_.get()) {
+            element->setVisible(false);
+        }
     }
     
-    // Make sure WorldGenerationUI is properly centered
+    // Center the configuration UI
     centerMenus(getRenderer().getScreenWidth(), getRenderer().getScreenHeight());
     
-    std::cout << "[MenuSystem] Switching to World Generation UI - WorldGenerationUI size: " 
-              << getWorldGenerationUISize().x << "x" << getWorldGenerationUISize().y << std::endl;
+    std::cout << "[MenuSystem] WorldConfigurationUI is now active" << std::endl;
+}
+
+void MenuSystem::showWorldSimulationUI() {
+    std::cout << "[MenuSystem] showWorldSimulationUI() called" << std::endl;
     
-    if (worldGenerationUI_) {
-        std::cout << "[MenuSystem] WorldGenerationUI position: " << worldGenerationUI_->getPosition().x 
-                  << ", " << worldGenerationUI_->getPosition().y << std::endl;
-        std::cout << "[MenuSystem] WorldGenerationUI visibility: " << (worldGenerationUI_->isVisible() ? "VISIBLE" : "HIDDEN") << std::endl;
+    // Hide all other menus
+    mainMenu_->setVisible(false);
+    settingsMenu_->setVisible(false);
+    worldCreationDialog_->setVisible(false);
+    worldConfigurationUI_->setVisible(false);
+    
+    // Show world simulation UI
+    worldSimulationUI_->setVisible(true);
+    menuState_ = MenuState::WORLD_SIMULATION;
+    
+    // Hide all other UI elements  
+    for (const auto& element : elements_) {
+        if (element.get() != worldSimulationUI_.get()) {
+            element->setVisible(false);
+        }
     }
+    
+    // Center the simulation UI
+    centerMenus(getRenderer().getScreenWidth(), getRenderer().getScreenHeight());
+    
+    std::cout << "[MenuSystem] WorldSimulationUI is now active" << std::endl;
 }
 
 void MenuSystem::closeMenus() {

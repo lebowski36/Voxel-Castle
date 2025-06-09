@@ -24,6 +24,10 @@ class WorldGenerationUI;
 }
 }
 
+// Forward declarations for new split UIs
+class WorldConfigurationUI;
+class WorldSimulationUI;
+
 namespace VoxelEngine {
 namespace UI {
 
@@ -40,7 +44,9 @@ public:
         MAIN_MENU,         // Main menu is active
         SETTINGS,          // Settings menu is active
         WORLD_CREATION,    // World creation dialog is active
-        WORLD_GENERATION   // World generation UI is active
+        WORLD_GENERATION,  // World generation UI is active (original)
+        WORLD_CONFIGURATION, // World configuration UI is active (new)
+        WORLD_SIMULATION   // World simulation UI is active (new)
     };
 
     MenuSystem();
@@ -94,6 +100,16 @@ public:
      * @brief Show the world generation UI (Dwarf Fortress-style)
      */
     void showWorldGenerationUI();
+
+    /**
+     * @brief Show the world configuration UI (new split UI)
+     */
+    void showWorldConfigurationUI();
+
+    /**
+     * @brief Show the world simulation UI (new split UI)
+     */
+    void showWorldSimulationUI();
 
     /**
      * @brief Close all menus
@@ -226,6 +242,11 @@ private:
     std::shared_ptr<SettingsMenu> settingsMenu_;
     std::shared_ptr<WorldCreationDialog> worldCreationDialog_;
     std::shared_ptr<VoxelCastle::UI::WorldGenerationUI> worldGenerationUI_;
+    
+    // New split world generation UIs
+    std::shared_ptr<WorldConfigurationUI> worldConfigurationUI_;
+    std::shared_ptr<WorldSimulationUI> worldSimulationUI_;
+    
     std::function<void()> onMenuClosed_;
     std::function<bool(bool)> onFullscreenToggle_;
     std::function<void()> onExitRequest_;
