@@ -91,28 +91,33 @@ void WorldGenerationUI::createConfigurationUI() {
     addChild(titleLabel);
     currentY_ += VERTICAL_SPACING;
     
-    // Left column - World Parameters with improved spacing
+    // Left column - World Parameters with automatic alignment
     float paramY = currentY_;
+    
+    // Calculate the maximum label width for proper alignment
+    float maxLabelWidth = calculateMaxParameterLabelWidth();
+    float valueColumnX = PANEL_MARGIN + maxLabelWidth + 10.0f; // 10px spacing between label and value
+    float buttonColumnX = valueColumnX + 220.0f; // Space for values + spacing (increased for longer value texts)
     
     // World Size with controls
     auto sizeLabel = std::make_shared<VoxelEngine::UI::UIButton>(renderer_);
     sizeLabel->setText("World Size:");
     sizeLabel->setPosition(PANEL_MARGIN, paramY);
-    sizeLabel->setSize(200.0f, TEXT_HEIGHT);
+    sizeLabel->autoSizeToText(8.0f);
     sizeLabel->setBackgroundColor({0.1f, 0.1f, 0.1f, 0.6f});
     addChild(sizeLabel);
     
     auto sizeValueLabel = std::make_shared<VoxelEngine::UI::UIButton>(renderer_);
     sizeValueLabel->setText(std::to_string(config_.worldSize) + "x" + std::to_string(config_.worldSize) + " regions");
-    sizeValueLabel->setPosition(PANEL_MARGIN + 220.0f, paramY);
+    sizeValueLabel->setPosition(valueColumnX, paramY);
     sizeValueLabel->autoSizeToText(8.0f);  // Auto-size with 8px padding
     sizeValueLabel->setBackgroundColor({0.1f, 0.1f, 0.1f, 0.6f});
     addChild(sizeValueLabel);
     
-    // Size adjustment buttons with improved spacing
+    // Size adjustment buttons with aligned positioning
     auto sizeDecButton = std::make_shared<VoxelEngine::UI::UIButton>(renderer_);
     sizeDecButton->setText("-");
-    sizeDecButton->setPosition(PANEL_MARGIN + 480.0f, paramY);  // Moved from 410.0f to 480.0f
+    sizeDecButton->setPosition(buttonColumnX, paramY);
     sizeDecButton->setSize(TEXT_HEIGHT, TEXT_HEIGHT);
     sizeDecButton->setBackgroundColor({0.3f, 0.2f, 0.2f, 0.8f});
     sizeDecButton->setOnClick([this, sizeValueLabel]() { 
@@ -130,7 +135,7 @@ void WorldGenerationUI::createConfigurationUI() {
     
     auto sizeIncButton = std::make_shared<VoxelEngine::UI::UIButton>(renderer_);
     sizeIncButton->setText("+");
-    sizeIncButton->setPosition(PANEL_MARGIN + 510.0f, paramY);  // Moved from 440.0f to 510.0f
+    sizeIncButton->setPosition(buttonColumnX + 30.0f, paramY);
     sizeIncButton->setSize(TEXT_HEIGHT, TEXT_HEIGHT);
     sizeIncButton->setBackgroundColor({0.2f, 0.3f, 0.2f, 0.8f});
     sizeIncButton->setOnClick([this, sizeValueLabel]() { 
@@ -158,7 +163,7 @@ void WorldGenerationUI::createConfigurationUI() {
     std::vector<std::string> climateTypes = {"Arctic", "Temperate", "Tropical", "Desert"};
     auto climateValueLabel = std::make_shared<VoxelEngine::UI::UIButton>(renderer_);
     climateValueLabel->setText(climateTypes[config_.climateType]);
-    climateValueLabel->setPosition(PANEL_MARGIN + 220.0f, paramY);
+    climateValueLabel->setPosition(valueColumnX, paramY);
     climateValueLabel->autoSizeToText(8.0f);  // Auto-size with 8px padding
     climateValueLabel->setBackgroundColor({0.1f, 0.1f, 0.1f, 0.6f});
     addChild(climateValueLabel);
@@ -166,7 +171,7 @@ void WorldGenerationUI::createConfigurationUI() {
     // Climate adjustment buttons
     auto climateDecButton = std::make_shared<VoxelEngine::UI::UIButton>(renderer_);
     climateDecButton->setText("<");
-    climateDecButton->setPosition(PANEL_MARGIN + 480.0f, paramY);  // Moved from 410.0f to 480.0f
+    climateDecButton->setPosition(buttonColumnX, paramY);
     climateDecButton->setSize(25.0f, 25.0f);
     climateDecButton->setBackgroundColor({0.3f, 0.2f, 0.2f, 0.8f});
     climateDecButton->setOnClick([this]() { 
@@ -179,7 +184,7 @@ void WorldGenerationUI::createConfigurationUI() {
     
     auto climateIncButton = std::make_shared<VoxelEngine::UI::UIButton>(renderer_);
     climateIncButton->setText(">");
-    climateIncButton->setPosition(PANEL_MARGIN + 510.0f, paramY);  // Moved from 440.0f to 510.0f
+    climateIncButton->setPosition(buttonColumnX + 30.0f, paramY);
     climateIncButton->setSize(25.0f, 25.0f);
     climateIncButton->setBackgroundColor({0.2f, 0.3f, 0.2f, 0.8f});
     climateIncButton->setOnClick([this]() { 
@@ -202,7 +207,7 @@ void WorldGenerationUI::createConfigurationUI() {
     std::vector<std::string> depthTypes = {"Fast", "Normal", "Epic"};
     auto depthValueLabel = std::make_shared<VoxelEngine::UI::UIButton>(renderer_);
     depthValueLabel->setText(depthTypes[config_.simulationDepth - 1]);
-    depthValueLabel->setPosition(PANEL_MARGIN + 220.0f, paramY);
+    depthValueLabel->setPosition(valueColumnX, paramY);
     depthValueLabel->autoSizeToText(8.0f);  // Auto-size with 8px padding
     depthValueLabel->setBackgroundColor({0.1f, 0.1f, 0.1f, 0.6f});
     addChild(depthValueLabel);
@@ -210,7 +215,7 @@ void WorldGenerationUI::createConfigurationUI() {
     // Depth adjustment buttons
     auto depthDecButton = std::make_shared<VoxelEngine::UI::UIButton>(renderer_);
     depthDecButton->setText("<");
-    depthDecButton->setPosition(PANEL_MARGIN + 480.0f, paramY);  // Moved from 410.0f to 480.0f
+    depthDecButton->setPosition(buttonColumnX, paramY);
     depthDecButton->setSize(25.0f, 25.0f);
     depthDecButton->setBackgroundColor({0.3f, 0.2f, 0.2f, 0.8f});
     depthDecButton->setOnClick([this]() { 
@@ -223,7 +228,7 @@ void WorldGenerationUI::createConfigurationUI() {
     
     auto depthIncButton = std::make_shared<VoxelEngine::UI::UIButton>(renderer_);
     depthIncButton->setText(">");
-    depthIncButton->setPosition(PANEL_MARGIN + 510.0f, paramY);  // Moved from 440.0f to 510.0f
+    depthIncButton->setPosition(buttonColumnX + 30.0f, paramY);
     depthIncButton->setSize(25.0f, 25.0f);
     depthIncButton->setBackgroundColor({0.2f, 0.3f, 0.2f, 0.8f});
     depthIncButton->setOnClick([this]() { 
@@ -246,7 +251,7 @@ void WorldGenerationUI::createConfigurationUI() {
     std::vector<std::string> geoTypes = {"Stable", "Moderate", "Highly Active"};
     auto geoValueLabel = std::make_shared<VoxelEngine::UI::UIButton>(renderer_);
     geoValueLabel->setText(geoTypes[config_.geologicalActivity]);
-    geoValueLabel->setPosition(PANEL_MARGIN + 220.0f, paramY);
+    geoValueLabel->setPosition(valueColumnX, paramY);
     geoValueLabel->autoSizeToText(10.0f);  // Auto-size to fit text with padding
     geoValueLabel->setBackgroundColor({0.1f, 0.1f, 0.1f, 0.6f});
     addChild(geoValueLabel);
@@ -254,7 +259,7 @@ void WorldGenerationUI::createConfigurationUI() {
     // Geological adjustment buttons
     auto geoDecButton = std::make_shared<VoxelEngine::UI::UIButton>(renderer_);
     geoDecButton->setText("<");
-    geoDecButton->setPosition(PANEL_MARGIN + 410.0f, paramY);  // Moved from 370.0f to 410.0f
+    geoDecButton->setPosition(buttonColumnX, paramY);
     geoDecButton->setSize(25.0f, 25.0f);
     geoDecButton->setBackgroundColor({0.3f, 0.2f, 0.2f, 0.8f});
     geoDecButton->setOnClick([this]() { 
@@ -267,7 +272,7 @@ void WorldGenerationUI::createConfigurationUI() {
     
     auto geoIncButton = std::make_shared<VoxelEngine::UI::UIButton>(renderer_);
     geoIncButton->setText(">");
-    geoIncButton->setPosition(PANEL_MARGIN + 440.0f, paramY);  // Moved from 400.0f to 440.0f
+    geoIncButton->setPosition(buttonColumnX + 30.0f, paramY);
     geoIncButton->setSize(25.0f, 25.0f);
     geoIncButton->setBackgroundColor({0.2f, 0.3f, 0.2f, 0.8f});
     geoIncButton->setOnClick([this]() { 
@@ -289,7 +294,7 @@ void WorldGenerationUI::createConfigurationUI() {
     
     auto civToggleButton = std::make_shared<VoxelEngine::UI::UIButton>(renderer_);
     civToggleButton->setText(config_.enableCivilizations ? "Enabled" : "Disabled");
-    civToggleButton->setPosition(PANEL_MARGIN + 220.0f, paramY);
+    civToggleButton->setPosition(valueColumnX, paramY);
     civToggleButton->autoSizeToText(10.0f);
     civToggleButton->setBackgroundColor(config_.enableCivilizations ? 
         glm::vec4{0.2f, 0.4f, 0.2f, 0.8f} : glm::vec4{0.4f, 0.2f, 0.2f, 0.8f});
@@ -612,6 +617,26 @@ void WorldGenerationUI::createGenerationUI() {
     exportButton->setBackgroundColor({0.2f, 0.2f, 0.4f, 0.8f});
     exportButton->setOnClick([this]() { OnExportCurrentStateClicked(); });
     addChild(exportButton);
+}
+
+// Helper method to calculate maximum width of parameter labels
+float WorldGenerationUI::calculateMaxParameterLabelWidth() {
+    std::vector<std::string> parameterLabels = {
+        "World Size:",
+        "Climate:",
+        "Simulation Depth:",
+        "Geological Activity:",
+        "Enable Civilizations:"
+    };
+    
+    float maxWidth = 0.0f;
+    for (const std::string& label : parameterLabels) {
+        float textWidth = renderer_->getTextWidth(label);
+        float buttonWidth = textWidth + 16.0f; // 8px padding on each side
+        maxWidth = std::max(maxWidth, buttonWidth);
+    }
+    
+    return maxWidth;
 }
 
 void WorldGenerationUI::createWorldSummaryUI() {

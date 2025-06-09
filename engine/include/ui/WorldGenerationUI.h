@@ -211,6 +211,7 @@ private:
     std::string FormatTimeRemaining(float secondsRemaining);
     float GetPhaseExpectedDuration(GenerationPhase phase);
     float CalculateTimeRemaining();
+    float calculateMaxParameterLabelWidth();  // Calculate max width for parameter alignment
     
     // Constants for layout
     static constexpr float PANEL_MARGIN = 15.0f;           // Increased from 10.0f
