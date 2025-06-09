@@ -58,6 +58,13 @@ public:
      */
     void setOnClick(std::function<void()> callback);
 
+    /**
+     * @brief Auto-size the button to fit its text content
+     * @param padding Extra padding around the text (default: 10px on each side)
+     * @param scale Text scale factor (default: 1.0f)
+     */
+    void autoSizeToText(float padding = 10.0f, float scale = 1.0f);
+
     // UIElement interface
     void update(float deltaTime) override;
     void render() override;

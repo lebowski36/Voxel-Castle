@@ -121,5 +121,18 @@ bool UIButton::handleInput(float mouseX, float mouseY, bool clicked) {
     return false; // Input not handled by this button (or handled on press)
 }
 
+void UIButton::autoSizeToText(float padding, float scale) {
+    if (!renderer_ || text_.empty()) {
+        return;
+    }
+    
+    // Get text dimensions
+    float textWidth = renderer_->getTextWidth(text_, scale);
+    float textHeight = renderer_->getTextHeight(scale);
+    
+    // Set button size with padding
+    setSize(textWidth + (padding * 2.0f), textHeight + (padding * 2.0f));
+}
+
 } // namespace UI
 } // namespace VoxelEngine

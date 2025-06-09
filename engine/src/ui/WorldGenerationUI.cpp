@@ -105,14 +105,14 @@ void WorldGenerationUI::createConfigurationUI() {
     auto sizeValueLabel = std::make_shared<VoxelEngine::UI::UIButton>(renderer_);
     sizeValueLabel->setText(std::to_string(config_.worldSize) + "x" + std::to_string(config_.worldSize) + " regions");
     sizeValueLabel->setPosition(PANEL_MARGIN + 220.0f, paramY);
-    sizeValueLabel->setSize(180.0f, TEXT_HEIGHT);  // Increased from 140.0f to 180.0f
+    sizeValueLabel->autoSizeToText(8.0f);  // Auto-size with 8px padding
     sizeValueLabel->setBackgroundColor({0.1f, 0.1f, 0.1f, 0.6f});
     addChild(sizeValueLabel);
     
     // Size adjustment buttons with improved spacing
     auto sizeDecButton = std::make_shared<VoxelEngine::UI::UIButton>(renderer_);
     sizeDecButton->setText("-");
-    sizeDecButton->setPosition(PANEL_MARGIN + 410.0f, paramY);  // Moved from 370.0f to 410.0f
+    sizeDecButton->setPosition(PANEL_MARGIN + 480.0f, paramY);  // Moved from 410.0f to 480.0f
     sizeDecButton->setSize(TEXT_HEIGHT, TEXT_HEIGHT);
     sizeDecButton->setBackgroundColor({0.3f, 0.2f, 0.2f, 0.8f});
     sizeDecButton->setOnClick([this, sizeValueLabel]() { 
@@ -130,7 +130,7 @@ void WorldGenerationUI::createConfigurationUI() {
     
     auto sizeIncButton = std::make_shared<VoxelEngine::UI::UIButton>(renderer_);
     sizeIncButton->setText("+");
-    sizeIncButton->setPosition(PANEL_MARGIN + 440.0f, paramY);  // Moved from 400.0f to 440.0f
+    sizeIncButton->setPosition(PANEL_MARGIN + 510.0f, paramY);  // Moved from 440.0f to 510.0f
     sizeIncButton->setSize(TEXT_HEIGHT, TEXT_HEIGHT);
     sizeIncButton->setBackgroundColor({0.2f, 0.3f, 0.2f, 0.8f});
     sizeIncButton->setOnClick([this, sizeValueLabel]() { 
@@ -151,7 +151,7 @@ void WorldGenerationUI::createConfigurationUI() {
     auto climateLabel = std::make_shared<VoxelEngine::UI::UIButton>(renderer_);
     climateLabel->setText("Climate:");
     climateLabel->setPosition(PANEL_MARGIN, paramY);
-    climateLabel->setSize(200.0f, 25.0f);
+    climateLabel->autoSizeToText(8.0f);
     climateLabel->setBackgroundColor({0.1f, 0.1f, 0.1f, 0.6f});
     addChild(climateLabel);
     
@@ -159,14 +159,14 @@ void WorldGenerationUI::createConfigurationUI() {
     auto climateValueLabel = std::make_shared<VoxelEngine::UI::UIButton>(renderer_);
     climateValueLabel->setText(climateTypes[config_.climateType]);
     climateValueLabel->setPosition(PANEL_MARGIN + 220.0f, paramY);
-    climateValueLabel->setSize(180.0f, 25.0f);  // Increased from 140.0f to 180.0f
+    climateValueLabel->autoSizeToText(8.0f);  // Auto-size with 8px padding
     climateValueLabel->setBackgroundColor({0.1f, 0.1f, 0.1f, 0.6f});
     addChild(climateValueLabel);
     
     // Climate adjustment buttons
     auto climateDecButton = std::make_shared<VoxelEngine::UI::UIButton>(renderer_);
     climateDecButton->setText("<");
-    climateDecButton->setPosition(PANEL_MARGIN + 410.0f, paramY);  // Moved from 370.0f to 410.0f
+    climateDecButton->setPosition(PANEL_MARGIN + 480.0f, paramY);  // Moved from 410.0f to 480.0f
     climateDecButton->setSize(25.0f, 25.0f);
     climateDecButton->setBackgroundColor({0.3f, 0.2f, 0.2f, 0.8f});
     climateDecButton->setOnClick([this]() { 
@@ -179,7 +179,7 @@ void WorldGenerationUI::createConfigurationUI() {
     
     auto climateIncButton = std::make_shared<VoxelEngine::UI::UIButton>(renderer_);
     climateIncButton->setText(">");
-    climateIncButton->setPosition(PANEL_MARGIN + 440.0f, paramY);  // Moved from 400.0f to 440.0f
+    climateIncButton->setPosition(PANEL_MARGIN + 510.0f, paramY);  // Moved from 440.0f to 510.0f
     climateIncButton->setSize(25.0f, 25.0f);
     climateIncButton->setBackgroundColor({0.2f, 0.3f, 0.2f, 0.8f});
     climateIncButton->setOnClick([this]() { 
@@ -195,7 +195,7 @@ void WorldGenerationUI::createConfigurationUI() {
     auto depthLabel = std::make_shared<VoxelEngine::UI::UIButton>(renderer_);
     depthLabel->setText("Simulation Depth:");
     depthLabel->setPosition(PANEL_MARGIN, paramY);
-    depthLabel->setSize(200.0f, 25.0f);
+    depthLabel->autoSizeToText(8.0f);
     depthLabel->setBackgroundColor({0.1f, 0.1f, 0.1f, 0.6f});
     addChild(depthLabel);
     
@@ -203,14 +203,14 @@ void WorldGenerationUI::createConfigurationUI() {
     auto depthValueLabel = std::make_shared<VoxelEngine::UI::UIButton>(renderer_);
     depthValueLabel->setText(depthTypes[config_.simulationDepth - 1]);
     depthValueLabel->setPosition(PANEL_MARGIN + 220.0f, paramY);
-    depthValueLabel->setSize(180.0f, 25.0f);  // Increased from 140.0f to 180.0f
+    depthValueLabel->autoSizeToText(8.0f);  // Auto-size with 8px padding
     depthValueLabel->setBackgroundColor({0.1f, 0.1f, 0.1f, 0.6f});
     addChild(depthValueLabel);
     
     // Depth adjustment buttons
     auto depthDecButton = std::make_shared<VoxelEngine::UI::UIButton>(renderer_);
     depthDecButton->setText("<");
-    depthDecButton->setPosition(PANEL_MARGIN + 410.0f, paramY);  // Moved from 370.0f to 410.0f
+    depthDecButton->setPosition(PANEL_MARGIN + 480.0f, paramY);  // Moved from 410.0f to 480.0f
     depthDecButton->setSize(25.0f, 25.0f);
     depthDecButton->setBackgroundColor({0.3f, 0.2f, 0.2f, 0.8f});
     depthDecButton->setOnClick([this]() { 
@@ -223,7 +223,7 @@ void WorldGenerationUI::createConfigurationUI() {
     
     auto depthIncButton = std::make_shared<VoxelEngine::UI::UIButton>(renderer_);
     depthIncButton->setText(">");
-    depthIncButton->setPosition(PANEL_MARGIN + 440.0f, paramY);  // Moved from 400.0f to 440.0f
+    depthIncButton->setPosition(PANEL_MARGIN + 510.0f, paramY);  // Moved from 440.0f to 510.0f
     depthIncButton->setSize(25.0f, 25.0f);
     depthIncButton->setBackgroundColor({0.2f, 0.3f, 0.2f, 0.8f});
     depthIncButton->setOnClick([this]() { 
@@ -239,7 +239,7 @@ void WorldGenerationUI::createConfigurationUI() {
     auto geoLabel = std::make_shared<VoxelEngine::UI::UIButton>(renderer_);
     geoLabel->setText("Geological Activity:");
     geoLabel->setPosition(PANEL_MARGIN, paramY);
-    geoLabel->setSize(200.0f, 25.0f);
+    geoLabel->autoSizeToText(8.0f);
     geoLabel->setBackgroundColor({0.1f, 0.1f, 0.1f, 0.6f});
     addChild(geoLabel);
     
@@ -247,7 +247,7 @@ void WorldGenerationUI::createConfigurationUI() {
     auto geoValueLabel = std::make_shared<VoxelEngine::UI::UIButton>(renderer_);
     geoValueLabel->setText(geoTypes[config_.geologicalActivity]);
     geoValueLabel->setPosition(PANEL_MARGIN + 220.0f, paramY);
-    geoValueLabel->setSize(180.0f, 25.0f);  // Increased from 140.0f to 180.0f
+    geoValueLabel->autoSizeToText(10.0f);  // Auto-size to fit text with padding
     geoValueLabel->setBackgroundColor({0.1f, 0.1f, 0.1f, 0.6f});
     addChild(geoValueLabel);
     
@@ -283,14 +283,14 @@ void WorldGenerationUI::createConfigurationUI() {
     auto civLabel = std::make_shared<VoxelEngine::UI::UIButton>(renderer_);
     civLabel->setText("Enable Civilizations:");
     civLabel->setPosition(PANEL_MARGIN, paramY);
-    civLabel->setSize(200.0f, 25.0f);
+    civLabel->autoSizeToText(8.0f);
     civLabel->setBackgroundColor({0.1f, 0.1f, 0.1f, 0.6f});
     addChild(civLabel);
     
     auto civToggleButton = std::make_shared<VoxelEngine::UI::UIButton>(renderer_);
     civToggleButton->setText(config_.enableCivilizations ? "Enabled" : "Disabled");
     civToggleButton->setPosition(PANEL_MARGIN + 220.0f, paramY);
-    civToggleButton->setSize(180.0f, 25.0f);  // Increased from 140.0f to 180.0f
+    civToggleButton->autoSizeToText(10.0f);
     civToggleButton->setBackgroundColor(config_.enableCivilizations ? 
         glm::vec4{0.2f, 0.4f, 0.2f, 0.8f} : glm::vec4{0.4f, 0.2f, 0.2f, 0.8f});
     civToggleButton->setOnClick([this]() { 
@@ -327,7 +327,7 @@ void WorldGenerationUI::createConfigurationUI() {
     auto seedValueLabel = std::make_shared<VoxelEngine::UI::UIButton>(renderer_);
     seedValueLabel->setText(config_.customSeed == 0 ? "Random" : std::to_string(config_.customSeed));
     seedValueLabel->setPosition(rightColumnX, currentY_ + 225.0f);
-    seedValueLabel->setSize(rightColumnWidth - 60.0f, 25.0f);
+    seedValueLabel->autoSizeToText(10.0f);  // Auto-size to fit text with padding
     seedValueLabel->setBackgroundColor({0.1f, 0.1f, 0.1f, 0.6f});
     addChild(seedValueLabel);
     
@@ -350,7 +350,7 @@ void WorldGenerationUI::createConfigurationUI() {
     auto startButton = std::make_shared<VoxelEngine::UI::UIButton>(renderer_);
     startButton->setText("Start Generation");
     startButton->setPosition(getSize().x - buttonWidth - PANEL_MARGIN - buttonWidth - PANEL_MARGIN, buttonY);
-    startButton->setSize(buttonWidth, BUTTON_HEIGHT);
+    startButton->autoSizeToText(16.0f);
     startButton->setBackgroundColor({0.2f, 0.4f, 0.2f, 0.8f});
     startButton->setOnClick([this]() { OnStartClicked(); });
     addChild(startButton);
@@ -358,7 +358,7 @@ void WorldGenerationUI::createConfigurationUI() {
     auto cancelButton = std::make_shared<VoxelEngine::UI::UIButton>(renderer_);
     cancelButton->setText("Back");
     cancelButton->setPosition(getSize().x - buttonWidth - PANEL_MARGIN, buttonY);
-    cancelButton->setSize(buttonWidth, BUTTON_HEIGHT);
+    cancelButton->autoSizeToText(16.0f);
     cancelButton->setBackgroundColor({0.4f, 0.2f, 0.2f, 0.8f});
     cancelButton->setOnClick([this]() { OnBackToMainMenuClicked(); });
     addChild(cancelButton);
@@ -371,7 +371,7 @@ void WorldGenerationUI::createGenerationUI() {
     auto vizControlsLabel = std::make_shared<VoxelEngine::UI::UIButton>(renderer_);
     vizControlsLabel->setText("Visualization Mode:");
     vizControlsLabel->setPosition(PANEL_MARGIN, currentY_);
-    vizControlsLabel->setSize(150.0f, 20.0f);
+    vizControlsLabel->autoSizeToText(8.0f);
     vizControlsLabel->setBackgroundColor({0.2f, 0.2f, 0.2f, 0.8f});
     addChild(vizControlsLabel);
     
@@ -406,7 +406,7 @@ void WorldGenerationUI::createGenerationUI() {
     auto speedLabel = std::make_shared<VoxelEngine::UI::UIButton>(renderer_);
     speedLabel->setText("Generation Speed:");
     speedLabel->setPosition(PANEL_MARGIN, currentY_);
-    speedLabel->setSize(150.0f, 20.0f);
+    speedLabel->autoSizeToText(8.0f);
     speedLabel->setBackgroundColor({0.2f, 0.2f, 0.2f, 0.8f});
     addChild(speedLabel);
     
@@ -588,7 +588,7 @@ void WorldGenerationUI::createGenerationUI() {
     auto pauseButton = std::make_shared<VoxelEngine::UI::UIButton>(renderer_);
     pauseButton->setText(isPaused_ ? "Resume" : "Pause");
     pauseButton->setPosition(buttonX, buttonY);
-    pauseButton->setSize(80.0f, BUTTON_HEIGHT);
+    pauseButton->autoSizeToText(12.0f);
     pauseButton->setBackgroundColor(isPaused_ ? 
         glm::vec4{0.2f, 0.4f, 0.2f, 0.8f} : glm::vec4{0.4f, 0.3f, 0.2f, 0.8f});
     pauseButton->setOnClick([this]() { OnPauseResumeClicked(); });
@@ -598,7 +598,7 @@ void WorldGenerationUI::createGenerationUI() {
     auto cancelButton = std::make_shared<VoxelEngine::UI::UIButton>(renderer_);
     cancelButton->setText("Cancel");
     cancelButton->setPosition(buttonX, buttonY);
-    cancelButton->setSize(80.0f, BUTTON_HEIGHT);
+    cancelButton->autoSizeToText(12.0f);
     cancelButton->setBackgroundColor({0.4f, 0.2f, 0.2f, 0.8f});
     cancelButton->setOnClick([this]() { OnCancelClicked(); });
     addChild(cancelButton);
@@ -608,7 +608,7 @@ void WorldGenerationUI::createGenerationUI() {
     auto exportButton = std::make_shared<VoxelEngine::UI::UIButton>(renderer_);
     exportButton->setText("Export");
     exportButton->setPosition(buttonX, buttonY);
-    exportButton->setSize(80.0f, BUTTON_HEIGHT);
+    exportButton->autoSizeToText(12.0f);
     exportButton->setBackgroundColor({0.2f, 0.2f, 0.4f, 0.8f});
     exportButton->setOnClick([this]() { OnExportCurrentStateClicked(); });
     addChild(exportButton);
@@ -630,7 +630,7 @@ void WorldGenerationUI::createWorldSummaryUI() {
     auto explorationLabel = std::make_shared<VoxelEngine::UI::UIButton>(renderer_);
     explorationLabel->setText("Exploration Mode:");
     explorationLabel->setPosition(PANEL_MARGIN, currentY_);
-    explorationLabel->setSize(150.0f, 20.0f);
+    explorationLabel->autoSizeToText(8.0f);
     explorationLabel->setBackgroundColor({0.2f, 0.2f, 0.2f, 0.8f});
     addChild(explorationLabel);
     
@@ -648,7 +648,7 @@ void WorldGenerationUI::createWorldSummaryUI() {
         auto modeButton = std::make_shared<VoxelEngine::UI::UIButton>(renderer_);
         modeButton->setText(mode.first);
         modeButton->setPosition(viewButtonX, currentY_);
-        modeButton->setSize(75.0f, 20.0f);
+        modeButton->autoSizeToText(8.0f);
         bool isActive = (visualizationMode_ == mode.second);
         modeButton->setBackgroundColor(isActive ? 
             glm::vec4{0.3f, 0.5f, 0.3f, 0.8f} : glm::vec4{0.2f, 0.2f, 0.2f, 0.6f});
@@ -813,7 +813,7 @@ void WorldGenerationUI::createWorldSummaryUI() {
     auto actionsLabel = std::make_shared<VoxelEngine::UI::UIButton>(renderer_);
     actionsLabel->setText("World Actions:");
     actionsLabel->setPosition(PANEL_MARGIN, bottomY);
-    actionsLabel->setSize(200.0f, 20.0f);
+    actionsLabel->autoSizeToText(8.0f);
     actionsLabel->setBackgroundColor({0.2f, 0.2f, 0.2f, 0.8f});
     addChild(actionsLabel);
     bottomY += 30.0f;
@@ -826,7 +826,7 @@ void WorldGenerationUI::createWorldSummaryUI() {
     auto beginGameButton = std::make_shared<VoxelEngine::UI::UIButton>(renderer_);
     beginGameButton->setText("Begin Game");
     beginGameButton->setPosition(buttonX, buttonY);
-    beginGameButton->setSize(buttonWidth, BUTTON_HEIGHT);
+    beginGameButton->autoSizeToText(16.0f);
     beginGameButton->setBackgroundColor({0.2f, 0.5f, 0.2f, 0.8f});
     beginGameButton->setOnClick([this]() { OnBeginGameClicked(); });
     addChild(beginGameButton);
@@ -835,7 +835,7 @@ void WorldGenerationUI::createWorldSummaryUI() {
     auto exportButton = std::make_shared<VoxelEngine::UI::UIButton>(renderer_);
     exportButton->setText("Export World");
     exportButton->setPosition(buttonX, buttonY);
-    exportButton->setSize(buttonWidth, BUTTON_HEIGHT);
+    exportButton->autoSizeToText(16.0f);
     exportButton->setBackgroundColor({0.2f, 0.2f, 0.5f, 0.8f});
     exportButton->setOnClick([this]() { OnExportCurrentStateClicked(); });
     addChild(exportButton);
@@ -844,7 +844,7 @@ void WorldGenerationUI::createWorldSummaryUI() {
     auto analyzeButton = std::make_shared<VoxelEngine::UI::UIButton>(renderer_);
     analyzeButton->setText("Analyze World");
     analyzeButton->setPosition(buttonX, buttonY);
-    analyzeButton->setSize(buttonWidth, BUTTON_HEIGHT);
+    analyzeButton->autoSizeToText(16.0f);
     analyzeButton->setBackgroundColor({0.5f, 0.3f, 0.2f, 0.8f});
     analyzeButton->setOnClick([this]() { 
         AddLogEntry("Opening detailed world analysis", stats_.simulationYears);
@@ -856,7 +856,7 @@ void WorldGenerationUI::createWorldSummaryUI() {
     auto regenerateButton = std::make_shared<VoxelEngine::UI::UIButton>(renderer_);
     regenerateButton->setText("Regenerate");
     regenerateButton->setPosition(buttonX, buttonY);
-    regenerateButton->setSize(buttonWidth, BUTTON_HEIGHT);
+    regenerateButton->autoSizeToText(16.0f);
     regenerateButton->setBackgroundColor({0.4f, 0.4f, 0.2f, 0.8f});
     regenerateButton->setOnClick([this]() { 
         currentPhase_ = GenerationPhase::CONFIGURATION;
@@ -868,7 +868,7 @@ void WorldGenerationUI::createWorldSummaryUI() {
     auto backButton = std::make_shared<VoxelEngine::UI::UIButton>(renderer_);
     backButton->setText("Main Menu");
     backButton->setPosition(buttonX, buttonY);
-    backButton->setSize(buttonWidth, BUTTON_HEIGHT);
+    backButton->autoSizeToText(16.0f);
     backButton->setBackgroundColor({0.4f, 0.2f, 0.2f, 0.8f});
     backButton->setOnClick([this]() { OnBackToMainMenuClicked(); });
     addChild(backButton);
