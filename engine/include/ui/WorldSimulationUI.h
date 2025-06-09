@@ -1,0 +1,175 @@
+#pragma once
+
+#include "elements/BaseMenu.h"
+#include <functional>
+#include <memory>
+#include <chrono>
+#include <deque>
+#include <string>
+
+namespace VoxelEngine::UI {
+    class UIButton;
+    class UIRenderer;
+}
+
+class WorldSimulationUI : public VoxelEngine::UI::BaseMenu {
+public:
+    // World generation phases (from original WorldGenerationUI)
+    enum class GenerationPhase {
+        CONFIGURATION,  // Parameter selection
+        TECTONICS,     // Mountain/terrain formation
+        EROSION,       // Valley carving and sediment
+        HYDROLOGY,     // Rivers and lakes
+        CLIMATE,       // Temperature and precipitation
+        BIOMES,        // Biome assignment
+        CIVILIZATION,  // Historical civilizations (optional)
+        COMPLETE       // Generation finished
+    };
+
+    // Visualization modes (from original WorldGenerationUI)
+    enum class VisualizationMode {
+        ELEVATION,
+        TEMPERATURE,
+        PRECIPITATION,
+        BIOMES,
+        HYDROLOGY,
+        GEOLOGY
+    };
+
+    // World configuration parameters (matching original)
+    struct WorldConfig {
+        int worldSize = 1024;           
+        int simulationDepth = 2;        
+        int climateType = 1;            
+        int geologicalActivity = 1;     
+        int hydrologyLevel = 1;         
+        uint32_t customSeed = 0;        
+        bool enableCivilizations = true;
+    };
+
+    // Generation log entry (from original)
+    struct LogEntry {
+        std::string message;
+        std::chrono::steady_clock::time_point timestamp;
+        int simulationYear;
+    };
+
+    // World statistics (from original)
+    struct WorldStats {
+        int mountainRanges = 0;
+        int majorRivers = 0;
+        int biomesIdentified = 0;
+        int simulationYears = 0;
+        float highestPeak = 0.0f;
+        float deepestValley = 0.0f;
+        float largestLakeSize = 0.0f;
+        float longestRiverLength = 0.0f;
+        std::string highestPeakName = "";
+        std::string deepestValleyName = "";
+        std::string largestLakeName = "";
+        std::string longestRiverName = "";
+    };
+
+    // Simulation completion callback
+    using OnSimulationCompleteCallback = std::function<void(const WorldStats&)>;
+    using OnBackCallback = std::function<void()>;
+
+    WorldSimulationUI(VoxelEngine::UI::UIRenderer* renderer);
+    virtual ~WorldSimulationUI() = default;
+
+    /**
+     * @brief Initialize the world simulation UI
+     * @param screenWidth Screen width in pixels
+     * @param screenHeight Screen height in pixels
+     * @return true if initialization succeeded, false otherwise
+     */
+    bool initialize(int screenWidth, int screenHeight);
+
+    // Override base menu methods
+    void render() override;
+    bool handleInput(float mouseX, float mouseY, bool clicked) override;
+    void update(float deltaTime) override;
+
+    // Simulation control
+    void startSimulation(const WorldConfig& config);
+    void pauseSimulation();
+    void resumeSimulation();
+    void stopSimulation();
+    bool isSimulationRunning() const { return isRunning_; }
+    bool isSimulationComplete() const { return currentPhase_ == GenerationPhase::COMPLETE; }
+
+    // Callbacks
+    void setOnSimulationCompleteCallback(OnSimulationCompleteCallback callback) { onSimulationComplete_ = callback; }
+    void setOnBackCallback(OnBackCallback callback) { onBack_ = callback; }
+
+    // Progress access
+    float getCurrentProgress() const { return currentProgress_; }
+    GenerationPhase getCurrentPhase() const { return currentPhase_; }
+    const WorldStats& getWorldStats() const { return stats_; }
+
+private:
+    void createUIElements();
+    void createVisualizationControls();
+    void createWorldPreview();
+    void createProgressPanels();
+    void createGenerationLog();
+    void createActionButtons();
+    void createWorldSummaryUI();
+    
+    // Layout calculation helpers
+    float calculateMaxVisualizationButtonWidth();
+    float calculateOptimalRowSpacing();
+    
+    // Simulation management
+    void updateSimulation(float deltaTime);
+    void advancePhase();
+    void simulatePhase(GenerationPhase phase, float deltaTime);
+    void completeSimulation();
+    void addLogEntry(const std::string& message, int year = 0);
+    
+    // Event handlers
+    void onVisualizationModeChanged(VisualizationMode mode);
+    void onPauseResumeClicked();
+    void onStopClicked();
+    void onBackClicked();
+    void onBeginGameClicked();
+    
+    // Helper methods
+    std::string getPhaseDisplayName(GenerationPhase phase);
+    std::string getVisualizationModeDisplayName(VisualizationMode mode);
+    float getPhaseExpectedDuration(GenerationPhase phase);
+    float calculateTimeRemaining();
+
+    // Configuration and state
+    WorldConfig config_;
+    WorldStats stats_;
+    std::deque<LogEntry> generationLog_;
+    
+    // Current simulation state
+    GenerationPhase currentPhase_;
+    float currentProgress_;
+    float phaseProgress_;
+    bool isPaused_;
+    bool isRunning_;
+    std::chrono::steady_clock::time_point simulationStartTime_;
+    std::chrono::steady_clock::time_point phaseStartTime_;
+    
+    // UI state
+    VisualizationMode visualizationMode_;
+    float generationSpeed_ = 1.0f;
+    
+    // Callbacks
+    OnSimulationCompleteCallback onSimulationComplete_;
+    OnBackCallback onBack_;
+    
+    // Layout state
+    float currentY_;
+    
+    // Layout constants (matching original)
+    static constexpr float PANEL_MARGIN = 20.0f;
+    static constexpr float ELEMENT_SPACING = 10.0f;
+    static constexpr float TITLE_HEIGHT = 40.0f;
+    static constexpr float BUTTON_HEIGHT = 30.0f;
+    static constexpr float TEXT_HEIGHT = 25.0f;
+    static constexpr float VERTICAL_SPACING = 35.0f;
+};
