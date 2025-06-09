@@ -17,12 +17,7 @@ class WorldCreationDialog;
 } // namespace UI
 } // namespace VoxelEngine
 
-// Forward declaration from VoxelCastle namespace
-namespace VoxelCastle {
-namespace UI {
-class WorldGenerationUI;
-}
-}
+
 
 // Forward declarations for new split UIs
 class WorldConfigurationUI;
@@ -96,10 +91,7 @@ public:
      */
     void showWorldCreationDialog();
 
-    /**
-     * @brief Show the world generation UI (Dwarf Fortress-style)
-     */
-    void showWorldGenerationUI();
+
 
     /**
      * @brief Show the world configuration UI (new split UI)
@@ -217,11 +209,7 @@ public:
      */
     glm::vec2 getWorldCreationDialogSize() const;
 
-    /**
-     * @brief Get the size of the world generation UI
-     * @return Size of the world generation UI as a glm::vec2
-     */
-    glm::vec2 getWorldGenerationUISize() const;
+
 
     /**
      * @brief Debug dump of menu state - to verify in console
@@ -241,7 +229,6 @@ private:
     std::shared_ptr<MainMenu> mainMenu_;
     std::shared_ptr<SettingsMenu> settingsMenu_;
     std::shared_ptr<WorldCreationDialog> worldCreationDialog_;
-    std::shared_ptr<VoxelCastle::UI::WorldGenerationUI> worldGenerationUI_;
     
     // New split world generation UIs
     std::shared_ptr<WorldConfigurationUI> worldConfigurationUI_;

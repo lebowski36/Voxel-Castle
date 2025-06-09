@@ -66,7 +66,6 @@ add_library(VoxelEngine STATIC
     src/ui/elements/MainMenu.cpp # Main menu UI
     src/ui/elements/SettingsMenu.cpp # Settings menu UI
     src/ui/elements/WorldCreationDialog.cpp # World creation dialog UI
-    src/ui/WorldGenerationUI.cpp # Dwarf Fortress-style world generation UI
     src/ui/WorldConfigurationUI.cpp # World generation setup UI
     src/ui/WorldSimulationUI.cpp # World generation simulation UI
     src/ui/BlockVisualizationPanel.cpp # Block visualization debug panel
