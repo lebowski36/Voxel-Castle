@@ -103,16 +103,21 @@ void WorldGenerationUI::createConfigurationUI() {
     sizeValueLabel->setBackgroundColor({0.1f, 0.1f, 0.1f, 0.6f});
     addChild(sizeValueLabel);
     
-    // Size adjustment buttons
+    // Size adjustment buttons with debug output
     auto sizeDecButton = std::make_shared<VoxelEngine::UI::UIButton>(renderer_);
     sizeDecButton->setText("-");
     sizeDecButton->setPosition(PANEL_MARGIN + 370.0f, paramY);
     sizeDecButton->setSize(25.0f, 25.0f);
     sizeDecButton->setBackgroundColor({0.3f, 0.2f, 0.2f, 0.8f});
-    sizeDecButton->setOnClick([this]() { 
+    sizeDecButton->setOnClick([this, sizeValueLabel]() { 
+        std::cout << "[WorldGenerationUI] Decreasing world size from " << config_.worldSize << std::endl;
         if (config_.worldSize > 256) {
-            config_.worldSize = config_.worldSize == 512 ? 256 : (config_.worldSize == 1024 ? 512 : config_.worldSize);
-            createUIElements();
+            if (config_.worldSize == 512) config_.worldSize = 256;
+            else if (config_.worldSize == 1024) config_.worldSize = 512;
+            else if (config_.worldSize == 2048) config_.worldSize = 1024;
+            
+            std::cout << "[WorldGenerationUI] New world size: " << config_.worldSize << std::endl;
+            sizeValueLabel->setText(std::to_string(config_.worldSize) + "x" + std::to_string(config_.worldSize) + " regions");
         }
     });
     addChild(sizeDecButton);
@@ -122,10 +127,15 @@ void WorldGenerationUI::createConfigurationUI() {
     sizeIncButton->setPosition(PANEL_MARGIN + 400.0f, paramY);
     sizeIncButton->setSize(25.0f, 25.0f);
     sizeIncButton->setBackgroundColor({0.2f, 0.3f, 0.2f, 0.8f});
-    sizeIncButton->setOnClick([this]() { 
+    sizeIncButton->setOnClick([this, sizeValueLabel]() { 
+        std::cout << "[WorldGenerationUI] Increasing world size from " << config_.worldSize << std::endl;
         if (config_.worldSize < 2048) {
-            config_.worldSize = config_.worldSize == 256 ? 512 : (config_.worldSize == 512 ? 1024 : (config_.worldSize == 1024 ? 2048 : config_.worldSize));
-            createUIElements();
+            if (config_.worldSize == 256) config_.worldSize = 512;
+            else if (config_.worldSize == 512) config_.worldSize = 1024;
+            else if (config_.worldSize == 1024) config_.worldSize = 2048;
+            
+            std::cout << "[WorldGenerationUI] New world size: " << config_.worldSize << std::endl;
+            sizeValueLabel->setText(std::to_string(config_.worldSize) + "x" + std::to_string(config_.worldSize) + " regions");
         }
     });
     addChild(sizeIncButton);
@@ -601,102 +611,259 @@ void WorldGenerationUI::createGenerationUI() {
 void WorldGenerationUI::createWorldSummaryUI() {
     float panelWidth = getSize().x - (PANEL_MARGIN * 2);
     
-    // Title
+    // Title with world name
     auto titleLabel = std::make_shared<VoxelEngine::UI::UIButton>(renderer_);
-    titleLabel->setText("World Generation Complete!");
+    titleLabel->setText("World Generation Complete! - \"Realm of Legends\"");
     titleLabel->setPosition(PANEL_MARGIN, currentY_);
     titleLabel->setSize(panelWidth, 30.0f);
     titleLabel->setBackgroundColor({0.2f, 0.4f, 0.2f, 0.8f});
     addChild(titleLabel);
     currentY_ += 50.0f;
     
-    // World overview map
-    float mapWidth = panelWidth * 0.6f;
-    float mapHeight = 300.0f;
+    // Top controls for exploration
+    auto explorationLabel = std::make_shared<VoxelEngine::UI::UIButton>(renderer_);
+    explorationLabel->setText("Exploration Mode:");
+    explorationLabel->setPosition(PANEL_MARGIN, currentY_);
+    explorationLabel->setSize(150.0f, 20.0f);
+    explorationLabel->setBackgroundColor({0.2f, 0.2f, 0.2f, 0.8f});
+    addChild(explorationLabel);
     
+    // View mode buttons for final world
+    float viewButtonX = PANEL_MARGIN + 160.0f;
+    std::vector<std::pair<std::string, VisualizationMode>> viewModes = {
+        {"Overview", VisualizationMode::ELEVATION},
+        {"Climate", VisualizationMode::TEMPERATURE},
+        {"Biomes", VisualizationMode::BIOMES},
+        {"Geology", VisualizationMode::GEOLOGY},
+        {"Rivers", VisualizationMode::HYDROLOGY}
+    };
+    
+    for (const auto& mode : viewModes) {
+        auto modeButton = std::make_shared<VoxelEngine::UI::UIButton>(renderer_);
+        modeButton->setText(mode.first);
+        modeButton->setPosition(viewButtonX, currentY_);
+        modeButton->setSize(75.0f, 20.0f);
+        bool isActive = (visualizationMode_ == mode.second);
+        modeButton->setBackgroundColor(isActive ? 
+            glm::vec4{0.3f, 0.5f, 0.3f, 0.8f} : glm::vec4{0.2f, 0.2f, 0.2f, 0.6f});
+        modeButton->setOnClick([this, mode]() { 
+            OnVisualizationModeChanged(mode.second); 
+            createUIElements(); 
+        });
+        addChild(modeButton);
+        viewButtonX += 80.0f;
+    }
+    currentY_ += 35.0f;
+    
+    // Main layout: map on left, info panels on right
+    float mapWidth = panelWidth * 0.6f;
+    float mapHeight = 280.0f;
+    float rightPanelX = PANEL_MARGIN + mapWidth + PANEL_MARGIN;
+    float rightPanelWidth = panelWidth - mapWidth - PANEL_MARGIN;
+    
+    // World overview map with enhanced information
     auto mapLabel = std::make_shared<VoxelEngine::UI::UIButton>(renderer_);
-    mapLabel->setText("Final World Map");
+    mapLabel->setText("Final World Map - " + GetVisualizationModeDisplayName(visualizationMode_));
     mapLabel->setPosition(PANEL_MARGIN, currentY_);
     mapLabel->setSize(mapWidth, 25.0f);
     mapLabel->setBackgroundColor({0.2f, 0.2f, 0.2f, 0.8f});
     addChild(mapLabel);
     
     auto mapPanel = std::make_shared<VoxelEngine::UI::UIButton>(renderer_);
-    mapPanel->setText("[Interactive World Map]");
+    std::string mapText = "[Interactive World Map - " + GetVisualizationModeDisplayName(visualizationMode_) + " View]\n";
+    mapText += "Click to explore regions in detail";
+    mapPanel->setText(mapText);
     mapPanel->setPosition(PANEL_MARGIN, currentY_ + 30.0f);
     mapPanel->setSize(mapWidth, mapHeight);
     mapPanel->setBackgroundColor({0.15f, 0.25f, 0.2f, 0.8f});
+    mapPanel->setOnClick([this]() { 
+        AddLogEntry("Exploring world map in detail", stats_.simulationYears);
+        // TODO: Implement detailed map exploration
+    });
     addChild(mapPanel);
     
-    // World statistics (right side)
-    float statsX = PANEL_MARGIN + mapWidth + PANEL_MARGIN;
-    float statsWidth = panelWidth - mapWidth - PANEL_MARGIN;
-    float statsY = currentY_;
+    // Right panel - World Statistics and Notable Features
+    float rightY = currentY_;
     
     auto statsLabel = std::make_shared<VoxelEngine::UI::UIButton>(renderer_);
-    statsLabel->setText("World Statistics");
-    statsLabel->setPosition(statsX, statsY);
-    statsLabel->setSize(statsWidth, 25.0f);
+    statsLabel->setText("World Summary");
+    statsLabel->setPosition(rightPanelX, rightY);
+    statsLabel->setSize(rightPanelWidth, 25.0f);
     statsLabel->setBackgroundColor({0.2f, 0.2f, 0.2f, 0.8f});
     addChild(statsLabel);
-    statsY += 35.0f;
+    rightY += 35.0f;
     
-    // Notable features
+    // Generation Summary
+    auto genSummaryLabel = std::make_shared<VoxelEngine::UI::UIButton>(renderer_);
+    genSummaryLabel->setText("Generation Details:");
+    genSummaryLabel->setPosition(rightPanelX, rightY);
+    genSummaryLabel->setSize(rightPanelWidth, 18.0f);
+    genSummaryLabel->setBackgroundColor({0.15f, 0.15f, 0.15f, 0.7f});
+    addChild(genSummaryLabel);
+    rightY += 23.0f;
+    
+    auto timeLabel = std::make_shared<VoxelEngine::UI::UIButton>(renderer_);
+    timeLabel->setText("Time: " + FormatTimeRemaining(
+        std::chrono::duration_cast<std::chrono::seconds>(
+            std::chrono::steady_clock::now() - generationStartTime_).count()));
+    timeLabel->setPosition(rightPanelX, rightY);
+    timeLabel->setSize(rightPanelWidth, 16.0f);
+    timeLabel->setBackgroundColor({0.1f, 0.1f, 0.1f, 0.5f});
+    addChild(timeLabel);
+    rightY += 20.0f;
+    
+    auto seedLabel = std::make_shared<VoxelEngine::UI::UIButton>(renderer_);
+    seedLabel->setText("Seed: " + (config_.customSeed == 0 ? "Random" : std::to_string(config_.customSeed)));
+    seedLabel->setPosition(rightPanelX, rightY);
+    seedLabel->setSize(rightPanelWidth, 16.0f);
+    seedLabel->setBackgroundColor({0.1f, 0.1f, 0.1f, 0.5f});
+    addChild(seedLabel);
+    rightY += 25.0f;
+    
+    // Notable Features
+    auto featuresLabel = std::make_shared<VoxelEngine::UI::UIButton>(renderer_);
+    featuresLabel->setText("Notable Features:");
+    featuresLabel->setPosition(rightPanelX, rightY);
+    featuresLabel->setSize(rightPanelWidth, 18.0f);
+    featuresLabel->setBackgroundColor({0.15f, 0.15f, 0.15f, 0.7f});
+    addChild(featuresLabel);
+    rightY += 23.0f;
+    
     if (!stats_.highestPeakName.empty()) {
         auto peakLabel = std::make_shared<VoxelEngine::UI::UIButton>(renderer_);
-        peakLabel->setText("Highest Peak: " + stats_.highestPeakName);
-        peakLabel->setPosition(statsX, statsY);
-        peakLabel->setSize(statsWidth, 20.0f);
-        peakLabel->setBackgroundColor({0.1f, 0.1f, 0.1f, 0.6f});
+        peakLabel->setText("🏔️ " + stats_.highestPeakName + " (" + std::to_string((int)stats_.highestPeak) + "m)");
+        peakLabel->setPosition(rightPanelX, rightY);
+        peakLabel->setSize(rightPanelWidth, 16.0f);
+        peakLabel->setBackgroundColor({0.1f, 0.1f, 0.1f, 0.5f});
         addChild(peakLabel);
-        statsY += 25.0f;
+        rightY += 18.0f;
     }
     
     if (!stats_.longestRiverName.empty()) {
         auto riverLabel = std::make_shared<VoxelEngine::UI::UIButton>(renderer_);
-        riverLabel->setText("Longest River: " + stats_.longestRiverName);
-        riverLabel->setPosition(statsX, statsY);
-        riverLabel->setSize(statsWidth, 20.0f);
-        riverLabel->setBackgroundColor({0.1f, 0.1f, 0.1f, 0.6f});
+        riverLabel->setText("🌊 " + stats_.longestRiverName + " (" + std::to_string((int)stats_.longestRiverLength) + "km)");
+        riverLabel->setPosition(rightPanelX, rightY);
+        riverLabel->setSize(rightPanelWidth, 16.0f);
+        riverLabel->setBackgroundColor({0.1f, 0.1f, 0.1f, 0.5f});
         addChild(riverLabel);
-        statsY += 25.0f;
+        rightY += 18.0f;
     }
     
-    // Final statistics
-    auto finalStatsLabel = std::make_shared<VoxelEngine::UI::UIButton>(renderer_);
-    finalStatsLabel->setText("Total Generation Time: " + FormatTimeRemaining(
-        std::chrono::duration_cast<std::chrono::seconds>(
-            std::chrono::steady_clock::now() - generationStartTime_).count()));
-    finalStatsLabel->setPosition(statsX, statsY);
-    finalStatsLabel->setSize(statsWidth, 20.0f);
-    finalStatsLabel->setBackgroundColor({0.1f, 0.1f, 0.1f, 0.6f});
-    addChild(finalStatsLabel);
+    if (!stats_.largestLakeName.empty()) {
+        auto lakeLabel = std::make_shared<VoxelEngine::UI::UIButton>(renderer_);
+        lakeLabel->setText("🏞️ " + stats_.largestLakeName + " (" + std::to_string((int)stats_.largestLakeSize) + "km²)");
+        lakeLabel->setPosition(rightPanelX, rightY);
+        lakeLabel->setSize(rightPanelWidth, 16.0f);
+        lakeLabel->setBackgroundColor({0.1f, 0.1f, 0.1f, 0.5f});
+        addChild(lakeLabel);
+        rightY += 18.0f;
+    }
+    
+    rightY += 10.0f;
+    
+    // World Statistics
+    auto worldStatsLabel = std::make_shared<VoxelEngine::UI::UIButton>(renderer_);
+    worldStatsLabel->setText("World Statistics:");
+    worldStatsLabel->setPosition(rightPanelX, rightY);
+    worldStatsLabel->setSize(rightPanelWidth, 18.0f);
+    worldStatsLabel->setBackgroundColor({0.15f, 0.15f, 0.15f, 0.7f});
+    addChild(worldStatsLabel);
+    rightY += 23.0f;
+    
+    auto mountainsLabel = std::make_shared<VoxelEngine::UI::UIButton>(renderer_);
+    mountainsLabel->setText("Mountains: " + std::to_string(stats_.mountainRanges));
+    mountainsLabel->setPosition(rightPanelX, rightY);
+    mountainsLabel->setSize(rightPanelWidth, 16.0f);
+    mountainsLabel->setBackgroundColor({0.1f, 0.1f, 0.1f, 0.5f});
+    addChild(mountainsLabel);
+    rightY += 18.0f;
+    
+    auto riversLabel = std::make_shared<VoxelEngine::UI::UIButton>(renderer_);
+    riversLabel->setText("Major Rivers: " + std::to_string(stats_.majorRivers));
+    riversLabel->setPosition(rightPanelX, rightY);
+    riversLabel->setSize(rightPanelWidth, 16.0f);
+    riversLabel->setBackgroundColor({0.1f, 0.1f, 0.1f, 0.5f});
+    addChild(riversLabel);
+    rightY += 18.0f;
+    
+    auto biomesLabel = std::make_shared<VoxelEngine::UI::UIButton>(renderer_);
+    biomesLabel->setText("Unique Biomes: " + std::to_string(stats_.biomesIdentified));
+    biomesLabel->setPosition(rightPanelX, rightY);
+    biomesLabel->setSize(rightPanelWidth, 16.0f);
+    biomesLabel->setBackgroundColor({0.1f, 0.1f, 0.1f, 0.5f});
+    addChild(biomesLabel);
+    rightY += 18.0f;
+    
+    auto yearsLabel = std::make_shared<VoxelEngine::UI::UIButton>(renderer_);
+    yearsLabel->setText("Simulation Years: " + std::to_string(stats_.simulationYears));
+    yearsLabel->setPosition(rightPanelX, rightY);
+    yearsLabel->setSize(rightPanelWidth, 16.0f);
+    yearsLabel->setBackgroundColor({0.1f, 0.1f, 0.1f, 0.5f});
+    addChild(yearsLabel);
+    
+    // Bottom panel - Action buttons and world export options
+    float bottomY = currentY_ + mapHeight + 60.0f;
+    
+    auto actionsLabel = std::make_shared<VoxelEngine::UI::UIButton>(renderer_);
+    actionsLabel->setText("World Actions:");
+    actionsLabel->setPosition(PANEL_MARGIN, bottomY);
+    actionsLabel->setSize(200.0f, 20.0f);
+    actionsLabel->setBackgroundColor({0.2f, 0.2f, 0.2f, 0.8f});
+    addChild(actionsLabel);
+    bottomY += 30.0f;
     
     // Action buttons
     float buttonY = getSize().y - 60.0f;
     float buttonWidth = 120.0f;
+    float buttonX = PANEL_MARGIN;
     
     auto beginGameButton = std::make_shared<VoxelEngine::UI::UIButton>(renderer_);
     beginGameButton->setText("Begin Game");
-    beginGameButton->setPosition(getSize().x - buttonWidth - PANEL_MARGIN - buttonWidth - PANEL_MARGIN - buttonWidth - PANEL_MARGIN, buttonY);
+    beginGameButton->setPosition(buttonX, buttonY);
     beginGameButton->setSize(buttonWidth, BUTTON_HEIGHT);
+    beginGameButton->setBackgroundColor({0.2f, 0.5f, 0.2f, 0.8f});
     beginGameButton->setOnClick([this]() { OnBeginGameClicked(); });
     addChild(beginGameButton);
+    buttonX += buttonWidth + PANEL_MARGIN;
+    
+    auto exportButton = std::make_shared<VoxelEngine::UI::UIButton>(renderer_);
+    exportButton->setText("Export World");
+    exportButton->setPosition(buttonX, buttonY);
+    exportButton->setSize(buttonWidth, BUTTON_HEIGHT);
+    exportButton->setBackgroundColor({0.2f, 0.2f, 0.5f, 0.8f});
+    exportButton->setOnClick([this]() { OnExportCurrentStateClicked(); });
+    addChild(exportButton);
+    buttonX += buttonWidth + PANEL_MARGIN;
+    
+    auto analyzeButton = std::make_shared<VoxelEngine::UI::UIButton>(renderer_);
+    analyzeButton->setText("Analyze World");
+    analyzeButton->setPosition(buttonX, buttonY);
+    analyzeButton->setSize(buttonWidth, BUTTON_HEIGHT);
+    analyzeButton->setBackgroundColor({0.5f, 0.3f, 0.2f, 0.8f});
+    analyzeButton->setOnClick([this]() { 
+        AddLogEntry("Opening detailed world analysis", stats_.simulationYears);
+        // TODO: Implement detailed world analysis UI
+    });
+    addChild(analyzeButton);
+    buttonX += buttonWidth + PANEL_MARGIN;
     
     auto regenerateButton = std::make_shared<VoxelEngine::UI::UIButton>(renderer_);
     regenerateButton->setText("Regenerate");
-    regenerateButton->setPosition(getSize().x - buttonWidth - PANEL_MARGIN - buttonWidth - PANEL_MARGIN, buttonY);
+    regenerateButton->setPosition(buttonX, buttonY);
     regenerateButton->setSize(buttonWidth, BUTTON_HEIGHT);
+    regenerateButton->setBackgroundColor({0.4f, 0.4f, 0.2f, 0.8f});
     regenerateButton->setOnClick([this]() { 
         currentPhase_ = GenerationPhase::CONFIGURATION;
         createUIElements();
     });
     addChild(regenerateButton);
+    buttonX += buttonWidth + PANEL_MARGIN;
     
     auto backButton = std::make_shared<VoxelEngine::UI::UIButton>(renderer_);
     backButton->setText("Main Menu");
-    backButton->setPosition(getSize().x - buttonWidth - PANEL_MARGIN, buttonY);
+    backButton->setPosition(buttonX, buttonY);
     backButton->setSize(buttonWidth, BUTTON_HEIGHT);
+    backButton->setBackgroundColor({0.4f, 0.2f, 0.2f, 0.8f});
     backButton->setOnClick([this]() { OnBackToMainMenuClicked(); });
     addChild(backButton);
 }
@@ -1036,6 +1203,12 @@ void WorldGenerationUI::OnClimateTypeChanged(int type) {
     config_.climateType = type;
 }
 
+void WorldGenerationUI::OnExportCurrentStateClicked() {
+    std::cout << "[WorldGenerationUI] Export current state clicked" << std::endl;
+    AddLogEntry("World state exported for analysis", stats_.simulationYears);
+    // TODO: Implement actual export functionality
+}
+
 // Helper methods
 void WorldGenerationUI::removeAllChildren() {
     auto children = getChildren();
@@ -1084,7 +1257,45 @@ float WorldGenerationUI::GetPhaseExpectedDuration(GenerationPhase phase) {
 }
 
 bool WorldGenerationUI::handleInput(float mouseX, float mouseY, bool clicked) {
+    if (clicked) {
+        std::cout << "[WorldGenerationUI] Received click at (" << mouseX << ", " << mouseY << ")" << std::endl;
+    }
     return BaseMenu::handleInput(mouseX, mouseY, clicked);
+}
+
+std::string WorldGenerationUI::GetVisualizationModeDisplayName(VisualizationMode mode) {
+    switch (mode) {
+        case VisualizationMode::ELEVATION: return "Elevation";
+        case VisualizationMode::TEMPERATURE: return "Temperature";
+        case VisualizationMode::PRECIPITATION: return "Precipitation";
+        case VisualizationMode::BIOMES: return "Biomes";
+        case VisualizationMode::HYDROLOGY: return "Hydrology";
+        case VisualizationMode::GEOLOGY: return "Geology";
+        default: return "Unknown";
+    }
+}
+
+float WorldGenerationUI::CalculateTimeRemaining() {
+    if (!isGenerating_ || currentPhase_ == GenerationPhase::COMPLETE) {
+        return 0.0f;
+    }
+    
+    // Calculate remaining time for current phase
+    float currentPhaseRemaining = (1.0f - phaseProgress_) * GetPhaseExpectedDuration(currentPhase_);
+    
+    // Calculate remaining phases
+    float remainingPhases = 0.0f;
+    int currentPhaseIndex = static_cast<int>(currentPhase_);
+    
+    // Add up durations for remaining phases
+    for (int i = currentPhaseIndex + 1; i <= static_cast<int>(GenerationPhase::CIVILIZATION); i++) {
+        if (i == static_cast<int>(GenerationPhase::CIVILIZATION) && !config_.enableCivilizations) {
+            break; // Skip civilization phase if disabled
+        }
+        remainingPhases += GetPhaseExpectedDuration(static_cast<GenerationPhase>(i));
+    }
+    
+    return (currentPhaseRemaining + remainingPhases) / generationSpeed_;
 }
 
 } // namespace VoxelCastle::UI

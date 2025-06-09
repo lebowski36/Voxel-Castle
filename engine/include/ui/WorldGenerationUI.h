@@ -202,12 +202,15 @@ private:
     void OnSpeedChanged(float speed);
     void OnWorldSizeChanged(int size);
     void OnClimateTypeChanged(int type);
+    void OnExportCurrentStateClicked();
     
     // Helper methods
     void removeAllChildren();
     std::string GetPhaseDisplayName(GenerationPhase phase);
+    std::string GetVisualizationModeDisplayName(VisualizationMode mode);
     std::string FormatTimeRemaining(float secondsRemaining);
     float GetPhaseExpectedDuration(GenerationPhase phase);
+    float CalculateTimeRemaining();
     
     // Constants for layout
     static constexpr float PANEL_MARGIN = 10.0f;

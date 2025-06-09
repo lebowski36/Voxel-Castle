@@ -125,6 +125,7 @@ This standard is **NON-NEGOTIABLE** and prevents the recurring capitalization bu
 ### III. Key Reminders & Tool Usage
 *   **🚨 CRITICAL: ALWAYS use `clear &&` before terminal commands** - This is ESSENTIAL for maintaining context window and improving output readability. NEVER run commands without clearing first.
 *   **🚨 CRITICAL: ALWAYS ask for output if not received** - Never try commands twice. If output isn't shown, explicitly ask "What was the output of that command?"
+*   **🚨 CRITICAL: ALWAYS check the current path before running commands** - If commands fail, verify that you're in the correct directory path. The working directory for terminal commands may vary depending on the context.
 *   **Direct Tool Usage:** Always execute necessary commands directly using the appropriate tool (e.g., `run_in_terminal`, `insert_edit_into_file`). Do not ask the user to run commands manually.
 *   **File Modifications:** Use `insert_edit_into_file` for all file changes, providing clear explanations.
 *   **🔤 NAMING/CAPITALIZATION STANDARD:**

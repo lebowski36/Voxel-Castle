@@ -67,6 +67,15 @@ public:
     void render() override;
 
     /**
+     * @brief Handle input events (mouse clicks, etc.)
+     * @param mouseX Mouse X coordinate
+     * @param mouseY Mouse Y coordinate  
+     * @param clicked Whether mouse was clicked
+     * @return true if input was handled, false otherwise
+     */
+    bool handleInput(float mouseX, float mouseY, bool clicked);
+
+    /**
      * @brief Show the main menu
      */
     void showMainMenu();

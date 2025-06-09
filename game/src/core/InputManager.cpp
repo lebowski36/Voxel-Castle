@@ -371,6 +371,20 @@ void processInput(Game& game) {
                 DEBUG_LOG("InputManager", "Window gained focus - mouse capture enabled");
             }
         }
+        else if (e.type == SDL_EVENT_WINDOW_FOCUS_LOST) {
+            // Release mouse capture when window loses focus
+            if (game.isMouseCaptured()) {
+                game.setMouseCaptured(false);
+                DEBUG_LOG("InputManager", "Window lost focus - mouse capture disabled");
+            }
+        }
+        else if (e.type == SDL_EVENT_WINDOW_MINIMIZED) {
+            // Release mouse capture when window is minimized
+            if (game.isMouseCaptured()) {
+                game.setMouseCaptured(false);
+                DEBUG_LOG("InputManager", "Window minimized - mouse capture disabled");
+            }
+        }
         else if (e.type == SDL_EVENT_WINDOW_CLOSE_REQUESTED) {
             // Handle window close button (X) click
             CRITICAL_LOG("InputManager", "Window close requested - shutting down");

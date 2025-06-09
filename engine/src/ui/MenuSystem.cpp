@@ -143,6 +143,21 @@ void MenuSystem::render() {
     }
 }
 
+bool MenuSystem::handleInput(float mouseX, float mouseY, bool clicked) {
+    if (menuState_ == MenuState::WORLD_GENERATION && worldGenerationUI_) {
+        // Log input events for debugging (only on clicks to avoid spam)
+        if (clicked) {
+            std::cout << "[MenuSystem] Forwarding click at (" << mouseX << ", " << mouseY 
+                     << ") to WorldGenerationUI" << std::endl;
+        }
+        // Forward input to WorldGenerationUI
+        return worldGenerationUI_->handleInput(mouseX, mouseY, clicked);
+    } else {
+        // Use default UISystem input handling for other menus
+        return UISystem::handleInput(mouseX, mouseY, clicked);
+    }
+}
+
 void MenuSystem::showMainMenu() {
     // First make the menu visible to ensure its size is calculated correctly
     mainMenu_->setVisible(true);

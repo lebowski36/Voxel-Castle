@@ -92,15 +92,6 @@ void BaseMenu::render() {
         if (child && child->isVisible()) {
             // Force children to be visible and update their absolute positions before rendering
             child->setVisible(true);
-            
-            // Debug child rendering for WorldGenerationUI
-            if (title_ == "World Generation" && frameCounter % 100 == 1) {
-                auto childPos = child->getAbsolutePosition();
-                auto childSize = child->getSize();
-                std::cout << "[BaseMenu] Rendering child at pos: (" << childPos.x << ", " << childPos.y 
-                          << ") size: (" << childSize.x << ", " << childSize.y << ")" << std::endl;
-            }
-            
             child->render();
         }
     }
