@@ -46,6 +46,7 @@ public:
 
     // World configuration parameters (matching original)
     struct WorldConfig {
+        std::string worldName = "New World";  // World name
         int worldSize = 1024;           
         int simulationDepth = 2;        
         int climateType = 1;            

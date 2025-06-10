@@ -14,6 +14,7 @@ class WorldConfigurationUI : public VoxelEngine::UI::BaseMenu {
 public:
     // World configuration parameters (matching original WorldGenerationUI)
     struct WorldConfig {
+        std::string worldName = "New World";    // World name (user-definable)
         int worldSize = 1024;           // World size in regions
         int simulationDepth = 2;        // 1=Fast, 2=Normal, 3=Epic
         int climateType = 1;            // 0=Arctic, 1=Temperate, 2=Tropical, 3=Desert
@@ -41,6 +42,7 @@ public:
     // Override base menu methods
     void render() override;
     bool handleInput(float mouseX, float mouseY, bool clicked) override;
+    bool handleKeyboardInput(int key, bool pressed);  // Add keyboard input handling
 
     // Callbacks
     void setOnConfigurationCompleteCallback(OnConfigurationCompleteCallback callback) { onConfigurationComplete_ = callback; }
@@ -65,9 +67,20 @@ private:
     void onStartGenerationClicked();
     void onBackClicked();
     void onParameterChanged();
+    void onWorldNameChanged();
+    
+    // World name validation
+    void validateWorldName();
+    bool isWorldNameValid() const;
 
     // Configuration state
     WorldConfig config_;
+    
+    // World name input state
+    char worldNameBuffer_[64];          // Buffer for ImGui text input
+    bool worldNameExists_ = false;      // True if world name already exists
+    std::string worldNameError_;        // Error message for world name validation
+    bool isEditingWorldName_ = false;   // True when user is editing world name
     
     // Callbacks
     OnConfigurationCompleteCallback onConfigurationComplete_;

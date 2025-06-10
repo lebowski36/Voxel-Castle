@@ -117,6 +117,79 @@ void processInput(Game& game) {
             game.isRunning_ = false;
         }
         else if (e.type == SDL_EVENT_KEY_DOWN) {
+            // First check if menus are open and should handle keyboard input
+            if (game.isMenuOpen()) {
+                // Convert SDL scancode to a character/key code for menu handling
+                int keyCode = 0;
+                
+                // Convert common scancodes to key codes
+                switch (e.key.scancode) {
+                    case SDL_SCANCODE_BACKSPACE: keyCode = 8; break;
+                    case SDL_SCANCODE_RETURN: keyCode = 13; break;
+                    case SDL_SCANCODE_ESCAPE: keyCode = 27; break;
+                    case SDL_SCANCODE_SPACE: keyCode = 32; break;
+                    // Letters (convert to uppercase)
+                    case SDL_SCANCODE_A: keyCode = 65; break;
+                    case SDL_SCANCODE_B: keyCode = 66; break;
+                    case SDL_SCANCODE_C: keyCode = 67; break;
+                    case SDL_SCANCODE_D: keyCode = 68; break;
+                    case SDL_SCANCODE_E: keyCode = 69; break;
+                    case SDL_SCANCODE_F: keyCode = 70; break;
+                    case SDL_SCANCODE_G: keyCode = 71; break;
+                    case SDL_SCANCODE_H: keyCode = 72; break;
+                    case SDL_SCANCODE_I: keyCode = 73; break;
+                    case SDL_SCANCODE_J: keyCode = 74; break;
+                    case SDL_SCANCODE_K: keyCode = 75; break;
+                    case SDL_SCANCODE_L: keyCode = 76; break;
+                    case SDL_SCANCODE_M: keyCode = 77; break;
+                    case SDL_SCANCODE_N: keyCode = 78; break;
+                    case SDL_SCANCODE_O: keyCode = 79; break;
+                    case SDL_SCANCODE_P: keyCode = 80; break;
+                    case SDL_SCANCODE_Q: keyCode = 81; break;
+                    case SDL_SCANCODE_R: keyCode = 82; break;
+                    case SDL_SCANCODE_S: keyCode = 83; break;
+                    case SDL_SCANCODE_T: keyCode = 84; break;
+                    case SDL_SCANCODE_U: keyCode = 85; break;
+                    case SDL_SCANCODE_V: keyCode = 86; break;
+                    case SDL_SCANCODE_W: keyCode = 87; break;
+                    case SDL_SCANCODE_X: keyCode = 88; break;
+                    case SDL_SCANCODE_Y: keyCode = 89; break;
+                    case SDL_SCANCODE_Z: keyCode = 90; break;
+                    // Numbers
+                    case SDL_SCANCODE_0: keyCode = 48; break;
+                    case SDL_SCANCODE_1: keyCode = 49; break;
+                    case SDL_SCANCODE_2: keyCode = 50; break;
+                    case SDL_SCANCODE_3: keyCode = 51; break;
+                    case SDL_SCANCODE_4: keyCode = 52; break;
+                    case SDL_SCANCODE_5: keyCode = 53; break;
+                    case SDL_SCANCODE_6: keyCode = 54; break;
+                    case SDL_SCANCODE_7: keyCode = 55; break;
+                    case SDL_SCANCODE_8: keyCode = 56; break;
+                    case SDL_SCANCODE_9: keyCode = 57; break;
+                    // Common punctuation
+                    case SDL_SCANCODE_MINUS: keyCode = 45; break;
+                    case SDL_SCANCODE_EQUALS: keyCode = 61; break;
+                    case SDL_SCANCODE_LEFTBRACKET: keyCode = 91; break;
+                    case SDL_SCANCODE_RIGHTBRACKET: keyCode = 93; break;
+                    case SDL_SCANCODE_BACKSLASH: keyCode = 92; break;
+                    case SDL_SCANCODE_SEMICOLON: keyCode = 59; break;
+                    case SDL_SCANCODE_APOSTROPHE: keyCode = 39; break;
+                    case SDL_SCANCODE_COMMA: keyCode = 44; break;
+                    case SDL_SCANCODE_PERIOD: keyCode = 46; break;
+                    case SDL_SCANCODE_SLASH: keyCode = 47; break;
+                    default: keyCode = 0; break; // Unhandled key
+                }
+                
+                // Try to route keyboard input to menu system first
+                if (keyCode != 0) {
+                    game.handleMenuKeyboardInput(keyCode, true);
+                    // If the key was ESC, also handle it normally for menu toggling
+                    if (e.key.scancode != SDL_SCANCODE_ESCAPE) {
+                        continue; // Skip normal game input handling for other keys
+                    }
+                }
+            }
+            
             // Debug - print scancode of all keys - commented out as too verbose
             // Only uncomment for specific debugging sessions when needed
             // std::cout << "[DEBUG] Key pressed, scancode: " << e.key.scancode << std::endl;
@@ -248,6 +321,76 @@ void processInput(Game& game) {
             }
         }
         else if (e.type == SDL_EVENT_KEY_UP) {
+            // First check if menus are open and should handle keyboard input
+            if (game.isMenuOpen()) {
+                // Convert SDL scancode to key code (similar to KEY_DOWN)
+                int keyCode = 0;
+                switch (e.key.scancode) {
+                    case SDL_SCANCODE_BACKSPACE: keyCode = 8; break;
+                    case SDL_SCANCODE_RETURN: keyCode = 13; break;
+                    case SDL_SCANCODE_ESCAPE: keyCode = 27; break;
+                    case SDL_SCANCODE_SPACE: keyCode = 32; break;
+                    // Letters and other keys (same mapping as KEY_DOWN)
+                    case SDL_SCANCODE_A: keyCode = 65; break;
+                    case SDL_SCANCODE_B: keyCode = 66; break;
+                    case SDL_SCANCODE_C: keyCode = 67; break;
+                    case SDL_SCANCODE_D: keyCode = 68; break;
+                    case SDL_SCANCODE_E: keyCode = 69; break;
+                    case SDL_SCANCODE_F: keyCode = 70; break;
+                    case SDL_SCANCODE_G: keyCode = 71; break;
+                    case SDL_SCANCODE_H: keyCode = 72; break;
+                    case SDL_SCANCODE_I: keyCode = 73; break;
+                    case SDL_SCANCODE_J: keyCode = 74; break;
+                    case SDL_SCANCODE_K: keyCode = 75; break;
+                    case SDL_SCANCODE_L: keyCode = 76; break;
+                    case SDL_SCANCODE_M: keyCode = 77; break;
+                    case SDL_SCANCODE_N: keyCode = 78; break;
+                    case SDL_SCANCODE_O: keyCode = 79; break;
+                    case SDL_SCANCODE_P: keyCode = 80; break;
+                    case SDL_SCANCODE_Q: keyCode = 81; break;
+                    case SDL_SCANCODE_R: keyCode = 82; break;
+                    case SDL_SCANCODE_S: keyCode = 83; break;
+                    case SDL_SCANCODE_T: keyCode = 84; break;
+                    case SDL_SCANCODE_U: keyCode = 85; break;
+                    case SDL_SCANCODE_V: keyCode = 86; break;
+                    case SDL_SCANCODE_W: keyCode = 87; break;
+                    case SDL_SCANCODE_X: keyCode = 88; break;
+                    case SDL_SCANCODE_Y: keyCode = 89; break;
+                    case SDL_SCANCODE_Z: keyCode = 90; break;
+                    // Numbers and punctuation
+                    case SDL_SCANCODE_0: keyCode = 48; break;
+                    case SDL_SCANCODE_1: keyCode = 49; break;
+                    case SDL_SCANCODE_2: keyCode = 50; break;
+                    case SDL_SCANCODE_3: keyCode = 51; break;
+                    case SDL_SCANCODE_4: keyCode = 52; break;
+                    case SDL_SCANCODE_5: keyCode = 53; break;
+                    case SDL_SCANCODE_6: keyCode = 54; break;
+                    case SDL_SCANCODE_7: keyCode = 55; break;
+                    case SDL_SCANCODE_8: keyCode = 56; break;
+                    case SDL_SCANCODE_9: keyCode = 57; break;
+                    case SDL_SCANCODE_MINUS: keyCode = 45; break;
+                    case SDL_SCANCODE_EQUALS: keyCode = 61; break;
+                    case SDL_SCANCODE_LEFTBRACKET: keyCode = 91; break;
+                    case SDL_SCANCODE_RIGHTBRACKET: keyCode = 93; break;
+                    case SDL_SCANCODE_BACKSLASH: keyCode = 92; break;
+                    case SDL_SCANCODE_SEMICOLON: keyCode = 59; break;
+                    case SDL_SCANCODE_APOSTROPHE: keyCode = 39; break;
+                    case SDL_SCANCODE_COMMA: keyCode = 44; break;
+                    case SDL_SCANCODE_PERIOD: keyCode = 46; break;
+                    case SDL_SCANCODE_SLASH: keyCode = 47; break;
+                    default: keyCode = 0; break;
+                }
+                
+                // Try to route keyboard input to menu system
+                if (keyCode != 0) {
+                    game.handleMenuKeyboardInput(keyCode, false);
+                    // Skip normal game input handling for menu keys (except ESC)
+                    if (e.key.scancode != SDL_SCANCODE_ESCAPE) {
+                        continue;
+                    }
+                }
+            }
+            
             switch (e.key.scancode) {
                 case SDL_SCANCODE_W: game.forward_ = false; break;
                 case SDL_SCANCODE_S: game.backward_ = false; break;

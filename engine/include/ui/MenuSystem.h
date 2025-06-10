@@ -76,6 +76,14 @@ public:
     bool handleInput(float mouseX, float mouseY, bool clicked);
 
     /**
+     * @brief Handle keyboard input events (key presses, text input, etc.)
+     * @param key SDL key code or character
+     * @param pressed Whether key was pressed (true) or released (false)
+     * @return true if input was handled, false otherwise
+     */
+    bool handleKeyboardInput(int key, bool pressed);
+
+    /**
      * @brief Show the main menu
      */
     void showMainMenu();

@@ -626,6 +626,18 @@ void Game::handleMenuInput(float mouseX, float mouseY, bool clicked) {
     }
 }
 
+void Game::handleMenuKeyboardInput(int key, bool pressed) {
+    if (menuSystem_ && isMenuOpen()) {
+        // Pass keyboard input to the menu system
+        bool inputHandled = menuSystem_->handleKeyboardInput(key, pressed);
+        
+        // Log keyboard interactions when handled (but only for significant keys)
+        if (inputHandled && pressed && (key == 8 || key == 13 || key == 27 || (key >= 32 && key <= 126))) {
+            DEBUG_LOG("Game", "Menu keyboard input handled - key: " + std::to_string(key));
+        }
+    }
+}
+
 // --- Game State Management ---
 void Game::toggleMenu() {
     if (stateManager_) {

@@ -1,15 +1,20 @@
 #include "ui/WorldConfigurationUI.h"
 #include "ui/elements/UIButton.h"
+#include "world/world_persistence_manager.h"
 #include <iostream>
 #include <random>
+#include <cstring>
 
 WorldConfigurationUI::WorldConfigurationUI(VoxelEngine::UI::UIRenderer* renderer) 
     : BaseMenu(renderer, "World Configuration")
     , currentY_(TITLE_HEIGHT + PANEL_MARGIN)
+    , worldNameExists_(false)
+    , isEditingWorldName_(false)
     , onConfigurationComplete_(nullptr)
     , onBack_(nullptr) {
     
     // Initialize default configuration
+    config_.worldName = "New World";
     config_.worldSize = 1024;
     config_.climateType = 1; // Temperate
     config_.simulationDepth = 2; // Normal
@@ -17,6 +22,10 @@ WorldConfigurationUI::WorldConfigurationUI(VoxelEngine::UI::UIRenderer* renderer
     config_.hydrologyLevel = 1; // Normal
     config_.enableCivilizations = true;
     config_.customSeed = 0; // Random
+    
+    // Initialize world name buffer
+    strncpy(worldNameBuffer_, config_.worldName.c_str(), sizeof(worldNameBuffer_) - 1);
+    worldNameBuffer_[sizeof(worldNameBuffer_) - 1] = '\0';
 }
 
 bool WorldConfigurationUI::initialize(int screenWidth, int screenHeight) {
@@ -42,6 +51,59 @@ void WorldConfigurationUI::render() {
 
 bool WorldConfigurationUI::handleInput(float mouseX, float mouseY, bool clicked) {
     return BaseMenu::handleInput(mouseX, mouseY, clicked);
+}
+
+bool WorldConfigurationUI::handleKeyboardInput(int key, bool pressed) {
+    if (!isEditingWorldName_ || !pressed) {
+        return false;
+    }
+    
+    // Handle text input when editing world name
+    size_t currentLength = strlen(worldNameBuffer_);
+    
+    // Handle backspace
+    if (key == 8) { // Backspace key
+        if (currentLength > 0) {
+            worldNameBuffer_[currentLength - 1] = '\0';
+            onWorldNameChanged();
+        }
+        return true;
+    }
+    
+    // Handle Enter key to finish editing
+    if (key == 13) { // Enter key
+        isEditingWorldName_ = false;
+        onWorldNameChanged();
+        createUIElements(); // Refresh UI to show new state
+        return true;
+    }
+    
+    // Handle Escape key to cancel editing
+    if (key == 27) { // Escape key
+        isEditingWorldName_ = false;
+        // Restore original name
+        strncpy(worldNameBuffer_, config_.worldName.c_str(), sizeof(worldNameBuffer_) - 1);
+        worldNameBuffer_[sizeof(worldNameBuffer_) - 1] = '\0';
+        createUIElements(); // Refresh UI to show original state
+        return true;
+    }
+    
+    // Handle printable characters
+    if (key >= 32 && key <= 126 && currentLength < sizeof(worldNameBuffer_) - 1) {
+        char c = static_cast<char>(key);
+        
+        // Convert to uppercase/lowercase as appropriate
+        if (key >= 97 && key <= 122) { // lowercase letters
+            c = static_cast<char>(key - 32); // Convert to uppercase
+        }
+        
+        worldNameBuffer_[currentLength] = c;
+        worldNameBuffer_[currentLength + 1] = '\0';
+        onWorldNameChanged();
+        return true;
+    }
+    
+    return false;
 }
 
 void WorldConfigurationUI::createUIElements() {
@@ -77,6 +139,89 @@ void WorldConfigurationUI::createParameterControls() {
     float buttonColumnX = valueColumnX + maxValueWidth + ELEMENT_SPACING;
     
     float paramY = currentY_;
+    
+    // World Name Parameter (first parameter)
+    auto nameLabel = std::make_shared<VoxelEngine::UI::UIButton>(renderer_);
+    nameLabel->setText("World Name:");
+    nameLabel->setPosition(PANEL_MARGIN, paramY);
+    nameLabel->autoSizeToText(8.0f);
+    nameLabel->setBackgroundColor({0.1f, 0.1f, 0.1f, 0.6f});
+    addChild(nameLabel);
+    
+    // World name value with validation status
+    auto nameValueLabel = std::make_shared<VoxelEngine::UI::UIButton>(renderer_);
+    std::string nameText = config_.worldName;
+    if (config_.worldName.empty()) {
+        nameText = "[Enter world name]";
+    }
+    
+    // Show typing indicator when editing
+    if (isEditingWorldName_) {
+        nameText = std::string(worldNameBuffer_) + "_"; // Blinking cursor effect
+    }
+    
+    nameValueLabel->setText(nameText);
+    nameValueLabel->setPosition(valueColumnX, paramY);
+    nameValueLabel->autoSizeToText(8.0f);
+    
+    // Color coding based on validation and editing state
+    if (isEditingWorldName_) {
+        nameValueLabel->setBackgroundColor({0.3f, 0.3f, 0.6f, 0.8f}); // Blue for editing
+    } else if (!worldNameError_.empty()) {
+        nameValueLabel->setBackgroundColor({0.6f, 0.2f, 0.2f, 0.8f}); // Red for error
+    } else if (worldNameExists_) {
+        nameValueLabel->setBackgroundColor({0.6f, 0.4f, 0.2f, 0.8f}); // Orange for existing world
+    } else {
+        nameValueLabel->setBackgroundColor({0.2f, 0.4f, 0.2f, 0.8f}); // Green for valid
+    }
+    addChild(nameValueLabel);
+    
+    // Edit button for world name
+    auto nameEditButton = std::make_shared<VoxelEngine::UI::UIButton>(renderer_);
+    nameEditButton->setText(isEditingWorldName_ ? "Done" : "Edit");
+    nameEditButton->setPosition(buttonColumnX, paramY);
+    nameEditButton->setSize(60, TEXT_HEIGHT);
+    nameEditButton->setBackgroundColor({0.3f, 0.3f, 0.5f, 0.8f});
+    nameEditButton->setOnClick([this]() { 
+        if (isEditingWorldName_) {
+            // Finish editing
+            isEditingWorldName_ = false;
+            onWorldNameChanged();
+        } else {
+            // Start editing
+            isEditingWorldName_ = true;
+            // Clear the buffer to start fresh
+            worldNameBuffer_[0] = '\0';
+        }
+        createUIElements(); // Refresh UI
+    });
+    addChild(nameEditButton);
+    
+    paramY += TEXT_HEIGHT + ELEMENT_SPACING;
+    
+    // Show error message if there's a validation error
+    if (!worldNameError_.empty()) {
+        auto errorLabel = std::make_shared<VoxelEngine::UI::UIButton>(renderer_);
+        errorLabel->setText("⚠ " + worldNameError_);
+        errorLabel->setPosition(PANEL_MARGIN, paramY);
+        errorLabel->autoSizeToText(7.0f);
+        errorLabel->setBackgroundColor({0.6f, 0.1f, 0.1f, 0.8f}); // Red background for error
+        addChild(errorLabel);
+        paramY += TEXT_HEIGHT + ELEMENT_SPACING;
+    }
+    
+    // Show editing instructions when in edit mode
+    if (isEditingWorldName_) {
+        auto instructionLabel = std::make_shared<VoxelEngine::UI::UIButton>(renderer_);
+        instructionLabel->setText("💡 Type world name. Press Enter to save, Escape to cancel.");
+        instructionLabel->setPosition(PANEL_MARGIN, paramY);
+        instructionLabel->autoSizeToText(7.0f);
+        instructionLabel->setBackgroundColor({0.2f, 0.3f, 0.5f, 0.8f}); // Blue background for instructions
+        addChild(instructionLabel);
+        paramY += TEXT_HEIGHT + ELEMENT_SPACING;
+    }
+    
+    paramY += ELEMENT_SPACING; // Extra spacing after world name
     
     // World Size Parameter
     auto sizeLabel = std::make_shared<VoxelEngine::UI::UIButton>(renderer_);
@@ -428,6 +573,15 @@ float WorldConfigurationUI::calculateOptimalRowSpacing() {
 }
 
 void WorldConfigurationUI::onStartGenerationClicked() {
+    // Validate world name before proceeding
+    validateWorldName();
+    
+    if (!isWorldNameValid()) {
+        std::cout << "[WorldConfigurationUI] Cannot start generation: " << worldNameError_ << std::endl;
+        createUIElements(); // Refresh UI to show error
+        return;
+    }
+    
     if (onConfigurationComplete_) {
         onConfigurationComplete_(config_);
     }
@@ -442,4 +596,67 @@ void WorldConfigurationUI::onBackClicked() {
 void WorldConfigurationUI::onParameterChanged() {
     // Could trigger preview updates in the future
     std::cout << "[WorldConfigurationUI] Parameter changed" << std::endl;
+}
+
+void WorldConfigurationUI::onWorldNameChanged() {
+    // Update config with new world name
+    config_.worldName = std::string(worldNameBuffer_);
+    
+    // Validate the world name
+    validateWorldName();
+    
+    // Recreate UI elements to show/hide error messages
+    createUIElements();
+}
+
+void WorldConfigurationUI::validateWorldName() {
+    worldNameError_.clear();
+    worldNameExists_ = false;
+    
+    std::string trimmedName = config_.worldName;
+    
+    // Trim whitespace
+    size_t start = trimmedName.find_first_not_of(" \t\n\r");
+    if (start == std::string::npos) {
+        worldNameError_ = "World name cannot be empty";
+        return;
+    }
+    size_t end = trimmedName.find_last_not_of(" \t\n\r");
+    trimmedName = trimmedName.substr(start, end - start + 1);
+    
+    // Check if name is empty after trimming
+    if (trimmedName.empty()) {
+        worldNameError_ = "World name cannot be empty";
+        return;
+    }
+    
+    // Check for invalid characters (basic validation)
+    for (char c : trimmedName) {
+        if (c == '/' || c == '\\' || c == ':' || c == '*' || c == '?' || c == '"' || c == '<' || c == '>' || c == '|') {
+            worldNameError_ = "World name contains invalid characters";
+            return;
+        }
+    }
+    
+    // Check if world already exists
+    try {
+        VoxelCastle::World::WorldPersistenceManager worldManager;
+        if (worldManager.WorldExists(trimmedName)) {
+            worldNameExists_ = true;
+            worldNameError_ = "A world with this name already exists";
+            return;
+        }
+    } catch (const std::exception& e) {
+        std::cerr << "[WorldConfigurationUI] Error checking world existence: " << e.what() << std::endl;
+        // Continue anyway - this is not a critical error
+    }
+    
+    // Update config with trimmed name
+    config_.worldName = trimmedName;
+    strncpy(worldNameBuffer_, trimmedName.c_str(), sizeof(worldNameBuffer_) - 1);
+    worldNameBuffer_[sizeof(worldNameBuffer_) - 1] = '\0';
+}
+
+bool WorldConfigurationUI::isWorldNameValid() const {
+    return worldNameError_.empty() && !config_.worldName.empty();
 }

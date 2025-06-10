@@ -61,6 +61,7 @@ bool MenuSystem::initialize(int screenWidth, int screenHeight, const std::string
         
         // Convert WorldConfigurationUI::WorldConfig to WorldSimulationUI::WorldConfig
         WorldSimulationUI::WorldConfig simConfig;
+        simConfig.worldName = config.worldName;
         simConfig.worldSize = config.worldSize;
         simConfig.simulationDepth = config.simulationDepth;
         simConfig.climateType = config.climateType;
@@ -71,7 +72,7 @@ bool MenuSystem::initialize(int screenWidth, int screenHeight, const std::string
         
         // Switch to simulation UI and start the simulation
         showWorldSimulationUI();
-        worldSimulationUI_->startSimulation(simConfig);
+        worldSimulationUI_->startSimulation(simConfig, config.worldName);
     });
     
     worldConfigurationUI_->setOnBackCallback([this]() {
@@ -172,6 +173,18 @@ bool MenuSystem::handleInput(float mouseX, float mouseY, bool clicked) {
     // Use default UISystem input handling for all menus (including new split UIs)
     // New split UIs are UIElements, so they're handled by UISystem::handleInput()
     return UISystem::handleInput(mouseX, mouseY, clicked);
+}
+
+bool MenuSystem::handleKeyboardInput(int key, bool pressed) {
+    // Route keyboard input to appropriate UI components based on current menu state
+    if (menuState_ == MenuState::WORLD_CONFIGURATION && worldConfigurationUI_) {
+        // Route keyboard input to WorldConfigurationUI when it's active
+        return worldConfigurationUI_->handleKeyboardInput(key, pressed);
+    }
+    
+    // Other menu states don't currently need keyboard input
+    // (Main menu and Settings menu use mouse-only interaction)
+    return false;
 }
 
 void MenuSystem::showMainMenu() {

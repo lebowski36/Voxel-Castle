@@ -222,6 +222,7 @@ public:
 
     // UI Input Handling
     void handleMenuInput(float mouseX, float mouseY, bool clicked);
+    void handleMenuKeyboardInput(int key, bool pressed);
 
     /**
      * @brief Request the game to exit
