@@ -101,6 +101,37 @@ public:
     void setGenerationPhase(GenerationPhase phase) { currentPhase_ = phase; }
 
     /**
+     * @brief Set the zoom level and center position for detailed viewing
+     * @param zoomLevel Zoom factor (1.0 = full world, 2.0 = 2x zoom, etc.)
+     * @param centerX Center X coordinate in world space (0.0 to 1.0)
+     * @param centerY Center Y coordinate in world space (0.0 to 1.0)
+     */
+    void setViewport(float zoomLevel, float centerX, float centerY);
+
+    /**
+     * @brief Handle mouse input for interactive zoom and pan
+     * @param mouseX Mouse X coordinate relative to map area
+     * @param mouseY Mouse Y coordinate relative to map area
+     * @param mapWidth Width of the map display area
+     * @param mapHeight Height of the map display area
+     * @param wheelDelta Mouse wheel delta for zooming
+     * @param isMouseDown Whether mouse button is pressed for panning
+     * @return true if map needs to be regenerated due to significant zoom change
+     */
+    bool handleMouseInput(int mouseX, int mouseY, int mapWidth, int mapHeight, 
+                         float wheelDelta, bool isMouseDown);
+
+    /**
+     * @brief Get current zoom information for UI display
+     * @param outZoomLevel Current zoom level
+     * @param outCenterX Current center X (0.0 to 1.0)
+     * @param outCenterY Current center Y (0.0 to 1.0)
+     * @param outScale Scale description string
+     */
+    void getViewportInfo(float& outZoomLevel, float& outCenterX, float& outCenterY, 
+                        const char*& outScale) const;
+
+    /**
      * @brief Get display name for visualization mode
      * @param mode Visualization mode
      * @return Human-readable name
@@ -131,6 +162,16 @@ private:
     // Current visualization state
     VisualizationMode currentMode_;
     GenerationPhase currentPhase_;
+    
+    // Zoom and pan state
+    float zoomLevel_;        // Current zoom level (1.0 = full world view)
+    float centerX_;          // Center X coordinate in world space (0.0 to 1.0)
+    float centerY_;          // Center Y coordinate in world space (0.0 to 1.0)
+    float lastMouseX_;       // Last mouse position for drag calculation
+    float lastMouseY_;       // Last mouse position for drag calculation
+    bool isDragging_;        // Whether user is currently dragging the map
+    float minZoom_;          // Minimum zoom level (1.0 = full world)
+    float maxZoom_;          // Maximum zoom level (64.0 = very detailed)
     
     // Internal helper methods
     void cleanupResources();

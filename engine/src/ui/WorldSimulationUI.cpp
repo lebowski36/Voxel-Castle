@@ -66,7 +66,82 @@ void WorldSimulationUI::render() {
 }
 
 bool WorldSimulationUI::handleInput(float mouseX, float mouseY, bool clicked) {
+    // First check if we should handle map interaction
+    if (isMouseOverMap(mouseX, mouseY) && worldMapRenderer_) {
+        // Convert to relative map coordinates
+        glm::vec2 absolutePos = getAbsolutePosition();
+        float mapRelativeX = mouseX - (absolutePos.x + worldMapX_);
+        float mapRelativeY = mouseY - (absolutePos.y + worldMapY_);
+        
+        // Handle map interaction (no wheel delta here, will be handled by handleExtendedInput)
+        if (worldMapRenderer_->handleMouseInput(
+            static_cast<int>(mapRelativeX), static_cast<int>(mapRelativeY),
+            worldMapWidth_, worldMapHeight_, 0.0f, clicked)) {
+            
+            // Map needs regeneration due to zoom/pan change
+            if (worldGenerator_) {
+                worldMapRenderer_->generateWorldMap(
+                    worldGenerator_.get(),
+                    static_cast<VoxelEngine::UI::WorldMapRenderer::GenerationPhase>(currentPhase_),
+                    static_cast<VoxelEngine::UI::WorldMapRenderer::VisualizationMode>(visualizationMode_),
+                    config_.customSeed,
+                    static_cast<float>(config_.worldSize)
+                );
+            }
+        }
+        
+        // If we're over the map, don't let other UI elements handle the input
+        return true;
+    }
+    
     return BaseMenu::handleInput(mouseX, mouseY, clicked);
+}
+
+bool WorldSimulationUI::handleExtendedInput(float mouseX, float mouseY, bool clicked, float wheelDelta) {
+    // Handle base input first
+    bool handled = handleInput(mouseX, mouseY, clicked);
+    
+    // Handle mouse wheel for zoom if over map
+    if (wheelDelta != 0.0f && isMouseOverMap(mouseX, mouseY) && worldMapRenderer_) {
+        glm::vec2 absolutePos = getAbsolutePosition();
+        float mapRelativeX = mouseX - (absolutePos.x + worldMapX_);
+        float mapRelativeY = mouseY - (absolutePos.y + worldMapY_);
+        
+        if (worldMapRenderer_->handleMouseInput(
+            static_cast<int>(mapRelativeX), static_cast<int>(mapRelativeY),
+            worldMapWidth_, worldMapHeight_, wheelDelta, clicked)) {
+            
+            // Map needs regeneration due to zoom change
+            if (worldGenerator_) {
+                worldMapRenderer_->generateWorldMap(
+                    worldGenerator_.get(),
+                    static_cast<VoxelEngine::UI::WorldMapRenderer::GenerationPhase>(currentPhase_),
+                    static_cast<VoxelEngine::UI::WorldMapRenderer::VisualizationMode>(visualizationMode_),
+                    config_.customSeed,
+                    static_cast<float>(config_.worldSize)
+                );
+            }
+        }
+        
+        return true; // We handled the wheel event
+    }
+    
+    return handled;
+}
+
+bool WorldSimulationUI::isMouseOverMap(float mouseX, float mouseY) const {
+    if (worldMapWidth_ <= 0 || worldMapHeight_ <= 0) {
+        return false;
+    }
+    
+    glm::vec2 absolutePos = getAbsolutePosition();
+    float mapLeft = absolutePos.x + worldMapX_;
+    float mapTop = absolutePos.y + worldMapY_;
+    float mapRight = mapLeft + worldMapWidth_;
+    float mapBottom = mapTop + worldMapHeight_;
+    
+    return mouseX >= mapLeft && mouseX <= mapRight && 
+           mouseY >= mapTop && mouseY <= mapBottom;
 }
 
 void WorldSimulationUI::update(float deltaTime) {
@@ -139,6 +214,69 @@ void WorldSimulationUI::createVisualizationControls() {
         addChild(modeButton);
         vizButtonX += maxButtonWidth + ELEMENT_SPACING;
     }
+    currentY_ += VERTICAL_SPACING;
+    
+    // Add zoom controls row
+    auto zoomLabel = std::make_shared<VoxelEngine::UI::UIButton>(renderer_);
+    zoomLabel->setText("Map Controls:");
+    zoomLabel->setPosition(PANEL_MARGIN, currentY_);
+    zoomLabel->autoSizeToText(8.0f);
+    zoomLabel->setBackgroundColor({0.2f, 0.2f, 0.2f, 0.8f});
+    addChild(zoomLabel);
+    
+    // Zoom controls
+    float zoomButtonX = PANEL_MARGIN + 160.0f;
+    
+    // Zoom out button
+    auto zoomOutButton = std::make_shared<VoxelEngine::UI::UIButton>(renderer_);
+    zoomOutButton->setText("Zoom Out");
+    zoomOutButton->setPosition(zoomButtonX, currentY_);
+    zoomOutButton->autoSizeToText(6.0f);
+    zoomOutButton->setBackgroundColor({0.2f, 0.2f, 0.2f, 0.6f});
+    zoomOutButton->setOnClick([this]() { 
+        if (worldMapRenderer_) {
+            float zoom, centerX, centerY;
+            const char* scale;
+            worldMapRenderer_->getViewportInfo(zoom, centerX, centerY, scale);
+            worldMapRenderer_->setViewport(zoom * 0.5f, centerX, centerY);
+            regenerateWorldMap();
+        }
+    });
+    addChild(zoomOutButton);
+    zoomButtonX += 100.0f + ELEMENT_SPACING;
+    
+    // Reset zoom button
+    auto resetZoomButton = std::make_shared<VoxelEngine::UI::UIButton>(renderer_);
+    resetZoomButton->setText("Reset View");
+    resetZoomButton->setPosition(zoomButtonX, currentY_);
+    resetZoomButton->autoSizeToText(6.0f);
+    resetZoomButton->setBackgroundColor({0.2f, 0.2f, 0.2f, 0.6f});
+    resetZoomButton->setOnClick([this]() { 
+        if (worldMapRenderer_) {
+            worldMapRenderer_->setViewport(1.0f, 0.5f, 0.5f);
+            regenerateWorldMap();
+        }
+    });
+    addChild(resetZoomButton);
+    zoomButtonX += 100.0f + ELEMENT_SPACING;
+    
+    // Zoom in button
+    auto zoomInButton = std::make_shared<VoxelEngine::UI::UIButton>(renderer_);
+    zoomInButton->setText("Zoom In");
+    zoomInButton->setPosition(zoomButtonX, currentY_);
+    zoomInButton->autoSizeToText(6.0f);
+    zoomInButton->setBackgroundColor({0.2f, 0.2f, 0.2f, 0.6f});
+    zoomInButton->setOnClick([this]() { 
+        if (worldMapRenderer_) {
+            float zoom, centerX, centerY;
+            const char* scale;
+            worldMapRenderer_->getViewportInfo(zoom, centerX, centerY, scale);
+            worldMapRenderer_->setViewport(zoom * 2.0f, centerX, centerY);
+            regenerateWorldMap();
+        }
+    });
+    addChild(zoomInButton);
+    
     currentY_ += VERTICAL_SPACING;
 }
 
@@ -229,6 +367,31 @@ void WorldSimulationUI::renderWorldMap() {
     worldMapRenderer_->render(renderer_, 
                              (int)absoluteX, (int)absoluteY, 
                              (int)worldMapWidth_, (int)worldMapHeight_);
+    
+    // Render zoom information overlay in the top-right corner of the map
+    if (worldMapRenderer_) {
+        float zoomLevel, centerX, centerY;
+        const char* scaleDesc;
+        worldMapRenderer_->getViewportInfo(zoomLevel, centerX, centerY, scaleDesc);
+        
+        // Create zoom info text
+        std::string zoomInfo = "Zoom: " + std::to_string((int)(zoomLevel * 100)) + "% | " + scaleDesc;
+        if (zoomLevel > 1.0f) {
+            zoomInfo += " | Mouse wheel to zoom, drag to pan";
+        }
+        
+        // Render zoom info background panel
+        float infoWidth = 300.0f;
+        float infoHeight = 25.0f;
+        float infoX = absoluteX + worldMapWidth_ - infoWidth - 10.0f;
+        float infoY = absoluteY + 10.0f;
+        
+        // Semi-transparent background for zoom info
+        renderer_->renderQuad(infoX, infoY, infoWidth, infoHeight, {0.0f, 0.0f, 0.0f, 0.7f});
+        
+        // Render the zoom info text (note: drawText expects text first, then position)
+        renderer_->drawText(zoomInfo, infoX + 5.0f, infoY + 5.0f, 0.6f, {1.0f, 1.0f, 1.0f});
+    }
 }
 
 void WorldSimulationUI::updateWorldMapVisualization() {
@@ -1026,4 +1189,16 @@ void WorldSimulationUI::updateFinalStatistics() {
     stats_.deepestValleyName = "Shadow Valley";
     stats_.largestLakeName = "Crystal Lake";
     stats_.longestRiverName = "Serpent River";
+}
+
+void WorldSimulationUI::regenerateWorldMap() {
+    if (worldMapRenderer_ && worldGenerator_) {
+        worldMapRenderer_->generateWorldMap(
+            worldGenerator_.get(),
+            static_cast<VoxelEngine::UI::WorldMapRenderer::GenerationPhase>(currentPhase_),
+            static_cast<VoxelEngine::UI::WorldMapRenderer::VisualizationMode>(visualizationMode_),
+            config_.customSeed,
+            static_cast<float>(config_.worldSize)
+        );
+    }
 }

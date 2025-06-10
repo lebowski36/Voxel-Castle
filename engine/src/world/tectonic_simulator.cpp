@@ -241,17 +241,18 @@ void TectonicSimulator::GeneratePlates() {
         }
     }
     
-    // Create plates from centers
+    // Create plates from centers with realistic continental/oceanic ratios
     for (size_t i = 0; i < centers.size(); i++) {
         PlateType type;
         float typeRoll = typeDist(rng);
         
-        if (typeRoll < 0.6f) {
-            type = PlateType::CONTINENTAL;
+        // More realistic plate distribution: fewer, larger continental plates
+        if (typeRoll < 0.35f) {
+            type = PlateType::CONTINENTAL; // 35% continental (creates continent-like landmasses)
         } else if (typeRoll < 0.9f) {
-            type = PlateType::OCEANIC;
+            type = PlateType::OCEANIC; // 55% oceanic (vast ocean basins)
         } else {
-            type = PlateType::MICROPLATE;
+            type = PlateType::MICROPLATE; // 10% microplates (island chains)
         }
         
         TectonicPlate plate(static_cast<uint32_t>(i), centers[i], type);
@@ -654,10 +655,31 @@ void TectonicSimulator::GenerateTerrainMaps() {
               << " | Boundary types - Convergent:" << convergentCount 
               << " Divergent:" << divergentCount << " Transform:" << transformCount << std::endl;
     
-    // Initialize elevation map with base tectonic state (stable = 0m modifier)
+    // Initialize elevation map with base tectonic state based on plate type
     for (uint32_t y = 0; y < mapResolution_; y++) {
         for (uint32_t x = 0; x < mapResolution_; x++) {
-            elevationMap_[y][x] = 0.0f; // Start with no tectonic modification
+            glm::vec2 worldPos((x + 0.5f) * cellSize, (y + 0.5f) * cellSize);
+            
+            // Get the dominant plate at this position
+            const TectonicPlate* dominantPlate = GetDominantPlate(worldPos);
+            
+            // Set base elevation based on plate type
+            float baseElevation = 0.0f;
+            if (dominantPlate) {
+                switch (dominantPlate->type) {
+                    case PlateType::CONTINENTAL:
+                        baseElevation = 200.0f; // Continental crust is higher (200m above sea level)
+                        break;
+                    case PlateType::OCEANIC:
+                        baseElevation = -2000.0f; // Oceanic crust is lower (2km below sea level)
+                        break;
+                    case PlateType::MICROPLATE:
+                        baseElevation = -500.0f; // Small oceanic plates
+                        break;
+                }
+            }
+            
+            elevationMap_[y][x] = baseElevation; // Start with plate-based base elevation
             terrainMap_[y][x] = TerrainType::STABLE;
             stressMap_[y][x] = 0.0f;
         }
@@ -723,7 +745,7 @@ void TectonicSimulator::GenerateTerrainMaps() {
             
             stressMap_[y][x] = maxStress;
             terrainMap_[y][x] = terrainType;
-            elevationMap_[y][x] = elevationMod;
+            elevationMap_[y][x] += elevationMod; // Add tectonic modifier to base plate elevation
         }
     }
     

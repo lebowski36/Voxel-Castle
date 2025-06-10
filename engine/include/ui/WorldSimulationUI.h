@@ -100,6 +100,24 @@ public:
     bool handleInput(float mouseX, float mouseY, bool clicked) override;
     void update(float deltaTime) override;
 
+    /**
+     * @brief Handle extended input events including mouse wheel for map zoom
+     * @param mouseX Mouse X coordinate
+     * @param mouseY Mouse Y coordinate
+     * @param clicked Whether mouse button is pressed
+     * @param wheelDelta Mouse wheel delta for zooming
+     * @return true if input was handled
+     */
+    bool handleExtendedInput(float mouseX, float mouseY, bool clicked, float wheelDelta);
+
+    /**
+     * @brief Check if mouse is over the world map area
+     * @param mouseX Mouse X coordinate
+     * @param mouseY Mouse Y coordinate
+     * @return true if mouse is over the map
+     */
+    bool isMouseOverMap(float mouseX, float mouseY) const;
+
     // Simulation control
     void startSimulation(const WorldConfig& config, const std::string& worldName = "Generated World");
     void pauseSimulation();
@@ -120,6 +138,11 @@ public:
     float getCurrentProgress() const { return currentProgress_; }
     GenerationPhase getCurrentPhase() const { return currentPhase_; }
     const WorldStats& getWorldStats() const { return stats_; }
+
+    /**
+     * @brief Regenerate the world map with current settings
+     */
+    void regenerateWorldMap();
 
 private:
     void createUIElements();

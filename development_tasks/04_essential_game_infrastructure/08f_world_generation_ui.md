@@ -1,6 +1,6 @@
 # World Generation UI Implementation
 *Created: 2025-06-09*
-*Last Updated: 2025-06-10 23:30*
+*Last Updated: 2025-06-10 23:50*
 
 ## Overview
 This document tracks the implementation of the Dwarf Fortress-inspired World Generation UI system for Voxel Castle, split into two separate UIs:
@@ -611,45 +611,95 @@ Target:  SeedWorldGenerator → Data Flow → WorldMapRenderer → Dynamic UI
 
 ---
 
-## 🎯 CURRENT STATUS SUMMARY - PARAMETER CONTROLS FIXED
+### 2025-06-10: 🔍 CRITICAL ISSUE ANALYSIS - CONTINENTAL SCALE VISUALIZATION
+**Issue**: World preview shows only tiny area instead of full continents and oceans
 
-### ✅ COMPLETED PHASES
-- **Phase 1**: UI Structure & Basic Components (UI layouts, basic interactions)
-- **Phase 2**: Core Functionality Implementation (parameter controls working perfectly, simulation display)  
-- **Phase 3**: Generation Logic Connection (real backend integration)
-- **Phase 3.5**: World Persistence Integration (complete storage system)
-- **Phase 4a**: Basic World Preview Rendering (debug quad visible, rendering pipeline functional)
+**Root Problem Analysis** (Based on console output):
+1. **World Size Mismatch:**
+   - **Config Expected**: 1024km × 1024km (continental scale)
+   - **Actual Tectonic Size**: 256km × 256km (smaller region)
+   - **Renderer Sampling**: Only 2km × 2km area (0-2000m coordinates)
 
-### 🚀 READY FOR IMPLEMENTATION - NEXT PHASE OPTIONS
+2. **Scale Sampling Problem:**
+   - Currently sampling positions like (0,0), (500,0), (1000,0), (1500,0), (2000,0)
+   - This represents only 2.5km × 2.5km out of 256km × 256km world
+   - Like looking at a neighborhood instead of entire continent
 
-**High Priority (Choose One):**
-1. **Heightmap Texture Rendering (Phase 4a Enhancement)**
-   - Replace magenta debug quad with actual heightmap texture
-   - Use existing WorldPreviewRenderer texture generation
-   - Simple enhancement - rendering pipeline already confirmed working
+3. **Missing Continental Features:**
+   - Elevation range: -121m to +397m (very limited)
+   - No large-scale continental features (mountain ranges, ocean basins)
+   - No visible continents vs oceans distinction
 
-2. **"Play World" Button Implementation (Phase 5)**
-   - Connect generated/saved worlds to actual gameplay
-   - Load world data into game world system
-   - Implement state transition from world generation to gameplay
+**Implementation Plan:**
 
-3. **"Load World" Menu System (Phase 5)**
-   - UI for browsing existing saved worlds  
-   - Display world metadata (creation date, seed, statistics)
-   - World selection and loading functionality
+#### Phase 4c: Fix Continental-Scale Visualization 🔥 HIGH PRIORITY
+**Target**: Show entire world with continents, oceans, and large-scale geological features
 
-**Medium Priority:**
-3. **World Preview Visualization (Phase 4)**
-   - Real-time heightmap/biome visualization during generation
-   - Interactive map controls and visualization overlays
-   - Enhanced visual feedback system
+**Step 1: Fix World Size Parameter Propagation**
+- ✅ Update `WorldMapRenderer::generateWorldMap()` to accept world size parameter
+- ✅ Update `WorldSimulationUI` to pass actual config world size
+- ✅ Store world size in `WorldMapRenderer::worldSizeKm_` member
 
-**Foundation Status:**
-- ✅ **All Dependencies Resolved**: No blocking dependencies remain
-- ✅ **Build System Stable**: Compilation and linking working correctly
-- ✅ **Core Systems Operational**: World generation, persistence, and UI systems functional
-- ✅ **Parameter Controls Fixed**: All editing buttons work perfectly without crashes
-- ✅ **Documentation Updated**: All task files reflect current state
-- ✅ **World Preview Rendering Pipeline Working**: Debug quad visible, ready for heightmap texture implementation
+**Step 2: Fix Sampling Resolution**
+- 🔄 **IN PROGRESS**: Update elevation data generation to sample entire world area
+- Current: Samples 2km × 2km (neighborhood scale)  
+- Target: Sample full worldSizeKm × worldSizeKm (continental scale)
 
-**Recommended Next Action:** Choose between implementing actual heightmap texture rendering (simple enhancement) or "Play World" button functionality (core gameplay feature) based on desired development focus.
+**Step 3: Enhance Tectonic Integration**
+- 🔄 **NEXT**: Ensure tectonic simulator uses same world size as renderer
+- Verify tectonic world size matches configuration setting
+- Scale tectonic effects to produce continental-scale features
+
+**Step 4: Continental-Scale Color Mapping**
+- Update color mapping to emphasize continental vs oceanic features
+- Enhance water/land distinction in visualization
+- Add distinct colors for deep ocean vs shallow coastal areas
+
+**Expected Outcome:**
+- Users see entire continents and ocean basins during generation
+- Clear distinction between land masses and water bodies
+- Continental-scale geological features (mountain ranges, rifts, basins)
+- Elevation ranges spanning -2000m to +2000m for realistic geography
+
+**Technical Changes Required:**
+1. **WorldMapRenderer.cpp** - Fix sampling to cover entire world area
+2. **TectonicSimulator integration** - Ensure world size consistency
+3. **Color mapping enhancement** - Better continental visualization
+4. **UI parameter passing** - Proper world size propagation
+
+---
+
+## 🎯 UPDATED NEXT PRIORITY TASKS
+
+### 🔥 IMMEDIATE: Fix Continental-Scale World Visualization (Phase 4c)
+**Status**: 🔄 **ACTIVE IMPLEMENTATION** - Critical for user experience
+
+**Current Progress:**
+- ✅ **World Size Parameter**: Successfully added worldSizeKm parameter to WorldMapRenderer
+- ✅ **Parameter Propagation**: WorldSimulationUI now passes config world size to renderer
+- 🔄 **Sampling Fix**: Currently updating elevation generation to sample entire world area
+- ⏳ **Tectonic Integration**: Need to verify tectonic simulator world size consistency
+
+**Next Implementation Steps:**
+1. **Fix Sampling Resolution** - Sample entire world area instead of tiny 2km patch
+2. **Verify Tectonic World Size** - Ensure tectonic simulator matches config world size  
+3. **Enhance Continental Features** - Better elevation ranges and geological realism
+4. **Test Continental Visualization** - Verify users can see continents and oceans
+
+### 🔶 MEDIUM PRIORITY: Enhanced Features (Phase 4/5)
+1. **"Play World" Button Implementation** - Transition to gameplay with generated world
+2. **"Load World" Menu System** - Browse and load existing saved worlds
+3. **Advanced Visualization Modes** - Temperature, precipitation, biome overlays
+
+### 🔸 LOW PRIORITY: Polish & Optimization
+1. **Interactive Map Controls** - Zoom, pan, click exploration
+2. **Threaded Generation** - Background processing
+3. **World Export/Import** - Template sharing
+
+**Key Success Criteria for Phase 4c:**
+- ✅ **Continental Scale**: Users see entire world, not tiny patches
+- ✅ **Land/Water Distinction**: Clear continents vs oceans
+- ✅ **Geological Realism**: Mountain ranges, ocean trenches, realistic elevation ranges
+- ✅ **Dynamic Progression**: Terrain evolves visibly through generation phases
+
+---

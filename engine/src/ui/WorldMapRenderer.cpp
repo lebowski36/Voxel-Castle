@@ -21,7 +21,15 @@ WorldMapRenderer::WorldMapRenderer()
     , worldSizeKm_(1024.0f)  // Default to 1024km (continent scale)
     , currentMode_(VisualizationMode::ELEVATION)
     , currentPhase_(GenerationPhase::TECTONICS)
-    , renderCounter_(0) {
+    , renderCounter_(0)
+    , zoomLevel_(1.0f)       // Start with full world view
+    , centerX_(0.5f)         // Center the view
+    , centerY_(0.5f)         // Center the view
+    , lastMouseX_(0.0f)
+    , lastMouseY_(0.0f)
+    , isDragging_(false)
+    , minZoom_(1.0f)         // Minimum zoom shows full world
+    , maxZoom_(64.0f) {      // Maximum zoom shows 1/64th of world (very detailed)
 }
 
 WorldMapRenderer::~WorldMapRenderer() {
@@ -228,9 +236,25 @@ void WorldMapRenderer::generateElevationData(VoxelCastle::World::SeedWorldGenera
     
     for (int y = 0; y < resolution_; y++) {
         for (int x = 0; x < resolution_; x++) {
-            // Convert screen coordinates to world coordinates
-            float worldX = (x / (float)resolution_) * worldSize;
-            float worldZ = (y / (float)resolution_) * worldSize;
+            // Apply zoom and pan to determine world coordinates
+            // Calculate the world area being viewed based on zoom level
+            float viewAreaSize = worldSize / zoomLevel_;  // Size of area being viewed
+            
+            // Calculate the corner of the viewed area
+            float viewStartX = (centerX_ - 0.5f / zoomLevel_) * worldSize;
+            float viewStartY = (centerY_ - 0.5f / zoomLevel_) * worldSize;
+            
+            // Clamp to world bounds
+            viewStartX = std::max(0.0f, std::min(viewStartX, worldSize - viewAreaSize));
+            viewStartY = std::max(0.0f, std::min(viewStartY, worldSize - viewAreaSize));
+            
+            // Convert screen coordinates to world coordinates within the zoomed view
+            float worldX = viewStartX + (x / (float)resolution_) * viewAreaSize;
+            float worldZ = viewStartY + (y / (float)resolution_) * viewAreaSize;
+            
+            // Ensure coordinates stay within world bounds
+            worldX = std::max(0.0f, std::min(worldX, worldSize - 1.0f));
+            worldZ = std::max(0.0f, std::min(worldZ, worldSize - 1.0f));
             
             // Start with base terrain height
             int heightVoxels = generator->getTerrainHeightAt((int)worldX, (int)worldZ);
@@ -242,11 +266,13 @@ void WorldMapRenderer::generateElevationData(VoxelCastle::World::SeedWorldGenera
                 // Convert coordinates to kilometers for tectonic simulator
                 glm::vec2 worldPosKm(worldX / 1000.0f, worldZ / 1000.0f);
                 
-                // Debug: Check world bounds
+                // Debug: Check world bounds and sampling pattern
                 float tectonicWorldSize = tectonicSim->GetWorldSize();
                 if (x < 5 && y < 5) {
                     std::cout << "[WorldMapRenderer] Tectonic world size: " << tectonicWorldSize << " km" << std::endl;
-                    std::cout << "[WorldMapRenderer] Checking position (" << worldPosKm.x << "," << worldPosKm.y << ") km" << std::endl;
+                    std::cout << "[WorldMapRenderer] Sampling position (" << worldPosKm.x << "," << worldPosKm.y << ") km" << std::endl;
+                    std::cout << "[WorldMapRenderer] World bounds: 0 to " << tectonicWorldSize << " km" << std::endl;
+                    std::cout << "[WorldMapRenderer] Pixel (" << x << "," << y << ") = World (" << worldX << "," << worldZ << ") m" << std::endl;
                     std::cout << "[WorldMapRenderer] Within bounds: " << (worldPosKm.x >= 0 && worldPosKm.y >= 0 && worldPosKm.x < tectonicWorldSize && worldPosKm.y < tectonicWorldSize) << std::endl;
                 }
                 
@@ -402,7 +428,7 @@ void WorldMapRenderer::generateWaterFeatures() {
 }
 
 void WorldMapRenderer::generateTemperatureData(VoxelCastle::World::SeedWorldGenerator* generator, unsigned int seed) {
-    // Suppress unused parameter warnings for now - these will be used when full climate simulation is implemented
+    // Suppress unused parameter warnings for now - phase will be used for phase-specific color tinting
     (void)generator;
     (void)seed;
     
@@ -689,6 +715,98 @@ const char* WorldMapRenderer::getGenerationPhaseName(GenerationPhase phase) {
         case GenerationPhase::CIVILIZATION: return "Civilization History";
         case GenerationPhase::COMPLETE: return "World Complete";
         default: return "Unknown Phase";
+    }
+}
+
+void WorldMapRenderer::setViewport(float zoomLevel, float centerX, float centerY) {
+    zoomLevel_ = std::clamp(zoomLevel, minZoom_, maxZoom_);
+    centerX_ = std::clamp(centerX, 0.0f, 1.0f);
+    centerY_ = std::clamp(centerY, 0.0f, 1.0f);
+    
+    // Adjust center to prevent viewing outside world bounds
+    float halfViewSize = 0.5f / zoomLevel_;
+    centerX_ = std::clamp(centerX_, halfViewSize, 1.0f - halfViewSize);
+    centerY_ = std::clamp(centerY_, halfViewSize, 1.0f - halfViewSize);
+    
+    // Mark texture as invalid to trigger regeneration
+    textureValid_ = false;
+}
+
+bool WorldMapRenderer::handleMouseInput(int mouseX, int mouseY, int mapWidth, int mapHeight, 
+                                       float wheelDelta, bool isMouseDown) {
+    bool needsRegeneration = false;
+    
+    // Convert mouse coordinates to normalized map coordinates (0.0 to 1.0)
+    float normalizedX = (float)mouseX / mapWidth;
+    float normalizedY = (float)mouseY / mapHeight;
+    
+    // Handle zoom with mouse wheel
+    if (wheelDelta != 0.0f) {
+        float oldZoom = zoomLevel_;
+        float zoomFactor = 1.0f + (wheelDelta * 0.1f); // 10% zoom per wheel step
+        float newZoom = zoomLevel_ * zoomFactor;
+        newZoom = std::clamp(newZoom, minZoom_, maxZoom_);
+        
+        if (std::abs(newZoom - oldZoom) > 0.01f) {
+            // Zoom towards mouse cursor position
+            float worldX = centerX_ + (normalizedX - 0.5f) / oldZoom;
+            float worldY = centerY_ + (normalizedY - 0.5f) / oldZoom;
+            
+            zoomLevel_ = newZoom;
+            
+            // Adjust center to keep the point under mouse cursor stable
+            centerX_ = worldX - (normalizedX - 0.5f) / newZoom;
+            centerY_ = worldY - (normalizedY - 0.5f) / newZoom;
+            
+            // Apply viewport constraints
+            setViewport(zoomLevel_, centerX_, centerY_);
+            needsRegeneration = true;
+        }
+    }
+    
+    // Handle panning with mouse drag
+    if (isMouseDown) {
+        if (isDragging_) {
+            // Calculate drag delta
+            float deltaX = (normalizedX - lastMouseX_) / zoomLevel_;
+            float deltaY = (normalizedY - lastMouseY_) / zoomLevel_;
+            
+            // Update center position (inverted because we're moving the world, not the viewport)
+            float newCenterX = centerX_ - deltaX;
+            float newCenterY = centerY_ - deltaY;
+            
+            setViewport(zoomLevel_, newCenterX, newCenterY);
+            needsRegeneration = true;
+        } else {
+            isDragging_ = true;
+        }
+        
+        lastMouseX_ = normalizedX;
+        lastMouseY_ = normalizedY;
+    } else {
+        isDragging_ = false;
+    }
+    
+    return needsRegeneration;
+}
+
+void WorldMapRenderer::getViewportInfo(float& outZoomLevel, float& outCenterX, float& outCenterY, 
+                                      const char*& outScale) const {
+    outZoomLevel = zoomLevel_;
+    outCenterX = centerX_;
+    outCenterY = centerY_;
+    
+    // Calculate scale description based on zoom level
+    float kmPerPixel = (worldSizeKm_ / zoomLevel_) / resolution_;
+    
+    if (kmPerPixel >= 10.0f) {
+        outScale = "Continental Scale";
+    } else if (kmPerPixel >= 1.0f) {
+        outScale = "Regional Scale";
+    } else if (kmPerPixel >= 0.1f) {
+        outScale = "Local Scale";
+    } else {
+        outScale = "Detailed Scale";
     }
 }
 
