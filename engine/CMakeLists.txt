@@ -69,7 +69,7 @@ add_library(VoxelEngine STATIC
     src/ui/elements/SettingsMenu.cpp # Settings menu UI
     src/ui/WorldConfigurationUI.cpp # World generation setup UI
     src/ui/WorldSimulationUI.cpp # World generation simulation UI
-    src/ui/WorldPreviewRenderer.cpp # World preview visualization for configuration UI
+    src/ui/WorldMapRenderer.cpp # World map visualization for simulation UI
     src/ui/BlockVisualizationPanel.cpp # Block visualization debug panel
     # Input system sources
     src/input/MouseCaptureManager.cpp # Mouse capture management

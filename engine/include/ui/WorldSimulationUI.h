@@ -11,6 +11,7 @@
 namespace VoxelEngine::UI {
     class UIButton;
     class UIRenderer;
+    class WorldMapRenderer;
 }
 
 namespace VoxelCastle::World {
@@ -129,6 +130,10 @@ private:
     void createActionButtons();
     void createWorldSummaryUI();
     
+    // World map rendering
+    void renderWorldMap();
+    void updateWorldMapVisualization();
+    
     // Layout calculation helpers
     float calculateMaxVisualizationButtonWidth();
     float calculateOptimalRowSpacing();
@@ -182,6 +187,12 @@ private:
     std::shared_ptr<VoxelCastle::World::WorldParameters> worldParameters_;
     std::shared_ptr<VoxelCastle::World::WorldPersistenceManager> worldPersistence_;
     std::thread generationThread_;
+    
+    // World map visualization
+    std::unique_ptr<VoxelEngine::UI::WorldMapRenderer> worldMapRenderer_;
+    
+    // World map area coordinates (set by createWorldPreview)
+    float worldMapX_, worldMapY_, worldMapWidth_, worldMapHeight_;
     
     // Callbacks
     OnSimulationCompleteCallback onSimulationComplete_;

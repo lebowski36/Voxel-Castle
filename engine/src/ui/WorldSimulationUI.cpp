@@ -1,5 +1,6 @@
 #include "ui/WorldSimulationUI.h"
 #include "ui/elements/UIButton.h"
+#include "ui/WorldMapRenderer.h"
 #include "world/seed_world_generator.h"
 #include "world/world_seed.h"
 #include "world/world_parameters.h"
@@ -17,9 +18,17 @@ WorldSimulationUI::WorldSimulationUI(VoxelEngine::UI::UIRenderer* renderer)
     , isPaused_(false)
     , isRunning_(false)
     , visualizationMode_(VisualizationMode::ELEVATION)
+    , worldMapRenderer_(nullptr)
+    , worldMapX_(0.0f), worldMapY_(0.0f), worldMapWidth_(0.0f), worldMapHeight_(0.0f)
     , onSimulationComplete_(nullptr)
     , onBack_(nullptr)
     , currentY_(TITLE_HEIGHT + PANEL_MARGIN) {
+    
+    // Initialize world map renderer
+    worldMapRenderer_ = std::make_unique<VoxelEngine::UI::WorldMapRenderer>();
+    if (!worldMapRenderer_->initialize(512)) {
+        std::cerr << "[WorldSimulationUI] Warning: Failed to initialize world map renderer" << std::endl;
+    }
 }
 
 WorldSimulationUI::~WorldSimulationUI() {
@@ -49,6 +58,11 @@ bool WorldSimulationUI::initialize(int screenWidth, int screenHeight) {
 
 void WorldSimulationUI::render() {
     BaseMenu::render();
+    
+    // Render world map on top of background but behind other UI elements
+    if (worldMapRenderer_ && isRunning_) {
+        renderWorldMap();
+    }
 }
 
 bool WorldSimulationUI::handleInput(float mouseX, float mouseY, bool clicked) {
@@ -130,19 +144,152 @@ void WorldSimulationUI::createVisualizationControls() {
 
 void WorldSimulationUI::createWorldPreview() {
     float panelWidth = getSize().x - (PANEL_MARGIN * 2);
-    float previewHeight = 200.0f;
     
-    // World preview panel
-    auto previewPanel = std::make_shared<VoxelEngine::UI::UIButton>(renderer_);
-    std::string previewText = "[World Generation Preview - " + getVisualizationModeDisplayName(visualizationMode_) + "]\n";
-    previewText += "Phase: " + getPhaseDisplayName(currentPhase_) + "\n";
-    previewText += "Progress: " + std::to_string((int)(currentProgress_ * 100)) + "%";
-    previewPanel->setText(previewText);
-    previewPanel->setPosition(PANEL_MARGIN, currentY_);
-    previewPanel->setSize(panelWidth, previewHeight);
-    previewPanel->setBackgroundColor({0.15f, 0.25f, 0.2f, 0.8f});
-    addChild(previewPanel);
-    currentY_ += previewHeight + ELEMENT_SPACING;
+    // Calculate world map area (large central area following the specification)
+    float mapWidth = panelWidth * 0.65f;  // 65% of width for main visualization
+    float mapHeight = 400.0f;              // Substantial height for good visibility
+    
+    // Store world map coordinates for rendering
+    worldMapX_ = PANEL_MARGIN;
+    worldMapY_ = currentY_;
+    worldMapWidth_ = mapWidth;
+    worldMapHeight_ = mapHeight;
+    
+    // Note: No background panel needed - world map will render directly
+    
+    currentY_ += mapHeight + ELEMENT_SPACING;
+}
+
+void WorldSimulationUI::renderWorldMap() {
+    if (!worldMapRenderer_ || worldMapWidth_ <= 0 || worldMapHeight_ <= 0) {
+        return;
+    }
+    
+    // Calculate absolute coordinates by adding the menu's position to relative coordinates
+    glm::vec2 absolutePos = getAbsolutePosition();
+    float absoluteX = absolutePos.x + worldMapX_;
+    float absoluteY = absolutePos.y + worldMapY_;
+    
+    // Convert WorldSimulationUI enums to WorldMapRenderer enums
+    VoxelEngine::UI::WorldMapRenderer::GenerationPhase mapPhase;
+    switch (currentPhase_) {
+        case GenerationPhase::TECTONICS:
+            mapPhase = VoxelEngine::UI::WorldMapRenderer::GenerationPhase::TECTONICS;
+            break;
+        case GenerationPhase::EROSION:
+            mapPhase = VoxelEngine::UI::WorldMapRenderer::GenerationPhase::EROSION;
+            break;
+        case GenerationPhase::HYDROLOGY:
+            mapPhase = VoxelEngine::UI::WorldMapRenderer::GenerationPhase::HYDROLOGY;
+            break;
+        case GenerationPhase::CLIMATE:
+            mapPhase = VoxelEngine::UI::WorldMapRenderer::GenerationPhase::CLIMATE;
+            break;
+        case GenerationPhase::BIOMES:
+            mapPhase = VoxelEngine::UI::WorldMapRenderer::GenerationPhase::BIOMES;
+            break;
+        case GenerationPhase::CIVILIZATION:
+            mapPhase = VoxelEngine::UI::WorldMapRenderer::GenerationPhase::CIVILIZATION;
+            break;
+        default:
+            mapPhase = VoxelEngine::UI::WorldMapRenderer::GenerationPhase::COMPLETE;
+            break;
+    }
+    
+    VoxelEngine::UI::WorldMapRenderer::VisualizationMode mapMode;
+    switch (visualizationMode_) {
+        case VisualizationMode::ELEVATION:
+            mapMode = VoxelEngine::UI::WorldMapRenderer::VisualizationMode::ELEVATION;
+            break;
+        case VisualizationMode::TEMPERATURE:
+            mapMode = VoxelEngine::UI::WorldMapRenderer::VisualizationMode::TEMPERATURE;
+            break;
+        case VisualizationMode::PRECIPITATION:
+            mapMode = VoxelEngine::UI::WorldMapRenderer::VisualizationMode::PRECIPITATION;
+            break;
+        case VisualizationMode::BIOMES:
+            mapMode = VoxelEngine::UI::WorldMapRenderer::VisualizationMode::BIOMES;
+            break;
+        case VisualizationMode::HYDROLOGY:
+            mapMode = VoxelEngine::UI::WorldMapRenderer::VisualizationMode::HYDROLOGY;
+            break;
+        case VisualizationMode::GEOLOGY:
+            mapMode = VoxelEngine::UI::WorldMapRenderer::VisualizationMode::GEOLOGY;
+            break;
+        default:
+            mapMode = VoxelEngine::UI::WorldMapRenderer::VisualizationMode::ELEVATION;
+            break;
+    }
+    
+    // Update the world map renderer with current phase and mode
+    worldMapRenderer_->setGenerationPhase(mapPhase);
+    worldMapRenderer_->setVisualizationMode(mapMode);
+    
+    // Render the world map using absolute screen coordinates
+    worldMapRenderer_->render(renderer_, 
+                             (int)absoluteX, (int)absoluteY, 
+                             (int)worldMapWidth_, (int)worldMapHeight_);
+}
+
+void WorldSimulationUI::updateWorldMapVisualization() {
+    if (!worldMapRenderer_ || !worldGenerator_) {
+        return;
+    }
+    
+    // Convert enums and generate new world map data
+    VoxelEngine::UI::WorldMapRenderer::GenerationPhase mapPhase;
+    switch (currentPhase_) {
+        case GenerationPhase::TECTONICS:
+            mapPhase = VoxelEngine::UI::WorldMapRenderer::GenerationPhase::TECTONICS;
+            break;
+        case GenerationPhase::EROSION:
+            mapPhase = VoxelEngine::UI::WorldMapRenderer::GenerationPhase::EROSION;
+            break;
+        case GenerationPhase::HYDROLOGY:
+            mapPhase = VoxelEngine::UI::WorldMapRenderer::GenerationPhase::HYDROLOGY;
+            break;
+        case GenerationPhase::CLIMATE:
+            mapPhase = VoxelEngine::UI::WorldMapRenderer::GenerationPhase::CLIMATE;
+            break;
+        case GenerationPhase::BIOMES:
+            mapPhase = VoxelEngine::UI::WorldMapRenderer::GenerationPhase::BIOMES;
+            break;
+        case GenerationPhase::CIVILIZATION:
+            mapPhase = VoxelEngine::UI::WorldMapRenderer::GenerationPhase::CIVILIZATION;
+            break;
+        default:
+            mapPhase = VoxelEngine::UI::WorldMapRenderer::GenerationPhase::COMPLETE;
+            break;
+    }
+    
+    VoxelEngine::UI::WorldMapRenderer::VisualizationMode mapMode;
+    switch (visualizationMode_) {
+        case VisualizationMode::ELEVATION:
+            mapMode = VoxelEngine::UI::WorldMapRenderer::VisualizationMode::ELEVATION;
+            break;
+        case VisualizationMode::TEMPERATURE:
+            mapMode = VoxelEngine::UI::WorldMapRenderer::VisualizationMode::TEMPERATURE;
+            break;
+        case VisualizationMode::PRECIPITATION:
+            mapMode = VoxelEngine::UI::WorldMapRenderer::VisualizationMode::PRECIPITATION;
+            break;
+        case VisualizationMode::BIOMES:
+            mapMode = VoxelEngine::UI::WorldMapRenderer::VisualizationMode::BIOMES;
+            break;
+        case VisualizationMode::HYDROLOGY:
+            mapMode = VoxelEngine::UI::WorldMapRenderer::VisualizationMode::HYDROLOGY;
+            break;
+        case VisualizationMode::GEOLOGY:
+            mapMode = VoxelEngine::UI::WorldMapRenderer::VisualizationMode::GEOLOGY;
+            break;
+        default:
+            mapMode = VoxelEngine::UI::WorldMapRenderer::VisualizationMode::ELEVATION;
+            break;
+    }
+    
+    // Generate new world map data
+    unsigned int currentSeed = worldSeed_ ? worldSeed_->getMasterSeed() : 12345;
+    worldMapRenderer_->generateWorldMap(worldGenerator_.get(), mapPhase, mapMode, currentSeed);
 }
 
 void WorldSimulationUI::createProgressPanels() {
@@ -331,6 +478,9 @@ void WorldSimulationUI::startSimulation(const WorldConfig& config, const std::st
         // Start generation in background thread
         startGenerationThread();
         
+        // Initialize world map visualization
+        updateWorldMapVisualization();
+        
     } catch (const std::exception& e) {
         addLogEntry("ERROR: Failed to initialize world generation: " + std::string(e.what()), 0);
         isRunning_ = false;
@@ -434,6 +584,9 @@ void WorldSimulationUI::advancePhase() {
             completeSimulation();
             return;
     }
+    
+    // Update world map visualization for the new phase
+    updateWorldMapVisualization();
     
     createUIElements();
 }
