@@ -640,11 +640,12 @@ void TectonicSimulator::GenerateTerrainMaps() {
                 for (const auto& contactPoint : boundary.contactPoints) {
                     float distance = glm::length(worldPos - contactPoint);
                     
-                    // Larger influence radius for more dramatic terrain
-                    float influenceRadius = worldSize_ * 0.35f; // Increased from 0.25f
+                    // Much smaller influence radius for localized geological features
+                    float influenceRadius = worldSize_ * 0.10f; // Reduced from 0.35f for localized features
                     float influence = std::exp(-distance / influenceRadius); // Exponential falloff
                     
-                    if (influence > 0.003f) { // Lower threshold for wider influence
+                    // Only apply tectonic effects in areas with significant boundary influence
+                    if (influence > 0.02f) { // Higher threshold for more localized effects
                         float localStress = boundary.stress * influence;
                         if (localStress > maxStress) {
                             maxStress = localStress;
@@ -652,27 +653,35 @@ void TectonicSimulator::GenerateTerrainMaps() {
                             switch (boundary.type) {
                                 case BoundaryType::CONVERGENT:
                                     terrainType = TerrainType::MOUNTAIN;
-                                    // DRAMATIC mountain ranges: 500m to 1800m elevation
-                                    elevationMod = localStress * 2200.0f + 500.0f; 
+                                    // Dramatic mountain ranges using nearly full height range
+                                    elevationMod = localStress * 1800.0f + 200.0f; // Mountains: 200m to 2000m+ elevation
                                     break;
                                 case BoundaryType::DIVERGENT:
                                     terrainType = TerrainType::RIFT;
-                                    // DRAMATIC deep rifts: -500m to -1700m depth (ocean trenches)
-                                    elevationMod = -localStress * 2000.0f - 500.0f; 
+                                    // Deep ocean trenches and rifts using negative elevation
+                                    elevationMod = -localStress * 1700.0f - 300.0f; // Deep rifts: -300m to -2000m+ depth
                                     break;
                                 case BoundaryType::TRANSFORM:
                                     terrainType = TerrainType::FAULT;
-                                    // Moderate fault ridges: 100m to 800m
-                                    elevationMod = localStress * 800.0f + 100.0f; 
+                                    // Moderate fault ridges
+                                    elevationMod = localStress * 600.0f + 50.0f; // Faults: 50m to 650m ridges
                                     break;
                                 default:
                                     terrainType = TerrainType::STABLE;
-                                    elevationMod = 0.0f;
+                                    elevationMod = 0.0f; // No tectonic modification for stable areas
                                     break;
                             }
                         }
                     }
                 }
+            }
+            
+            // Apply small random variation to prevent uniform terrain in non-tectonic areas
+            if (maxStress < 0.01f) {
+                // Add subtle elevation variation in tectonically stable areas
+                std::mt19937 rng(static_cast<uint32_t>(worldPos.x * 1000 + worldPos.y));
+                std::uniform_real_distribution<float> variationDist(-80.0f, 80.0f);
+                elevationMod = variationDist(rng);
             }
             
             stressMap_[y][x] = maxStress;

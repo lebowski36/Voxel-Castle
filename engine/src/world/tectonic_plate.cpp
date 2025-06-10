@@ -243,27 +243,44 @@ float CalculatePlateDensity(PlateType type, float age) {
 glm::vec2 GenerateTypicalMovement(PlateType type, uint32_t seed) {
     std::mt19937 rng(seed);
     std::uniform_real_distribution<float> angleDist(0.0f, 2.0f * 3.14159f);
-    std::uniform_real_distribution<float> speedDist;
     
-    // Use a different angle distribution that ensures more directional diversity
-    float angle = angleDist(rng);
+    // Create 8 preferred global movement directions to ensure diverse plate interactions
+    float globalDirections[8] = {
+        0.0f,           // East
+        3.14159f / 4,   // Northeast  
+        3.14159f / 2,   // North
+        3 * 3.14159f / 4, // Northwest
+        3.14159f,       // West
+        5 * 3.14159f / 4, // Southwest
+        3 * 3.14159f / 2, // South
+        7 * 3.14159f / 4  // Southeast
+    };
     
-    // Add some bias to create more varied movement patterns
-    // Different plates get different preferred directions to create diverse boundaries
-    float plateBias = (seed % 8) * (3.14159f / 4.0f); // 8 different preferred directions
-    angle += plateBias;
+    // Assign plate to one of 8 global directions based on seed
+    int directionIndex = seed % 8;
+    float baseAngle = globalDirections[directionIndex];
+    
+    // Add random variation around the base direction
+    std::uniform_real_distribution<float> variationDist(-0.6f, 0.6f); // ±35 degrees
+    float angle = baseAngle + variationDist(rng);
+    
+    // Ensure some plates move in opposite directions for divergent boundaries
+    if (seed % 3 == 0) {
+        angle += 3.14159f; // Reverse direction for 1/3 of plates
+    }
     
     float speed;
+    std::uniform_real_distribution<float> speedDist;
     
     switch (type) {
         case PlateType::OCEANIC:
-            speedDist = std::uniform_real_distribution<float>(3.0f, 12.0f); // Faster, more variable
+            speedDist = std::uniform_real_distribution<float>(4.0f, 15.0f); // Faster, more variable
             break;
         case PlateType::CONTINENTAL:
-            speedDist = std::uniform_real_distribution<float>(1.0f, 6.0f);  // Slower but with some variation
+            speedDist = std::uniform_real_distribution<float>(1.0f, 8.0f);  // Slower but with variation
             break;
         case PlateType::MICROPLATE:
-            speedDist = std::uniform_real_distribution<float>(0.5f, 20.0f); // Highly variable speed
+            speedDist = std::uniform_real_distribution<float>(0.5f, 25.0f); // Highly variable speed
             break;
         default:
             speedDist = std::uniform_real_distribution<float>(1.0f, 5.0f);
@@ -275,18 +292,15 @@ glm::vec2 GenerateTypicalMovement(PlateType type, uint32_t seed) {
     // Convert from cm/year to km/million years
     speed *= 10.0f; // 1 cm/year = 10 km/million years
     
-    // Add some random variation to ensure plates don't all move in similar patterns
-    std::uniform_real_distribution<float> variationDist(-0.3f, 0.3f);
-    float angleVariation = variationDist(rng);
-    angle += angleVariation;
-    
     glm::vec2 movement = glm::vec2(std::cos(angle) * speed, std::sin(angle) * speed);
     
     // Debug output for first few plates to verify movement diversity
-    if (seed % 100 < 5) {
+    if (seed % 100 < 8) {
         std::cout << "[GenerateTypicalMovement] Plate " << seed 
                   << " type=" << static_cast<int>(type) 
-                  << " angle=" << angle 
+                  << " direction=" << directionIndex
+                  << " baseAngle=" << baseAngle 
+                  << " finalAngle=" << angle 
                   << " speed=" << speed 
                   << " movement=(" << movement.x << "," << movement.y << ")" << std::endl;
     }
