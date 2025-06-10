@@ -169,6 +169,9 @@ public:
     bool isInTransition() const;
     bool canAcceptInput() const;
     
+    // Rendering state management
+    bool shouldRender3DWorld() const;
+    
     // Fullscreen toggle for menu system
     bool toggleFullscreen();
     bool isFullscreen() const;

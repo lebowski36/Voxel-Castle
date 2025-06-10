@@ -255,6 +255,37 @@ void UIRenderer::renderColoredQuad(float x, float y, float width, float height, 
 }
 
 void UIRenderer::renderQuad(float x, float y, float width, float height, const glm::vec4& color) {
+    // Add OpenGL state debugging for magenta quads
+    bool isMagenta = (color.r > 0.9f && color.g < 0.1f && color.b > 0.9f);
+    if (isMagenta) {
+        std::cout << "[UIRenderer] DEBUG MAGENTA: Starting renderQuad" << std::endl;
+        
+        // Enable blending for the magenta quad to ensure it shows over backgrounds
+        glEnable(GL_BLEND);
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+        std::cout << "[UIRenderer] DEBUG MAGENTA: Enabled blending for preview" << std::endl;
+        
+        // Check OpenGL state
+        GLint viewport[4];
+        glGetIntegerv(GL_VIEWPORT, viewport);
+        std::cout << "[UIRenderer] DEBUG MAGENTA: Viewport: " << viewport[0] << "," << viewport[1] << "," << viewport[2] << "," << viewport[3] << std::endl;
+        
+        GLboolean scissorEnabled = glIsEnabled(GL_SCISSOR_TEST);
+        std::cout << "[UIRenderer] DEBUG MAGENTA: Scissor test enabled: " << (scissorEnabled ? "YES" : "NO") << std::endl;
+        
+        if (scissorEnabled) {
+            GLint scissorBox[4];
+            glGetIntegerv(GL_SCISSOR_BOX, scissorBox);
+            std::cout << "[UIRenderer] DEBUG MAGENTA: Scissor box: " << scissorBox[0] << "," << scissorBox[1] << "," << scissorBox[2] << "," << scissorBox[3] << std::endl;
+        }
+        
+        GLboolean blendEnabled = glIsEnabled(GL_BLEND);
+        std::cout << "[UIRenderer] DEBUG MAGENTA: Blend enabled: " << (blendEnabled ? "YES" : "NO") << std::endl;
+        
+        GLboolean depthTestEnabled = glIsEnabled(GL_DEPTH_TEST);
+        std::cout << "[UIRenderer] DEBUG MAGENTA: Depth test enabled: " << (depthTestEnabled ? "YES" : "NO") << std::endl;
+    }
+    
     // Clear any previous OpenGL errors before we start
     while (glGetError() != GL_NO_ERROR) {}
     
@@ -330,10 +361,23 @@ void UIRenderer::renderQuad(float x, float y, float width, float height, const g
     // Draw
     glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
     
+    // Debug for magenta quads after drawing
+    if (isMagenta) {
+        std::cout << "[UIRenderer] DEBUG MAGENTA: Draw call completed" << std::endl;
+        
+        // Restore previous blend state (disable it since it wasn't enabled before)
+        glDisable(GL_BLEND);
+        std::cout << "[UIRenderer] DEBUG MAGENTA: Restored blending state" << std::endl;
+    }
+    
     // Check for OpenGL errors after drawing
     err = glGetError();
     if (err != GL_NO_ERROR) {
         std::cerr << "[UIRenderer] OpenGL error after drawing quad: 0x" << std::hex << err << std::dec << std::endl;
+    }
+    
+    if (isMagenta) {
+        std::cout << "[UIRenderer] DEBUG MAGENTA: Finished renderQuad, no OpenGL errors" << std::endl;
     }
 }
 

@@ -530,8 +530,10 @@ void WorldConfigurationUI::createPreviewSection() {
     addChild(previewPanel);
     
     // Store preview area coordinates for rendering
-    previewX_ = rightColumnX + getPosition().x; // Add menu position offset
-    previewY_ = TITLE_HEIGHT + PANEL_MARGIN + TEXT_HEIGHT + 5.0f + getPosition().y; // Add menu position offset
+    // IMPORTANT: These coordinates should be relative to the menu, not screen coordinates
+    // UIRenderer will handle the final positioning when renderColoredQuad is called
+    previewX_ = rightColumnX; // Relative to menu position 
+    previewY_ = TITLE_HEIGHT + PANEL_MARGIN + TEXT_HEIGHT + 5.0f; // Relative to menu position
     previewWidth_ = rightColumnWidth;
     previewHeight_ = 180.0f;
     
@@ -787,8 +789,15 @@ void WorldConfigurationUI::renderWorldPreview() {
         return;
     }
     
-    std::cout << "[WorldConfigurationUI] Calling preview render at (" << previewX_ << ", " << previewY_ << ") size " << previewWidth_ << "x" << previewHeight_ << std::endl;
+    // Calculate final screen coordinates by adding menu position
+    glm::vec2 menuPos = getPosition();
+    float finalX = previewX_ + menuPos.x;
+    float finalY = previewY_ + menuPos.y;
     
-    // Use the stored preview coordinates
-    previewRenderer_->render(renderer_, previewX_, previewY_, previewWidth_, previewHeight_);
+    std::cout << "[WorldConfigurationUI] Menu position: (" << menuPos.x << ", " << menuPos.y << ")" << std::endl;
+    std::cout << "[WorldConfigurationUI] Preview relative coords: (" << previewX_ << ", " << previewY_ << ")" << std::endl;
+    std::cout << "[WorldConfigurationUI] Final screen coords: (" << finalX << ", " << finalY << ") size " << previewWidth_ << "x" << previewHeight_ << std::endl;
+    
+    // Use the calculated final screen coordinates
+    previewRenderer_->render(renderer_, finalX, finalY, previewWidth_, previewHeight_);
 }

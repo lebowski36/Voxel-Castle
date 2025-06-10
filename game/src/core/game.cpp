@@ -916,6 +916,30 @@ bool Game::hasWindow() const {
     return gameWindow_ != nullptr;
 }
 
+bool Game::shouldRender3DWorld() const {
+    // Only render 3D world when we're actually playing the game, not in menus
+    GameState currentState = getGameState();
+    switch (currentState) {
+        case GameState::PLAYING:
+        case GameState::FIRST_PERSON_MODE:
+        case GameState::STRATEGIC_MODE:
+        case GameState::HYBRID_MODE:
+        case GameState::PAUSED:  // Still show world when paused
+            return true;
+            
+        case GameState::MAIN_MENU:
+        case GameState::WORLD_SELECT:
+        case GameState::CREATE_WORLD:
+        case GameState::MENU:
+        case GameState::LOADING:
+        case GameState::SAVING:
+        case GameState::AUTO_SAVING:
+        case GameState::TRANSITIONING:
+        default:
+            return false;
+    }
+}
+
 RaycastResult Game::getTargetedBlock() const {
     if (!camera_ || !worldManager_) {
         return RaycastResult(); // Return empty result

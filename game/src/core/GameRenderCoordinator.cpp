@@ -40,8 +40,19 @@ void VoxelCastle::Core::GameRenderCoordinator::render(
     // Always set viewport explicitly before rendering anything
     glViewport(0, 0, screenWidth, screenHeight);
     
-    // Render the 3D world scene
-    renderWorldScene(game, camera, meshRenderer, textureAtlas, gameWindow, worldManager, screenWidth, screenHeight);
+    // CRITICAL FIX: Only render 3D world scene when we're actually in the game, not in menus
+    // Check if we're in a menu state where 3D world rendering should be skipped
+    bool shouldRender3DWorld = game.shouldRender3DWorld();
+    
+    if (shouldRender3DWorld) {
+        // Render the 3D world scene
+        renderWorldScene(game, camera, meshRenderer, textureAtlas, gameWindow, worldManager, screenWidth, screenHeight);
+    } else {
+        // When in menu states, just clear the screen with a dark background
+        // This prevents the 3D renderer from clearing UI elements drawn in the same frame
+        glClearColor(0.1f, 0.1f, 0.15f, 1.0f); // Dark blue-gray background
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    }
     
     // If UI system exists, update its dimensions to match current window size before rendering
     if (uiSystem) {
