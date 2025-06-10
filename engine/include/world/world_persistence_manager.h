@@ -39,6 +39,8 @@ public:
                     const std::string& worldType = "normal",
                     bool generateStructures = true);
     
+    bool CreateWorld(const std::string& worldName, const WorldMetadata& metadata);
+    
     // World loading and listing
     std::vector<WorldInfo> GetWorldList();
     bool LoadWorld(const std::string& worldName);

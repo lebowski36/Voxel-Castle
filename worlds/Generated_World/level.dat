@@ -1,0 +1,14 @@
+{
+    "version": 1,
+    "worldName": "Generated World",
+    "seed": 5524717231359444434,
+    "gameMode": "creative",
+    "worldType": "normal",
+    "spawnX": 0,
+    "spawnY": 64,
+    "spawnZ": 0,
+    "generateStructures": true,
+    "createdDate": "2025-06-10T08:02:54Z",
+    "lastPlayed": "2025-06-10T08:02:54Z",
+    "playTime": 0
+}

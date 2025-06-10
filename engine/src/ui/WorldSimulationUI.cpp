@@ -3,6 +3,7 @@
 #include "world/seed_world_generator.h"
 #include "world/world_seed.h"
 #include "world/world_parameters.h"
+#include "world/world_persistence_manager.h"
 #include <iostream>
 #include <sstream>
 #include <iomanip>
@@ -90,7 +91,6 @@ void WorldSimulationUI::createUIElements() {
 }
 
 void WorldSimulationUI::createVisualizationControls() {
-    float panelWidth = getSize().x - (PANEL_MARGIN * 2);
     float maxButtonWidth = calculateMaxVisualizationButtonWidth();
     
     // Visualization mode label
@@ -241,7 +241,6 @@ void WorldSimulationUI::createWorldSummaryUI() {
 }
 
 void WorldSimulationUI::createActionButtons() {
-    float panelWidth = getSize().x - (PANEL_MARGIN * 2);
     float buttonY = getSize().y - 60.0f;
     float buttonWidth = 120.0f;
     
@@ -290,8 +289,9 @@ void WorldSimulationUI::createActionButtons() {
     }
 }
 
-void WorldSimulationUI::startSimulation(const WorldConfig& config) {
+void WorldSimulationUI::startSimulation(const WorldConfig& config, const std::string& worldName) {
     config_ = config;
+    worldName_ = worldName;  // Store the world name for saving
     currentPhase_ = GenerationPhase::TECTONICS;
     currentProgress_ = 0.0f;
     phaseProgress_ = 0.0f;
@@ -321,6 +321,9 @@ void WorldSimulationUI::startSimulation(const WorldConfig& config) {
         
         // Create SeedWorldGenerator
         worldGenerator_ = std::make_shared<VoxelCastle::World::SeedWorldGenerator>(worldSeed_, worldParameters_);
+        
+        // Create WorldPersistenceManager
+        worldPersistence_ = std::make_shared<VoxelCastle::World::WorldPersistenceManager>();
         
         addLogEntry("Initializing tectonic simulation", 2);
         addLogEntry("World size: " + std::to_string(config.worldSize) + "x" + std::to_string(config.worldSize), 3);
@@ -548,7 +551,6 @@ void WorldSimulationUI::completeSimulation() {
     isPaused_ = false;
     
     // Finalize statistics with realistic values based on world size
-    float worldScale = config_.worldSize / 1024.0f; // Normalize to default size
     stats_.highestPeakName = "Mount Skyreach";
     stats_.deepestValleyName = "Shadowrift Canyon";
     stats_.largestLakeName = "Lake Serenity";
@@ -574,6 +576,54 @@ void WorldSimulationUI::completeSimulation() {
         } catch (const std::exception& e) {
             addLogEntry("Warning: Sample chunk generation failed - " + std::string(e.what()), stats_.simulationYears);
         }
+    }
+    
+    // Save the generated world to disk
+    if (worldPersistence_ && worldGenerator_) {
+        addLogEntry("Saving world to disk...", stats_.simulationYears);
+        
+        try {
+            // Create world metadata with all generation statistics
+            VoxelCastle::World::WorldMetadata metadata;
+            metadata.worldName = worldName_;
+            metadata.seed = worldSeed_ ? worldSeed_->getMasterSeed() : 0;
+            metadata.gameMode = "creative";
+            metadata.worldType = "infinite";
+            metadata.generateStructures = true;
+            metadata.worldSize = config_.worldSize;
+            metadata.mountainRanges = stats_.mountainRanges;
+            metadata.majorRivers = stats_.majorRivers;
+            metadata.biomesIdentified = stats_.biomesIdentified;
+            metadata.simulationYears = stats_.simulationYears;
+            metadata.highestPeak = stats_.highestPeak;
+            metadata.generatorName = "SeedWorldGenerator";
+            metadata.generatorVersion = "1.0";
+            
+            // Create the world using the new metadata-based method
+            if (worldPersistence_->CreateWorld(worldName_, metadata)) {
+                addLogEntry("World '" + worldName_ + "' saved successfully!", stats_.simulationYears);
+                
+                // Log generation statistics
+                addLogEntry("World statistics:", stats_.simulationYears);
+                addLogEntry("- Mountain ranges: " + std::to_string(stats_.mountainRanges), stats_.simulationYears);
+                addLogEntry("- Major rivers: " + std::to_string(stats_.majorRivers), stats_.simulationYears);
+                addLogEntry("- Biomes identified: " + std::to_string(stats_.biomesIdentified), stats_.simulationYears);
+                addLogEntry("- Highest peak: " + stats_.highestPeakName, stats_.simulationYears);
+                addLogEntry("- Largest lake: " + stats_.largestLakeName, stats_.simulationYears);
+                
+                // TODO: Save chunk data when chunk persistence is implemented
+                // For now, the world generator parameters and seed are saved in metadata
+                // This allows the world to be regenerated on-demand during gameplay
+                
+            } else {
+                addLogEntry("ERROR: Failed to save world to disk", stats_.simulationYears);
+            }
+            
+        } catch (const std::exception& e) {
+            addLogEntry("ERROR: World save failed - " + std::string(e.what()), stats_.simulationYears);
+        }
+    } else {
+        addLogEntry("Warning: World persistence not available - world not saved", stats_.simulationYears);
     }
     
     addLogEntry("World generation complete! Ready for exploration.", stats_.simulationYears);

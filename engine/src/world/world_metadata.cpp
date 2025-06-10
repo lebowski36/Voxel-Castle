@@ -49,6 +49,14 @@ bool WorldMetadata::SaveToFile(const std::string& worldPath) const {
         file << "    \"spawnY\": " << spawnY << ",\n";
         file << "    \"spawnZ\": " << spawnZ << ",\n";
         file << "    \"generateStructures\": " << (generateStructures ? "true" : "false") << ",\n";
+        file << "    \"worldSize\": " << worldSize << ",\n";
+        file << "    \"mountainRanges\": " << mountainRanges << ",\n";
+        file << "    \"majorRivers\": " << majorRivers << ",\n";
+        file << "    \"biomesIdentified\": " << biomesIdentified << ",\n";
+        file << "    \"simulationYears\": " << simulationYears << ",\n";
+        file << "    \"highestPeak\": " << highestPeak << ",\n";
+        file << "    \"generatorName\": \"" << generatorName << "\",\n";
+        file << "    \"generatorVersion\": \"" << generatorVersion << "\",\n";
         file << "    \"createdDate\": \"" << createdSS.str() << "\",\n";
         file << "    \"lastPlayed\": \"" << lastPlayedSS.str() << "\",\n";
         file << "    \"playTime\": " << playTime << "\n";
@@ -118,6 +126,22 @@ bool WorldMetadata::LoadFromFile(const std::string& worldPath) {
                     spawnZ = std::stof(value);
                 } else if (key == "generateStructures") {
                     generateStructures = (value == "true");
+                } else if (key == "worldSize") {
+                    worldSize = std::stoi(value);
+                } else if (key == "mountainRanges") {
+                    mountainRanges = std::stoi(value);
+                } else if (key == "majorRivers") {
+                    majorRivers = std::stoi(value);
+                } else if (key == "biomesIdentified") {
+                    biomesIdentified = std::stoi(value);
+                } else if (key == "simulationYears") {
+                    simulationYears = std::stoi(value);
+                } else if (key == "highestPeak") {
+                    highestPeak = std::stof(value);
+                } else if (key == "generatorName") {
+                    generatorName = value;
+                } else if (key == "generatorVersion") {
+                    generatorVersion = value;
                 } else if (key == "playTime") {
                     playTime = std::stoull(value);
                 }

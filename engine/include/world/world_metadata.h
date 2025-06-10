@@ -29,6 +29,16 @@ struct WorldMetadata {
     // Generation settings
     bool generateStructures = true;
     
+    // World generation statistics (optional, for UI display)
+    int32_t worldSize = 1024;           // World size used during generation
+    int32_t mountainRanges = 0;         // Number of mountain ranges generated
+    int32_t majorRivers = 0;            // Number of major rivers
+    int32_t biomesIdentified = 0;       // Number of biomes identified
+    int32_t simulationYears = 0;        // Years simulated during generation
+    float highestPeak = 0.0f;           // Highest peak elevation in meters
+    std::string generatorName = "SeedWorldGenerator";  // Generator used
+    std::string generatorVersion = "1.0";              // Generator version
+    
     // Timestamps
     std::chrono::system_clock::time_point createdDate;
     std::chrono::system_clock::time_point lastPlayed;

@@ -17,6 +17,7 @@ namespace VoxelCastle::World {
     class SeedWorldGenerator;
     class WorldSeed;
     class WorldParameters;
+    class WorldPersistenceManager;
 }
 
 class WorldSimulationUI : public VoxelEngine::UI::BaseMenu {
@@ -98,12 +99,16 @@ public:
     void update(float deltaTime) override;
 
     // Simulation control
-    void startSimulation(const WorldConfig& config);
+    void startSimulation(const WorldConfig& config, const std::string& worldName = "Generated World");
     void pauseSimulation();
     void resumeSimulation();
     void stopSimulation();
     bool isSimulationRunning() const { return isRunning_; }
     bool isSimulationComplete() const { return currentPhase_ == GenerationPhase::COMPLETE; }
+
+    // World persistence
+    void setWorldName(const std::string& worldName) { worldName_ = worldName; }
+    const std::string& getWorldName() const { return worldName_; }
 
     // Callbacks
     void setOnSimulationCompleteCallback(OnSimulationCompleteCallback callback) { onSimulationComplete_ = callback; }
@@ -155,6 +160,7 @@ private:
     WorldConfig config_;
     WorldStats stats_;
     std::deque<LogEntry> generationLog_;
+    std::string worldName_ = "Generated World"; // Default world name
     
     // Current simulation state
     GenerationPhase currentPhase_;
@@ -173,6 +179,7 @@ private:
     std::shared_ptr<VoxelCastle::World::SeedWorldGenerator> worldGenerator_;
     std::shared_ptr<VoxelCastle::World::WorldSeed> worldSeed_;
     std::shared_ptr<VoxelCastle::World::WorldParameters> worldParameters_;
+    std::shared_ptr<VoxelCastle::World::WorldPersistenceManager> worldPersistence_;
     std::thread generationThread_;
     
     // Callbacks

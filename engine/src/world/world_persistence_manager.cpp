@@ -70,6 +70,59 @@ bool WorldPersistenceManager::CreateWorld(const std::string& worldName, uint64_t
     }
 }
 
+bool WorldPersistenceManager::CreateWorld(const std::string& worldName, const WorldMetadata& metadata) {
+    try {
+        // Sanitize world name for filesystem
+        std::string sanitizedName = SanitizeWorldName(worldName);
+        if (sanitizedName.empty()) {
+            std::cerr << "[ERROR] Invalid world name: " << worldName << std::endl;
+            return false;
+        }
+        
+        // Check if world already exists
+        if (WorldExists(sanitizedName)) {
+            std::cerr << "[ERROR] World already exists: " << sanitizedName << std::endl;
+            return false;
+        }
+        
+        // Create world path
+        std::string worldPath = GetWorldPath(sanitizedName);
+        
+        // Create world directories
+        if (!CreateWorldDirectories(worldPath)) {
+            std::cerr << "[ERROR] Failed to create world directories: " << worldPath << std::endl;
+            return false;
+        }
+        
+        // Copy metadata and set timestamps
+        WorldMetadata metadataCopy = metadata;
+        metadataCopy.createdDate = std::chrono::system_clock::now();
+        metadataCopy.lastPlayed = metadataCopy.createdDate;
+        
+        // Save metadata to level.dat
+        if (!metadataCopy.SaveToFile(worldPath)) {
+            std::cerr << "[ERROR] Failed to save world metadata for: " << worldName << std::endl;
+            return false;
+        }
+        
+        // Store as current world
+        currentWorldMetadata_ = std::make_unique<WorldMetadata>(metadataCopy);
+        currentWorldPath_ = worldPath;
+        
+        // Trigger callback if set
+        if (onWorldCreated_) {
+            onWorldCreated_(worldPath, metadataCopy);
+        }
+        
+        std::cout << "[INFO] Successfully created world: " << worldName << " at " << worldPath << std::endl;
+        return true;
+        
+    } catch (const std::exception& e) {
+        std::cerr << "[ERROR] Exception while creating world '" << worldName << "': " << e.what() << std::endl;
+        return false;
+    }
+}
+
 std::vector<WorldPersistenceManager::WorldInfo> WorldPersistenceManager::GetWorldList() {
     std::vector<WorldInfo> worlds;
     
