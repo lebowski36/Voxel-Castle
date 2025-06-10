@@ -71,11 +71,44 @@ void WorldPreviewRenderer::generatePreview(std::shared_ptr<VoxelCastle::World::W
 
 void WorldPreviewRenderer::render(VoxelEngine::UI::UIRenderer* renderer, float x, float y, float width, float height) {
     if (!textureValid_ || previewTexture_ == 0 || !renderer) {
+        // Render a placeholder colored rectangle instead of trying to render texture
+        glm::vec4 placeholderColor(0.3f, 0.5f, 0.7f, 1.0f); // Blue-ish placeholder
+        renderer->renderColoredQuad(x, y, width, height, placeholderColor);
         return;
     }
     
-    // Use the UIRenderer's existing texture rendering capabilities
-    renderer->renderTexturedQuad(x, y, width, height, previewTexture_);
+    // For now, render a gradient placeholder that represents the heightmap
+    // This avoids the OpenGL texture rendering issues while we debug
+    
+    // Sample some height data to create a simple visual representation
+    if (heightData_) {
+        // Calculate average height to determine a representative color
+        float totalHeight = 0.0f;
+        int sampleCount = std::min(100, resolution_ * resolution_); // Sample first 100 pixels
+        
+        for (int i = 0; i < sampleCount; i++) {
+            totalHeight += heightData_[i];
+        }
+        
+        float avgHeight = totalHeight / sampleCount;
+        
+        // Convert average height to color (similar to heightToColor logic)
+        unsigned char r, g, b;
+        heightToColor(avgHeight, r, g, b);
+        
+        glm::vec4 avgColor(r / 255.0f, g / 255.0f, b / 255.0f, 1.0f);
+        renderer->renderColoredQuad(x, y, width, height, avgColor);
+        
+        // Add a simple text overlay to show it's working
+        if (renderer->isTextRendererAvailable()) {
+            std::string heightText = "Height: " + std::to_string((int)avgHeight) + "m";
+            renderer->drawText(heightText, x + 10, y + height - 20, 0.8f, glm::vec3(1.0f, 1.0f, 1.0f));
+        }
+    } else {
+        // Fallback: render a placeholder
+        glm::vec4 placeholderColor(0.3f, 0.3f, 0.3f, 1.0f); // Gray placeholder
+        renderer->renderColoredQuad(x, y, width, height, placeholderColor);
+    }
 }
 
 void WorldPreviewRenderer::heightmapToColorTexture(const float* heightData, int resolution, unsigned char* colorData) {
