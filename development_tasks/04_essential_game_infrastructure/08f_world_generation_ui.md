@@ -305,3 +305,22 @@ This split architecture provides better separation of concerns and improved main
 - Export/Import world templates for sharing
 
 This represents the complete roadmap for finishing the World Generation UI system and integrating it with the advanced biome implementation plan.
+
+## Recent Updates
+
+### 2025-06-10: Legacy Cleanup Completed ✅
+- **WorldCreationDialog Removal**: Completely removed legacy WorldCreationDialog files and all references
+  - Deleted: `engine/include/ui/elements/WorldCreationDialog.h`
+  - Deleted: `engine/src/ui/elements/WorldCreationDialog.cpp`
+  - Cleaned: All references removed from MenuSystem.cpp and game.cpp
+  - Result: Clean codebase with only the new split UI architecture (WorldConfigurationUI + WorldSimulationUI)
+
+- **Spammy Logging Resolution**: Fixed excessive console output at startup
+  - Issue: Multiple WorldSeed instances created at startup, spammy MenuSystem logging
+  - Solution: Lazy WorldSeed initialization, reduced logging frequency
+  - Result: Clean startup with minimal console output
+
+- **Architecture Transition Complete**: Full transition to split UI system
+  - Legacy: Single WorldCreationDialog (removed)
+  - Current: WorldConfigurationUI (setup) + WorldSimulationUI (progress/simulation)
+  - Status: All legacy references eliminated, new system fully integrated
