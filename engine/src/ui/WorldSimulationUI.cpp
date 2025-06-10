@@ -953,9 +953,8 @@ void WorldSimulationUI::completeSimulation() {
     addLogEntry("World generation complete! Ready for exploration.", stats_.simulationYears);
     createUIElements();
     
-    if (onSimulationComplete_) {
-        onSimulationComplete_(stats_);
-    }
+    // DO NOT automatically call onSimulationComplete_ - let user manually proceed with "Begin Game" button
+    // User can now examine the completed world map, zoom around, and choose when to proceed
 }
 
 void WorldSimulationUI::addLogEntry(const std::string& message, int year) {
