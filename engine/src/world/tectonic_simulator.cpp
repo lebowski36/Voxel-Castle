@@ -14,7 +14,7 @@ TectonicSimulator::TectonicSimulator()
     , simulationComplete_(false)
     , timeStep_(0.0f)
     , totalSimulationTime_(0.0f)
-    , mapResolution_(64)
+    , mapResolution_(512)  // Increased from 64 to 512 for 2km cells instead of 16km cells
 {
 }
 
@@ -507,10 +507,8 @@ void TectonicSimulator::HandleConvergentBoundary(PlateBoundary& boundary) {
     
     if (!plate1 || !plate2) return;
     
-    // Mountain formation at convergent boundaries - dramatically increased accumulation
-    boundary.stress += boundary.interactionStrength * timeStep_ * 0.35f; // Increased from 0.15f
-    
     // Generate multiple contact points along the boundary line for mountain ranges
+    // Note: Stress accumulation handled by centralized CalculateStressAccumulation()
     glm::vec2 midpoint = (plate1->centerPosition + plate2->centerPosition) * 0.5f;
     glm::vec2 direction = glm::normalize(plate2->centerPosition - plate1->centerPosition);
     glm::vec2 perpendicular = glm::vec2(-direction.y, direction.x);
@@ -549,10 +547,8 @@ void TectonicSimulator::HandleDivergentBoundary(PlateBoundary& boundary) {
     
     if (!plate1 || !plate2) return;
     
-    // Rift formation at divergent boundaries - dramatically increased accumulation
-    boundary.stress += boundary.interactionStrength * timeStep_ * 0.25f; // Increased from 0.08f
-    
     // Generate multiple contact points along the rift valley
+    // Note: Stress accumulation handled by centralized CalculateStressAccumulation()
     glm::vec2 midpoint = (plate1->centerPosition + plate2->centerPosition) * 0.5f;
     glm::vec2 direction = glm::normalize(plate2->centerPosition - plate1->centerPosition);
     glm::vec2 perpendicular = glm::vec2(-direction.y, direction.x);
@@ -581,10 +577,8 @@ void TectonicSimulator::HandleTransformBoundary(PlateBoundary& boundary) {
     
     if (!plate1 || !plate2) return;
     
-    // Fault line formation at transform boundaries
-    boundary.stress += boundary.interactionStrength * timeStep_ * 0.20f; // Higher stress for transform boundaries
-    
     // Generate multiple contact points along the fault line
+    // Note: Stress accumulation handled by centralized CalculateStressAccumulation()
     glm::vec2 midpoint = (plate1->centerPosition + plate2->centerPosition) * 0.5f;
     glm::vec2 direction = glm::normalize(plate2->centerPosition - plate1->centerPosition);
     glm::vec2 perpendicular = glm::vec2(-direction.y, direction.x);
@@ -696,18 +690,18 @@ void TectonicSimulator::GenerateTerrainMaps() {
                             switch (boundary.type) {
                                 case BoundaryType::CONVERGENT:
                                     terrainType = TerrainType::MOUNTAIN;
-                                    // Mountain ranges: use 0m to +1800m range (87.5% of max height)
-                                    elevationMod = localStress * 1800.0f;
+                                    // Mountain ranges - scientifically calculated for ±2048m world bounds
+                                    elevationMod = localStress * 1638.4f;
                                     break;
                                 case BoundaryType::DIVERGENT:
                                     terrainType = TerrainType::RIFT;
-                                    // Ocean trenches and rifts: use -1800m to 0m range (87.5% of max depth)
-                                    elevationMod = -localStress * 1800.0f;
+                                    // Ocean trenches/rifts - scientifically calculated for ±2048m world bounds  
+                                    elevationMod = -localStress * 1638.4f;
                                     break;
                                 case BoundaryType::TRANSFORM:
                                     terrainType = TerrainType::FAULT;
-                                    // Transform faults: moderate elevation changes ±600m
-                                    elevationMod = (localStress * 600.0f) * (boundary.stress > 0.5f ? 1.0f : -1.0f);
+                                    // Transform faults - lateral shear, scientifically calculated
+                                    elevationMod = localStress * 409.6f * (boundary.stress > 0.5f ? 1.0f : -1.0f);
                                     break;
                                 default:
                                     terrainType = TerrainType::STABLE;
@@ -721,9 +715,9 @@ void TectonicSimulator::GenerateTerrainMaps() {
             
             // Apply small random variation to prevent uniform terrain in non-tectonic areas
             if (maxStress < 0.05f) {
-                // Add subtle elevation variation in tectonically stable areas
+                // Add subtle elevation variation in tectonically stable areas - scientifically calculated
                 std::mt19937 rng(static_cast<uint32_t>(worldPos.x * 1000 + worldPos.y));
-                std::uniform_real_distribution<float> variationDist(-200.0f, 200.0f);
+                std::uniform_real_distribution<float> variationDist(-50.0f, 50.0f);
                 elevationMod = variationDist(rng);
             }
             
