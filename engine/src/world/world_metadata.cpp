@@ -4,9 +4,7 @@
 #include <iomanip>
 #include <sstream>
 #include <iostream>
-#include <nlohmann/json.hpp>
 
-using json = nlohmann::json;
 namespace fs = std::filesystem;
 
 namespace VoxelCastle {
@@ -25,34 +23,15 @@ bool WorldMetadata::SaveToFile(const std::string& worldPath) const {
         // Ensure the world directory exists
         fs::create_directories(worldPath);
         
-        // Create JSON object
-        json j;
-        j["version"] = version;
-        j["worldName"] = worldName;
-        j["seed"] = seed;
-        j["gameMode"] = gameMode;
-        j["worldType"] = worldType;
-        j["spawnX"] = spawnX;
-        j["spawnY"] = spawnY;
-        j["spawnZ"] = spawnZ;
-        j["generateStructures"] = generateStructures;
-        
         // Convert timestamps to ISO 8601 strings
         auto created_time_t = std::chrono::system_clock::to_time_t(createdDate);
         auto lastplayed_time_t = std::chrono::system_clock::to_time_t(lastPlayed);
         
-        std::stringstream ss;
-        ss << std::put_time(std::gmtime(&created_time_t), "%Y-%m-%dT%H:%M:%SZ");
-        j["createdDate"] = ss.str();
+        std::stringstream createdSS, lastPlayedSS;
+        createdSS << std::put_time(std::gmtime(&created_time_t), "%Y-%m-%dT%H:%M:%SZ");
+        lastPlayedSS << std::put_time(std::gmtime(&lastplayed_time_t), "%Y-%m-%dT%H:%M:%SZ");
         
-        ss.str("");
-        ss.clear();
-        ss << std::put_time(std::gmtime(&lastplayed_time_t), "%Y-%m-%dT%H:%M:%SZ");
-        j["lastPlayed"] = ss.str();
-        
-        j["playTime"] = playTime;
-        
-        // Write to file
+        // Write simple JSON format manually
         std::string levelDatPath = worldPath + "/level.dat";
         std::ofstream file(levelDatPath);
         if (!file.is_open()) {
@@ -60,7 +39,21 @@ bool WorldMetadata::SaveToFile(const std::string& worldPath) const {
             return false;
         }
         
-        file << j.dump(4); // Pretty print with 4-space indentation
+        file << "{\n";
+        file << "    \"version\": " << version << ",\n";
+        file << "    \"worldName\": \"" << worldName << "\",\n";
+        file << "    \"seed\": " << seed << ",\n";
+        file << "    \"gameMode\": \"" << gameMode << "\",\n";
+        file << "    \"worldType\": \"" << worldType << "\",\n";
+        file << "    \"spawnX\": " << spawnX << ",\n";
+        file << "    \"spawnY\": " << spawnY << ",\n";
+        file << "    \"spawnZ\": " << spawnZ << ",\n";
+        file << "    \"generateStructures\": " << (generateStructures ? "true" : "false") << ",\n";
+        file << "    \"createdDate\": \"" << createdSS.str() << "\",\n";
+        file << "    \"lastPlayed\": \"" << lastPlayedSS.str() << "\",\n";
+        file << "    \"playTime\": " << playTime << "\n";
+        file << "}\n";
+        
         file.close();
         
         std::cout << "[INFO] Saved world metadata to: " << levelDatPath << std::endl;
@@ -89,32 +82,54 @@ bool WorldMetadata::LoadFromFile(const std::string& worldPath) {
             return false;
         }
         
-        json j;
-        file >> j;
+        // Simple JSON parser - read line by line and extract values
+        std::string line;
+        while (std::getline(file, line)) {
+            // Remove whitespace and find key-value pairs
+            size_t colonPos = line.find(':');
+            if (colonPos != std::string::npos) {
+                std::string key = line.substr(0, colonPos);
+                std::string value = line.substr(colonPos + 1);
+                
+                // Clean up key (remove quotes and whitespace)
+                key.erase(0, key.find_first_not_of(" \t\""));
+                key.erase(key.find_last_not_of(" \t\"") + 1);
+                
+                // Clean up value (remove quotes, whitespace, commas)
+                value.erase(0, value.find_first_not_of(" \t\""));
+                value.erase(value.find_last_not_of(" \t\",") + 1);
+                
+                // Parse based on key
+                if (key == "version") {
+                    version = std::stoi(value);
+                } else if (key == "worldName") {
+                    worldName = value;
+                } else if (key == "seed") {
+                    seed = std::stoull(value);
+                } else if (key == "gameMode") {
+                    gameMode = value;
+                } else if (key == "worldType") {
+                    worldType = value;
+                } else if (key == "spawnX") {
+                    spawnX = std::stof(value);
+                } else if (key == "spawnY") {
+                    spawnY = std::stof(value);
+                } else if (key == "spawnZ") {
+                    spawnZ = std::stof(value);
+                } else if (key == "generateStructures") {
+                    generateStructures = (value == "true");
+                } else if (key == "playTime") {
+                    playTime = std::stoull(value);
+                }
+                // Note: Timestamp parsing is complex, skip for now and use current time
+            }
+        }
+        
         file.close();
         
-        // Parse JSON
-        version = j.value("version", 1);
-        worldName = j.value("worldName", "Unknown World");
-        seed = j.value("seed", static_cast<uint64_t>(0));
-        gameMode = j.value("gameMode", "creative");
-        worldType = j.value("worldType", "normal");
-        spawnX = j.value("spawnX", 0.0f);
-        spawnY = j.value("spawnY", 64.0f);
-        spawnZ = j.value("spawnZ", 0.0f);
-        generateStructures = j.value("generateStructures", true);
-        playTime = j.value("playTime", static_cast<uint64_t>(0));
-        
-        // Parse timestamps - simplified parsing for now
-        if (j.contains("createdDate")) {
-            // For now, just set to current time if parsing fails
-            // TODO: Implement proper ISO 8601 parsing
-            createdDate = std::chrono::system_clock::now();
-        }
-        
-        if (j.contains("lastPlayed")) {
-            lastPlayed = std::chrono::system_clock::now();
-        }
+        // Set timestamps to current time for now
+        createdDate = std::chrono::system_clock::now();
+        lastPlayed = std::chrono::system_clock::now();
         
         std::cout << "[INFO] Loaded world metadata from: " << levelDatPath << std::endl;
         return true;
