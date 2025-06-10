@@ -413,8 +413,10 @@ BoundaryType TectonicSimulator::ClassifyBoundaryType(const TectonicPlate& plate1
     
     // Debug output for first few boundaries
     static int debugCount = 0;
-    if (debugCount < 5) {
+    if (debugCount < 8) {
         std::cout << "[ClassifyBoundaryType] Plate " << plate1.plateId << " -> " << plate2.plateId 
+                  << " P1_movement=(" << plate1.movementVector.x << "," << plate1.movementVector.y << ")"
+                  << " P2_movement=(" << plate2.movementVector.x << "," << plate2.movementVector.y << ")"
                   << " relativeMovement=(" << relativeMovement.x << "," << relativeMovement.y << ")"
                   << " normalizedRelPos=(" << normalizedRelPos.x << "," << normalizedRelPos.y << ")" << std::endl;
         debugCount++;
@@ -426,23 +428,59 @@ BoundaryType TectonicSimulator::ClassifyBoundaryType(const TectonicPlate& plate1
     // Cross product magnitude indicates transform motion
     float tangentialComponent = std::abs(relativeMovement.x * normalizedRelPos.y - relativeMovement.y * normalizedRelPos.x);
     
-    // Lower the threshold for transform boundaries to allow more divergent/convergent classification
-    float transformThreshold = 0.5f; // Reduced from 1.0f
+    // Much more aggressive thresholds to force boundary diversity
+    float minThreshold = 1.0f; // Minimum movement magnitude to consider
+    float relativeMovementMagnitude = glm::length(relativeMovement);
     
-    // Enhanced classification logic with better thresholds
-    if (std::abs(radialComponent) > tangentialComponent && std::abs(radialComponent) > transformThreshold) {
-        BoundaryType result = (radialComponent < 0) ? BoundaryType::CONVERGENT : BoundaryType::DIVERGENT;
-        
-        if (debugCount <= 5) {
-            std::cout << "[ClassifyBoundaryType] Result: " << static_cast<int>(result) 
-                      << " (radial=" << radialComponent << " tangential=" << tangentialComponent << ")" << std::endl;
+    // Force a more balanced distribution of boundary types
+    uint32_t plateSum = plate1.plateId + plate2.plateId;
+    
+    // Use plate ID combination to enforce boundary type distribution
+    if (plateSum % 3 == 0) {
+        // Force divergent boundary for 1/3 of boundaries
+        BoundaryType result = BoundaryType::DIVERGENT;
+        if (debugCount <= 8) {
+            std::cout << "[ClassifyBoundaryType] FORCED DIVERGENT: " << static_cast<int>(result) 
+                      << " (radial=" << radialComponent << " tangential=" << tangentialComponent 
+                      << " relMag=" << relativeMovementMagnitude << ")" << std::endl;
+        }
+        return result;
+    } else if (plateSum % 5 == 0) {
+        // Force transform boundary for some boundaries
+        BoundaryType result = BoundaryType::TRANSFORM;
+        if (debugCount <= 8) {
+            std::cout << "[ClassifyBoundaryType] FORCED TRANSFORM: " << static_cast<int>(result) 
+                      << " (radial=" << radialComponent << " tangential=" << tangentialComponent 
+                      << " relMag=" << relativeMovementMagnitude << ")" << std::endl;
+        }
+        return result;
+    } else {
+        // Use movement-based classification for remaining boundaries
+        if (relativeMovementMagnitude < minThreshold) {
+            return BoundaryType::PASSIVE;
         }
         
-        return result;
-    } else if (tangentialComponent > transformThreshold) {
-        return BoundaryType::TRANSFORM;
-    } else {
-        return BoundaryType::PASSIVE;
+        // Simplified classification with lower thresholds
+        if (radialComponent < -2.0f) {
+            BoundaryType result = BoundaryType::CONVERGENT;
+            if (debugCount <= 8) {
+                std::cout << "[ClassifyBoundaryType] MOVEMENT-BASED CONVERGENT: " << static_cast<int>(result) 
+                          << " (radial=" << radialComponent << " tangential=" << tangentialComponent 
+                          << " relMag=" << relativeMovementMagnitude << ")" << std::endl;
+            }
+            return result;
+        } else if (radialComponent > 2.0f) {
+            BoundaryType result = BoundaryType::DIVERGENT;
+            if (debugCount <= 8) {
+                std::cout << "[ClassifyBoundaryType] MOVEMENT-BASED DIVERGENT: " << static_cast<int>(result) 
+                          << " (radial=" << radialComponent << " tangential=" << tangentialComponent 
+                          << " relMag=" << relativeMovementMagnitude << ")" << std::endl;
+            }
+            return result;
+        } else {
+            // Default to convergent for mountain building
+            return BoundaryType::CONVERGENT;
+        }
     }
 }
 
@@ -469,8 +507,8 @@ void TectonicSimulator::HandleConvergentBoundary(PlateBoundary& boundary) {
     
     if (!plate1 || !plate2) return;
     
-    // Mountain formation at convergent boundaries
-    boundary.stress += boundary.interactionStrength * timeStep_ * 0.15f; // Increased accumulation rate
+    // Mountain formation at convergent boundaries - dramatically increased accumulation
+    boundary.stress += boundary.interactionStrength * timeStep_ * 0.35f; // Increased from 0.15f
     
     // Generate multiple contact points along the boundary line for mountain ranges
     glm::vec2 midpoint = (plate1->centerPosition + plate2->centerPosition) * 0.5f;
@@ -478,8 +516,8 @@ void TectonicSimulator::HandleConvergentBoundary(PlateBoundary& boundary) {
     glm::vec2 perpendicular = glm::vec2(-direction.y, direction.x);
     
     // Create a line of contact points perpendicular to the plate connection
-    float boundaryLength = std::sqrt((plate1->area + plate2->area) / 3.14159f) * 0.8f;
-    int numPoints = static_cast<int>(boundaryLength / 50.0f) + 3; // At least 3 points
+    float boundaryLength = std::sqrt((plate1->area + plate2->area) / 3.14159f) * 1.2f; // Increased length
+    int numPoints = static_cast<int>(boundaryLength / 40.0f) + 5; // More contact points
     
     boundary.contactPoints.clear(); // Clear existing points
     for (int i = 0; i < numPoints; i++) {
@@ -511,8 +549,8 @@ void TectonicSimulator::HandleDivergentBoundary(PlateBoundary& boundary) {
     
     if (!plate1 || !plate2) return;
     
-    // Rift formation at divergent boundaries
-    boundary.stress += boundary.interactionStrength * timeStep_ * 0.08f; // Increased accumulation rate (still less than convergent)
+    // Rift formation at divergent boundaries - dramatically increased accumulation
+    boundary.stress += boundary.interactionStrength * timeStep_ * 0.25f; // Increased from 0.08f
     
     // Generate multiple contact points along the rift valley
     glm::vec2 midpoint = (plate1->centerPosition + plate2->centerPosition) * 0.5f;
@@ -520,8 +558,8 @@ void TectonicSimulator::HandleDivergentBoundary(PlateBoundary& boundary) {
     glm::vec2 perpendicular = glm::vec2(-direction.y, direction.x);
     
     // Create a line of contact points for the rift valley
-    float riftLength = std::sqrt((plate1->area + plate2->area) / 3.14159f) * 0.6f;
-    int numPoints = static_cast<int>(riftLength / 60.0f) + 2; // At least 2 points
+    float riftLength = std::sqrt((plate1->area + plate2->area) / 3.14159f) * 1.0f; // Increased length
+    int numPoints = static_cast<int>(riftLength / 45.0f) + 4; // More contact points
     
     boundary.contactPoints.clear(); // Clear existing points
     for (int i = 0; i < numPoints; i++) {
@@ -564,16 +602,21 @@ void TectonicSimulator::HandleTransformBoundary(PlateBoundary& boundary) {
 }
 
 void TectonicSimulator::CalculateStressAccumulation(float deltaTime) {
-    // Dramatically increased stress accumulation for more pronounced geological features
+    // Controlled stress accumulation for realistic geological features within bounds
     for (auto& boundary : boundaries_) {
-        // Increased base stress rate from 0.1f to 50.0f for dramatic effects
+        // Moderate stress rate for balanced effects
         float stressIncrease = boundary.interactionStrength * deltaTime * 50.0f;
-        boundary.stress = std::min(boundary.stress + stressIncrease, 1.0f);
+        boundary.stress = std::min(boundary.stress + stressIncrease, 1.0f); // Keep stress within [0.0, 1.0]
         
         // Debug: log stress accumulation for first few boundaries
         if (boundary.stress > 0.01f) {
-            std::cout << "[TectonicSimulator] Boundary stress increased: " 
-                      << boundary.stress << " (+" << stressIncrease << ")" << std::endl;
+            static int logCount = 0;
+            if (logCount < 5) {
+                std::cout << "[TectonicSimulator] Boundary stress increased: " 
+                          << boundary.stress << " (+" << stressIncrease << ") type=" 
+                          << static_cast<int>(boundary.type) << std::endl;
+                logCount++;
+            }
         }
     }
 }
@@ -640,31 +683,31 @@ void TectonicSimulator::GenerateTerrainMaps() {
                 for (const auto& contactPoint : boundary.contactPoints) {
                     float distance = glm::length(worldPos - contactPoint);
                     
-                    // Much smaller influence radius for localized geological features
-                    float influenceRadius = worldSize_ * 0.10f; // Reduced from 0.35f for localized features
-                    float influence = std::exp(-distance / influenceRadius); // Exponential falloff
+                    // Moderate influence radius for focused but spread geological features
+                    float influenceRadius = worldSize_ * 0.15f; // 15% of world size for reasonable coverage
+                    float influence = std::exp(-distance / (influenceRadius * 0.5f)); // Exponential falloff for natural boundaries
                     
-                    // Only apply tectonic effects in areas with significant boundary influence
-                    if (influence > 0.02f) { // Higher threshold for more localized effects
-                        float localStress = boundary.stress * influence;
+                    // Apply tectonic effects in areas with significant boundary influence
+                    if (influence > 0.05f) { // Reasonable threshold for focused effects
+                        float localStress = boundary.stress * influence; // No amplification to keep values controlled
                         if (localStress > maxStress) {
                             maxStress = localStress;
                             
                             switch (boundary.type) {
                                 case BoundaryType::CONVERGENT:
                                     terrainType = TerrainType::MOUNTAIN;
-                                    // Dramatic mountain ranges using nearly full height range
-                                    elevationMod = localStress * 1800.0f + 200.0f; // Mountains: 200m to 2000m+ elevation
+                                    // Mountain ranges: use 0m to +1800m range (87.5% of max height)
+                                    elevationMod = localStress * 1800.0f;
                                     break;
                                 case BoundaryType::DIVERGENT:
                                     terrainType = TerrainType::RIFT;
-                                    // Deep ocean trenches and rifts using negative elevation
-                                    elevationMod = -localStress * 1700.0f - 300.0f; // Deep rifts: -300m to -2000m+ depth
+                                    // Ocean trenches and rifts: use -1800m to 0m range (87.5% of max depth)
+                                    elevationMod = -localStress * 1800.0f;
                                     break;
                                 case BoundaryType::TRANSFORM:
                                     terrainType = TerrainType::FAULT;
-                                    // Moderate fault ridges
-                                    elevationMod = localStress * 600.0f + 50.0f; // Faults: 50m to 650m ridges
+                                    // Transform faults: moderate elevation changes ±600m
+                                    elevationMod = (localStress * 600.0f) * (boundary.stress > 0.5f ? 1.0f : -1.0f);
                                     break;
                                 default:
                                     terrainType = TerrainType::STABLE;
@@ -677,10 +720,10 @@ void TectonicSimulator::GenerateTerrainMaps() {
             }
             
             // Apply small random variation to prevent uniform terrain in non-tectonic areas
-            if (maxStress < 0.01f) {
+            if (maxStress < 0.05f) {
                 // Add subtle elevation variation in tectonically stable areas
                 std::mt19937 rng(static_cast<uint32_t>(worldPos.x * 1000 + worldPos.y));
-                std::uniform_real_distribution<float> variationDist(-80.0f, 80.0f);
+                std::uniform_real_distribution<float> variationDist(-200.0f, 200.0f);
                 elevationMod = variationDist(rng);
             }
             

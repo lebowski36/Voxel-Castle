@@ -244,29 +244,43 @@ glm::vec2 GenerateTypicalMovement(PlateType type, uint32_t seed) {
     std::mt19937 rng(seed);
     std::uniform_real_distribution<float> angleDist(0.0f, 2.0f * 3.14159f);
     
-    // Create 8 preferred global movement directions to ensure diverse plate interactions
-    float globalDirections[8] = {
+    // Create 16 preferred global movement directions for maximum diversity
+    float globalDirections[16] = {
         0.0f,           // East
+        3.14159f / 8,   // ENE  
         3.14159f / 4,   // Northeast  
+        3 * 3.14159f / 8, // NNE
         3.14159f / 2,   // North
+        5 * 3.14159f / 8, // NNW
         3 * 3.14159f / 4, // Northwest
+        7 * 3.14159f / 8, // WNW
         3.14159f,       // West
+        9 * 3.14159f / 8, // WSW
         5 * 3.14159f / 4, // Southwest
+        11 * 3.14159f / 8, // SSW
         3 * 3.14159f / 2, // South
-        7 * 3.14159f / 4  // Southeast
+        13 * 3.14159f / 8, // SSE
+        7 * 3.14159f / 4, // Southeast
+        15 * 3.14159f / 8  // ESE
     };
     
-    // Assign plate to one of 8 global directions based on seed
-    int directionIndex = seed % 8;
+    // Assign plate to one of 16 global directions based on seed
+    int directionIndex = seed % 16;
     float baseAngle = globalDirections[directionIndex];
     
-    // Add random variation around the base direction
-    std::uniform_real_distribution<float> variationDist(-0.6f, 0.6f); // ±35 degrees
+    // Add significant random variation around the base direction
+    std::uniform_real_distribution<float> variationDist(-1.2f, 1.2f); // ±70 degrees for major variation
     float angle = baseAngle + variationDist(rng);
     
-    // Ensure some plates move in opposite directions for divergent boundaries
-    if (seed % 3 == 0) {
-        angle += 3.14159f; // Reverse direction for 1/3 of plates
+    // Create opposing plate movements for dramatic boundaries
+    if (seed % 2 == 0) {
+        angle += 3.14159f; // Reverse direction for 50% of plates
+    }
+    
+    // Add additional random rotation for maximum chaos
+    std::uniform_real_distribution<float> chaosAngleDist(0.0f, 2.0f * 3.14159f);
+    if (seed % 4 == 1) {
+        angle = chaosAngleDist(rng); // Completely random direction for 25% of plates
     }
     
     float speed;
@@ -274,20 +288,27 @@ glm::vec2 GenerateTypicalMovement(PlateType type, uint32_t seed) {
     
     switch (type) {
         case PlateType::OCEANIC:
-            speedDist = std::uniform_real_distribution<float>(4.0f, 15.0f); // Faster, more variable
+            speedDist = std::uniform_real_distribution<float>(8.0f, 25.0f); // Much faster, more variable
             break;
         case PlateType::CONTINENTAL:
-            speedDist = std::uniform_real_distribution<float>(1.0f, 8.0f);  // Slower but with variation
+            speedDist = std::uniform_real_distribution<float>(2.0f, 15.0f);  // More variable speed range
             break;
         case PlateType::MICROPLATE:
-            speedDist = std::uniform_real_distribution<float>(0.5f, 25.0f); // Highly variable speed
+            speedDist = std::uniform_real_distribution<float>(1.0f, 35.0f); // Extremely variable speed
             break;
         default:
-            speedDist = std::uniform_real_distribution<float>(1.0f, 5.0f);
+            speedDist = std::uniform_real_distribution<float>(3.0f, 12.0f);
             break;
     }
     
     speed = speedDist(rng);
+    
+    // Add speed multiplier based on seed for extreme variations
+    if (seed % 7 == 0) {
+        speed *= 2.5f; // Very fast plates for 1/7 of plates
+    } else if (seed % 11 == 0) {
+        speed *= 0.3f; // Very slow plates for some boundaries
+    }
     
     // Convert from cm/year to km/million years
     speed *= 10.0f; // 1 cm/year = 10 km/million years
@@ -295,7 +316,7 @@ glm::vec2 GenerateTypicalMovement(PlateType type, uint32_t seed) {
     glm::vec2 movement = glm::vec2(std::cos(angle) * speed, std::sin(angle) * speed);
     
     // Debug output for first few plates to verify movement diversity
-    if (seed % 100 < 8) {
+    if (seed % 100 < 12) {
         std::cout << "[GenerateTypicalMovement] Plate " << seed 
                   << " type=" << static_cast<int>(type) 
                   << " direction=" << directionIndex
