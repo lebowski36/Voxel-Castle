@@ -21,6 +21,8 @@ TectonicSimulator::TectonicSimulator()
 TectonicSimulator::~TectonicSimulator() = default;
 
 void TectonicSimulator::InitializePlates(uint32_t seed, float worldSize, uint32_t plateCount) {
+    std::cout << "[TectonicSimulator] InitializePlates: seed=" << seed << ", worldSize=" << worldSize << ", plateCount=" << plateCount << std::endl;
+    
     seed_ = seed;
     worldSize_ = worldSize;
     simulationComplete_ = false;
@@ -29,48 +31,80 @@ void TectonicSimulator::InitializePlates(uint32_t seed, float worldSize, uint32_
     // Clear existing data
     plates_.clear();
     boundaries_.clear();
+    std::cout << "[TectonicSimulator] Cleared existing data" << std::endl;
     
     // Determine plate count if not specified
     if (plateCount == 0) {
         plateCount = GetOptimalPlateCount(worldSize);
+        std::cout << "[TectonicSimulator] Auto-determined plate count: " << plateCount << std::endl;
     }
     
     // Generate initial plates
+    std::cout << "[TectonicSimulator] Generating plates..." << std::endl;
     GeneratePlates();
+    std::cout << "[TectonicSimulator] Generated " << plates_.size() << " plates" << std::endl;
     
     // Create spatial grid for optimization
+    std::cout << "[TectonicSimulator] Building spatial grid..." << std::endl;
     BuildSpatialGrid();
+    std::cout << "[TectonicSimulator] Spatial grid built" << std::endl;
     
     // Initialize stress and terrain maps
+    std::cout << "[TectonicSimulator] Initializing stress map (" << mapResolution_ << "x" << mapResolution_ << ")..." << std::endl;
     stressMap_.assign(mapResolution_, std::vector<float>(mapResolution_, 0.0f));
+    std::cout << "[TectonicSimulator] Stress map initialized" << std::endl;
+    
+    std::cout << "[TectonicSimulator] Initializing terrain map..." << std::endl;
     terrainMap_.assign(mapResolution_, std::vector<TerrainType>(mapResolution_, TerrainType::STABLE));
+    std::cout << "[TectonicSimulator] Terrain map initialized" << std::endl;
+    
+    std::cout << "[TectonicSimulator] Initializing elevation map..." << std::endl;
     elevationMap_.assign(mapResolution_, std::vector<float>(mapResolution_, 0.0f));
+    std::cout << "[TectonicSimulator] Elevation map initialized" << std::endl;
+    
+    std::cout << "[TectonicSimulator] InitializePlates complete" << std::endl;
 }
 
 void TectonicSimulator::SimulatePlateMovement(float simulationTime, uint32_t timeSteps) {
+    std::cout << "[TectonicSimulator] Starting simulation with " << plates_.size() << " plates" << std::endl;
+    
     if (plates_.empty()) {
+        std::cout << "[TectonicSimulator] No plates to simulate" << std::endl;
         return;
     }
     
+    std::cout << "[TectonicSimulator] Calculating deltaTime: " << simulationTime << " / " << timeSteps << std::endl;
     float deltaTime = simulationTime / static_cast<float>(timeSteps);
     timeStep_ = deltaTime;
+    std::cout << "[TectonicSimulator] Delta time: " << deltaTime << std::endl;
     
     for (uint32_t step = 0; step < timeSteps; step++) {
+        std::cout << "[TectonicSimulator] Step " << step << " / " << timeSteps << std::endl;
+        
         // Detect plate collisions and update boundaries
+        std::cout << "[TectonicSimulator] Detecting plate collisions..." << std::endl;
         DetectPlateCollisions();
+        std::cout << "[TectonicSimulator] Plate collisions detected" << std::endl;
         
         // Calculate stress accumulation
+        std::cout << "[TectonicSimulator] Calculating stress accumulation..." << std::endl;
         CalculateStressAccumulation(deltaTime);
+        std::cout << "[TectonicSimulator] Stress accumulation calculated" << std::endl;
         
         // Update plate positions based on movement
+        std::cout << "[TectonicSimulator] Updating plate positions..." << std::endl;
         UpdatePlatePositions(deltaTime);
+        std::cout << "[TectonicSimulator] Plate positions updated" << std::endl;
         
         // Rebuild spatial grid if plates moved significantly
         if (step % 5 == 0) { // Rebuild every 5 steps
+            std::cout << "[TectonicSimulator] Rebuilding spatial grid..." << std::endl;
             BuildSpatialGrid();
+            std::cout << "[TectonicSimulator] Spatial grid rebuilt" << std::endl;
         }
     }
     
+    std::cout << "[TectonicSimulator] Simulation complete" << std::endl;
     totalSimulationTime_ += simulationTime;
     simulationComplete_ = true;
 }
