@@ -12,7 +12,6 @@ namespace UI {
 // Forward declarations
 class MainMenu;
 class SettingsMenu;
-class WorldCreationDialog;
 
 } // namespace UI
 } // namespace VoxelEngine
@@ -85,13 +84,6 @@ public:
      * @brief Show the settings menu
      */
     void showSettingsMenu();
-
-    /**
-     * @brief Show the world creation dialog
-     */
-    void showWorldCreationDialog();
-
-
 
     /**
      * @brief Show the world configuration UI (new split UI)
@@ -204,14 +196,6 @@ public:
     glm::vec2 getSettingsMenuSize() const;
 
     /**
-     * @brief Get the size of the world creation dialog
-     * @return Size of the world creation dialog as a glm::vec2
-     */
-    glm::vec2 getWorldCreationDialogSize() const;
-
-
-
-    /**
      * @brief Debug dump of menu state - to verify in console
      * Logs the current state of menu and visibility of elements
      */
@@ -228,7 +212,6 @@ private:
     MenuState menuState_ = MenuState::NONE;
     std::shared_ptr<MainMenu> mainMenu_;
     std::shared_ptr<SettingsMenu> settingsMenu_;
-    std::shared_ptr<WorldCreationDialog> worldCreationDialog_;
     
     // New split world generation UIs
     std::shared_ptr<WorldConfigurationUI> worldConfigurationUI_;

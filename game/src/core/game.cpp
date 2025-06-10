@@ -716,19 +716,12 @@ bool Game::toggleFullscreen() {
             // Store current menu sizes
             glm::vec2 mainSize = menuSystem_->getMainMenuSize();
             glm::vec2 settingsSize = menuSystem_->getSettingsMenuSize();
-            glm::vec2 worldCreationSize = menuSystem_->getWorldCreationDialogSize();
             
             // Update screen dimensions in the renderer
             menuSystem_->updateScreenSize(width, height);
             
             // Double-check menu sizes were preserved properly
             DEBUG_LOG("Game", "Menu system updated for new screen size: " + std::to_string(width) + "x" + std::to_string(height));
-            
-            // If WorldCreationDialog is the active menu, explicitly recenter it
-            if (menuSystem_->getMenuState() == VoxelEngine::UI::MenuSystem::MenuState::WORLD_CREATION) {
-                DEBUG_LOG("Game", "Explicitly recentering WorldCreationDialog after fullscreen toggle");
-                menuSystem_->showWorldCreationDialog();
-            }
         }
          // Update HUD position for new screen size
         if (hudSystem_) {

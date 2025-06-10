@@ -1,7 +1,6 @@
 #include "ui/MenuSystem.h"
 #include "ui/elements/MainMenu.h"
 #include "ui/elements/SettingsMenu.h" 
-#include "ui/elements/WorldCreationDialog.h"
 #include "ui/WorldConfigurationUI.h"
 #include "ui/WorldSimulationUI.h"
 #include "world/world_seed.h"
@@ -42,13 +41,6 @@ bool MenuSystem::initialize(int screenWidth, int screenHeight, const std::string
         std::cerr << "[MenuSystem] Failed to initialize settings menu" << std::endl;
         return false;
     }
-    
-    // Create world creation dialog
-    worldCreationDialog_ = std::make_shared<WorldCreationDialog>(renderer);
-    if (!worldCreationDialog_->initialize(this)) {
-        std::cerr << "[MenuSystem] Failed to initialize world creation dialog" << std::endl;
-        return false;
-    }
 
     // Create new split world generation UIs
     worldConfigurationUI_ = std::make_shared<WorldConfigurationUI>(renderer);
@@ -63,18 +55,6 @@ bool MenuSystem::initialize(int screenWidth, int screenHeight, const std::string
         return false;
     }
     
-    // Set up world creation dialog callbacks
-    worldCreationDialog_->setOnWorldCreate([this](const VoxelCastle::World::WorldSeed& seed, WorldCreationDialog::WorldSize size) {
-        if (onWorldCreateRequest_) {
-            onWorldCreateRequest_(seed, static_cast<int>(size));
-        }
-        closeMenus(); // Close dialog after world creation
-    });
-    
-    worldCreationDialog_->setOnCancel([this]() {
-        showMainMenu(); // Return to main menu
-    });
-
     // Set up new split world generation UI callbacks
     worldConfigurationUI_->setOnConfigurationCompleteCallback([this](const WorldConfigurationUI::WorldConfig& config) {
         std::cout << "[MenuSystem] World configuration complete, switching to simulation" << std::endl;
@@ -117,10 +97,8 @@ bool MenuSystem::initialize(int screenWidth, int screenHeight, const std::string
     // Set widths only - preserve auto-calculated heights
     glm::vec2 mainSize = mainMenu_->getSize();
     glm::vec2 settingsSize = settingsMenu_->getSize();
-    glm::vec2 worldCreationSize = worldCreationDialog_->getSize();
     mainMenu_->setSize(400.0f, mainSize.y); // Keep auto-calculated height
     settingsMenu_->setSize(450.0f, settingsSize.y); // Keep auto-calculated height
-    worldCreationDialog_->setSize(600.0f, worldCreationSize.y); // Wider to accommodate longer text
     
     // Position menus after they auto-calculate their heights
     // Note: This will be called again in showMainMenu/showSettingsMenu to ensure proper centering
@@ -128,14 +106,12 @@ bool MenuSystem::initialize(int screenWidth, int screenHeight, const std::string
      // Hide all menus initially
     mainMenu_->setVisible(false);
     settingsMenu_->setVisible(false);
-    worldCreationDialog_->setVisible(false);
     worldConfigurationUI_->setVisible(false);
     worldSimulationUI_->setVisible(false);
 
     // Add menus to UI system
     addElement(mainMenu_);
     addElement(settingsMenu_);
-    addElement(worldCreationDialog_);
     addElement(worldConfigurationUI_);
     addElement(worldSimulationUI_);
     
@@ -177,7 +153,6 @@ void MenuSystem::showMainMenu() {
     // First make the menu visible to ensure its size is calculated correctly
     mainMenu_->setVisible(true);
     settingsMenu_->setVisible(false);
-    worldCreationDialog_->setVisible(false);
     menuState_ = MenuState::MAIN_MENU;
     
     // Now explicitly re-center menus after setting visibility
@@ -187,7 +162,7 @@ void MenuSystem::showMainMenu() {
     // Ensure the block selection UI stays hidden during menu display
     // Block selection UI is identified by checking if it's not one of our menu elements
     for (const auto& element : elements_) {
-        if (element.get() != mainMenu_.get() && element.get() != settingsMenu_.get() && element.get() != worldCreationDialog_.get()) {
+        if (element.get() != mainMenu_.get() && element.get() != settingsMenu_.get()) {
             element->setVisible(false);
         }
     }
@@ -206,7 +181,6 @@ void MenuSystem::showSettingsMenu() {
     // First make the menu visible to ensure its size is calculated correctly
     mainMenu_->setVisible(false);
     settingsMenu_->setVisible(true);
-    worldCreationDialog_->setVisible(false);
     menuState_ = MenuState::SETTINGS;
     
     // Now explicitly re-center menus after setting visibility
@@ -215,7 +189,7 @@ void MenuSystem::showSettingsMenu() {
     
     // Ensure game UI elements stay hidden when switching to settings
     for (const auto& element : elements_) {
-        if (element.get() != mainMenu_.get() && element.get() != settingsMenu_.get() && element.get() != worldCreationDialog_.get()) {
+        if (element.get() != mainMenu_.get() && element.get() != settingsMenu_.get()) {
             element->setVisible(false);
         }
     }
@@ -230,43 +204,12 @@ void MenuSystem::showSettingsMenu() {
     );
 }
 
-void MenuSystem::showWorldCreationDialog() {
-    // First make the dialog visible to ensure its size is calculated correctly
-    mainMenu_->setVisible(false);
-    settingsMenu_->setVisible(false);
-    worldCreationDialog_->setVisible(true);
-    menuState_ = MenuState::WORLD_CREATION;
-    
-    // Now explicitly re-center menus after setting visibility
-    // This ensures dimensions are correct when centering
-    centerMenus(getRenderer().getScreenWidth(), getRenderer().getScreenHeight());
-    
-    // Ensure game UI elements stay hidden when showing world creation dialog
-    for (const auto& element : elements_) {
-        if (element.get() != mainMenu_.get() && element.get() != settingsMenu_.get() && element.get() != worldCreationDialog_.get()) {
-            element->setVisible(false);
-        }
-    }
-    
-    // Double-check the position to ensure it's properly centered
-    float screenWidth = getRenderer().getScreenWidth();
-    float screenHeight = getRenderer().getScreenHeight();
-    glm::vec2 dialogSize = worldCreationDialog_->getSize();
-    worldCreationDialog_->setPosition(
-        screenWidth / 2.0f - dialogSize.x / 2.0f,
-        screenHeight / 2.0f - dialogSize.y / 2.0f
-    );
-}
-
-
-
 void MenuSystem::showWorldConfigurationUI() {
     std::cout << "[MenuSystem] showWorldConfigurationUI() called" << std::endl;
     
     // Hide all other menus
     mainMenu_->setVisible(false);
     settingsMenu_->setVisible(false);
-    worldCreationDialog_->setVisible(false);
     worldSimulationUI_->setVisible(false);
     
     // Show world configuration UI
@@ -292,7 +235,6 @@ void MenuSystem::showWorldSimulationUI() {
     // Hide all other menus
     mainMenu_->setVisible(false);
     settingsMenu_->setVisible(false);
-    worldCreationDialog_->setVisible(false);
     worldConfigurationUI_->setVisible(false);
     
     // Show world simulation UI
@@ -315,7 +257,6 @@ void MenuSystem::showWorldSimulationUI() {
 void MenuSystem::closeMenus() {
     mainMenu_->setVisible(false);
     settingsMenu_->setVisible(false);
-    worldCreationDialog_->setVisible(false);
     menuState_ = MenuState::NONE;
     
     // Call the onMenuClosed callback if it exists
@@ -374,12 +315,10 @@ void MenuSystem::updateScreenSize(int width, int height) {
     // Cache the fixed menu dimensions before any updates
     static const float MAIN_MENU_WIDTH = 400.0f;
     static const float SETTINGS_MENU_WIDTH = 450.0f;
-    static const float WORLD_CREATION_WIDTH = 700.0f;
     
     // Store the heights the first time this is called
     static float mainMenuHeight = 0.0f;
     static float settingsMenuHeight = 0.0f;
-    static float worldCreationHeight = 0.0f;
     
     // Store the heights the first time this is called
     if (mainMenuHeight == 0.0f && mainMenu_) {
@@ -388,21 +327,17 @@ void MenuSystem::updateScreenSize(int width, int height) {
     if (settingsMenuHeight == 0.0f && settingsMenu_) {
         settingsMenuHeight = settingsMenu_->getSize().y;
     }
-    if (worldCreationHeight == 0.0f && worldCreationDialog_) {
-        worldCreationHeight = worldCreationDialog_->getSize().y;
-    }
     
     // Suppressed repetitive logging for menu system operations.
     
     // IMPORTANT: Store references to the menus before updating renderer to avoid brief size flashes
     std::shared_ptr<BaseMenu> mainMenuRef = mainMenu_;
     std::shared_ptr<BaseMenu> settingsMenuRef = settingsMenu_;
-    std::shared_ptr<BaseMenu> worldCreationRef = worldCreationDialog_;
     
     // Temporarily remove menus from the UI system's element list to avoid rendering at wrong size
     std::vector<std::shared_ptr<UIElement>> tempMenus;
     for (auto it = elements_.begin(); it != elements_.end();) {
-        if ((*it).get() == mainMenu_.get() || (*it).get() == settingsMenu_.get() || (*it).get() == worldCreationDialog_.get()) {
+        if ((*it).get() == mainMenu_.get() || (*it).get() == settingsMenu_.get()) {
             tempMenus.push_back(*it);
             it = elements_.erase(it);
         } else {
@@ -422,10 +357,6 @@ void MenuSystem::updateScreenSize(int width, int height) {
         settingsMenuRef->setSize(SETTINGS_MENU_WIDTH, settingsMenuHeight);
     }
     
-    if (worldCreationRef) {
-        worldCreationRef->setSize(WORLD_CREATION_WIDTH, worldCreationHeight);
-    }
-    
     // Re-add the menus to the element list
     for (auto& menu : tempMenus) {
         elements_.push_back(menu);
@@ -435,17 +366,14 @@ void MenuSystem::updateScreenSize(int width, int height) {
     centerMenus(width, height);
     
     // Verify menu sizes are preserved
-    if (mainMenu_ && settingsMenu_ && worldCreationDialog_) {
+    if (mainMenu_ && settingsMenu_) {
         glm::vec2 mainSize = mainMenu_->getSize();
         glm::vec2 settingsSize = settingsMenu_->getSize();
-        glm::vec2 worldCreationSize = worldCreationDialog_->getSize();
         
         DEBUG_LOG("MenuSystem", "Verification - Main menu size: " + std::to_string(static_cast<int>(mainSize.x)) + 
                   "x" + std::to_string(static_cast<int>(mainSize.y)) + 
                   ", Settings menu size: " + std::to_string(static_cast<int>(settingsSize.x)) + 
-                  "x" + std::to_string(static_cast<int>(settingsSize.y)) +
-                  ", World Creation dialog size: " + std::to_string(static_cast<int>(worldCreationSize.x)) +
-                  "x" + std::to_string(static_cast<int>(worldCreationSize.y)));
+                  "x" + std::to_string(static_cast<int>(settingsSize.y)));
         
         // Correct sizes if somehow they got changed
         if (std::abs(mainSize.x - MAIN_MENU_WIDTH) > 0.1f || 
@@ -458,12 +386,6 @@ void MenuSystem::updateScreenSize(int width, int height) {
             std::abs(settingsSize.y - settingsMenuHeight) > 0.1f) {
             DEBUG_LOG("MenuSystem", "WARNING: Settings menu size incorrect, resetting...");
             settingsMenu_->setSize(SETTINGS_MENU_WIDTH, settingsMenuHeight);
-        }
-        
-        if (std::abs(worldCreationSize.x - WORLD_CREATION_WIDTH) > 0.1f ||
-            std::abs(worldCreationSize.y - worldCreationHeight) > 0.1f) {
-            DEBUG_LOG("MenuSystem", "WARNING: World Creation dialog size incorrect, resetting...");
-            worldCreationDialog_->setSize(WORLD_CREATION_WIDTH, worldCreationHeight);
         }
     }
 }
@@ -534,29 +456,6 @@ void MenuSystem::centerMenus(int screenWidth, int screenHeight) {
     }
     
     settingsMenu_->setPosition(settingsX, settingsY);
-    
-    // Center world creation dialog with similar constraints
-    if (worldCreationDialog_) {
-        glm::vec2 worldCreationSize = worldCreationDialog_->getSize();
-        
-        // Default to centered position
-        float idealWorldCreationX = screenWidth / 2.0f - worldCreationSize.x / 2.0f;
-        float idealWorldCreationY = screenHeight / 2.0f - worldCreationSize.y / 2.0f;
-        
-        // Constrain to visible area with 10px margins
-        float worldCreationX = std::max(10.0f, std::min(idealWorldCreationX, screenWidth - worldCreationSize.x - 10.0f));
-        float worldCreationY = std::max(10.0f, std::min(idealWorldCreationY, screenHeight - worldCreationSize.y - 10.0f));
-        
-        // If screen is too small for the menu, prioritize showing top-left
-        if (screenWidth < worldCreationSize.x + 20.0f || screenHeight < worldCreationSize.y + 20.0f) {
-            worldCreationX = 10.0f; // Pin to left with margin
-            worldCreationY = 10.0f; // Pin to top with margin
-        }
-        
-        worldCreationDialog_->setPosition(worldCreationX, worldCreationY);
-    }
-    
-
 }
 
 glm::vec2 MenuSystem::getMainMenuSize() const {
@@ -569,13 +468,6 @@ glm::vec2 MenuSystem::getMainMenuSize() const {
 glm::vec2 MenuSystem::getSettingsMenuSize() const {
     if (settingsMenu_) {
         return settingsMenu_->getSize();
-    }
-    return glm::vec2(0.0f, 0.0f);
-}
-
-glm::vec2 MenuSystem::getWorldCreationDialogSize() const {
-    if (worldCreationDialog_) {
-        return worldCreationDialog_->getSize();
     }
     return glm::vec2(0.0f, 0.0f);
 }
