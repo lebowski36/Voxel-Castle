@@ -528,19 +528,112 @@ struct GeologicalConfig {
 
 ---
 
-## **UNCLARITY #2: MEMORY & STREAMING STRATEGIES** ⏳ NEXT
+## **UNCLARITY #2: MEMORY & STREAMING STRATEGIES** ✅ RESOLVED
 
 **Question:** How to handle chunk caching, boundary smoothing, and quality fallbacks?
 
-*Will be addressed next after confirming Unclarity #1 resolution*
+### **DECISION: Intelligent Multi-Tier Caching System**
+
+**Chunk Storage Strategy:**
+```cpp
+class GeologicalChunkManager {
+    // Tier 1: Active chunks in memory (player vicinity)
+    LRUCache<ChunkCoord, VoxelChunk> activeChunks;     // ~64 chunks, ~2GB
+    
+    // Tier 2: Generated chunks on disk (compressed)
+    DiskCache<ChunkCoord, CompressedChunk> diskCache;  // Unlimited, ~100MB per chunk
+    
+    // Tier 3: Geological base data (continental scale)
+    ContinuousField<GeologicalSample> baseGeology;     // Always in memory, ~500MB
+    
+    // Boundary smoothing buffer
+    HashMap<ChunkCoord, BorderVoxels> boundaryBuffer;  // Adjacent chunk edges
+};
+```
+
+**Streaming Performance Strategy:**
+1. **Predictive Loading:** Load chunks in player movement direction
+2. **Quality Fallback:** Generate lower-detail chunks when memory/time limited
+3. **Boundary Smoothing:** Always maintain seamless 1-voxel overlap between chunks
+4. **Persistent Storage:** Never regenerate the same chunk twice
+
+**Memory Targets:**
+- **Active Chunks:** 64 chunks × 32MB = ~2GB in memory
+- **Geological Base:** Continental data = ~500MB always loaded  
+- **Boundary Buffer:** Edge voxels = ~100MB for smoothing
+- **Total Peak:** ~2.6GB during normal gameplay
+
+**Quality Fallback Hierarchy:**
+1. **Full Detail:** Complete geological simulation + micro-physics
+2. **Simplified Detail:** Geological simulation + noise-based micro-features  
+3. **Basic Detail:** Heightmap + rock type + simple erosion patterns
+4. **Emergency Fallback:** Pure procedural noise (only if system overloaded)
 
 ---
 
-## **UNCLARITY #3: MULTI-TIMESCALE ARCHITECTURE** ⏳ PENDING
+## **UNCLARITY #3: MULTI-TIMESCALE ARCHITECTURE** ✅ RESOLVED
 
 **Question:** Data flow between geological phases, visual update frequency, and timeline transitions?
 
-*Will be addressed after Unclarity #2 is resolved*
+### **DECISION: Three-Phase Simulation Pipeline**
+
+**Phase Architecture:**
+```cpp
+class GeologicalTimeline {
+    // Phase 1: Continental Tectonics (millions of years)
+    void simulateTectonicPhase(float duration_million_years) {
+        for (float time = 0; time < duration_million_years; time += 0.1f) {
+            updateMantleConvection(time);
+            updatePlateMovement(time);
+            updateMountainBuilding(time);
+            
+            // Visual update every 100,000 years
+            if (time % 0.1f == 0) updateVisualization();
+        }
+    }
+    
+    // Phase 2: Regional Erosion (thousands of years)  
+    void simulateErosionPhase(float duration_thousand_years) {
+        for (float time = 0; time < duration_thousand_years; time += 1.0f) {
+            updateWeatheringProcesses(time);
+            updateRiverSystems(time);
+            updateGlacialCarving(time);
+            
+            // Visual update every 1,000 years
+            if (time % 10.0f == 0) updateVisualization();
+        }
+    }
+    
+    // Phase 3: Local Detail (hundreds of years)
+    void simulateDetailPhase(float duration_hundred_years) {
+        for (float time = 0; time < duration_hundred_years; time += 10.0f) {
+            updateMicroWeathering(time);
+            updateSedimentDeposition(time);
+            updateVegetationEffects(time);
+            
+            // Visual update every 100 years  
+            if (time % 50.0f == 0) updateVisualization();
+        }
+    }
+};
+```
+
+**Data Flow Between Phases:**
+1. **Tectonics → Erosion:** Continental elevation + rock type + stress fields
+2. **Erosion → Detail:** Regional drainage + weathering patterns + micro-topography  
+3. **Detail → Chunks:** Local geological conditions + micro-feature templates
+
+**Visual Timeline Strategy:**
+- **Phase 1:** 30 visual updates over 2 minutes (4 seconds per update)
+- **Phase 2:** 20 visual updates over 2 minutes (6 seconds per update)  
+- **Phase 3:** 10 visual updates over 1 minute (6 seconds per update)
+- **Total Duration:** ~5 minutes with 60 visual transitions
+
+**User Control:**
+- **Play/Pause:** Stop at any point to examine geological state
+- **Phase Indicators:** Clear UI showing current geological process
+- **Progress Bar:** Time remaining in current phase
+- **No Speed Control:** Fixed pacing for optimal visual experience
 
 ---
 
