@@ -14,7 +14,7 @@ This document tracks the implementation of the Dwarf Fortress-inspired World Gen
 
 This split architecture provides better separation of concerns and improved maintainability.
 
-## Status: 🔄 PHASE 4B IN PROGRESS - WORLD SIMULATION VISUALIZATION
+## Status: 🔄 PHASE 4B IN PROGRESS - DYNAMIC WORLD VISUALIZATION
 **Major Achievements**: 
 - Successfully connected WorldSimulationUI to actual SeedWorldGenerator backend
 - Implemented full world persistence system (Task 08a)
@@ -23,12 +23,19 @@ This split architecture provides better separation of concerns and improved main
 - World creation, generation, and saving pipeline fully operational
 - **✅ FIXED: All parameter control buttons work perfectly without crashes or value disappearance**
 - **✅ REMOVED: WorldConfigurationUI preview system** - Following Dwarf Fortress approach (configuration → simulation → embark)
+- **✅ COMPLETED: WorldMapRenderer integration** - 512x512 heightmap visualization working correctly
 
-**Current Focus**: Implementing Dwarf Fortress-style world generation visualization in WorldSimulationUI
+**Current Focus**: **Making World Generation Visually Dynamic** - Connect simulation results to visualization
+
+**Key Implementation Gaps Identified**:
+1. **Static Visualization**: Same heightmap throughout all phases (29-380m elevation unchanged)
+2. **Missing Water Visualization**: No blue areas for rivers/lakes during Water Systems phase  
+3. **No Auto-Mode Switching**: Always shows elevation instead of switching per phase
+4. **Tectonic Disconnect**: Simulation results not applied to visualization data
 
 **Architecture Decision**: Adopted Dwarf Fortress UX pattern:
 1. **Configuration Phase**: Parameter selection only (no preview) ✅ COMPLETE
-2. **Generation Phase**: Full world map visualization during simulation 🔄 IN PROGRESS
+2. **Generation Phase**: Full world map visualization during simulation 🔄 **IMPLEMENTING DYNAMIC VISUALIZATION**
 3. **Embark Phase**: Browse completed world to select spawn location (future)
 
 ## Related Files
@@ -208,46 +215,55 @@ This split architecture provides better separation of concerns and improved main
   - **Files Removed**: WorldPreviewRenderer integration from WorldConfigurationUI
   - **Backup**: Complete system preserved in `/docs/WORLD_PREVIEW_RENDERER_BACKUP.md`
 
-#### 🔄 **Phase 4b: WorldSimulationUI Visualization Enhancement** - **IN PROGRESS**
-- [ ] **Real-time World Map Visualization**: Implement large central world map display
-  - **Specification**: Following `/docs/WORLD_GENERATION_UI_SPECIFICATION.md` - Phase 2
-  - **Features**: Color-coded generation phases, progressive detail, zoom capability
-  - **Status**: 🔄 **Next Implementation Task**
+#### 🔄 **Phase 4b: Dynamic Visualization Implementation** - **IN PROGRESS**
+**Status**: 🔄 **ACTIVE DEVELOPMENT** - Making world generation visually dynamic and engaging
 
-- [ ] **Enhanced Progress Tracking**: Expand beyond basic progress bars
-  - **Features**: Generation statistics, time estimates, geological feature counts
-  - **Integration**: Connect to actual SeedWorldGenerator metrics
-  - **Status**: ⏳ **Waiting for world map**
+**Current Reality Check** (Based on user testing and console analysis):
+- ✅ **UI Rendering**: WorldMapRenderer successfully displays 512x512 heightmap
+- ✅ **Phase Progression**: All 6 phases execute correctly with progress tracking  
+- ✅ **Tectonic Simulation**: Real geological simulation with 15-21 plates running
+- ❌ **Static Visualization**: Same elevation data (29-380m) shown throughout all phases
+- ❌ **Missing Water**: No blue areas for rivers/lakes despite "Water Systems" phase
+- ❌ **No Auto-Switching**: Always elevation mode, never switches to temperature/biome views
 
-- [ ] **Generation Log Enhancement**: Dwarf Fortress-style narrative logging
-  - **Features**: Geological events, historical timeline, named features
-  - **Examples**: "The Dragonspine Mountains rise...", "Lake Mirrormere forms..."
-  - **Status**: ⏳ **Waiting for world map**
+**Priority Implementation Tasks**:
 
-- ✅ **UI Rendering Pipeline Fix**: Resolved transparent panel interference
-  - **Issue**: Transparent UI panel with background {0.0f, 0.0f, 0.0f, 0.0f} was still interfering with OpenGL rendering
-  - **Solution**: Removed transparent preview panel from UI children - UI panels interfere with OpenGL content even when transparent
-  - **Result**: Magenta debug quad now visible in preview area
-  - **Files**: `engine/src/ui/WorldConfigurationUI.cpp` - `createPreviewSection()` method
+1. **🔥 HIGH: Connect Tectonic Results to Visualization**
+   - **Issue**: TectonicSimulator runs correctly but results don't affect heightmap
+   - **Goal**: Apply tectonic stress/elevation changes to terrain visualization
+   - **Files**: `WorldMapRenderer.cpp`, `seed_world_generator.cpp`
+   - **Expected Outcome**: Dramatic terrain changes during Tectonic phase
 
-**Technical Status:**
-- ✅ **Data Generation**: Height data and color texture creation working correctly
-- ✅ **OpenGL Texture**: Texture creation and data upload successful
-- ✅ **Visual Rendering**: Magenta debug quad now visible - UIRenderer::renderColoredQuad working
-- ✅ **No Error Spam**: Clean console output, no OpenGL errors
-- ✅ **UI Rendering Pipeline**: Fixed transparent panel interference issue
+2. **🔥 HIGH: Implement Water Visualization**  
+   - **Issue**: No blue areas despite Water Systems phase execution
+   - **Goal**: Show water bodies (rivers, lakes, oceans) in blue
+   - **Implementation**: Water detection + blue color mapping for low elevations
+   - **Expected Outcome**: Blue areas appear during Water Systems phase
 
-#### 🔄 **Phase 4b: Multiple visualization modes in WorldSimulationUI** - **READY FOR IMPLEMENTATION**
-- [ ] **Visualization Mode System**: Temperature, Precipitation, Biomes, Hydrology views
-- [ ] **Mode Toggle Controls**: UI buttons to switch between different map overlays
-- [ ] **Color Schemes**: Distinct color mapping for each visualization mode
+3. **🔥 HIGH: Add Auto-Mode Switching**
+   - **Issue**: Always shows elevation colors regardless of phase  
+   - **Goal**: Automatically switch visualization modes per generation phase
+   - **Mapping**: Tectonic→Elevation, Water→Hydrology, Climate→Temperature, Biomes→Biome colors
+   - **Expected Outcome**: Visual mode changes automatically as phases progress
 
-#### 🔄 **Phase 4c: Interactive controls (zoom, pan, click)** - **FUTURE ENHANCEMENT**
-- [ ] **Interactive Map Controls**: Zoom, pan, click exploration
-- [ ] **Detail View**: Click regions to see detailed information
-- [ ] **Navigation**: Explore different areas of the generated world
+4. **🔶 MED: Enhanced Generation Statistics**
+   - **Issue**: Statistics show placeholders instead of real data
+   - **Goal**: Display actual mountain count, river length, biome distribution
+   - **Implementation**: Connect real generation data to UI statistics
+   - **Expected Outcome**: Meaningful statistics that update during generation
 
-**Current Status**: **Phase 4a is complete and working**. Users now see a magenta debug quad in the preview area, confirming the UI rendering pipeline is functional. Ready to proceed with actual heightmap texture rendering or other enhancement features.
+**Technical Architecture**:
+```
+Current: SeedWorldGenerator → [MISSING] → WorldMapRenderer → UI
+Target:  SeedWorldGenerator → Data Flow → WorldMapRenderer → Dynamic UI
+```
+
+**Success Criteria for Phase 4b**:
+- ✅ **Visually Dynamic**: Terrain changes dramatically between phases
+- ✅ **Water Appears**: Blue areas visible during Water Systems phase
+- ✅ **Auto-Switching**: Different visualizations per phase automatically  
+- ✅ **Progressive Terrain**: Elevation range increases during Tectonic phase
+- ✅ **User Engagement**: Generation feels dynamic and interesting, not static
 
 ### Phase 3.5: World Persistence Integration 🚨 CRITICAL BLOCKING DEPENDENCY
 **Status**: ❌ NOT IMPLEMENTED - **BLOCKS ALL FURTHER PROGRESS**
