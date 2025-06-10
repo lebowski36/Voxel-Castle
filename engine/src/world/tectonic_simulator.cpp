@@ -411,15 +411,35 @@ BoundaryType TectonicSimulator::ClassifyBoundaryType(const TectonicPlate& plate1
     // Calculate relative movement vectors
     glm::vec2 relativeMovement = plate2.movementVector - plate1.movementVector;
     
+    // Debug output for first few boundaries
+    static int debugCount = 0;
+    if (debugCount < 5) {
+        std::cout << "[ClassifyBoundaryType] Plate " << plate1.plateId << " -> " << plate2.plateId 
+                  << " relativeMovement=(" << relativeMovement.x << "," << relativeMovement.y << ")"
+                  << " normalizedRelPos=(" << normalizedRelPos.x << "," << normalizedRelPos.y << ")" << std::endl;
+        debugCount++;
+    }
+    
     // Dot product with relative position indicates convergent/divergent
     float radialComponent = glm::dot(relativeMovement, normalizedRelPos);
     
     // Cross product magnitude indicates transform motion
     float tangentialComponent = std::abs(relativeMovement.x * normalizedRelPos.y - relativeMovement.y * normalizedRelPos.x);
     
-    if (std::abs(radialComponent) > tangentialComponent) {
-        return (radialComponent < 0) ? BoundaryType::CONVERGENT : BoundaryType::DIVERGENT;
-    } else if (tangentialComponent > 1.0f) { // Threshold for significant transform motion
+    // Lower the threshold for transform boundaries to allow more divergent/convergent classification
+    float transformThreshold = 0.5f; // Reduced from 1.0f
+    
+    // Enhanced classification logic with better thresholds
+    if (std::abs(radialComponent) > tangentialComponent && std::abs(radialComponent) > transformThreshold) {
+        BoundaryType result = (radialComponent < 0) ? BoundaryType::CONVERGENT : BoundaryType::DIVERGENT;
+        
+        if (debugCount <= 5) {
+            std::cout << "[ClassifyBoundaryType] Result: " << static_cast<int>(result) 
+                      << " (radial=" << radialComponent << " tangential=" << tangentialComponent << ")" << std::endl;
+        }
+        
+        return result;
+    } else if (tangentialComponent > transformThreshold) {
         return BoundaryType::TRANSFORM;
     } else {
         return BoundaryType::PASSIVE;
@@ -544,10 +564,17 @@ void TectonicSimulator::HandleTransformBoundary(PlateBoundary& boundary) {
 }
 
 void TectonicSimulator::CalculateStressAccumulation(float deltaTime) {
-    // Update stress based on plate interactions
+    // Dramatically increased stress accumulation for more pronounced geological features
     for (auto& boundary : boundaries_) {
-        float stressIncrease = boundary.interactionStrength * deltaTime * 0.1f;
+        // Increased base stress rate from 0.1f to 50.0f for dramatic effects
+        float stressIncrease = boundary.interactionStrength * deltaTime * 50.0f;
         boundary.stress = std::min(boundary.stress + stressIncrease, 1.0f);
+        
+        // Debug: log stress accumulation for first few boundaries
+        if (boundary.stress > 0.01f) {
+            std::cout << "[TectonicSimulator] Boundary stress increased: " 
+                      << boundary.stress << " (+" << stressIncrease << ")" << std::endl;
+        }
     }
 }
 
@@ -571,16 +598,35 @@ void TectonicSimulator::GenerateTerrainMaps() {
     
     // Debug: check boundary data
     int totalContactPoints = 0;
+    int convergentCount = 0, divergentCount = 0, transformCount = 0;
+    
     for (size_t i = 0; i < boundaries_.size() && i < 3; i++) {
         const auto& boundary = boundaries_[i];
         totalContactPoints += boundary.contactPoints.size();
+        
+        if (boundary.type == BoundaryType::CONVERGENT) convergentCount++;
+        else if (boundary.type == BoundaryType::DIVERGENT) divergentCount++;
+        else if (boundary.type == BoundaryType::TRANSFORM) transformCount++;
+        
         std::cout << "[TectonicSimulator] Boundary " << i << ": stress=" << boundary.stress 
                   << " contactPoints=" << boundary.contactPoints.size() 
                   << " type=" << static_cast<int>(boundary.type) 
                   << " interactionStrength=" << boundary.interactionStrength << std::endl;
     }
-    std::cout << "[TectonicSimulator] Total contact points across all boundaries: " << totalContactPoints << std::endl;
+    std::cout << "[TectonicSimulator] Total contact points: " << totalContactPoints 
+              << " | Boundary types - Convergent:" << convergentCount 
+              << " Divergent:" << divergentCount << " Transform:" << transformCount << std::endl;
     
+    // Initialize elevation map with base tectonic state (stable = 0m modifier)
+    for (uint32_t y = 0; y < mapResolution_; y++) {
+        for (uint32_t x = 0; x < mapResolution_; x++) {
+            elevationMap_[y][x] = 0.0f; // Start with no tectonic modification
+            terrainMap_[y][x] = TerrainType::STABLE;
+            stressMap_[y][x] = 0.0f;
+        }
+    }
+    
+    // Apply tectonic effects from boundaries with dramatic height variations
     for (uint32_t y = 0; y < mapResolution_; y++) {
         for (uint32_t x = 0; x < mapResolution_; x++) {
             glm::vec2 worldPos((x + 0.5f) * cellSize, (y + 0.5f) * cellSize);
@@ -593,10 +639,12 @@ void TectonicSimulator::GenerateTerrainMaps() {
             for (const auto& boundary : boundaries_) {
                 for (const auto& contactPoint : boundary.contactPoints) {
                     float distance = glm::length(worldPos - contactPoint);
-                    float influenceRadius = worldSize_ * 0.25f; // Increase influence radius to 25% of world size
+                    
+                    // Larger influence radius for more dramatic terrain
+                    float influenceRadius = worldSize_ * 0.35f; // Increased from 0.25f
                     float influence = std::exp(-distance / influenceRadius); // Exponential falloff
                     
-                    if (influence > 0.005f) { // Lower threshold for wider influence (was 0.01f)
+                    if (influence > 0.003f) { // Lower threshold for wider influence
                         float localStress = boundary.stress * influence;
                         if (localStress > maxStress) {
                             maxStress = localStress;
@@ -604,15 +652,18 @@ void TectonicSimulator::GenerateTerrainMaps() {
                             switch (boundary.type) {
                                 case BoundaryType::CONVERGENT:
                                     terrainType = TerrainType::MOUNTAIN;
-                                    elevationMod = localStress * 8000.0f + 500.0f; // Mountains: 500m to 8.5km elevation (dramatic mountain ranges)
+                                    // DRAMATIC mountain ranges: 500m to 1800m elevation
+                                    elevationMod = localStress * 2200.0f + 500.0f; 
                                     break;
                                 case BoundaryType::DIVERGENT:
                                     terrainType = TerrainType::RIFT;
-                                    elevationMod = -localStress * 4000.0f - 300.0f; // Deep rifts: -300m to -4.3km depth (dramatic rift valleys)
+                                    // DRAMATIC deep rifts: -500m to -1700m depth (ocean trenches)
+                                    elevationMod = -localStress * 2000.0f - 500.0f; 
                                     break;
                                 case BoundaryType::TRANSFORM:
                                     terrainType = TerrainType::FAULT;
-                                    elevationMod = localStress * 1200.0f + 100.0f; // Faults: 100m to 1.3km ridges (more prominent fault lines)
+                                    // Moderate fault ridges: 100m to 800m
+                                    elevationMod = localStress * 800.0f + 100.0f; 
                                     break;
                                 default:
                                     terrainType = TerrainType::STABLE;
@@ -629,6 +680,30 @@ void TectonicSimulator::GenerateTerrainMaps() {
             elevationMap_[y][x] = elevationMod;
         }
     }
+    
+    // Debug: Check elevation range and distribution
+    float minElev = elevationMap_[0][0];
+    float maxElev = elevationMap_[0][0];
+    int mountainCount = 0, riftCount = 0, stableCount = 0;
+    
+    for (uint32_t y = 0; y < mapResolution_; y++) {
+        for (uint32_t x = 0; x < mapResolution_; x++) {
+            float elev = elevationMap_[y][x];
+            minElev = std::min(minElev, elev);
+            maxElev = std::max(maxElev, elev);
+            
+            switch (terrainMap_[y][x]) {
+                case TerrainType::MOUNTAIN: mountainCount++; break;
+                case TerrainType::RIFT: riftCount++; break;
+                case TerrainType::STABLE: stableCount++; break;
+                default: break;
+            }
+        }
+    }
+    
+    std::cout << "[TectonicSimulator] Elevation range: " << minElev << "m to " << maxElev 
+              << "m | Terrain distribution - Mountains:" << mountainCount 
+              << " Rifts:" << riftCount << " Stable:" << stableCount << std::endl;
 }
 
 uint32_t TectonicSimulator::GetOptimalPlateCount(float worldSize) const {

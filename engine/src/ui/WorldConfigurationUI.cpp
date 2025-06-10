@@ -607,13 +607,13 @@ void WorldConfigurationUI::validateWorldName() {
         }
     }
     
-    // Check if world already exists
+    // Check if world already exists (informational, not an error since system auto-handles duplicates)
     try {
         VoxelCastle::World::WorldPersistenceManager worldManager;
         if (worldManager.WorldExists(trimmedName)) {
             worldNameExists_ = true;
-            worldNameError_ = "A world with this name already exists";
-            return;
+            worldNameError_ = "A world with this name exists - a unique suffix will be added";
+            // Note: This is informational, not a blocking error
         }
     } catch (const std::exception& e) {
         std::cerr << "[WorldConfigurationUI] Error checking world existence: " << e.what() << std::endl;
@@ -627,7 +627,10 @@ void WorldConfigurationUI::validateWorldName() {
 }
 
 bool WorldConfigurationUI::isWorldNameValid() const {
-    return worldNameError_.empty() && !config_.worldName.empty();
+    // Allow duplicate names since system auto-handles them with unique suffixes
+    // Only block truly invalid names (empty or containing invalid characters)
+    return !config_.worldName.empty() && 
+           (worldNameError_.empty() || worldNameExists_);
 }
 
 void WorldConfigurationUI::initializeWorldGenerationObjects() {

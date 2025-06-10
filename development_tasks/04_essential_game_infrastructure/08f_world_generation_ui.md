@@ -1,6 +1,6 @@
 # World Generation UI Implementation
 *Created: 2025-06-09*
-*Last Updated: 2025-06-10 22:45*
+*Last Updated: 2025-06-10 23:30*
 
 ## Overview
 This document tracks the implementation of the Dwarf Fortress-inspired World Generation UI system for Voxel Castle, split into two separate UIs:
@@ -33,6 +33,12 @@ This split architecture provides better separation of concerns and improved main
 3. **No Auto-Mode Switching**: Always shows elevation instead of switching per phase
 4. **Tectonic Disconnect**: Simulation results not applied to visualization data
 
+**Recent Progress (2025-06-10)**:
+- ✅ **Enhanced Color Mapping**: Updated elevation visualization to cover full ±2048m range with proper underwater/ocean colors
+- ✅ **Removed Sea Level Clamping**: Eliminated `std::max(0.0f, finalHeight)` constraint to allow negative elevations (underwater regions)
+- ✅ **Geological Realism**: Color scheme now includes deep ocean trenches (-1500m+), shallow water (-100m to 0m), beaches/coastlines (0-50m), and extreme peaks (2000m+)
+- 🔄 **Investigating Tectonic Simulation**: Examining why divergent boundaries (rifts) aren't producing enough negative elevation modifiers
+
 **Architecture Decision**: Adopted Dwarf Fortress UX pattern:
 1. **Configuration Phase**: Parameter selection only (no preview) ✅ COMPLETE
 2. **Generation Phase**: Full world map visualization during simulation 🔄 **IMPLEMENTING DYNAMIC VISUALIZATION**
@@ -49,6 +55,7 @@ This split architecture provides better separation of concerns and improved main
 - **Current TODO Tracking**: `/CURRENT_TODO.md`
 - **World Preview Backup**: `/docs/WORLD_PREVIEW_RENDERER_BACKUP.md` - Preserved preview system code and findings
 - **World Height Increase**: `/docs/WORLD_HEIGHT_INCREASE_SUMMARY.md` - Enhanced 4096m height range benefits and technical details
+- **Elevation Color Mapping**: `/docs/ELEVATION_COLOR_MAPPING_ENHANCEMENT.md` - Enhanced ±2048m range visualization and geological realism
 
 ### Core World Generation Tasks
 - **World Generation System Overview**: `/development_tasks/04_essential_game_infrastructure/08c_world_generation_system.md`
@@ -223,29 +230,30 @@ This split architecture provides better separation of concerns and improved main
 - ✅ **UI Rendering**: WorldMapRenderer successfully displays 512x512 heightmap
 - ✅ **Phase Progression**: All 6 phases execute correctly with progress tracking  
 - ✅ **Tectonic Simulation**: Real geological simulation with 15-21 plates running
-- ❌ **Static Visualization**: Same elevation data (29-380m) shown throughout all phases
-- ❌ **Missing Water**: No blue areas for rivers/lakes despite "Water Systems" phase
-- ❌ **No Auto-Switching**: Always elevation mode, never switches to temperature/biome views
+- ✅ **Dynamic Visualization**: Tectonic results now successfully applied (+4717m elevation changes)
+- ✅ **Enhanced Color Mapping**: Full ±2048m elevation range with underwater colors
+- ❌ **Negative Elevation Balance**: Need more reliable deep rifts/ocean trenches from divergent boundaries
+- ❌ **World Name Uniqueness**: Cannot reuse world names (directory conflicts)
 
 **Priority Implementation Tasks**:
 
-1. **🔥 HIGH: Connect Tectonic Results to Visualization**
-   - **Issue**: TectonicSimulator runs correctly but results don't affect heightmap
-   - **Goal**: Apply tectonic stress/elevation changes to terrain visualization
-   - **Files**: `WorldMapRenderer.cpp`, `seed_world_generator.cpp`
-   - **Expected Outcome**: Dramatic terrain changes during Tectonic phase
+1. **🔥 HIGH: Ensure Negative Elevation Modifiers**
+   - **Issue**: Tectonic system produces massive positive elevation (+4717m) but rare negative modifiers
+   - **Goal**: Divergent boundaries should reliably create deep rifts/oceans (negative elevation)
+   - **Status**: Positive modifiers working excellently, need to balance with negative zones
+   - **Expected Outcome**: Deep ocean trenches (-1000m+) alongside mountain ranges
 
-2. **🔥 HIGH: Implement Water Visualization**  
-   - **Issue**: No blue areas despite Water Systems phase execution
-   - **Goal**: Show water bodies (rivers, lakes, oceans) in blue
-   - **Implementation**: Water detection + blue color mapping for low elevations
-   - **Expected Outcome**: Blue areas appear during Water Systems phase
+2. **🔥 HIGH: Implement World Name Uniqueness**  
+   - **Issue**: Cannot reuse world names due to directory conflicts
+   - **Goal**: Allow reusing world names by appending unique suffix (timestamp/UUID)
+   - **Implementation**: Modify world saving to create unique directory names
+   - **Expected Outcome**: User can create multiple worlds with same base name
 
-3. **🔥 HIGH: Add Auto-Mode Switching**
-   - **Issue**: Always shows elevation colors regardless of phase  
-   - **Goal**: Automatically switch visualization modes per generation phase
-   - **Mapping**: Tectonic→Elevation, Water→Hydrology, Climate→Temperature, Biomes→Biome colors
-   - **Expected Outcome**: Visual mode changes automatically as phases progress
+3. **� MED: Verify Water Feature Visualization**
+   - **Issue**: Water features generated but need visual confirmation of blue areas
+   - **Goal**: Ensure underwater thresholds trigger blue coloring correctly  
+   - **Status**: Logic implemented, need runtime verification
+   - **Expected Outcome**: Clear blue water areas during Water Systems phase
 
 4. **🔶 MED: Enhanced Generation Statistics**
    - **Issue**: Statistics show placeholders instead of real data

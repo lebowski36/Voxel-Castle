@@ -135,6 +135,10 @@ private:
     void generateTemperatureData(VoxelCastle::World::SeedWorldGenerator* generator, unsigned int seed);
     void generatePrecipitationData(VoxelCastle::World::SeedWorldGenerator* generator, unsigned int seed);
     
+    // Phase-specific terrain modification methods for dynamic visualization
+    void applyErosionEffects();
+    void generateWaterFeatures();
+    
     void worldDataToColorTexture(unsigned char* colorData);
     void createTextureFromColorData(const unsigned char* colorData, int resolution);
     

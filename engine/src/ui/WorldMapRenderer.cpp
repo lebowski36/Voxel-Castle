@@ -4,6 +4,7 @@
 #include "world/tectonic_simulator.h"
 #include <iostream>
 #include <algorithm>
+#include <vector>
 #include <glad/glad.h>
 
 namespace VoxelEngine::UI {
@@ -61,17 +62,63 @@ void WorldMapRenderer::generateWorldMap(VoxelCastle::World::SeedWorldGenerator* 
     std::cout << "[WorldMapRenderer] Generating world map - Phase: " << getGenerationPhaseName(phase) 
               << ", Mode: " << getVisualizationModeName(mode) << std::endl;
     
-    // Generate data based on current phase and requirements
-    if (phase == GenerationPhase::TECTONICS || phase == GenerationPhase::EROSION || 
-        mode == VisualizationMode::ELEVATION) {
-        generateElevationData(generator, worldSeed);
+    // Generate data based on current phase - make visualization dynamic
+    switch (phase) {
+        case GenerationPhase::TECTONICS:
+            // Pure tectonic terrain - dramatic geological features
+            generateElevationData(generator, worldSeed);
+            break;
+        case GenerationPhase::EROSION:
+            // Apply erosion effects to existing terrain
+            generateElevationData(generator, worldSeed);
+            applyErosionEffects();
+            break;
+        case GenerationPhase::HYDROLOGY:
+            // Generate water features and modify terrain for rivers/lakes
+            generateElevationData(generator, worldSeed);
+            applyErosionEffects();
+            generateWaterFeatures();
+            break;
+        case GenerationPhase::CLIMATE:
+            // Focus on temperature and precipitation
+            generateElevationData(generator, worldSeed);
+            applyErosionEffects();
+            generateWaterFeatures();
+            generateTemperatureData(generator, worldSeed);
+            generatePrecipitationData(generator, worldSeed);
+            break;
+        case GenerationPhase::BIOMES:
+            // Generate biome-based terrain modifications
+            generateElevationData(generator, worldSeed);
+            applyErosionEffects();
+            generateWaterFeatures();
+            generateTemperatureData(generator, worldSeed);
+            generatePrecipitationData(generator, worldSeed);
+            break;
+        case GenerationPhase::CIVILIZATION:
+            // Final terrain with structure placement areas
+            generateElevationData(generator, worldSeed);
+            applyErosionEffects();
+            generateWaterFeatures();
+            generateTemperatureData(generator, worldSeed);
+            generatePrecipitationData(generator, worldSeed);
+            break;
+        case GenerationPhase::COMPLETE:
+            // Final integrated view - all features combined
+            generateElevationData(generator, worldSeed);
+            applyErosionEffects();
+            generateWaterFeatures();
+            generateTemperatureData(generator, worldSeed);
+            generatePrecipitationData(generator, worldSeed);
+            break;
     }
     
-    if (phase == GenerationPhase::CLIMATE || mode == VisualizationMode::TEMPERATURE) {
+    // Handle additional visualization modes
+    if (mode == VisualizationMode::TEMPERATURE && phase != GenerationPhase::CLIMATE) {
         generateTemperatureData(generator, worldSeed);
     }
     
-    if (phase == GenerationPhase::CLIMATE || mode == VisualizationMode::PRECIPITATION) {
+    if (mode == VisualizationMode::PRECIPITATION && phase != GenerationPhase::CLIMATE) {
         generatePrecipitationData(generator, worldSeed);
     }
     
@@ -207,8 +254,8 @@ void WorldMapRenderer::generateElevationData(VoxelCastle::World::SeedWorldGenera
                               << "m Final:" << finalHeight << "m" << std::endl;
                 }
                 
-                // Ensure realistic height bounds (prevent negative elevations for now)
-                finalHeight = std::max(0.0f, finalHeight);
+                // Allow full elevation range including underwater regions (±2048m)
+                finalHeight = std::clamp(finalHeight, -2048.0f, 2048.0f);
             } else {
                 // Debug: log that we're using base terrain only
                 if (x < 3 && y < 3) {
@@ -231,6 +278,118 @@ void WorldMapRenderer::generateElevationData(VoxelCastle::World::SeedWorldGenera
     }
     
     std::cout << "[WorldMapRenderer] Elevation range: " << minHeight << "m to " << maxHeight << "m" << std::endl;
+}
+
+void WorldMapRenderer::applyErosionEffects() {
+    if (!elevationData_) return;
+    
+    std::cout << "[WorldMapRenderer] Applying erosion effects..." << std::endl;
+    
+    // Apply erosion smoothing - reduce peak heights and fill valleys slightly
+    int dataSize = resolution_ * resolution_;
+    float* tempData = new float[dataSize];
+    
+    // Copy original data
+    for (int i = 0; i < dataSize; i++) {
+        tempData[i] = elevationData_[i];
+    }
+    
+    // Apply erosion: smooth terrain by averaging with neighbors and reducing extremes
+    for (int y = 1; y < resolution_ - 1; y++) {
+        for (int x = 1; x < resolution_ - 1; x++) {
+            int index = y * resolution_ + x;
+            
+            // Get neighboring heights
+            float center = tempData[index];
+            float neighbors = tempData[(y-1) * resolution_ + x] +     // North
+                             tempData[(y+1) * resolution_ + x] +     // South  
+                             tempData[y * resolution_ + (x-1)] +     // West
+                             tempData[y * resolution_ + (x+1)];      // East
+            
+            float avgNeighbor = neighbors / 4.0f;
+            
+            // Erosion effect: blend with neighbors and reduce extreme heights
+            float erosionFactor = 0.15f; // 15% erosion effect
+            float erodedHeight = center * (1.0f - erosionFactor) + avgNeighbor * erosionFactor;
+            
+            // Additional height reduction for very high peaks (simulating weathering)
+            if (erodedHeight > 600.0f) {
+                float peakReduction = (erodedHeight - 600.0f) * 0.1f; // 10% reduction above 600m
+                erodedHeight -= peakReduction;
+            }
+            
+            elevationData_[index] = erodedHeight;
+        }
+    }
+    
+    delete[] tempData;
+    
+    // Find new height range after erosion
+    float minHeight = elevationData_[0];
+    float maxHeight = elevationData_[0];
+    for (int i = 1; i < dataSize; i++) {
+        minHeight = std::min(minHeight, elevationData_[i]);
+        maxHeight = std::max(maxHeight, elevationData_[i]);
+    }
+    
+    std::cout << "[WorldMapRenderer] Erosion complete - new range: " << minHeight << "m to " << maxHeight << "m" << std::endl;
+}
+
+void WorldMapRenderer::generateWaterFeatures() {
+    if (!elevationData_) return;
+    
+    std::cout << "[WorldMapRenderer] Generating water features..." << std::endl;
+    
+    // Create lakes and rivers by lowering elevation in certain areas
+    int dataSize = resolution_ * resolution_;
+    
+    // Find the lowest 15% of terrain for potential water features
+    std::vector<std::pair<float, int>> heightIndices;
+    for (int i = 0; i < dataSize; i++) {
+        heightIndices.push_back({elevationData_[i], i});
+    }
+    
+    std::sort(heightIndices.begin(), heightIndices.end());
+    
+    // Convert the lowest 10% of areas to water bodies (lakes/rivers)
+    int waterPoints = static_cast<int>(dataSize * 0.10f);
+    
+    for (int i = 0; i < waterPoints; i++) {
+        int index = heightIndices[i].second;
+        float currentHeight = heightIndices[i].first;
+        
+        // Lower these areas to create water bodies
+        // Create significant depressions (50-150m below original)
+        float waterDepth = 50.0f + (i % 100); // Varying depths 50-150m
+        elevationData_[index] = currentHeight - waterDepth;
+        
+        // Also lower nearby areas to create natural water boundaries
+        int y = index / resolution_;
+        int x = index % resolution_;
+        
+        for (int dy = -1; dy <= 1; dy++) {
+            for (int dx = -1; dx <= 1; dx++) {
+                int ny = y + dy;
+                int nx = x + dx;
+                if (ny >= 0 && ny < resolution_ && nx >= 0 && nx < resolution_) {
+                    int neighborIndex = ny * resolution_ + nx;
+                    float neighborDepth = waterDepth * 0.3f; // Gentler slope around water
+                    elevationData_[neighborIndex] = std::min(elevationData_[neighborIndex], 
+                                                           currentHeight - neighborDepth);
+                }
+            }
+        }
+    }
+    
+    // Find new height range after water feature generation
+    float minHeight = elevationData_[0];
+    float maxHeight = elevationData_[0];
+    for (int i = 0; i < dataSize; i++) {
+        minHeight = std::min(minHeight, elevationData_[i]);
+        maxHeight = std::max(maxHeight, elevationData_[i]);
+    }
+    
+    std::cout << "[WorldMapRenderer] Water features complete - new range: " << minHeight << "m to " << maxHeight << "m" << std::endl;
 }
 
 void WorldMapRenderer::generateTemperatureData(VoxelCastle::World::SeedWorldGenerator* generator, unsigned int seed) {
@@ -315,30 +474,39 @@ void WorldMapRenderer::worldDataToColorTexture(unsigned char* colorData) {
 }
 
 void WorldMapRenderer::elevationToColor(float heightMeters, GenerationPhase phase, unsigned char& r, unsigned char& g, unsigned char& b) {
-    // Base elevation color scheme (reused from WorldPreviewRenderer backup)
-    if (heightMeters < -200.0f) {
+    // Updated elevation color scheme for dramatic geological features (±2048m range)
+    if (heightMeters < -1500.0f) {
+        // Deep ocean trenches
+        r = 0; g = 0; b = 100; // Very dark blue
+    } else if (heightMeters < -500.0f) {
         // Deep ocean
         r = 0; g = 0; b = 139; // Dark blue
-    } else if (heightMeters < -50.0f) {
+    } else if (heightMeters < -100.0f) {
         // Ocean
         r = 0; g = 100; b = 200; // Medium blue
     } else if (heightMeters < 0.0f) {
         // Shallow water  
         r = 100; g = 150; b = 255; // Light blue
-    } else if (heightMeters < 5.0f) {
+    } else if (heightMeters < 50.0f) {
         // Beach/coastline
         r = 238; g = 203; b = 173; // Tan
-    } else if (heightMeters < 100.0f) {
+    } else if (heightMeters < 200.0f) {
         // Lowlands/plains
         r = 34; g = 139; b = 34; // Forest green
-    } else if (heightMeters < 300.0f) {
+    } else if (heightMeters < 500.0f) {
         // Hills
         r = 107; g = 142; b = 35; // Olive drab
-    } else if (heightMeters < 600.0f) {
-        // Mountains
+    } else if (heightMeters < 1000.0f) {
+        // Low mountains
         r = 139; g = 101; b = 54; // Brown
+    } else if (heightMeters < 1500.0f) {
+        // High mountains
+        r = 160; g = 140; b = 120; // Light brown
+    } else if (heightMeters < 2000.0f) {
+        // Very high peaks
+        r = 200; g = 200; b = 200; // Light gray
     } else {
-        // High peaks
+        // Extreme peaks (above 2000m)
         r = 255; g = 250; b = 250; // Snow white
     }
     
@@ -410,23 +578,48 @@ void WorldMapRenderer::createTextureFromColorData(const unsigned char* colorData
         glDeleteTextures(1, &worldTexture_);
         worldTexture_ = 0;
     }
-    
+
+    // Check for OpenGL errors before proceeding
+    GLenum error = glGetError();
+    if (error != GL_NO_ERROR) {
+        std::cerr << "[WorldMapRenderer] OpenGL error before texture creation: " << error << std::endl;
+        return;
+    }
+
     // Generate new texture
     glGenTextures(1, &worldTexture_);
-    glBindTexture(GL_TEXTURE_2D, worldTexture_);
+    error = glGetError();
+    if (error != GL_NO_ERROR) {
+        std::cerr << "[WorldMapRenderer] Error generating texture: " << error << std::endl;
+        return;
+    }
     
+    glBindTexture(GL_TEXTURE_2D, worldTexture_);
+    error = glGetError();
+    if (error != GL_NO_ERROR) {
+        std::cerr << "[WorldMapRenderer] Error binding texture: " << error << std::endl;
+        return;
+    }
+
     // Set texture parameters
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-    
+
     // Upload texture data
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, resolution, resolution, 0, GL_RGBA, GL_UNSIGNED_BYTE, colorData);
-    
+    error = glGetError();
+    if (error != GL_NO_ERROR) {
+        std::cerr << "[WorldMapRenderer] Error uploading texture data: " << error << std::endl;
+        glDeleteTextures(1, &worldTexture_);
+        worldTexture_ = 0;
+        return;
+    }
+
     // Unbind texture
     glBindTexture(GL_TEXTURE_2D, 0);
-    
+
     std::cout << "[WorldMapRenderer] Created texture ID " << worldTexture_ 
               << " with resolution " << resolution << "x" << resolution << std::endl;
 }

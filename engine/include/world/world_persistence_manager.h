@@ -44,7 +44,7 @@ public:
     // World loading and listing
     std::vector<WorldInfo> GetWorldList();
     bool LoadWorld(const std::string& worldName);
-    bool WorldExists(const std::string& worldName);
+    bool WorldExists(const std::string& worldName) const;
     
     // World directory management
     std::string GetWorldsDirectory() const;
@@ -77,6 +77,7 @@ private:
     
     // Internal helpers
     std::string SanitizeWorldName(const std::string& worldName) const;
+    std::string GenerateUniqueWorldName(const std::string& baseName) const;
     bool IsValidWorldDirectory(const std::string& worldPath) const;
     void InitializeWorldsDirectory();
 };

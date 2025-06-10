@@ -4,6 +4,7 @@
 #include <random>
 #include <cassert>
 #include <cstring>
+#include <iostream>
 
 namespace VoxelCastle {
 
@@ -244,18 +245,25 @@ glm::vec2 GenerateTypicalMovement(PlateType type, uint32_t seed) {
     std::uniform_real_distribution<float> angleDist(0.0f, 2.0f * 3.14159f);
     std::uniform_real_distribution<float> speedDist;
     
+    // Use a different angle distribution that ensures more directional diversity
     float angle = angleDist(rng);
+    
+    // Add some bias to create more varied movement patterns
+    // Different plates get different preferred directions to create diverse boundaries
+    float plateBias = (seed % 8) * (3.14159f / 4.0f); // 8 different preferred directions
+    angle += plateBias;
+    
     float speed;
     
     switch (type) {
         case PlateType::OCEANIC:
-            speedDist = std::uniform_real_distribution<float>(2.0f, 10.0f); // 2-10 cm/year
+            speedDist = std::uniform_real_distribution<float>(3.0f, 12.0f); // Faster, more variable
             break;
         case PlateType::CONTINENTAL:
-            speedDist = std::uniform_real_distribution<float>(1.0f, 5.0f);  // 1-5 cm/year
+            speedDist = std::uniform_real_distribution<float>(1.0f, 6.0f);  // Slower but with some variation
             break;
         case PlateType::MICROPLATE:
-            speedDist = std::uniform_real_distribution<float>(0.5f, 15.0f); // Highly variable
+            speedDist = std::uniform_real_distribution<float>(0.5f, 20.0f); // Highly variable speed
             break;
         default:
             speedDist = std::uniform_real_distribution<float>(1.0f, 5.0f);
@@ -267,7 +275,23 @@ glm::vec2 GenerateTypicalMovement(PlateType type, uint32_t seed) {
     // Convert from cm/year to km/million years
     speed *= 10.0f; // 1 cm/year = 10 km/million years
     
-    return glm::vec2(std::cos(angle) * speed, std::sin(angle) * speed);
+    // Add some random variation to ensure plates don't all move in similar patterns
+    std::uniform_real_distribution<float> variationDist(-0.3f, 0.3f);
+    float angleVariation = variationDist(rng);
+    angle += angleVariation;
+    
+    glm::vec2 movement = glm::vec2(std::cos(angle) * speed, std::sin(angle) * speed);
+    
+    // Debug output for first few plates to verify movement diversity
+    if (seed % 100 < 5) {
+        std::cout << "[GenerateTypicalMovement] Plate " << seed 
+                  << " type=" << static_cast<int>(type) 
+                  << " angle=" << angle 
+                  << " speed=" << speed 
+                  << " movement=(" << movement.x << "," << movement.y << ")" << std::endl;
+    }
+    
+    return movement;
 }
 
 } // namespace VoxelCastle

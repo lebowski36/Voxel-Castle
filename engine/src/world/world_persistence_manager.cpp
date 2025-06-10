@@ -3,6 +3,9 @@
 #include <iostream>
 #include <algorithm>
 #include <cctype>
+#include <chrono>
+#include <iomanip>
+#include <sstream>
 
 namespace fs = std::filesystem;
 
@@ -25,14 +28,11 @@ bool WorldPersistenceManager::CreateWorld(const std::string& worldName, uint64_t
             return false;
         }
         
-        // Check if world already exists
-        if (WorldExists(sanitizedName)) {
-            std::cerr << "[ERROR] World already exists: " << sanitizedName << std::endl;
-            return false;
-        }
+        // Generate unique world name if duplicate exists
+        std::string uniqueWorldName = GenerateUniqueWorldName(sanitizedName);
         
         // Create world path
-        std::string worldPath = GetWorldPath(sanitizedName);
+        std::string worldPath = GetWorldPath(uniqueWorldName);
         
         // Create world directories
         if (!CreateWorldDirectories(worldPath)) {
@@ -40,7 +40,7 @@ bool WorldPersistenceManager::CreateWorld(const std::string& worldName, uint64_t
             return false;
         }
         
-        // Create world metadata
+        // Create world metadata (use original name for display, unique name for directory)
         WorldMetadata metadata(worldName, seed);
         metadata.gameMode = gameMode;
         metadata.worldType = worldType;
@@ -79,14 +79,11 @@ bool WorldPersistenceManager::CreateWorld(const std::string& worldName, const Wo
             return false;
         }
         
-        // Check if world already exists
-        if (WorldExists(sanitizedName)) {
-            std::cerr << "[ERROR] World already exists: " << sanitizedName << std::endl;
-            return false;
-        }
+        // Generate unique world name if duplicate exists
+        std::string uniqueWorldName = GenerateUniqueWorldName(sanitizedName);
         
         // Create world path
-        std::string worldPath = GetWorldPath(sanitizedName);
+        std::string worldPath = GetWorldPath(uniqueWorldName);
         
         // Create world directories
         if (!CreateWorldDirectories(worldPath)) {
@@ -205,7 +202,7 @@ bool WorldPersistenceManager::LoadWorld(const std::string& worldName) {
     }
 }
 
-bool WorldPersistenceManager::WorldExists(const std::string& worldName) {
+bool WorldPersistenceManager::WorldExists(const std::string& worldName) const {
     std::string worldPath = GetWorldPath(worldName);
     return IsValidWorldDirectory(worldPath);
 }
@@ -341,6 +338,38 @@ void WorldPersistenceManager::InitializeWorldsDirectory() {
         // Fallback to current directory
         worldsDirectory_ = "./";
     }
+}
+
+std::string WorldPersistenceManager::GenerateUniqueWorldName(const std::string& baseName) const {
+    std::string candidateName = baseName;
+    
+    // If the name doesn't exist, use it as-is
+    if (!WorldExists(candidateName)) {
+        return candidateName;
+    }
+    
+    // Generate unique name with timestamp suffix
+    auto now = std::chrono::system_clock::now();
+    auto time_t = std::chrono::system_clock::to_time_t(now);
+    auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(
+        now.time_since_epoch()) % 1000;
+    
+    std::stringstream ss;
+    ss << std::put_time(std::localtime(&time_t), "%Y%m%d_%H%M%S");
+    ss << "_" << std::setfill('0') << std::setw(3) << ms.count();
+    
+    std::string uniqueName = baseName + "_" + ss.str();
+    
+    // Ensure it's still within reasonable length limits
+    if (uniqueName.length() > 50) {
+        // Truncate base name to make room for timestamp
+        size_t maxBaseLength = 50 - ss.str().length() - 1; // -1 for underscore
+        std::string truncatedBase = baseName.substr(0, maxBaseLength);
+        uniqueName = truncatedBase + "_" + ss.str();
+    }
+    
+    std::cout << "[INFO] Generated unique world name: " << uniqueName << " (from: " << baseName << ")" << std::endl;
+    return uniqueName;
 }
 
 } // namespace World
