@@ -4,6 +4,11 @@
 #include <cmath>
 #include <algorithm>
 #include <random>
+#include <execution>  // For parallel algorithms
+#include <vector>
+#include <numeric>    // For std::iota
+
+using namespace VoxelCastle::World;
 
 namespace VoxelCastle {
 namespace World {
@@ -36,16 +41,16 @@ void GeologicalSimulator::initialize(uint64_t seed) {
     // Estimate total simulation time based on quality preset
     switch (config_.preset) {
         case GeologicalPreset::PERFORMANCE:
-            totalSimulationTime_ = 120.0f; // 2 minutes
+            totalSimulationTime_ = 120.0f; // 2 minutes - fast but watchable
             break;
         case GeologicalPreset::BALANCED:
-            totalSimulationTime_ = 300.0f; // 5 minutes
+            totalSimulationTime_ = 300.0f; // 5 minutes - ideal for watching geological evolution
             break;
         case GeologicalPreset::QUALITY:
-            totalSimulationTime_ = 720.0f; // 12 minutes
+            totalSimulationTime_ = 720.0f; // 12 minutes - detailed geological processes
             break;
         case GeologicalPreset::ULTRA_REALISM:
-            totalSimulationTime_ = 1800.0f; // 30 minutes
+            totalSimulationTime_ = 1800.0f; // 30 minutes - maximum realism
             break;
         case GeologicalPreset::CUSTOM:
             totalSimulationTime_ = config_.custom.simulationDetailLevel * 0.3f;
@@ -146,30 +151,35 @@ void GeologicalSimulator::runFullSimulation(std::function<void(const PhaseInfo&)
 void GeologicalSimulator::simulateTectonicPhase(float durationMillionYears) {
     std::cout << "[GeologicalSimulator] Tectonic Phase: Simulating " << durationMillionYears << " million years" << std::endl;
     
-    int steps = config_.getSimulationSteps() / 3; // 1/3 of total steps for tectonic phase
+    int steps = std::max(30, config_.getSimulationSteps() / 3); // At least 30 steps for meaningful geological detail
     float timeStep = durationMillionYears / steps;
     
     std::cout << "[GeologicalSimulator] Tectonic simulation: " << steps << " steps, " << timeStep << " million years per step" << std::endl;
     
     for (int step = 0; step < steps; ++step) {
-        // Update progress
-        float progress = static_cast<float>(step) / steps;
-        updateProgress(progress, "Mantle Convection & Plate Movement");
+        // Update progress less frequently for better performance
+        if (steps <= 5 || step % std::max(1, steps/20) == 0) { // Update 20 times max during phase
+            float progress = static_cast<float>(step) / steps;
+            updateProgress(progress, "Mantle Convection & Plate Movement");
+        }
         
         // Simulate geological processes with timing info
-        if (step % 5 == 0) { // Every 5th step, print progress
-            std::cout << "[GeologicalSimulator] Tectonic step " << step << "/" << steps << " (" << (progress*100) << "%)" << std::endl;
+        if (steps <= 5 || step % std::max(1, steps/5) == 0) { // Every 1/5th of steps, print progress
+            std::cout << "[GeologicalSimulator] Tectonic step " << step << "/" << steps << " (" << ((step*100)/steps) << "%)" << std::endl;
         }
         
         simulateMantleConvection(timeStep);
         simulatePlateMovement(timeStep);
         simulateMountainBuilding(timeStep);
         
-        if (step % (steps / 4) == 0) {
+        if (step % std::max(1, steps / 4) == 0) {
             simulateVolcanicActivity(timeStep * 4); // Less frequent volcanic activity
         }
         
-        updatePerformanceMetrics();
+        // Update performance metrics less frequently
+        if (steps <= 10 || step % std::max(1, steps/10) == 0) {
+            updatePerformanceMetrics();
+        }
     }
     
     std::cout << "[GeologicalSimulator] Tectonic phase completed" << std::endl;
@@ -178,7 +188,7 @@ void GeologicalSimulator::simulateTectonicPhase(float durationMillionYears) {
 void GeologicalSimulator::simulateErosionPhase(float durationThousandYears) {
     std::cout << "[GeologicalSimulator] Erosion Phase: Simulating " << durationThousandYears << " thousand years" << std::endl;
     
-    int steps = config_.getSimulationSteps() / 3; // 1/3 of total steps for erosion phase
+    int steps = std::max(30, config_.getSimulationSteps() / 3); // At least 30 steps for meaningful geological detail
     float timeStep = durationThousandYears / steps;
     
     for (int step = 0; step < steps; ++step) {
@@ -191,7 +201,7 @@ void GeologicalSimulator::simulateErosionPhase(float durationThousandYears) {
         simulatePhysicalErosion(timeStep);
         simulateRiverSystems(timeStep);
         
-        if (config_.custom.enableGlacialFeatures && step % (steps / 8) == 0) {
+        if (config_.custom.enableGlacialFeatures && step % std::max(1, steps / 8) == 0) {
             simulateGlacialCarving(timeStep * 8); // Occasional glacial periods
         }
         
@@ -202,7 +212,7 @@ void GeologicalSimulator::simulateErosionPhase(float durationThousandYears) {
 void GeologicalSimulator::simulateDetailPhase(float durationHundredYears) {
     std::cout << "[GeologicalSimulator] Detail Phase: Simulating " << durationHundredYears << " hundred years" << std::endl;
     
-    int steps = config_.getSimulationSteps() / 3; // 1/3 of total steps for detail phase
+    int steps = std::max(10, config_.getSimulationSteps() / 3); // At least 10 steps for meaningful detail
     float timeStep = durationHundredYears / steps;
     
     for (int step = 0; step < steps; ++step) {
@@ -218,7 +228,7 @@ void GeologicalSimulator::simulateDetailPhase(float durationHundredYears) {
             simulateJointFormation(timeStep);
         }
         
-        if (config_.custom.enableCaveSystems && step % (steps / 4) == 0) {
+        if (config_.custom.enableCaveSystems && step % std::max(1, steps / 4) == 0) {
             simulateCaveGeneration(timeStep * 4);
         }
         
@@ -256,70 +266,104 @@ void GeologicalSimulator::simulateMantleConvection(float timeStep) {
         return 1.0f; // Uniform resistance for mantle convection
     };
     
-    // Scale convection based on quality preset
+    // Scale convection based on quality preset - realistic geological scales
     int numCells, maxRange;
     switch (config_.preset) {
         case GeologicalPreset::PERFORMANCE:
-            numCells = 2; // Minimal convection cells
-            maxRange = 50000; // 50km max range
+            numCells = 8; // Basic but visible convection patterns
+            maxRange = 50000; // 50km max range - continental scale features
             break;
         case GeologicalPreset::BALANCED:
-            numCells = 4; 
-            maxRange = 200000; // 200km max range
+            numCells = 16; // Good number of convection patterns
+            maxRange = 100000; // 100km max range - realistic mantle cell size
+            break;
+        case GeologicalPreset::QUALITY:
+            numCells = 24; // Detailed convection patterns
+            maxRange = 200000; // 200km max range - large geological features
             break;
         default:
-            numCells = 8; 
-            maxRange = 500000; // 500km max range
+            numCells = 32; // Maximum detail convection
+            maxRange = 300000; // 300km max range - continental-scale features
             break;
     }
     
-    // Create convection cells
-    for (int i = 0; i < numCells; ++i) {
-        float x = randomRange(0, worldSizeKm_ * 1000.0f);
-        float z = randomRange(0, worldSizeKm_ * 1000.0f);
-        float strength = randomRange(0.5f, 2.0f) * timeStep;
-        float range = randomRange(maxRange * 0.5f, maxRange); // Variable range within limits
+    // Ensure we don't go beyond field boundaries
+    float maxWorldDistance = std::min(worldSizeKm_ * 1000.0f * 0.4f, static_cast<float>(maxRange));
+    
+    // Create convection cells with parallel processing
+    std::vector<int> cellIndices(numCells);
+    std::iota(cellIndices.begin(), cellIndices.end(), 0);
+    
+    std::for_each(std::execution::par_unseq, cellIndices.begin(), cellIndices.end(), [&](int i) {
+        // Ensure coordinates are well within bounds
+        float margin = maxWorldDistance * 0.5f;
+        float x = randomRange(margin, (worldSizeKm_ * 1000.0f) - margin);
+        float z = randomRange(margin, (worldSizeKm_ * 1000.0f) - margin);
+        float strength = randomRange(0.1f, 0.8f) * timeStep; // More conservative strength values
+        float range = randomRange(maxWorldDistance * 0.3f, maxWorldDistance); // Variable range within safe limits
+        
+        // Ensure range doesn't exceed world boundaries and clamp strength
+        range = std::min(range, maxWorldDistance);
+        strength = std::max(0.001f, std::min(2.0f, strength)); // Clamp strength to reasonable bounds
         
         mantleStress_->propagateValue(strength, x, z, range, resistance);
-    }
+    });
 }
 
 void GeologicalSimulator::simulatePlateMovement(float timeStep) {
-    // Transfer mantle stress to crust stress
-    for (int z = 0; z < mantleStress_->getHeight(); ++z) {
-        for (int x = 0; x < mantleStress_->getWidth(); ++x) {
-            float mantleValue = mantleStress_->getSample(x, z);
-            float transferredStress = mantleValue * timeStep * 0.1f;
-            crustStress_->addToSample(x, z, transferredStress);
+    // Transfer mantle stress to crust stress with bounds checking
+    int height = mantleStress_->getHeight();
+    int width = mantleStress_->getWidth();
+    
+    // Simple sequential processing for now to avoid segfaults
+    for (int z = 0; z < height; ++z) {
+        for (int x = 0; x < width; ++x) {        float mantleValue = mantleStress_->getSample(x, z);
+        float transferredStress = mantleValue * timeStep * 0.05f; // Reduced transfer rate
+        
+        // Clamp stress values to prevent overflow
+        transferredStress = std::max(-10.0f, std::min(10.0f, transferredStress));
+        crustStress_->addToSample(x, z, transferredStress);
         }
     }
 }
 
 void GeologicalSimulator::simulateMountainBuilding(float timeStep) {
-    // Convert crust stress to elevation changes
-    for (int z = 0; z < crustStress_->getHeight(); ++z) {
-        for (int x = 0; x < crustStress_->getWidth(); ++x) {
+    // Convert crust stress to elevation changes with bounds checking
+    int height = crustStress_->getHeight();
+    int width = crustStress_->getWidth();
+    
+    // Simple sequential processing for now to avoid segfaults
+    for (int z = 0; z < height; ++z) {
+        for (int x = 0; x < width; ++x) {
             float stress = crustStress_->getSample(x, z);
             float rockHard = rockHardness_->getSample(x, z);
+                 if (stress > 0.5f) { // Compression threshold
+            float uplift = stress * timeStep * 5.0f / rockHard; // Reduced uplift rate
             
-            if (stress > 0.5f) { // Compression threshold
-                float uplift = stress * timeStep * 10.0f / rockHard; // Harder rock uplifts less
-                elevationField_->addToSample(x, z, uplift);
-                
-                // Determine new rock type based on pressure and temperature
-                float currentElevation = elevationField_->getSample(x, z);
-                if (currentElevation > 2000.0f && stress > 3.0f) {
-                    rockTypes_->setSample(x, z, RockType::METAMORPHIC_SLATE);
-                    rockHardness_->setSample(x, z, 9.0f);
-                }
+            // Clamp uplift to prevent unrealistic mountain growth
+            uplift = std::max(-50.0f, std::min(50.0f, uplift));
+            elevationField_->addToSample(x, z, uplift);
+            
+            // Determine new rock type based on pressure and temperature
+            float currentElevation = elevationField_->getSample(x, z);
+            
+            // Clamp elevation to reasonable bounds
+            currentElevation = std::max(-5000.0f, std::min(10000.0f, currentElevation));
+            elevationField_->setSample(x, z, currentElevation);
+            
+            if (currentElevation > 2000.0f && stress > 3.0f) {
+                rockTypes_->setSample(x, z, RockType::METAMORPHIC_SLATE);
+                rockHardness_->setSample(x, z, 9.0f);
             }
+        }
         }
     }
 }
 
 void GeologicalSimulator::simulateVolcanicActivity(float timeStep) {
-    // Create volcanic hotspots
-    int numVolcanoes = 2 + static_cast<int>(random01() * 3); // 2-5 volcanic events
+    // Create volcanic hotspots - realistic number for geological realism
+    int numVolcanoes = 3 + static_cast<int>(random01() * 5); // 3-8 volcanic events for proper geological activity
+    
     for (int i = 0; i < numVolcanoes; ++i) {
         float x = randomRange(0, worldSizeKm_ * 1000.0f);
         float z = randomRange(0, worldSizeKm_ * 1000.0f);
@@ -328,124 +372,202 @@ void GeologicalSimulator::simulateVolcanicActivity(float timeStep) {
         int gridX = static_cast<int>(x / elevationField_->getSampleSpacing());
         int gridZ = static_cast<int>(z / elevationField_->getSampleSpacing());
         
+        // Validate grid coordinates
+        if (gridX < 0 || gridX >= elevationField_->getWidth() || 
+            gridZ < 0 || gridZ >= elevationField_->getHeight()) {
+            continue;
+        }
+        
         // Create volcanic cone
-        float volcanoHeight = randomRange(500.0f, 2000.0f);
-        elevationField_->addToSample(gridX, gridZ, volcanoHeight);            rockTypes_->setSample(gridX, gridZ, RockType::IGNEOUS_BASALT);
+        float volcanoHeight = randomRange(500.0f, 2500.0f); // Realistic volcano height range
+        elevationField_->addToSample(gridX, gridZ, volcanoHeight);
+        rockTypes_->setSample(gridX, gridZ, RockType::IGNEOUS_BASALT);
         rockHardness_->setSample(gridX, gridZ, 7.0f);
         
-        // Volcanic influence radius
-        int radius = 5 + static_cast<int>(random01() * 10);
+        // Volcanic influence radius - realistic geological impact
+        int radius = 8 + static_cast<int>(random01() * 15); // Larger radius for proper geological impact
+        
+        // Parallel processing of volcanic influence
+        std::vector<std::pair<int, int>> coords;
         for (int dz = -radius; dz <= radius; ++dz) {
             for (int dx = -radius; dx <= radius; ++dx) {
                 float distance = std::sqrt(dx*dx + dz*dz);
                 if (distance <= radius) {
-                    float heightMod = volcanoHeight * (1.0f - distance / radius) * 0.3f;
-                    elevationField_->addToSample(gridX + dx, gridZ + dz, heightMod);
+                    int targetX = gridX + dx;
+                    int targetZ = gridZ + dz;
+                    if (targetX >= 0 && targetX < elevationField_->getWidth() && 
+                        targetZ >= 0 && targetZ < elevationField_->getHeight()) {
+                        coords.push_back({targetX, targetZ});
+                    }
                 }
             }
         }
+        
+        std::for_each(std::execution::par_unseq, coords.begin(), coords.end(), [&](const auto& coord) {
+            int targetX = coord.first;
+            int targetZ = coord.second;
+            float dx = targetX - gridX;
+            float dz = targetZ - gridZ;
+            float distance = std::sqrt(dx*dx + dz*dz);
+            float heightMod = volcanoHeight * (1.0f - distance / radius) * 0.3f;
+            elevationField_->addToSample(targetX, targetZ, heightMod);
+        });
     }
 }
 
 void GeologicalSimulator::simulateChemicalWeathering(float timeStep) {
     if (!config_.custom.enableChemicalWeathering) return;
     
-    for (int z = 0; z < elevationField_->getHeight(); ++z) {
-        for (int x = 0; x < elevationField_->getWidth(); ++x) {
-            float elevation = elevationField_->getSample(x, z);
-            RockType rockType = rockTypes_->getSample(x, z);
-            
-            // Chemical weathering is stronger in warm, wet conditions
-            float temperature = 15.0f - (elevation * 0.006f);
-            float rainfall = 500.0f + elevation * 0.1f;
-            
-            float weatheringRate = 0.0f;
-            switch (rockType) {
-                case RockType::SEDIMENTARY_LIMESTONE:
-                    weatheringRate = 0.5f; // Limestone dissolves easily
-                    break;
-                case RockType::IGNEOUS_GRANITE:
-                    weatheringRate = 0.1f; // Granite is resistant
-                    break;
-                case RockType::SEDIMENTARY_SANDSTONE:
-                    weatheringRate = 0.3f; // Moderate weathering
-                    break;
-                default:
-                    weatheringRate = 0.2f;
-                    break;
-            }
-            
-            if (temperature > 0 && rainfall > 100) {
-                float climateMultiplier = (temperature / 30.0f) * (rainfall / 1000.0f);
-                float erosion = weatheringRate * timeStep * climateMultiplier;
-                elevationField_->addToSample(x, z, -erosion);
-            }
+    int height = elevationField_->getHeight();
+    int width = elevationField_->getWidth();
+    
+    // Create index range for parallel processing
+    std::vector<int> indices(height * width);
+    std::iota(indices.begin(), indices.end(), 0);
+    
+    // Parallel processing of chemical weathering
+    std::for_each(std::execution::par_unseq, indices.begin(), indices.end(), [&](int idx) {
+        int z = idx / width;
+        int x = idx % width;
+        
+        float elevation = elevationField_->getSample(x, z);
+        RockType rockType = rockTypes_->getSample(x, z);
+        
+        // Chemical weathering is stronger in warm, wet conditions
+        float temperature = 15.0f - (elevation * 0.006f);
+        float rainfall = 500.0f + elevation * 0.1f;
+        
+        float weatheringRate = 0.0f;
+        switch (rockType) {
+            case RockType::SEDIMENTARY_LIMESTONE:
+                weatheringRate = 0.5f; // Limestone dissolves easily
+                break;
+            case RockType::IGNEOUS_GRANITE:
+                weatheringRate = 0.1f; // Granite is resistant
+                break;
+            case RockType::SEDIMENTARY_SANDSTONE:
+                weatheringRate = 0.3f; // Moderate weathering
+                break;
+            default:
+                weatheringRate = 0.2f;
+                break;
         }
-    }
+        
+        if (temperature > 0 && rainfall > 100) {
+            float climateMultiplier = (temperature / 30.0f) * (rainfall / 1000.0f);
+            float erosion = weatheringRate * timeStep * climateMultiplier * 0.1f; // Reduced erosion rate
+            
+            // Clamp erosion to prevent extreme changes
+            erosion = std::max(0.0f, std::min(10.0f, erosion));
+            elevationField_->addToSample(x, z, -erosion);
+        }
+    });
 }
 
 void GeologicalSimulator::simulatePhysicalErosion(float timeStep) {
-    for (int z = 0; z < elevationField_->getHeight(); ++z) {
-        for (int x = 0; x < elevationField_->getWidth(); ++x) {
-            float elevation = elevationField_->getSample(x, z);
-            float waterFlowValue = waterFlow_->getSample(x, z);
+    int height = elevationField_->getHeight();
+    int width = elevationField_->getWidth();
+    
+    // Create index range for parallel processing
+    std::vector<int> indices(height * width);
+    std::iota(indices.begin(), indices.end(), 0);
+    
+    // Parallel processing of physical erosion
+    std::for_each(std::execution::par_unseq, indices.begin(), indices.end(), [&](int idx) {
+        int z = idx / width;
+        int x = idx % width;
+        
+        float elevation = elevationField_->getSample(x, z);
+        float waterFlowValue = waterFlow_->getSample(x, z);
+        
+        // Physical erosion increases with water flow and slope
+        if (waterFlowValue > 0.1f) {
+            float erosion = waterFlowValue * timeStep * 0.05f; // Reduced erosion rate
+            float flowIncrease = erosion * 0.05f; // Reduced flow increase
             
-            // Physical erosion increases with water flow and slope
-            if (waterFlowValue > 0.1f) {
-                float erosion = waterFlowValue * timeStep * 0.1f;
-                elevationField_->addToSample(x, z, -erosion);
-                waterFlow_->addToSample(x, z, erosion * 0.1f); // Increase flow downstream
-            }
+            // Clamp values to prevent overflow
+            erosion = std::max(0.0f, std::min(5.0f, erosion));
+            flowIncrease = std::max(0.0f, std::min(2.0f, flowIncrease));
+            
+            elevationField_->addToSample(x, z, -erosion);
+            waterFlow_->addToSample(x, z, flowIncrease);
         }
-    }
+    });
 }
 
 void GeologicalSimulator::simulateRiverSystems(float timeStep) {
+    int height = elevationField_->getHeight();
+    int width = elevationField_->getWidth();
+    
     // Simple river flow simulation - water flows from high to low elevation
-    for (int z = 1; z < elevationField_->getHeight() - 1; ++z) {
-        for (int x = 1; x < elevationField_->getWidth() - 1; ++x) {
-            float centerElev = elevationField_->getSample(x, z);
-            
-            // Check all 8 neighbors
-            float minElev = centerElev;
-            int flowX = x, flowZ = z;
-            
-            for (int dz = -1; dz <= 1; ++dz) {
-                for (int dx = -1; dx <= 1; ++dx) {
-                    if (dx == 0 && dz == 0) continue;
-                    
-                    float neighborElev = elevationField_->getSample(x + dx, z + dz);
-                    if (neighborElev < minElev) {
-                        minElev = neighborElev;
-                        flowX = x + dx;
-                        flowZ = z + dz;
-                    }
-                }
-            }
-            
-            // If water can flow, increase flow in that direction
-            if (flowX != x || flowZ != z) {
-                float flow = (centerElev - minElev) * timeStep;
-                waterFlow_->addToSample(flowX, flowZ, flow);
-            }
+    // Process only interior points (excluding boundaries) in parallel
+    std::vector<int> indices;
+    for (int z = 1; z < height - 1; ++z) {
+        for (int x = 1; x < width - 1; ++x) {
+            indices.push_back(z * width + x);
         }
     }
+    
+    // Parallel processing of river flow
+    std::for_each(std::execution::par_unseq, indices.begin(), indices.end(), [&](int idx) {
+        int z = idx / width;
+        int x = idx % width;
+        
+        float centerElev = elevationField_->getSample(x, z);
+        
+        // Check all 8 neighbors for flow direction
+        float minElev = centerElev;
+        int flowX = x, flowZ = z;
+        
+        for (int dz = -1; dz <= 1; ++dz) {
+            for (int dx = -1; dx <= 1; ++dx) {
+                if (dx == 0 && dz == 0) continue;
+                
+                float neighborElev = elevationField_->getSample(x + dx, z + dz);
+                if (neighborElev < minElev) {
+                    minElev = neighborElev;
+                    flowX = x + dx;
+                    flowZ = z + dz;
+                }
+            }
+        }
+        
+        // If water can flow, increase flow in that direction
+        if (flowX != x || flowZ != z) {
+            float flow = (centerElev - minElev) * timeStep * 0.1f; // Reduced flow rate
+            
+            // Clamp flow to prevent extreme values
+            flow = std::max(0.0f, std::min(2.0f, flow));
+            waterFlow_->addToSample(flowX, flowZ, flow);
+        }
+    });
 }
 
 void GeologicalSimulator::simulateGlacialCarving(float timeStep) {
-    // Glacial erosion occurs at high elevations in cold conditions
-    for (int z = 0; z < elevationField_->getHeight(); ++z) {
-        for (int x = 0; x < elevationField_->getWidth(); ++x) {
-            float elevation = elevationField_->getSample(x, z);
-            float temperature = 15.0f - (elevation * 0.006f);
-            
-            if (elevation > 1500.0f && temperature < -5.0f) {
-                // Glacial erosion creates U-shaped valleys
-                float erosion = timeStep * 2.0f;
-                elevationField_->addToSample(x, z, -erosion);
-            }
+    int height = elevationField_->getHeight();
+    int width = elevationField_->getWidth();
+    
+    // Create index range for parallel processing
+    std::vector<int> indices(height * width);
+    std::iota(indices.begin(), indices.end(), 0);
+    
+    // Parallel processing of glacial erosion
+    std::for_each(std::execution::par_unseq, indices.begin(), indices.end(), [&](int idx) {
+        int z = idx / width;
+        int x = idx % width;
+        
+        float elevation = elevationField_->getSample(x, z);
+        float temperature = 15.0f - (elevation * 0.006f);
+        
+        // More detailed glacial erosion with varying intensity
+        if (elevation > 1200.0f && temperature < -2.0f) {
+            // Glacial erosion intensity depends on elevation and temperature
+            float glacialIntensity = std::min(1.0f, (elevation - 1200.0f) / 2000.0f);
+            float temperatureFactor = std::max(0.1f, (-temperature - 2.0f) / 10.0f);
+            float erosion = timeStep * glacialIntensity * temperatureFactor * 1.5f;
+            elevationField_->addToSample(x, z, -erosion);
         }
-    }
+    });
 }
 
 void GeologicalSimulator::simulateMicroWeathering(float timeStep) {
@@ -454,20 +576,57 @@ void GeologicalSimulator::simulateMicroWeathering(float timeStep) {
 }
 
 void GeologicalSimulator::simulateSedimentDeposition(float timeStep) {
-    // Sediment accumulation in low-energy environments
-    for (int z = 0; z < waterFlow_->getHeight(); ++z) {
-        for (int x = 0; x < waterFlow_->getWidth(); ++x) {
-            float flow = waterFlow_->getSample(x, z);
-            float elevation = elevationField_->getSample(x, z);
+    int height = waterFlow_->getHeight();
+    int width = waterFlow_->getWidth();
+    
+    // Create index range for parallel processing
+    std::vector<int> indices(height * width);
+    std::iota(indices.begin(), indices.end(), 0);
+    
+    // Parallel processing of sediment deposition
+    std::for_each(std::execution::par_unseq, indices.begin(), indices.end(), [&](int idx) {
+        int z = idx / width;
+        int x = idx % width;
+        
+        float flow = waterFlow_->getSample(x, z);
+        float elevation = elevationField_->getSample(x, z);
+        RockType currentRockType = rockTypes_->getSample(x, z);
+        
+        // More sophisticated sediment deposition based on multiple factors
+        bool isDepositionZone = false;
+        float depositionRate = 0.0f;
+        
+        // River deltas and low flow areas
+        if (flow > 0.1f && flow < 0.8f && elevation < 200.0f) {
+            depositionRate = (0.8f - flow) * timeStep * 0.15f;
+            isDepositionZone = true;
+        }
+        
+        // Lake and ocean floor deposition
+        if (elevation < 10.0f && flow < 0.3f) {
+            depositionRate = std::max(depositionRate, (0.3f - flow) * timeStep * 0.2f);
+            isDepositionZone = true;
+        }
+        
+        // Valley floor accumulation
+        if (elevation > 10.0f && elevation < 500.0f && flow < 0.4f) {
+            depositionRate = std::max(depositionRate, (0.4f - flow) * timeStep * 0.08f);
+            isDepositionZone = true;
+        }
+        
+        if (isDepositionZone && depositionRate > 0.001f) {
+            elevationField_->addToSample(x, z, depositionRate);
             
-            // Sediment deposits where water flow is low and elevation is low
-            if (flow < 0.5f && elevation < 100.0f) {
-                float deposition = (0.5f - flow) * timeStep * 0.1f;
-                elevationField_->addToSample(x, z, deposition);                    rockTypes_->setSample(x, z, RockType::SEDIMENTARY_SHALE);
-                rockHardness_->setSample(x, z, 2.0f);
+            // Set appropriate sedimentary rock type based on environment
+            if (elevation < 50.0f) {
+                rockTypes_->setSample(x, z, RockType::SEDIMENTARY_SHALE); // Marine environment
+                rockHardness_->setSample(x, z, 3.0f);
+            } else {
+                rockTypes_->setSample(x, z, RockType::SEDIMENTARY_SANDSTONE); // River/lake environment
+                rockHardness_->setSample(x, z, 4.0f);
             }
         }
-    }
+    });
 }
 
 void GeologicalSimulator::simulateJointFormation(float timeStep) {
@@ -481,9 +640,6 @@ void GeologicalSimulator::simulateCaveGeneration(float timeStep) {
 }
 
 void GeologicalSimulator::updateProgress(float phaseProgress, const std::string& processName) {
-    std::cout << "[GeologicalSimulator] DEBUG: updateProgress called with: " << phaseProgress << ", " << processName << std::endl;
-    std::cout.flush();
-    
     currentPhaseProgress_ = phaseProgress;
     
     // Calculate total progress across all phases
