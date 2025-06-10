@@ -385,6 +385,12 @@ void UIRenderer::renderTexturedQuad(float x, float y, float width, float height,
                                    GLuint textureID, const glm::vec4& texCoords) {
     // Suppressed repetitive logging for renderTexturedQuad calls.
     
+    // Check for invalid texture
+    if (textureID == 0) {
+        std::cerr << "[UIRenderer] Error: Invalid texture ID (0)" << std::endl;
+        return;
+    }
+    
     // Check for invalid position
     if (x < -width || x > screenWidth_ || y < -height || y > screenHeight_) {
         static int warnCounter = 0;
@@ -394,9 +400,29 @@ void UIRenderer::renderTexturedQuad(float x, float y, float width, float height,
         }
     }
 
-    // Check for invalid texture
-    if (textureID == 0) {
-        std::cerr << "[UIRenderer] Error: Invalid texture ID (0)" << std::endl;
+    // CRITICAL FIX: Ensure VAO is bound before any buffer operations
+    if (vao_ == 0) {
+        std::cerr << "[UIRenderer] ERROR: VAO is 0, cannot render textured quad!" << std::endl;
+        return;
+    }
+    
+    glBindVertexArray(vao_);
+    GLenum err = glGetError();
+    if (err != GL_NO_ERROR) {
+        std::cerr << "[UIRenderer] ERROR after glBindVertexArray: 0x" << std::hex << err << std::dec << std::endl;
+        return;
+    }
+    
+    // Ensure shader program is active
+    if (shaderProgram_ == 0) {
+        std::cerr << "[UIRenderer] ERROR: No shader program active!" << std::endl;
+        return;
+    }
+    
+    glUseProgram(shaderProgram_);
+    err = glGetError();
+    if (err != GL_NO_ERROR) {
+        std::cerr << "[UIRenderer] ERROR after glUseProgram: 0x" << std::hex << err << std::dec << std::endl;
         return;
     }
     
@@ -473,7 +499,7 @@ void UIRenderer::renderTexturedQuad(float x, float y, float width, float height,
     }
     
     // Check for OpenGL errors before drawing
-    GLenum err = glGetError();
+    err = glGetError();
     if (err != GL_NO_ERROR) {
         std::cerr << "[UIRenderer] OpenGL error before drawing: 0x" << std::hex << err << std::dec << std::endl;
         

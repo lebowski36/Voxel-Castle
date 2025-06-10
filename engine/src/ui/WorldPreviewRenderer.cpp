@@ -92,38 +92,36 @@ void WorldPreviewRenderer::render(VoxelEngine::UI::UIRenderer* renderer, float x
         return;
     }
     
-    std::cout << "[WorldPreviewRenderer] Rendering heightmap data" << std::endl;
+    std::cout << "[WorldPreviewRenderer] Rendering heightmap texture" << std::endl;
     
-    // We have valid height data! Create a visual representation
-    // Calculate average height to determine a representative color
+    // Check if we have a valid texture to render
+    if (previewTexture_ == 0) {
+        std::cout << "[WorldPreviewRenderer] Warning: previewTexture_ is 0, rendering magenta fallback" << std::endl;
+        // Fallback to magenta debug quad if texture creation failed
+        glm::vec4 errorColor(1.0f, 0.0f, 1.0f, 1.0f);
+        renderer->renderColoredQuad(x, y, width, height, errorColor);
+        return;
+    }
+    
+    // Render the actual heightmap texture
+    std::cout << "[WorldPreviewRenderer] Rendering texture ID " << previewTexture_ 
+              << " at (" << x << ", " << y << ") size " << width << "x" << height << std::endl;
+    
+    // Use full texture coordinates (0,0,1,1) to display the entire texture
+    glm::vec4 fullTexCoords(0.0f, 0.0f, 1.0f, 1.0f);
+    renderer->renderTexturedQuad(x, y, width, height, previewTexture_, fullTexCoords);
+    
+    // Calculate average height for display text
     float totalHeight = 0.0f;
-    int sampleCount = std::min(100, resolution_ * resolution_); // Sample first 100 pixels
-    
+    int sampleCount = std::min(100, resolution_ * resolution_);
     for (int i = 0; i < sampleCount; i++) {
         totalHeight += heightData_[i];
     }
-    
     float avgHeight = totalHeight / sampleCount;
-    
-    std::cout << "[WorldPreviewRenderer] Average height: " << avgHeight << "m" << std::endl;
-    
-    // Convert average height to color (similar to heightToColor logic)
-    unsigned char r, g, b;
-    heightToColor(avgHeight, r, g, b);
-    
-    glm::vec4 avgColor(r / 255.0f, g / 255.0f, b / 255.0f, 1.0f);
-    std::cout << "[WorldPreviewRenderer] Color: (" << (int)r << ", " << (int)g << ", " << (int)b << ")" << std::endl;
-    std::cout << "[WorldPreviewRenderer] Calling renderColoredQuad with bright test color instead" << std::endl;
-    
-    // DEBUGGING: Use a bright, obvious color instead of the calculated one to see if ANY quad renders
-    glm::vec4 testColor(1.0f, 0.0f, 1.0f, 1.0f); // Bright magenta - impossible to miss!
-    std::cout << "[WorldPreviewRenderer] About to call renderer->renderColoredQuad(" << x << ", " << y << ", " << width << ", " << height << ", magenta)" << std::endl;
-    renderer->renderColoredQuad(x, y, width, height, testColor);
-    std::cout << "[WorldPreviewRenderer] renderColoredQuad call completed" << std::endl;
     
     // Add a text overlay to show the height information
     if (renderer->isTextRendererAvailable()) {
-        std::string heightText = "TEST: " + std::to_string((int)avgHeight) + "m";
+        std::string heightText = "Height: " + std::to_string((int)avgHeight) + "m";
         renderer->drawText(heightText, x + 10, y + height - 20, 0.8f, glm::vec3(1.0f, 1.0f, 1.0f));
     }
 }
