@@ -474,3 +474,88 @@ void generateCaveSystems(VoxelChunk& chunk, RockType rockType) {
 **Status:** ✅ **READY FOR IMPLEMENTATION** - Ultra-realistic hybrid approach confirmed feasible with chunk-based streaming strategy.
 
 ---
+
+## 🔍 **RESOLVING CRITICAL UNCLARITIES** 
+
+### **Status: Working through each unclarity individually before implementation**
+
+---
+
+## **UNCLARITY #1: GEOLOGICAL ACCURACY LEVEL** ✅ RESOLVED
+
+**Question:** How much real physics vs visually convincing results? Should this be tweakable/configurable?
+
+### **DECISION: Option C - Quality Presets + Custom Overrides**
+
+**Selected Configuration System:**
+```cpp
+enum class GeologicalPreset {
+    PERFORMANCE,      // Fast generation, basic visual quality
+    BALANCED,         // Good realism with reasonable performance (DEFAULT)
+    QUALITY,          // High realism, slower generation
+    ULTRA_REALISM,    // Maximum accuracy, very slow
+    CUSTOM           // User-defined settings
+};
+
+struct GeologicalConfig {
+    GeologicalPreset preset = BALANCED;
+    
+    // Optional overrides when preset == CUSTOM
+    struct CustomSettings {
+        bool enableChemicalWeathering = true;
+        bool enableJointSystems = true;
+        bool enableCaveSystems = true;
+        bool enableGlacialFeatures = false;
+        float timeScaleMultiplier = 1.0f;
+        int simulationDetailLevel = 1000;
+    } custom;
+};
+```
+
+**Performance Characteristics:**
+| Preset | Chunk Gen Time | Memory Usage | Visual Quality | Geological Accuracy |
+|--------|----------------|--------------|----------------|-------------------|
+| PERFORMANCE | ~5ms | Low | Good | Game-like |
+| BALANCED | ~15ms | Medium | Very Good | Plausible |
+| QUALITY | ~50ms | High | Excellent | Scientifically Sound |
+| ULTRA_REALISM | ~200ms | Very High | Ultra-Real | Research-Grade |
+
+**Rationale:** 
+- **User-Friendly:** Clear presets for most users
+- **Flexible:** Advanced users can fine-tune with Custom mode
+- **Performance Scaling:** Predictable performance per preset
+- **Default BALANCED:** ~15ms per chunk with good visual realism
+
+---
+
+## **UNCLARITY #2: MEMORY & STREAMING STRATEGIES** ⏳ NEXT
+
+**Question:** How to handle chunk caching, boundary smoothing, and quality fallbacks?
+
+*Will be addressed next after confirming Unclarity #1 resolution*
+
+---
+
+## **UNCLARITY #3: MULTI-TIMESCALE ARCHITECTURE** ⏳ PENDING
+
+**Question:** Data flow between geological phases, visual update frequency, and timeline transitions?
+
+*Will be addressed after Unclarity #2 is resolved*
+
+---
+
+## **UNCLARITY #4: CONTINUOUSFIELD MATHEMATICS** ⏳ PENDING
+
+**Question:** Interpolation methods, force propagation models, and boundary handling?
+
+*Will be addressed after Unclarity #3 is resolved*
+
+---
+
+## **UNCLARITY #5: QUALITY SETTINGS & FALLBACKS** ⏳ PENDING
+
+**Question:** Performance fallback mechanisms and quality degradation strategies?
+
+*Will be addressed after Unclarity #4 is resolved*
+
+---
