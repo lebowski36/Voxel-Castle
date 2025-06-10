@@ -181,6 +181,20 @@ target_link_libraries(test_advanced_worldgen
     ${CMAKE_DL_LIBS}
 )
 
+# Add ContinuousField unit tests
+add_executable(ContinuousFieldTest tests/unit/ContinuousFieldTest.cpp)
+target_link_libraries(ContinuousFieldTest PRIVATE VoxelEngine gtest gtest_main)
+target_include_directories(ContinuousFieldTest PRIVATE engine/include)
+
+# Add ContinuousField performance test
+add_executable(ContinuousFieldPerformanceTest tests/performance/ContinuousFieldPerformanceTest.cpp)
+target_link_libraries(ContinuousFieldPerformanceTest PRIVATE VoxelEngine)
+target_include_directories(ContinuousFieldPerformanceTest PRIVATE engine/include)
+
+# Add ContinuousField tests to CTest
+add_test(NAME ContinuousFieldUnitTests COMMAND ContinuousFieldTest)
+add_test(NAME ContinuousFieldPerformanceVerification COMMAND ContinuousFieldPerformanceTest)
+
 # Enable CTest (optional, if you add tests)
 enable_testing()
 # add_subdirectory(tests) # If you have a tests directory with CMakeLists.txt

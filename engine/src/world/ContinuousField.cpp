@@ -48,7 +48,8 @@ T ContinuousField<T>::sampleAt(float x, float z) const {
     T baseValue = bicubicInterpolate(fx, fz, samples);
     
     // Add Perlin noise enhancement for organic variation
-    float noiseValue = generatePerlinNoise(x, z, 4);
+    // Use wrapped coordinates for noise to ensure seamless boundaries
+    float noiseValue = generatePerlinNoise(wrapped.x, wrapped.z, 4);
     
     // For scalar types, add noise directly
     if constexpr (std::is_arithmetic_v<T>) {
@@ -71,9 +72,20 @@ void ContinuousField<T>::propagateValue(const T& value, float x, float z, float 
     float fx, fz;
     worldToGrid(x, z, sourceX, sourceZ, fx, fz);
     
-    // Propagate in a square around the source
+    // Pre-calculate range squared and exponential denominator for faster comparisons
+    float rangeSq = range * range;
+    float expDenom = range * 0.3f; // Pre-calculate denominator for exp function
+    
+    // Optimize: Use circular iteration instead of square
     for (int dz = -gridRange; dz <= gridRange; ++dz) {
         for (int dx = -gridRange; dx <= gridRange; ++dx) {
+            // Early distance check using grid coordinates (faster than world coordinates)
+            float gridDistSq = dx * dx + dz * dz;
+            float worldDistSq = gridDistSq * sampleSpacing_ * sampleSpacing_;
+            
+            // Skip if definitely outside range (avoids expensive toroidal distance calculation)
+            if (worldDistSq > rangeSq * 1.1f) continue; // 1.1f buffer for wrapping edge cases
+            
             int targetX = sourceX + dx;
             int targetZ = sourceZ + dz;
             
@@ -81,14 +93,14 @@ void ContinuousField<T>::propagateValue(const T& value, float x, float z, float 
             float targetWorldX = targetX * sampleSpacing_;
             float targetWorldZ = targetZ * sampleSpacing_;
             
-            // Calculate distance with toroidal wrapping
+            // Calculate distance with toroidal wrapping (only for candidates within range)
             float distance = getToroidalDistance(x, z, targetWorldX, targetWorldZ);
             
             if (distance <= range) {
                 // Calculate influence based on distance and resistance
                 float resistance = resistanceFunc(targetWorldX, targetWorldZ);
-                float distanceFactor = std::exp(-distance / (range * 0.3f)); // Exponential falloff
-                float influence = distanceFactor * (1.0f / resistance);
+                float distanceFactor = std::exp(-distance / expDenom); // Exponential falloff
+                float influence = distanceFactor / resistance; // Removed extra multiplication
                 
                 // Apply influence to target sample
                 if constexpr (std::is_arithmetic_v<T>) {
