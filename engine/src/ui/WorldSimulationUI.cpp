@@ -287,9 +287,10 @@ void WorldSimulationUI::updateWorldMapVisualization() {
             break;
     }
     
-    // Generate new world map data
+    // Generate new world map data with actual world size from configuration
     unsigned int currentSeed = worldSeed_ ? worldSeed_->getMasterSeed() : 12345;
-    worldMapRenderer_->generateWorldMap(worldGenerator_.get(), mapPhase, mapMode, currentSeed);
+    float worldSizeKm = static_cast<float>(config_.worldSize); // Convert from config (which is in km)
+    worldMapRenderer_->generateWorldMap(worldGenerator_.get(), mapPhase, mapMode, currentSeed, worldSizeKm);
 }
 
 void WorldSimulationUI::createProgressPanels() {

@@ -64,11 +64,13 @@ public:
      * @param phase Current generation phase for color coding
      * @param mode Visualization mode to display
      * @param worldSeed Seed for reproducible generation
+     * @param worldSizeKm World size in kilometers (default 1024km for continent-scale)
      */
     void generateWorldMap(VoxelCastle::World::SeedWorldGenerator* generator,
                          GenerationPhase phase,
                          VisualizationMode mode,
-                         unsigned int worldSeed);
+                         unsigned int worldSeed,
+                         float worldSizeKm = 1024.0f);
 
     /**
      * @brief Render the world map at specified screen coordinates
@@ -124,6 +126,7 @@ private:
     float* precipitationData_;
     int resolution_;
     bool textureValid_;
+    float worldSizeKm_;  // World size in kilometers for proper scale sampling
     
     // Current visualization state
     VisualizationMode currentMode_;

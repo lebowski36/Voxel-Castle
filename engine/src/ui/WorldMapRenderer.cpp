@@ -18,6 +18,7 @@ WorldMapRenderer::WorldMapRenderer()
     , precipitationData_(nullptr)
     , resolution_(0)
     , textureValid_(false)
+    , worldSizeKm_(1024.0f)  // Default to 1024km (continent scale)
     , currentMode_(VisualizationMode::ELEVATION)
     , currentPhase_(GenerationPhase::TECTONICS)
     , renderCounter_(0) {
@@ -50,17 +51,22 @@ bool WorldMapRenderer::initialize(int resolution) {
 void WorldMapRenderer::generateWorldMap(VoxelCastle::World::SeedWorldGenerator* generator,
                                        GenerationPhase phase,
                                        VisualizationMode mode,
-                                       unsigned int worldSeed) {
+                                       unsigned int worldSeed,
+                                       float worldSizeKm) {
     if (!generator || !elevationData_) {
         std::cout << "[WorldMapRenderer] Error: Generator or data arrays not available" << std::endl;
         return;
     }
+    
+    // Store the world size for proper sampling
+    worldSizeKm_ = worldSizeKm;
     
     currentPhase_ = phase;
     currentMode_ = mode;
     
     std::cout << "[WorldMapRenderer] Generating world map - Phase: " << getGenerationPhaseName(phase) 
               << ", Mode: " << getVisualizationModeName(mode) << std::endl;
+    std::cout << "[WorldMapRenderer] World size: " << worldSizeKm_ << "km x " << worldSizeKm_ << "km" << std::endl;
     
     // Generate data based on current phase - make visualization dynamic
     switch (phase) {
@@ -204,9 +210,12 @@ void WorldMapRenderer::generateElevationData(VoxelCastle::World::SeedWorldGenera
     
     std::cout << "[WorldMapRenderer] Generating elevation data..." << std::endl;
     
-    // Sample elevation across the world map area
-    // Use a reasonable world area - let's say 8km x 8km for good detail
-    float worldSize = 8000.0f; // 8km in meters
+    // Use the actual world size passed in - this represents the entire world being generated
+    // The world size should be stored from the generateWorldMap call
+    float worldSize = worldSizeKm_ * 1000.0f; // Convert from kilometers to meters
+    
+    std::cout << "[WorldMapRenderer] Sampling world area: " << worldSizeKm_ << "km x " << worldSizeKm_ << "km" << std::endl;
+    std::cout << "[WorldMapRenderer] World size in meters: " << worldSize << "m x " << worldSize << "m" << std::endl;
     
     // Get tectonic simulator for elevation modifiers
     const VoxelCastle::TectonicSimulator* tectonicSim = generator->getTectonicSimulator();
