@@ -92,14 +92,21 @@ bool MenuSystem::initialize(int screenWidth, int screenHeight, const std::string
         // 2. Pass it to the game system for immediate use
         // 3. Skip the legacy WorldGenerator entirely
         
-        // For now, we'll close menus and let the user manually start the world
-        // This prevents the OpenGL spam and crash from the legacy system
-        std::cout << "[MenuSystem] World generation complete - ready for exploration!" << std::endl;
-        std::cout << "[MenuSystem] TODO: Integrate generated world with game systems" << std::endl;
+        // For now, we'll stay in the simulation UI so the user can see completion
+        // This prevents the GameState stack errors and OpenGL corruption
+        std::cout << "[MenuSystem] World generation complete - simulation UI remains active" << std::endl;
+        std::cout << "[MenuSystem] TODO: Add 'Play World' button to transition to gameplay with generated world" << std::endl;
         
-        closeMenus();
+        // NOTE: Do NOT call closeMenus() here - it causes:
+        // 1. GameState stack underflow ("Cannot pop state: stack is empty")
+        // 2. Mouse capture issues (cursor disappears)
+        // 3. OpenGL state corruption (error 0x502 spam)
         
-        // NOTE: Commented out the problematic legacy world creation call
+        // The user can use the "Back to Menu" button in WorldSimulationUI to navigate
+        
+        // NOTE: Commented out the problematic calls
+        // closeMenus(); // This was causing GameState stack errors!
+        
         // TODO: Convert simulation results to WorldSeed and trigger NEW world creation (not legacy)
         // VoxelCastle::World::WorldSeed seed; // Create with current timestamp  
         // if (onWorldCreateRequest_) {
