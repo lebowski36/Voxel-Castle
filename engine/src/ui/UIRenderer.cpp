@@ -7,6 +7,7 @@
 #include <fstream>
 #include <sstream>
 #include <iostream>
+#include <chrono>
 
 namespace VoxelEngine {
 namespace UI {
@@ -263,6 +264,7 @@ void UIRenderer::renderQuad(float x, float y, float width, float height, const g
     GLenum err = glGetError();
     if (err != GL_NO_ERROR) {
         std::cerr << "[UIRenderer] ERROR after glBindVertexArray: 0x" << std::hex << err << std::dec << std::endl;
+        return;
     }
     
     // Ensure shader program is active
@@ -275,6 +277,7 @@ void UIRenderer::renderQuad(float x, float y, float width, float height, const g
     err = glGetError();
     if (err != GL_NO_ERROR) {
         std::cerr << "[UIRenderer] ERROR after glUseProgram: 0x" << std::hex << err << std::dec << std::endl;
+        return;
     }
     
     // Create model matrix for positioning and scaling
@@ -292,6 +295,7 @@ void UIRenderer::renderQuad(float x, float y, float width, float height, const g
     err = glGetError();
     if (err != GL_NO_ERROR) {
         std::cerr << "[UIRenderer] ERROR after setting model uniform: 0x" << std::hex << err << std::dec << std::endl;
+        return;
     }
     
     GLint colorLoc = glGetUniformLocation(shaderProgram_, "uColor");
@@ -303,6 +307,7 @@ void UIRenderer::renderQuad(float x, float y, float width, float height, const g
     err = glGetError();
     if (err != GL_NO_ERROR) {
         std::cerr << "[UIRenderer] ERROR after setting color uniform: 0x" << std::hex << err << std::dec << std::endl;
+        return;
     }
     
     GLint useTextureLoc = glGetUniformLocation(shaderProgram_, "uUseTexture");
@@ -314,6 +319,7 @@ void UIRenderer::renderQuad(float x, float y, float width, float height, const g
     err = glGetError();
     if (err != GL_NO_ERROR) {
         std::cerr << "[UIRenderer] ERROR after setting useTexture uniform: 0x" << std::hex << err << std::dec << std::endl;
+        return;
     }
     
     // Draw

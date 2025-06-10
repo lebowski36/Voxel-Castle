@@ -526,7 +526,7 @@ void WorldConfigurationUI::createPreviewSection() {
     previewPanel->setText(""); // Remove placeholder text since we'll render over it
     previewPanel->setPosition(rightColumnX, TITLE_HEIGHT + PANEL_MARGIN + TEXT_HEIGHT + 5.0f);
     previewPanel->setSize(rightColumnWidth, 180.0f);
-    previewPanel->setBackgroundColor({0.15f, 0.2f, 0.25f, 0.7f});
+    previewPanel->setBackgroundColor({0.0f, 0.0f, 0.0f, 0.0f}); // TRANSPARENT - don't cover the preview!
     addChild(previewPanel);
     
     // Store preview area coordinates for rendering
