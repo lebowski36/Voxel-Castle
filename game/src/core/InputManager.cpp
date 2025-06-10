@@ -476,10 +476,18 @@ void processInput(Game& game) {
                 game.rightMousePressed_ = false;
             }
         }
-        else if (e.type == SDL_EVENT_MOUSE_WHEEL && game.isMouseCaptured()) {
-            // Mouse wheel cycles through block types
-            bool forward = e.wheel.y > 0;
-            BlockPlacement::cycleBlockType(game, forward);
+        else if (e.type == SDL_EVENT_MOUSE_WHEEL) {
+            if (!game.isMouseCaptured() && game.isMenuOpen()) {
+                // Mouse wheel in UI mode - handle zoom in world map
+                int mouseX, mouseY;
+                SDL_GetMouseState(&mouseX, &mouseY);
+                float wheelDelta = static_cast<float>(e.wheel.y);
+                game.handleMenuMouseWheel(static_cast<float>(mouseX), static_cast<float>(mouseY), wheelDelta);
+            } else if (game.isMouseCaptured()) {
+                // Mouse wheel cycles through block types
+                bool forward = e.wheel.y > 0;
+                BlockPlacement::cycleBlockType(game, forward);
+            }
         }
         else if (e.type == SDL_EVENT_WINDOW_RESIZED) {
             int width = e.window.data1;

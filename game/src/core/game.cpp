@@ -638,6 +638,13 @@ void Game::handleMenuKeyboardInput(int key, bool pressed) {
     }
 }
 
+void Game::handleMenuMouseWheel(float mouseX, float mouseY, float wheelDelta) {
+    if (menuSystem_ && isMenuOpen()) {
+        // Pass wheel input to menu system - it will handle routing to appropriate UI
+        menuSystem_->handleMouseWheel(mouseX, mouseY, wheelDelta);
+    }
+}
+
 // --- Game State Management ---
 void Game::toggleMenu() {
     if (stateManager_) {

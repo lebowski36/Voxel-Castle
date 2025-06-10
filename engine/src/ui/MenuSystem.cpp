@@ -187,6 +187,27 @@ bool MenuSystem::handleKeyboardInput(int key, bool pressed) {
     return false;
 }
 
+bool MenuSystem::handleMouseWheel(float mouseX, float mouseY, float wheelDelta) {
+    // Route mouse wheel events to the appropriate active menu
+    switch (menuState_) {
+        case MenuState::WORLD_SIMULATION:
+            if (worldSimulationUI_ && worldSimulationUI_->isVisible()) {
+                return worldSimulationUI_->handleExtendedInput(mouseX, mouseY, false, wheelDelta);
+            }
+            break;
+        case MenuState::WORLD_CONFIGURATION:
+            // World configuration UI doesn't need mouse wheel for now
+            break;
+        case MenuState::MAIN_MENU:
+        case MenuState::SETTINGS:
+        case MenuState::NONE:
+        default:
+            // Other menus don't handle mouse wheel events
+            break;
+    }
+    return false;
+}
+
 void MenuSystem::showMainMenu() {
     // First make the menu visible to ensure its size is calculated correctly
     mainMenu_->setVisible(true);

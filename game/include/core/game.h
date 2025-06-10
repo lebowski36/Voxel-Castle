@@ -264,6 +264,14 @@ public:
     void runSerializationTest();
     void runSaveManagerTest(); // T key is always replaced with the current test
 
+    /**
+     * @brief Handle mouse wheel input for menu system
+     * @param mouseX Mouse X coordinate
+     * @param mouseY Mouse Y coordinate
+     * @param wheelDelta Mouse wheel delta (positive = up, negative = down)
+     */
+    void handleMenuMouseWheel(float mouseX, float mouseY, float wheelDelta);
+
 private:
     // Helper method for world initialization
     void initializeWorldContent();

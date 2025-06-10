@@ -84,6 +84,15 @@ public:
     bool handleKeyboardInput(int key, bool pressed);
 
     /**
+     * @brief Handle mouse wheel input for menus
+     * @param mouseX Mouse X coordinate  
+     * @param mouseY Mouse Y coordinate
+     * @param wheelDelta Mouse wheel delta (positive = up, negative = down)
+     * @return true if input was handled
+     */
+    bool handleMouseWheel(float mouseX, float mouseY, float wheelDelta);
+
+    /**
      * @brief Show the main menu
      */
     void showMainMenu();
