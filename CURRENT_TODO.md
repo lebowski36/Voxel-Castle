@@ -200,7 +200,7 @@ cd build && make && cd .. && ./build/bin/VoxelFortressGame
 *Detailed sub-tasks in `/home/system-x1/Projects/Voxel Castle/development_tasks/04_essential_game_infrastructure/`. A main task in this section is marked `[x]` ONLY if ALL its detailed sub-tasks in the corresponding file are complete.*
 - [x] Implement Physics System
 - [x] Develop UI Framework
-- [x] Clean Up Console Output and Logging System
+- [x] **Clean Up Console Output and Logging System** - ✅ **RESOLVED**: Eliminated spammy MenuSystem logging (reduced from every frame to every 1000 frames), removed unnecessary WorldSeed initializations at startup, and completed full transition from legacy WorldCreationDialog to split UI system (WorldConfigurationUI + WorldSimulationUI). System startup is now clean with minimal console output.
 - [ ] **Merge Dual Logging Systems** - Fix inconsistency between DEBUG_LOG() (writes to debug_logs/) and VoxelCastle::Utils::logToFile() (writes to debug_log.txt) 
 - [ ] Implement Game State Management
 - [x] Implement Block Placement System
