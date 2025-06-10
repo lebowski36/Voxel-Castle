@@ -191,9 +191,15 @@ add_executable(ContinuousFieldPerformanceTest tests/performance/ContinuousFieldP
 target_link_libraries(ContinuousFieldPerformanceTest PRIVATE VoxelEngine)
 target_include_directories(ContinuousFieldPerformanceTest PRIVATE engine/include)
 
+# Add GeologicalSimulation integration test
+add_executable(GeologicalSimulationTest tests/integration/GeologicalSimulationTest.cpp)
+target_link_libraries(GeologicalSimulationTest PRIVATE VoxelEngine gtest gtest_main)
+target_include_directories(GeologicalSimulationTest PRIVATE engine/include)
+
 # Add ContinuousField tests to CTest
 add_test(NAME ContinuousFieldUnitTests COMMAND ContinuousFieldTest)
 add_test(NAME ContinuousFieldPerformanceVerification COMMAND ContinuousFieldPerformanceTest)
+add_test(NAME GeologicalSimulationIntegration COMMAND GeologicalSimulationTest)
 
 # Enable CTest (optional, if you add tests)
 enable_testing()

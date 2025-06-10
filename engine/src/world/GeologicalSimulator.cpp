@@ -149,12 +149,18 @@ void GeologicalSimulator::simulateTectonicPhase(float durationMillionYears) {
     int steps = config_.getSimulationSteps() / 3; // 1/3 of total steps for tectonic phase
     float timeStep = durationMillionYears / steps;
     
+    std::cout << "[GeologicalSimulator] Tectonic simulation: " << steps << " steps, " << timeStep << " million years per step" << std::endl;
+    
     for (int step = 0; step < steps; ++step) {
         // Update progress
         float progress = static_cast<float>(step) / steps;
         updateProgress(progress, "Mantle Convection & Plate Movement");
         
-        // Simulate geological processes
+        // Simulate geological processes with timing info
+        if (step % 5 == 0) { // Every 5th step, print progress
+            std::cout << "[GeologicalSimulator] Tectonic step " << step << "/" << steps << " (" << (progress*100) << "%)" << std::endl;
+        }
+        
         simulateMantleConvection(timeStep);
         simulatePlateMovement(timeStep);
         simulateMountainBuilding(timeStep);
@@ -165,6 +171,8 @@ void GeologicalSimulator::simulateTectonicPhase(float durationMillionYears) {
         
         updatePerformanceMetrics();
     }
+    
+    std::cout << "[GeologicalSimulator] Tectonic phase completed" << std::endl;
 }
 
 void GeologicalSimulator::simulateErosionPhase(float durationThousandYears) {
@@ -248,13 +256,29 @@ void GeologicalSimulator::simulateMantleConvection(float timeStep) {
         return 1.0f; // Uniform resistance for mantle convection
     };
     
+    // Scale convection based on quality preset
+    int numCells, maxRange;
+    switch (config_.preset) {
+        case GeologicalPreset::PERFORMANCE:
+            numCells = 2; // Minimal convection cells
+            maxRange = 50000; // 50km max range
+            break;
+        case GeologicalPreset::BALANCED:
+            numCells = 4; 
+            maxRange = 200000; // 200km max range
+            break;
+        default:
+            numCells = 8; 
+            maxRange = 500000; // 500km max range
+            break;
+    }
+    
     // Create convection cells
-    int numCells = 8 + static_cast<int>(random01() * 4); // 8-12 convection cells
     for (int i = 0; i < numCells; ++i) {
         float x = randomRange(0, worldSizeKm_ * 1000.0f);
         float z = randomRange(0, worldSizeKm_ * 1000.0f);
         float strength = randomRange(0.5f, 2.0f) * timeStep;
-        float range = randomRange(100000.0f, 500000.0f); // 100-500km range
+        float range = randomRange(maxRange * 0.5f, maxRange); // Variable range within limits
         
         mantleStress_->propagateValue(strength, x, z, range, resistance);
     }
@@ -457,6 +481,9 @@ void GeologicalSimulator::simulateCaveGeneration(float timeStep) {
 }
 
 void GeologicalSimulator::updateProgress(float phaseProgress, const std::string& processName) {
+    std::cout << "[GeologicalSimulator] DEBUG: updateProgress called with: " << phaseProgress << ", " << processName << std::endl;
+    std::cout.flush();
+    
     currentPhaseProgress_ = phaseProgress;
     
     // Calculate total progress across all phases
