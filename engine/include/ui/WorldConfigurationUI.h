@@ -9,7 +9,6 @@
 namespace VoxelEngine::UI {
     class UIButton;
     class UIRenderer;
-    class WorldPreviewRenderer;
 }
 
 namespace VoxelCastle::World {
@@ -62,7 +61,6 @@ public:
 private:
     void createUIElements();
     void createParameterControls();
-    void createPreviewSection();
     void createActionButtons();
     
     // Layout calculation helpers
@@ -76,20 +74,9 @@ private:
     void onParameterChanged();
     void onWorldNameChanged();
     
-    // Preview management
-    void updateWorldPreview();
+    // Parameter display management
     void initializeWorldGenerationObjects();
-    void renderWorldPreview();
     void updateParameterDisplayText(); // Add method to update UI text without recreating
-    
-    // Preview area coordinates (set by createPreviewSection)
-    float previewX_, previewY_, previewWidth_, previewHeight_;
-    
-    // World preview rendering
-    std::unique_ptr<VoxelEngine::UI::WorldPreviewRenderer> previewRenderer_;
-    std::shared_ptr<VoxelCastle::World::WorldSeed> currentWorldSeed_;
-    std::shared_ptr<VoxelCastle::World::WorldParameters> currentWorldParameters_;
-    bool previewNeedsUpdate_;
     
     // World name validation
     void validateWorldName();
