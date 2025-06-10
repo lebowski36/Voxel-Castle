@@ -637,11 +637,59 @@ class GeologicalTimeline {
 
 ---
 
-## **UNCLARITY #4: CONTINUOUSFIELD MATHEMATICS** ⏳ PENDING
+## **UNCLARITY #4: CONTINUOUSFIELD MATHEMATICS** ✅ RESOLVED
 
 **Question:** Interpolation methods, force propagation models, and boundary handling?
 
-*Will be addressed after Unclarity #3 is resolved*
+### **DECISIONS: Perlin-Enhanced + Geological Resistance + Toroidal Wrapping**
+
+**1. Interpolation Method: Option C - Perlin-Enhanced (Organic Results)**
+```cpp
+float ContinuousField::sampleAt(float x, float z) {
+    // Smooth bicubic base interpolation
+    float baseValue = bicubicInterpolate(samples, x, z);
+    
+    // Add geological noise for organic variation
+    float noiseValue = perlinNoise(x, z, multiple_octaves);
+    return baseValue + (noiseValue * geologicalVariability);
+}
+```
+**Rationale:** Only 32,768 voxels per chunk makes this computationally feasible, and organic results are worth the extra cost.
+
+**2. Force Propagation: Geological Resistance Model (Realistic Physics)**
+```cpp
+void propagateStress(float stress, Point source) {
+    for (each nearby point) {
+        float distance = getToroidalDistance(source, point, worldWidth, worldHeight);
+        float rockResistance = getRockHardness(point);
+        float existingStress = getStress(point);
+        
+        float influence = stress * exp(-distance / propagationRange) 
+                         * (1.0f / rockResistance)
+                         * stressAccumulationFunction(existingStress);
+        addStress(point, influence);
+    }
+}
+```
+**Rationale:** Stress flows through weak rock, accumulates in sedimentary areas, creates organic mountain shapes.
+
+**3. Boundary Handling: Toroidal Wrapping (Seamless Exploration)**
+```cpp
+// Simple coordinate wrapping for massive worlds (250km+ minimum)
+Point wrapCoordinates(Point p, float worldWidth, float worldHeight) {
+    p.x = fmod(p.x + worldWidth, worldWidth);   
+    p.z = fmod(p.z + worldHeight, worldHeight); 
+    return p;
+}
+
+// Distance calculation with wrapping
+float getToroidalDistance(Point a, Point b, float worldWidth, float worldHeight) {
+    float dx = min(abs(a.x - b.x), worldWidth - abs(a.x - b.x));
+    float dz = min(abs(a.z - b.z), worldHeight - abs(a.z - b.z));
+    return sqrt(dx*dx + dz*dz);
+}
+```
+**Rationale:** At 250km+ scale, seamless exploration outweighs rare geological impossibilities. Most players won't encounter wrapping artifacts in normal gameplay.
 
 ---
 
