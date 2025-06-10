@@ -81,12 +81,30 @@ bool MenuSystem::initialize(int screenWidth, int screenHeight, const std::string
     
     worldSimulationUI_->setOnSimulationCompleteCallback([this](const WorldSimulationUI::WorldStats& stats) {
         std::cout << "[MenuSystem] World simulation complete!" << std::endl;
-        // TODO: Convert simulation results to WorldSeed and trigger world creation
-        VoxelCastle::World::WorldSeed seed; // Create with current timestamp
-        if (onWorldCreateRequest_) {
-            onWorldCreateRequest_(seed, 1); // Medium world size
-        }
+        std::cout << "[MenuSystem] Generated world statistics:" << std::endl;
+        std::cout << "  - Highest Peak: " << stats.highestPeak << "m (" << stats.highestPeakName << ")" << std::endl;
+        std::cout << "  - Deepest Valley: " << stats.deepestValley << "m (" << stats.deepestValleyName << ")" << std::endl;
+        std::cout << "  - Largest Lake: " << stats.largestLakeSize << " (" << stats.largestLakeName << ")" << std::endl;
+        std::cout << "  - Simulation Years: " << stats.simulationYears << std::endl;
+        
+        // TODO: Instead of calling legacy world creation, we should:
+        // 1. Save the SeedWorldGenerator state from the simulation
+        // 2. Pass it to the game system for immediate use
+        // 3. Skip the legacy WorldGenerator entirely
+        
+        // For now, we'll close menus and let the user manually start the world
+        // This prevents the OpenGL spam and crash from the legacy system
+        std::cout << "[MenuSystem] World generation complete - ready for exploration!" << std::endl;
+        std::cout << "[MenuSystem] TODO: Integrate generated world with game systems" << std::endl;
+        
         closeMenus();
+        
+        // NOTE: Commented out the problematic legacy world creation call
+        // TODO: Convert simulation results to WorldSeed and trigger NEW world creation (not legacy)
+        // VoxelCastle::World::WorldSeed seed; // Create with current timestamp  
+        // if (onWorldCreateRequest_) {
+        //     onWorldCreateRequest_(seed, 1); // This was calling the legacy system!
+        // }
     });
     
     worldSimulationUI_->setOnBackCallback([this]() {
