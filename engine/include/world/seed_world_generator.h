@@ -52,6 +52,33 @@ public:
     void generateChunkSegment(ChunkSegment& segment, int worldX, int worldY, int worldZ);
 
     /**
+     * @brief Generate world preview data for UI visualization
+     * 
+     * Creates a lightweight heightmap sample for world configuration preview.
+     * This method samples terrain heights at regular intervals across the specified
+     * world region to create a preview visualization.
+     * 
+     * @param centerX World center X coordinate for preview
+     * @param centerZ World center Z coordinate for preview  
+     * @param sampleRadius Radius in world coordinates to sample around center
+     * @param resolution Number of samples per axis (creates resolution x resolution grid)
+     * @param heightData Output array to fill with height values (must be resolution*resolution size)
+     */
+    void generatePreviewHeightmap(int centerX, int centerZ, int sampleRadius, int resolution, float* heightData) const;
+
+    /**
+     * @brief Get terrain height at a specific world coordinate
+     * 
+     * Public accessor for terrain height calculation to support preview generation
+     * and other systems that need height information without full chunk generation.
+     * 
+     * @param globalX Global world X coordinate
+     * @param globalZ Global world Z coordinate
+     * @return Terrain height at the specified coordinate
+     */
+    int getTerrainHeightAt(int globalX, int globalZ) const;
+
+    /**
      * @brief Generate chunk segment with enhanced features (future use)
      * 
      * This method will add new features beyond legacy parity while maintaining

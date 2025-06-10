@@ -5,9 +5,16 @@
 #include <memory>
 #include <chrono>
 
+// Forward declarations
 namespace VoxelEngine::UI {
     class UIButton;
     class UIRenderer;
+    class WorldPreviewRenderer;
+}
+
+namespace VoxelCastle::World {
+    class WorldSeed;
+    class WorldParameters;
 }
 
 class WorldConfigurationUI : public VoxelEngine::UI::BaseMenu {
@@ -29,7 +36,7 @@ public:
     using OnBackCallback = std::function<void()>;
 
     WorldConfigurationUI(VoxelEngine::UI::UIRenderer* renderer);
-    virtual ~WorldConfigurationUI() = default;
+    virtual ~WorldConfigurationUI();
 
     /**
      * @brief Initialize the world configuration UI
@@ -69,12 +76,26 @@ private:
     void onParameterChanged();
     void onWorldNameChanged();
     
+    // Preview management
+    void updateWorldPreview();
+    void initializeWorldGenerationObjects();
+    void renderWorldPreview();
+    
+    // Preview area coordinates (set by createPreviewSection)
+    float previewX_, previewY_, previewWidth_, previewHeight_;
+    
     // World name validation
     void validateWorldName();
     bool isWorldNameValid() const;
 
     // Configuration state
     WorldConfig config_;
+    
+    // World preview rendering
+    std::unique_ptr<VoxelEngine::UI::WorldPreviewRenderer> previewRenderer_;
+    std::shared_ptr<VoxelCastle::World::WorldSeed> currentWorldSeed_;
+    std::shared_ptr<VoxelCastle::World::WorldParameters> currentWorldParameters_;
+    bool previewNeedsUpdate_;
     
     // World name input state
     char worldNameBuffer_[64];          // Buffer for ImGui text input

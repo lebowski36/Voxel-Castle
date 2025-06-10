@@ -1,17 +1,25 @@
 #include "ui/WorldConfigurationUI.h"
 #include "ui/elements/UIButton.h"
+#include "ui/WorldPreviewRenderer.h"
 #include "world/world_persistence_manager.h"
+#include "world/world_seed.h"
+#include "world/world_parameters.h"
 #include <iostream>
 #include <random>
 #include <cstring>
 
 WorldConfigurationUI::WorldConfigurationUI(VoxelEngine::UI::UIRenderer* renderer) 
     : BaseMenu(renderer, "World Configuration")
-    , currentY_(TITLE_HEIGHT + PANEL_MARGIN)
+    , previewRenderer_(nullptr)
+    , currentWorldSeed_(nullptr)
+    , currentWorldParameters_(nullptr)
+    , previewNeedsUpdate_(true)
+    , previewX_(0.0f), previewY_(0.0f), previewWidth_(0.0f), previewHeight_(0.0f)
     , worldNameExists_(false)
     , isEditingWorldName_(false)
     , onConfigurationComplete_(nullptr)
-    , onBack_(nullptr) {
+    , onBack_(nullptr)
+    , currentY_(TITLE_HEIGHT + PANEL_MARGIN) {
     
     // Initialize default configuration
     config_.worldName = "New World";
@@ -28,6 +36,10 @@ WorldConfigurationUI::WorldConfigurationUI(VoxelEngine::UI::UIRenderer* renderer
     worldNameBuffer_[sizeof(worldNameBuffer_) - 1] = '\0';
 }
 
+WorldConfigurationUI::~WorldConfigurationUI() {
+    // Destructor implementation - unique_ptr will handle cleanup automatically
+}
+
 bool WorldConfigurationUI::initialize(int screenWidth, int screenHeight) {
     // Use larger portion of screen for better usability
     float uiWidth = screenWidth * 0.85f;
@@ -39,6 +51,15 @@ bool WorldConfigurationUI::initialize(int screenWidth, int screenHeight) {
     std::cout << "[WorldConfigurationUI] Initializing with size: " << getSize().x << "x" << getSize().y 
               << " (screen: " << screenWidth << "x" << screenHeight << ")" << std::endl;
     
+    // Initialize preview renderer
+    previewRenderer_ = std::make_unique<VoxelEngine::UI::WorldPreviewRenderer>();
+    if (!previewRenderer_->initialize(256)) {
+        std::cerr << "[WorldConfigurationUI] Warning: Failed to initialize preview renderer" << std::endl;
+    }
+    
+    // Initialize world generation objects
+    initializeWorldGenerationObjects();
+    
     createUIElements();
     setVisible(true);
     
@@ -47,6 +68,19 @@ bool WorldConfigurationUI::initialize(int screenWidth, int screenHeight) {
 
 void WorldConfigurationUI::render() {
     BaseMenu::render();
+    
+    // Render world preview if available
+    renderWorldPreview();
+    
+    // Update preview if needed (but not every frame for performance)
+    static auto lastUpdateTime = std::chrono::steady_clock::now();
+    auto currentTime = std::chrono::steady_clock::now();
+    auto timeSinceUpdate = std::chrono::duration_cast<std::chrono::milliseconds>(currentTime - lastUpdateTime);
+    
+    if (previewNeedsUpdate_ && timeSinceUpdate.count() > 100) { // Update at most every 100ms
+        updateWorldPreview();
+        lastUpdateTime = currentTime;
+    }
 }
 
 bool WorldConfigurationUI::handleInput(float mouseX, float mouseY, bool clicked) {
@@ -464,11 +498,17 @@ void WorldConfigurationUI::createPreviewSection() {
     
     // Preview panel
     auto previewPanel = std::make_shared<VoxelEngine::UI::UIButton>(renderer_);
-    previewPanel->setText("[Preview Map Area]");
+    previewPanel->setText(""); // Remove placeholder text since we'll render over it
     previewPanel->setPosition(rightColumnX, TITLE_HEIGHT + PANEL_MARGIN + TEXT_HEIGHT + 5.0f);
     previewPanel->setSize(rightColumnWidth, 180.0f);
     previewPanel->setBackgroundColor({0.15f, 0.2f, 0.25f, 0.7f});
     addChild(previewPanel);
+    
+    // Store preview area coordinates for rendering
+    previewX_ = rightColumnX + getPosition().x; // Add menu position offset
+    previewY_ = TITLE_HEIGHT + PANEL_MARGIN + TEXT_HEIGHT + 5.0f + getPosition().y; // Add menu position offset
+    previewWidth_ = rightColumnWidth;
+    previewHeight_ = 180.0f;
     
     // Seed controls
     float seedY = TITLE_HEIGHT + PANEL_MARGIN + TEXT_HEIGHT + 190.0f;
@@ -490,7 +530,6 @@ void WorldConfigurationUI::createPreviewSection() {
     auto newSeedButton = std::make_shared<VoxelEngine::UI::UIButton>(renderer_);
     newSeedButton->setText("New Seed");
     newSeedButton->setPosition(rightColumnX + rightColumnWidth - 80.0f, seedY + 25.0f);
-    newSeedButton->autoSizeToText(8.0f);
     newSeedButton->setBackgroundColor({0.2f, 0.3f, 0.2f, 0.8f});
     newSeedButton->setOnClick([this, seedValueLabel]() { 
         std::random_device rd;
@@ -594,8 +633,14 @@ void WorldConfigurationUI::onBackClicked() {
 }
 
 void WorldConfigurationUI::onParameterChanged() {
-    // Could trigger preview updates in the future
-    std::cout << "[WorldConfigurationUI] Parameter changed" << std::endl;
+    std::cout << "[WorldConfigurationUI] Parameter changed - world size: " << config_.worldSize 
+              << ", climate: " << config_.climateType << ", seed: " << config_.customSeed << std::endl;
+    
+    // Mark preview for update when parameters change
+    previewNeedsUpdate_ = true;
+    
+    // Update world generation objects with new parameters
+    initializeWorldGenerationObjects();
 }
 
 void WorldConfigurationUI::onWorldNameChanged() {
@@ -659,4 +704,53 @@ void WorldConfigurationUI::validateWorldName() {
 
 bool WorldConfigurationUI::isWorldNameValid() const {
     return worldNameError_.empty() && !config_.worldName.empty();
+}
+
+void WorldConfigurationUI::initializeWorldGenerationObjects() {
+    // Create world seed from current configuration
+    uint32_t seed = config_.customSeed;
+    if (seed == 0) {
+        // Generate random seed if none specified
+        std::random_device rd;
+        std::mt19937 gen(rd());
+        seed = gen();
+    }
+    
+    currentWorldSeed_ = std::make_shared<VoxelCastle::World::WorldSeed>(seed);
+    currentWorldParameters_ = std::make_shared<VoxelCastle::World::WorldParameters>();
+    
+    // Configure world parameters based on UI settings
+    // TODO: Map UI configuration to world parameters once WorldParameters is fully implemented
+    // For now, use default parameters
+    
+    std::cout << "[WorldConfigurationUI] Initialized world generation objects with seed: " << seed << std::endl;
+}
+
+void WorldConfigurationUI::updateWorldPreview() {
+    if (!previewRenderer_ || !currentWorldSeed_ || !currentWorldParameters_) {
+        return;
+    }
+    
+    try {
+        // Calculate preview area based on world size
+        int sampleRadius = config_.worldSize / 4; // Show 1/4 of world size for good overview
+        
+        // Generate preview centered at world origin
+        previewRenderer_->generatePreview(currentWorldSeed_, currentWorldParameters_, 0, 0, sampleRadius);
+        
+        previewNeedsUpdate_ = false;
+        std::cout << "[WorldConfigurationUI] Updated world preview with radius: " << sampleRadius << std::endl;
+        
+    } catch (const std::exception& e) {
+        std::cerr << "[WorldConfigurationUI] Error updating world preview: " << e.what() << std::endl;
+    }
+}
+
+void WorldConfigurationUI::renderWorldPreview() {
+    if (!previewRenderer_ || !previewRenderer_->hasValidPreview()) {
+        return;
+    }
+    
+    // Use the stored preview coordinates
+    previewRenderer_->render(renderer_, previewX_, previewY_, previewWidth_, previewHeight_);
 }

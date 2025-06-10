@@ -574,5 +574,46 @@ RegionalData SeedWorldGenerator::generateRegionalData(int regionX, int regionZ) 
     return data;
 }
 
+void SeedWorldGenerator::generatePreviewHeightmap(int centerX, int centerZ, int sampleRadius, int resolution, float* heightData) const {
+    if (!heightData) {
+        throw std::invalid_argument("heightData cannot be null");
+    }
+    
+    if (resolution <= 0) {
+        throw std::invalid_argument("resolution must be positive");
+    }
+    
+    // Calculate sampling parameters
+    int minX = centerX - sampleRadius;
+    int maxX = centerX + sampleRadius;
+    int minZ = centerZ - sampleRadius;
+    int maxZ = centerZ + sampleRadius;
+    
+    int worldRangeX = maxX - minX;
+    int worldRangeZ = maxZ - minZ;
+    
+    // Sample terrain heights at regular intervals
+    for (int sampleZ = 0; sampleZ < resolution; sampleZ++) {
+        for (int sampleX = 0; sampleX < resolution; sampleX++) {
+            // Map sample coordinates to world coordinates
+            int worldX = minX + (sampleX * worldRangeX) / (resolution - 1);
+            int worldZ = minZ + (sampleZ * worldRangeZ) / (resolution - 1);
+            
+            // Get terrain height at this world coordinate
+            int terrainHeight = generateTerrainHeight(worldX, worldZ);
+            
+            // Convert block height to world meters for consistent scaling
+            float heightInMeters = terrainHeight * VoxelCastle::World::WorldCoordinates::VOXEL_SIZE_METERS;
+            
+            // Store in output array (row-major order)
+            heightData[sampleZ * resolution + sampleX] = heightInMeters;
+        }
+    }
+}
+
+int SeedWorldGenerator::getTerrainHeightAt(int globalX, int globalZ) const {
+    return generateTerrainHeight(globalX, globalZ);
+}
+
 } // namespace World
 } // namespace VoxelCastle
