@@ -70,44 +70,59 @@ void WorldPreviewRenderer::generatePreview(std::shared_ptr<VoxelCastle::World::W
 }
 
 void WorldPreviewRenderer::render(VoxelEngine::UI::UIRenderer* renderer, float x, float y, float width, float height) {
-    if (!textureValid_ || previewTexture_ == 0 || !renderer) {
-        // Render a placeholder colored rectangle instead of trying to render texture
-        glm::vec4 placeholderColor(0.3f, 0.5f, 0.7f, 1.0f); // Blue-ish placeholder
-        renderer->renderColoredQuad(x, y, width, height, placeholderColor);
+    if (!renderer) {
+        std::cout << "[WorldPreviewRenderer] ERROR: renderer is null" << std::endl;
         return;
     }
     
-    // For now, render a gradient placeholder that represents the heightmap
-    // This avoids the OpenGL texture rendering issues while we debug
+    std::cout << "[WorldPreviewRenderer] render() called at (" << x << ", " << y << ") size " << width << "x" << height << std::endl;
+    std::cout << "[WorldPreviewRenderer] textureValid_=" << textureValid_ << ", heightData_=" << (heightData_ ? "valid" : "null") << std::endl;
     
-    // Sample some height data to create a simple visual representation
-    if (heightData_) {
-        // Calculate average height to determine a representative color
-        float totalHeight = 0.0f;
-        int sampleCount = std::min(100, resolution_ * resolution_); // Sample first 100 pixels
-        
-        for (int i = 0; i < sampleCount; i++) {
-            totalHeight += heightData_[i];
-        }
-        
-        float avgHeight = totalHeight / sampleCount;
-        
-        // Convert average height to color (similar to heightToColor logic)
-        unsigned char r, g, b;
-        heightToColor(avgHeight, r, g, b);
-        
-        glm::vec4 avgColor(r / 255.0f, g / 255.0f, b / 255.0f, 1.0f);
-        renderer->renderColoredQuad(x, y, width, height, avgColor);
-        
-        // Add a simple text overlay to show it's working
-        if (renderer->isTextRendererAvailable()) {
-            std::string heightText = "Height: " + std::to_string((int)avgHeight) + "m";
-            renderer->drawText(heightText, x + 10, y + height - 20, 0.8f, glm::vec3(1.0f, 1.0f, 1.0f));
-        }
-    } else {
-        // Fallback: render a placeholder
+    // Check if we have valid heightmap data to render
+    if (!textureValid_ || !heightData_) {
+        std::cout << "[WorldPreviewRenderer] Rendering placeholder - no valid data" << std::endl;
+        // Render a placeholder colored rectangle when no data available
         glm::vec4 placeholderColor(0.3f, 0.3f, 0.3f, 1.0f); // Gray placeholder
         renderer->renderColoredQuad(x, y, width, height, placeholderColor);
+        
+        // Add text to show it's a placeholder
+        if (renderer->isTextRendererAvailable()) {
+            renderer->drawText("Generating Preview...", x + 10, y + height - 20, 0.8f, glm::vec3(1.0f, 1.0f, 1.0f));
+        }
+        return;
+    }
+    
+    std::cout << "[WorldPreviewRenderer] Rendering heightmap data" << std::endl;
+    
+    // We have valid height data! Create a visual representation
+    // Calculate average height to determine a representative color
+    float totalHeight = 0.0f;
+    int sampleCount = std::min(100, resolution_ * resolution_); // Sample first 100 pixels
+    
+    for (int i = 0; i < sampleCount; i++) {
+        totalHeight += heightData_[i];
+    }
+    
+    float avgHeight = totalHeight / sampleCount;
+    
+    std::cout << "[WorldPreviewRenderer] Average height: " << avgHeight << "m" << std::endl;
+    
+    // Convert average height to color (similar to heightToColor logic)
+    unsigned char r, g, b;
+    heightToColor(avgHeight, r, g, b);
+    
+    glm::vec4 avgColor(r / 255.0f, g / 255.0f, b / 255.0f, 1.0f);
+    std::cout << "[WorldPreviewRenderer] Color: (" << (int)r << ", " << (int)g << ", " << (int)b << ")" << std::endl;
+    std::cout << "[WorldPreviewRenderer] Calling renderColoredQuad with bright test color instead" << std::endl;
+    
+    // DEBUGGING: Use a bright, obvious color instead of the calculated one to see if ANY quad renders
+    glm::vec4 testColor(1.0f, 0.0f, 1.0f, 1.0f); // Bright magenta - impossible to miss!
+    renderer->renderColoredQuad(x, y, width, height, testColor);
+    
+    // Add a text overlay to show the height information
+    if (renderer->isTextRendererAvailable()) {
+        std::string heightText = "TEST: " + std::to_string((int)avgHeight) + "m";
+        renderer->drawText(heightText, x + 10, y + height - 20, 0.8f, glm::vec3(1.0f, 1.0f, 1.0f));
     }
 }
 

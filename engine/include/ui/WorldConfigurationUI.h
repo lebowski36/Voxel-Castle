@@ -80,9 +80,16 @@ private:
     void updateWorldPreview();
     void initializeWorldGenerationObjects();
     void renderWorldPreview();
+    void updateParameterDisplayText(); // Add method to update UI text without recreating
     
     // Preview area coordinates (set by createPreviewSection)
     float previewX_, previewY_, previewWidth_, previewHeight_;
+    
+    // World preview rendering
+    std::unique_ptr<VoxelEngine::UI::WorldPreviewRenderer> previewRenderer_;
+    std::shared_ptr<VoxelCastle::World::WorldSeed> currentWorldSeed_;
+    std::shared_ptr<VoxelCastle::World::WorldParameters> currentWorldParameters_;
+    bool previewNeedsUpdate_;
     
     // World name validation
     void validateWorldName();
@@ -90,12 +97,6 @@ private:
 
     // Configuration state
     WorldConfig config_;
-    
-    // World preview rendering
-    std::unique_ptr<VoxelEngine::UI::WorldPreviewRenderer> previewRenderer_;
-    std::shared_ptr<VoxelCastle::World::WorldSeed> currentWorldSeed_;
-    std::shared_ptr<VoxelCastle::World::WorldParameters> currentWorldParameters_;
-    bool previewNeedsUpdate_;
     
     // World name input state
     char worldNameBuffer_[64];          // Buffer for ImGui text input
@@ -109,6 +110,9 @@ private:
     
     // Layout state
     float currentY_;
+    
+    // UI update management
+    bool isRecreatingUI_ = false;  // Prevent recursion during UI recreation
     
     // Constants for layout
     static constexpr float PANEL_MARGIN = 15.0f;

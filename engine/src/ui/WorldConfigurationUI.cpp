@@ -19,7 +19,8 @@ WorldConfigurationUI::WorldConfigurationUI(VoxelEngine::UI::UIRenderer* renderer
     , isEditingWorldName_(false)
     , onConfigurationComplete_(nullptr)
     , onBack_(nullptr)
-    , currentY_(TITLE_HEIGHT + PANEL_MARGIN) {
+    , currentY_(TITLE_HEIGHT + PANEL_MARGIN)
+    , isRecreatingUI_(false) {
     
     // Initialize default configuration
     config_.worldName = "New World";
@@ -284,6 +285,7 @@ void WorldConfigurationUI::createParameterControls() {
             else if (config_.worldSize == 2048) config_.worldSize = 1024;
             
             sizeValueLabel->setText(std::to_string(config_.worldSize) + "x" + std::to_string(config_.worldSize) + " regions");
+            std::cout << "[DEBUG] World size decreased to: " << config_.worldSize << std::endl;
             onParameterChanged();
         }
     });
@@ -301,6 +303,7 @@ void WorldConfigurationUI::createParameterControls() {
             else if (config_.worldSize == 1024) config_.worldSize = 2048;
             
             sizeValueLabel->setText(std::to_string(config_.worldSize) + "x" + std::to_string(config_.worldSize) + " regions");
+            std::cout << "[DEBUG] World size increased to: " << config_.worldSize << std::endl;
             onParameterChanged();
         }
     });
@@ -315,9 +318,7 @@ void WorldConfigurationUI::createParameterControls() {
     climateLabel->setBackgroundColor({0.1f, 0.1f, 0.1f, 0.6f});
     addChild(climateLabel);
     
-    std::vector<std::string> climateTypes = {"Arctic", "Temperate", "Tropical", "Desert"};
     auto climateValueLabel = std::make_shared<VoxelEngine::UI::UIButton>(renderer_);
-    climateValueLabel->setText(climateTypes[config_.climateType]);
     climateValueLabel->setPosition(valueColumnX, paramY);
     climateValueLabel->autoSizeToText(8.0f);
     climateValueLabel->setBackgroundColor({0.1f, 0.1f, 0.1f, 0.6f});
@@ -328,10 +329,12 @@ void WorldConfigurationUI::createParameterControls() {
     climateDecButton->setPosition(buttonColumnX, paramY);
     climateDecButton->setSize(25.0f, 25.0f);
     climateDecButton->setBackgroundColor({0.3f, 0.2f, 0.2f, 0.8f});
-    climateDecButton->setOnClick([this, climateValueLabel, &climateTypes]() { 
+    climateDecButton->setOnClick([this, climateValueLabel]() { 
         if (config_.climateType > 0) {
             config_.climateType--;
+            std::vector<std::string> climateTypes = {"Arctic", "Temperate", "Tropical", "Desert"};
             climateValueLabel->setText(climateTypes[config_.climateType]);
+            std::cout << "[DEBUG] Climate decreased to: " << config_.climateType << " (" << climateTypes[config_.climateType] << ")" << std::endl;
             onParameterChanged();
         }
     });
@@ -342,14 +345,21 @@ void WorldConfigurationUI::createParameterControls() {
     climateIncButton->setPosition(buttonColumnX + 30.0f, paramY);
     climateIncButton->setSize(25.0f, 25.0f);
     climateIncButton->setBackgroundColor({0.2f, 0.3f, 0.2f, 0.8f});
-    climateIncButton->setOnClick([this, climateValueLabel, &climateTypes]() { 
+    climateIncButton->setOnClick([this, climateValueLabel]() { 
         if (config_.climateType < 3) {
             config_.climateType++;
+            std::vector<std::string> climateTypes = {"Arctic", "Temperate", "Tropical", "Desert"};
             climateValueLabel->setText(climateTypes[config_.climateType]);
+            std::cout << "[DEBUG] Climate increased to: " << config_.climateType << " (" << climateTypes[config_.climateType] << ")" << std::endl;
             onParameterChanged();
         }
     });
     addChild(climateIncButton);
+    
+    // Update climate value text after creating buttons
+    std::vector<std::string> climateTypes = {"Arctic", "Temperate", "Tropical", "Desert"};
+    climateValueLabel->setText(climateTypes[config_.climateType]);
+    
     paramY += rowSpacing;
     
     // Simulation Depth Parameter
@@ -360,9 +370,7 @@ void WorldConfigurationUI::createParameterControls() {
     depthLabel->setBackgroundColor({0.1f, 0.1f, 0.1f, 0.6f});
     addChild(depthLabel);
     
-    std::vector<std::string> depthTypes = {"Fast", "Normal", "Epic"};
     auto depthValueLabel = std::make_shared<VoxelEngine::UI::UIButton>(renderer_);
-    depthValueLabel->setText(depthTypes[config_.simulationDepth - 1]);
     depthValueLabel->setPosition(valueColumnX, paramY);
     depthValueLabel->autoSizeToText(8.0f);
     depthValueLabel->setBackgroundColor({0.1f, 0.1f, 0.1f, 0.6f});
@@ -373,10 +381,12 @@ void WorldConfigurationUI::createParameterControls() {
     depthDecButton->setPosition(buttonColumnX, paramY);
     depthDecButton->setSize(25.0f, 25.0f);
     depthDecButton->setBackgroundColor({0.3f, 0.2f, 0.2f, 0.8f});
-    depthDecButton->setOnClick([this, depthValueLabel, &depthTypes]() { 
+    depthDecButton->setOnClick([this, depthValueLabel]() { 
         if (config_.simulationDepth > 1) {
             config_.simulationDepth--;
+            std::vector<std::string> depthTypes = {"Fast", "Normal", "Epic"};
             depthValueLabel->setText(depthTypes[config_.simulationDepth - 1]);
+            std::cout << "[DEBUG] Simulation depth decreased to: " << config_.simulationDepth << " (" << depthTypes[config_.simulationDepth - 1] << ")" << std::endl;
             onParameterChanged();
         }
     });
@@ -387,14 +397,21 @@ void WorldConfigurationUI::createParameterControls() {
     depthIncButton->setPosition(buttonColumnX + 30.0f, paramY);
     depthIncButton->setSize(25.0f, 25.0f);
     depthIncButton->setBackgroundColor({0.2f, 0.3f, 0.2f, 0.8f});
-    depthIncButton->setOnClick([this, depthValueLabel, &depthTypes]() { 
+    depthIncButton->setOnClick([this, depthValueLabel]() { 
         if (config_.simulationDepth < 3) {
             config_.simulationDepth++;
+            std::vector<std::string> depthTypes = {"Fast", "Normal", "Epic"};
             depthValueLabel->setText(depthTypes[config_.simulationDepth - 1]);
+            std::cout << "[DEBUG] Simulation depth increased to: " << config_.simulationDepth << " (" << depthTypes[config_.simulationDepth - 1] << ")" << std::endl;
             onParameterChanged();
         }
     });
     addChild(depthIncButton);
+    
+    // Update depth value text after creating buttons
+    std::vector<std::string> depthTypes = {"Fast", "Normal", "Epic"};
+    depthValueLabel->setText(depthTypes[config_.simulationDepth - 1]);
+    
     paramY += rowSpacing;
     
     // Geological Activity Parameter
@@ -405,9 +422,7 @@ void WorldConfigurationUI::createParameterControls() {
     geoLabel->setBackgroundColor({0.1f, 0.1f, 0.1f, 0.6f});
     addChild(geoLabel);
     
-    std::vector<std::string> geoTypes = {"Stable", "Moderate", "Highly Active"};
     auto geoValueLabel = std::make_shared<VoxelEngine::UI::UIButton>(renderer_);
-    geoValueLabel->setText(geoTypes[config_.geologicalActivity]);
     geoValueLabel->setPosition(valueColumnX, paramY);
     geoValueLabel->autoSizeToText(10.0f);
     geoValueLabel->setBackgroundColor({0.1f, 0.1f, 0.1f, 0.6f});
@@ -418,10 +433,12 @@ void WorldConfigurationUI::createParameterControls() {
     geoDecButton->setPosition(buttonColumnX, paramY);
     geoDecButton->setSize(25.0f, 25.0f);
     geoDecButton->setBackgroundColor({0.3f, 0.2f, 0.2f, 0.8f});
-    geoDecButton->setOnClick([this, geoValueLabel, &geoTypes]() { 
+    geoDecButton->setOnClick([this, geoValueLabel]() { 
         if (config_.geologicalActivity > 0) {
             config_.geologicalActivity--;
+            std::vector<std::string> geoTypes = {"Stable", "Moderate", "Highly Active"};
             geoValueLabel->setText(geoTypes[config_.geologicalActivity]);
+            std::cout << "[DEBUG] Geological activity decreased to: " << config_.geologicalActivity << " (" << geoTypes[config_.geologicalActivity] << ")" << std::endl;
             onParameterChanged();
         }
     });
@@ -432,14 +449,21 @@ void WorldConfigurationUI::createParameterControls() {
     geoIncButton->setPosition(buttonColumnX + 30.0f, paramY);
     geoIncButton->setSize(25.0f, 25.0f);
     geoIncButton->setBackgroundColor({0.2f, 0.3f, 0.2f, 0.8f});
-    geoIncButton->setOnClick([this, geoValueLabel, &geoTypes]() { 
+    geoIncButton->setOnClick([this, geoValueLabel]() { 
         if (config_.geologicalActivity < 2) {
             config_.geologicalActivity++;
+            std::vector<std::string> geoTypes = {"Stable", "Moderate", "Highly Active"};
             geoValueLabel->setText(geoTypes[config_.geologicalActivity]);
+            std::cout << "[DEBUG] Geological activity increased to: " << config_.geologicalActivity << " (" << geoTypes[config_.geologicalActivity] << ")" << std::endl;
             onParameterChanged();
         }
     });
     addChild(geoIncButton);
+    
+    // Update geological activity value text after creating buttons
+    std::vector<std::string> geoTypes = {"Stable", "Moderate", "Highly Active"};
+    geoValueLabel->setText(geoTypes[config_.geologicalActivity]);
+    
     paramY += rowSpacing;
     
     // Enable Civilizations Parameter
@@ -461,6 +485,7 @@ void WorldConfigurationUI::createParameterControls() {
         civToggleButton->setText(config_.enableCivilizations ? "Enabled" : "Disabled");
         civToggleButton->setBackgroundColor(config_.enableCivilizations ? 
             glm::vec4{0.2f, 0.4f, 0.2f, 0.8f} : glm::vec4{0.4f, 0.2f, 0.2f, 0.8f});
+        std::cout << "[DEBUG] Civilizations toggled to: " << (config_.enableCivilizations ? "Enabled" : "Disabled") << std::endl;
         onParameterChanged();
     });
     addChild(civToggleButton);
@@ -747,9 +772,22 @@ void WorldConfigurationUI::updateWorldPreview() {
 }
 
 void WorldConfigurationUI::renderWorldPreview() {
-    if (!previewRenderer_ || !previewRenderer_->hasValidPreview()) {
+    std::cout << "[WorldConfigurationUI] renderWorldPreview() called" << std::endl;
+    std::cout << "[WorldConfigurationUI] previewRenderer_=" << (previewRenderer_ ? "valid" : "null") << std::endl;
+    
+    if (!previewRenderer_) {
+        std::cout << "[WorldConfigurationUI] No preview renderer available" << std::endl;
         return;
     }
+    
+    std::cout << "[WorldConfigurationUI] previewRenderer_->hasValidPreview()=" << previewRenderer_->hasValidPreview() << std::endl;
+    
+    if (!previewRenderer_->hasValidPreview()) {
+        std::cout << "[WorldConfigurationUI] Preview renderer has no valid preview" << std::endl;
+        return;
+    }
+    
+    std::cout << "[WorldConfigurationUI] Calling preview render at (" << previewX_ << ", " << previewY_ << ") size " << previewWidth_ << "x" << previewHeight_ << std::endl;
     
     // Use the stored preview coordinates
     previewRenderer_->render(renderer_, previewX_, previewY_, previewWidth_, previewHeight_);
