@@ -164,6 +164,12 @@ void WorldMapRenderer::generateElevationData(VoxelCastle::World::SeedWorldGenera
     // Get tectonic simulator for elevation modifiers
     const VoxelCastle::TectonicSimulator* tectonicSim = generator->getTectonicSimulator();
     
+    std::cout << "[WorldMapRenderer] Tectonic simulator: " << (tectonicSim ? "Available" : "Not available") << std::endl;
+    if (tectonicSim) {
+        std::cout << "[WorldMapRenderer] Tectonic simulation complete: " << (tectonicSim->IsSimulationComplete() ? "Yes" : "No") << std::endl;
+        std::cout << "[WorldMapRenderer] Number of plates: " << tectonicSim->GetPlates().size() << std::endl;
+    }
+    
     for (int y = 0; y < resolution_; y++) {
         for (int x = 0; x < resolution_; x++) {
             // Convert screen coordinates to world coordinates
@@ -180,14 +186,35 @@ void WorldMapRenderer::generateElevationData(VoxelCastle::World::SeedWorldGenera
                 // Convert coordinates to kilometers for tectonic simulator
                 glm::vec2 worldPosKm(worldX / 1000.0f, worldZ / 1000.0f);
                 
+                // Debug: Check world bounds
+                float tectonicWorldSize = tectonicSim->GetWorldSize();
+                if (x < 5 && y < 5) {
+                    std::cout << "[WorldMapRenderer] Tectonic world size: " << tectonicWorldSize << " km" << std::endl;
+                    std::cout << "[WorldMapRenderer] Checking position (" << worldPosKm.x << "," << worldPosKm.y << ") km" << std::endl;
+                    std::cout << "[WorldMapRenderer] Within bounds: " << (worldPosKm.x >= 0 && worldPosKm.y >= 0 && worldPosKm.x < tectonicWorldSize && worldPosKm.y < tectonicWorldSize) << std::endl;
+                }
+                
                 // Get tectonic elevation modifier (in meters)
                 float tectonicModifier = tectonicSim->GetElevationModifier(worldPosKm);
                 
                 // Apply tectonic effects to terrain
                 finalHeight = baseHeight + tectonicModifier;
                 
+                // Debug: log first few values to see if tectonic data is working
+                if (x < 5 && y < 5) {
+                    std::cout << "[WorldMapRenderer] Pos(" << worldX << "," << worldZ 
+                              << ") Base:" << baseHeight << "m Tectonic:" << tectonicModifier 
+                              << "m Final:" << finalHeight << "m" << std::endl;
+                }
+                
                 // Ensure realistic height bounds (prevent negative elevations for now)
                 finalHeight = std::max(0.0f, finalHeight);
+            } else {
+                // Debug: log that we're using base terrain only
+                if (x < 3 && y < 3) {
+                    std::cout << "[WorldMapRenderer] Using base terrain only - Pos(" << worldX << "," << worldZ 
+                              << ") Height:" << baseHeight << "m" << std::endl;
+                }
             }
             
             elevationData_[y * resolution_ + x] = finalHeight;

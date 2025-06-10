@@ -105,6 +105,12 @@ void TectonicSimulator::SimulatePlateMovement(float simulationTime, uint32_t tim
     }
     
     std::cout << "[TectonicSimulator] Simulation complete" << std::endl;
+    
+    // Generate terrain features and elevation maps based on boundary interactions
+    std::cout << "[TectonicSimulator] Generating boundary features and terrain maps..." << std::endl;
+    GenerateBoundaryFeatures();
+    std::cout << "[TectonicSimulator] Boundary features and terrain maps generated" << std::endl;
+    
     totalSimulationTime_ += simulationTime;
     simulationComplete_ = true;
 }
@@ -359,6 +365,8 @@ void TectonicSimulator::BuildSpatialGrid() {
 void TectonicSimulator::DetectPlateCollisions() {
     boundaries_.clear();
     
+    std::cout << "[TectonicSimulator] DetectPlateCollisions: Checking " << plates_.size() << " plates for interactions..." << std::endl;
+    
     // Check all plate pairs for interactions
     for (size_t i = 0; i < plates_.size(); i++) {
         for (size_t j = i + 1; j < plates_.size(); j++) {
@@ -374,9 +382,19 @@ void TectonicSimulator::DetectPlateCollisions() {
                 PlateBoundary boundary(plate1.plateId, plate2.plateId, boundaryType);
                 boundary.interactionStrength = CalculateInteractionStrength(plate1, plate2);
                 boundaries_.push_back(boundary);
+                
+                // Debug for first few boundaries
+                if (boundaries_.size() <= 3) {
+                    std::cout << "[TectonicSimulator] Boundary " << boundaries_.size() 
+                              << ": plates " << plate1.plateId << "-" << plate2.plateId
+                              << " distance=" << distance << " interactionRadius=" << interactionRadius
+                              << " type=" << static_cast<int>(boundaryType) << std::endl;
+                }
             }
         }
     }
+    
+    std::cout << "[TectonicSimulator] DetectPlateCollisions: Created " << boundaries_.size() << " boundaries" << std::endl;
 }
 
 BoundaryType TectonicSimulator::ClassifyBoundaryType(const TectonicPlate& plate1, const TectonicPlate& plate2) const {
@@ -427,19 +445,95 @@ void TectonicSimulator::HandleConvergentBoundary(PlateBoundary& boundary) {
     // Mountain formation at convergent boundaries
     boundary.stress += boundary.interactionStrength * timeStep_ * 0.1f;
     
-    // Generate contact points for mountain ranges
+    // Generate multiple contact points along the boundary line for mountain ranges
     glm::vec2 midpoint = (plate1->centerPosition + plate2->centerPosition) * 0.5f;
-    boundary.contactPoints.push_back(midpoint);
+    glm::vec2 direction = glm::normalize(plate2->centerPosition - plate1->centerPosition);
+    glm::vec2 perpendicular = glm::vec2(-direction.y, direction.x);
+    
+    // Create a line of contact points perpendicular to the plate connection
+    float boundaryLength = std::sqrt((plate1->area + plate2->area) / 3.14159f) * 0.8f;
+    int numPoints = static_cast<int>(boundaryLength / 50.0f) + 3; // At least 3 points
+    
+    boundary.contactPoints.clear(); // Clear existing points
+    for (int i = 0; i < numPoints; i++) {
+        float offset = (i - numPoints/2.0f) * (boundaryLength / numPoints);
+        glm::vec2 contactPoint = midpoint + perpendicular * offset;
+        boundary.contactPoints.push_back(contactPoint);
+    }
+    
+    // Debug output
+    static int convergentCallCount = 0;
+    if (convergentCallCount < 2) {
+        std::cout << "[TectonicSimulator] HandleConvergentBoundary: Added " << numPoints 
+                  << " contact points for plates " << boundary.plate1Id << "-" << boundary.plate2Id
+                  << " at midpoint (" << midpoint.x << "," << midpoint.y << ")"
+                  << " stress=" << boundary.stress << std::endl;
+        convergentCallCount++;
+    }
 }
 
 void TectonicSimulator::HandleDivergentBoundary(PlateBoundary& boundary) {
+    // Find the plates involved
+    const TectonicPlate* plate1 = nullptr;
+    const TectonicPlate* plate2 = nullptr;
+    
+    for (const auto& plate : plates_) {
+        if (plate.plateId == boundary.plate1Id) plate1 = &plate;
+        if (plate.plateId == boundary.plate2Id) plate2 = &plate;
+    }
+    
+    if (!plate1 || !plate2) return;
+    
     // Rift formation at divergent boundaries
     boundary.stress += boundary.interactionStrength * timeStep_ * 0.05f; // Less stress than convergent
+    
+    // Generate multiple contact points along the rift valley
+    glm::vec2 midpoint = (plate1->centerPosition + plate2->centerPosition) * 0.5f;
+    glm::vec2 direction = glm::normalize(plate2->centerPosition - plate1->centerPosition);
+    glm::vec2 perpendicular = glm::vec2(-direction.y, direction.x);
+    
+    // Create a line of contact points for the rift valley
+    float riftLength = std::sqrt((plate1->area + plate2->area) / 3.14159f) * 0.6f;
+    int numPoints = static_cast<int>(riftLength / 60.0f) + 2; // At least 2 points
+    
+    boundary.contactPoints.clear(); // Clear existing points
+    for (int i = 0; i < numPoints; i++) {
+        float offset = (i - numPoints/2.0f) * (riftLength / numPoints);
+        glm::vec2 contactPoint = midpoint + perpendicular * offset;
+        boundary.contactPoints.push_back(contactPoint);
+    }
 }
 
 void TectonicSimulator::HandleTransformBoundary(PlateBoundary& boundary) {
+    // Find the plates involved
+    const TectonicPlate* plate1 = nullptr;
+    const TectonicPlate* plate2 = nullptr;
+    
+    for (const auto& plate : plates_) {
+        if (plate.plateId == boundary.plate1Id) plate1 = &plate;
+        if (plate.plateId == boundary.plate2Id) plate2 = &plate;
+    }
+    
+    if (!plate1 || !plate2) return;
+    
     // Fault line formation at transform boundaries
     boundary.stress += boundary.interactionStrength * timeStep_ * 0.15f; // High stress, different pattern
+    
+    // Generate multiple contact points along the fault line
+    glm::vec2 midpoint = (plate1->centerPosition + plate2->centerPosition) * 0.5f;
+    glm::vec2 direction = glm::normalize(plate2->centerPosition - plate1->centerPosition);
+    glm::vec2 perpendicular = glm::vec2(-direction.y, direction.x);
+    
+    // Create a line of contact points for the fault line
+    float faultLength = std::sqrt((plate1->area + plate2->area) / 3.14159f) * 0.7f;
+    int numPoints = static_cast<int>(faultLength / 70.0f) + 2; // At least 2 points
+    
+    boundary.contactPoints.clear(); // Clear existing points
+    for (int i = 0; i < numPoints; i++) {
+        float offset = (i - numPoints/2.0f) * (faultLength / numPoints);
+        glm::vec2 contactPoint = midpoint + perpendicular * offset;
+        boundary.contactPoints.push_back(contactPoint);
+    }
 }
 
 void TectonicSimulator::CalculateStressAccumulation(float deltaTime) {
@@ -465,6 +559,20 @@ void TectonicSimulator::UpdatePlatePositions(float deltaTime) {
 
 void TectonicSimulator::GenerateTerrainMaps() {
     float cellSize = worldSize_ / mapResolution_;
+    
+    std::cout << "[TectonicSimulator] GenerateTerrainMaps - Processing " << boundaries_.size() << " boundaries" << std::endl;
+    
+    // Debug: check boundary data
+    int totalContactPoints = 0;
+    for (size_t i = 0; i < boundaries_.size() && i < 3; i++) {
+        const auto& boundary = boundaries_[i];
+        totalContactPoints += boundary.contactPoints.size();
+        std::cout << "[TectonicSimulator] Boundary " << i << ": stress=" << boundary.stress 
+                  << " contactPoints=" << boundary.contactPoints.size() 
+                  << " type=" << static_cast<int>(boundary.type) 
+                  << " interactionStrength=" << boundary.interactionStrength << std::endl;
+    }
+    std::cout << "[TectonicSimulator] Total contact points across all boundaries: " << totalContactPoints << std::endl;
     
     for (uint32_t y = 0; y < mapResolution_; y++) {
         for (uint32_t x = 0; x < mapResolution_; x++) {
@@ -579,6 +687,8 @@ float TectonicSimulator::InterpolateElevationModifier(glm::vec2 worldPos) const 
     // Check if position is outside world bounds - return default elevation modifier
     if (worldPos.x < 0.0f || worldPos.y < 0.0f || 
         worldPos.x >= worldSize_ || worldPos.y >= worldSize_) {
+        std::cout << "[TectonicSimulator] Position (" << worldPos.x << "," << worldPos.y 
+                  << ") outside bounds [0," << worldSize_ << "] - returning 0" << std::endl;
         return 0.0f; // Default elevation modifier for out-of-bounds positions
     }
     
@@ -603,6 +713,16 @@ float TectonicSimulator::InterpolateElevationModifier(glm::vec2 worldPos) const 
     float v10 = elevationMap_[y0][x1];
     float v01 = elevationMap_[y1][x0];
     float v11 = elevationMap_[y1][x1];
+    
+    // Debug: log elevation map values for first few calls
+    static int debugCount = 0;
+    if (debugCount < 5) {
+        std::cout << "[TectonicSimulator] ElevationModifier debug - Pos(" << worldPos.x << "," << worldPos.y 
+                  << ") cellSize:" << cellSize << " grid(" << x0 << "," << y0 << ")" << std::endl;
+        std::cout << "[TectonicSimulator] Elevation values: v00=" << v00 << " v10=" << v10 
+                  << " v01=" << v01 << " v11=" << v11 << std::endl;
+        debugCount++;
+    }
     
     float v0 = v00 * (1.0f - fx) + v10 * fx;
     float v1 = v01 * (1.0f - fx) + v11 * fx;

@@ -469,17 +469,22 @@ void WorldSimulationUI::startSimulation(const WorldConfig& config, const std::st
         // Create SeedWorldGenerator
         worldGenerator_ = std::make_shared<VoxelCastle::World::SeedWorldGenerator>(worldSeed_, worldParameters_);
         
+        // Initialize tectonic simulation immediately so visualization has data
+        addLogEntry("Initializing tectonic simulation", 2);
+        addLogEntry("World size: " + std::to_string(config.worldSize) + "x" + std::to_string(config.worldSize), 3);
+        worldGenerator_->initializeTectonicSimulation(static_cast<float>(config.worldSize));
+        addLogEntry("Tectonic simulation initialized", 3);
+        
         // Create WorldPersistenceManager
         worldPersistence_ = std::make_shared<VoxelCastle::World::WorldPersistenceManager>();
         
-        addLogEntry("Initializing tectonic simulation", 2);
-        addLogEntry("World size: " + std::to_string(config.worldSize) + "x" + std::to_string(config.worldSize), 3);
+        // Update initial world map visualization now that tectonic data is available
+        updateWorldMapVisualization();
         
         // Start generation in background thread
         startGenerationThread();
         
-        // Initialize world map visualization
-        updateWorldMapVisualization();
+        // Note: updateWorldMapVisualization() will be called after each phase completes
         
     } catch (const std::exception& e) {
         addLogEntry("ERROR: Failed to initialize world generation: " + std::string(e.what()), 0);
@@ -608,9 +613,8 @@ void WorldSimulationUI::simulatePhase(GenerationPhase phase, float deltaTime) {
         switch (phase) {
             case GenerationPhase::TECTONICS:
                 if (generationProgress == 0.0f) {
-                    addLogEntry("Initializing tectonic simulation...", stats_.simulationYears);
-                    // Initialize tectonic simulation with world size
-                    worldGenerator_->initializeTectonicSimulation(static_cast<float>(config_.worldSize));
+                    addLogEntry("Tectonic simulation running...", stats_.simulationYears);
+                    // Tectonic simulation already initialized, now just show progress
                 }
                 if (lastLogEntry >= 1.5f) {
                     addLogEntry("Tectonic plates shifting, mountains rising...", stats_.simulationYears);
@@ -686,6 +690,9 @@ void WorldSimulationUI::simulatePhase(GenerationPhase phase, float deltaTime) {
         if (generationProgress >= phaseCompletionTime) {
             phaseCompleted = true;
             addLogEntry("Phase completed successfully.", stats_.simulationYears);
+            
+            // Update world map visualization after phase completion
+            updateWorldMapVisualization();
         }
     }
     
