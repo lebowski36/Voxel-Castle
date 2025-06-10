@@ -202,11 +202,18 @@ cd build && make && cd .. && ./build/bin/VoxelFortressGame
 - [x] Develop UI Framework
 - [x] **Clean Up Console Output and Logging System** - ✅ **RESOLVED**: Eliminated spammy MenuSystem logging (reduced from every frame to every 1000 frames), removed unnecessary WorldSeed initializations at startup, and completed full transition from legacy WorldCreationDialog to split UI system (WorldConfigurationUI + WorldSimulationUI). System startup is now clean with minimal console output.
 - [ ] **Merge Dual Logging Systems** - Fix inconsistency between DEBUG_LOG() (writes to debug_logs/) and VoxelCastle::Utils::logToFile() (writes to debug_log.txt) 
+- [ ] **🚨 URGENT: World Persistence System (08a)** - **CRITICAL BLOCKING DEPENDENCY** for World Generation UI completion
+  - **Current Issue**: World Generation UI (08f) creates worlds that disappear - no persistence layer
+  - **Task 1**: World Creation & Management Menu System - world directories and metadata
+  - **Task 3**: World Directory Structure - level.dat format, world storage system
+  - **Integration**: Connect WorldSimulationUI completion to SaveManager/world persistence
+  - **Impact**: Blocks "Play World" button implementation and Load World functionality
+  - **Status**: 🔄 IN PROGRESS - Required before 08f Phase 3.5 completion
 - [ ] Implement Game State Management
 - [x] Implement Block Placement System
 - [ ] Implement Modular UI System
 - [ ] Implement Menu System
-- [x] **Add World Seed System** - Enhanced world generation system (08c) in active development. Core seed system (08c.1) ✅ COMPLETED 2025-06-06. Generation parameters (08c.2) ✅ COMPLETED 2025-06-06. Feature parity (08c.3) ✅ COMPLETED 2025-06-06. Next active steps: Implement Biome System (08c.4) and Structure Generation (08c.5). See `08c_world_generation_system.md` and subtasks for the full implementation plan. **Architecture**: [docs/WORLD_GENERATION_ARCHITECTURE.md](docs/WORLD_GENERATION_ARCHITECTURE.md) documents the dual-path system preserving legacy world generation.
+- [x] **Add World Seed System** - Enhanced world generation system (08c) with UI integration (08f) in active development. Core seed system (08c.1) ✅ COMPLETED 2025-06-06. Generation parameters (08c.2) ✅ COMPLETED 2025-06-06. Feature parity (08c.3) ✅ COMPLETED 2025-06-06. World Generation UI (08f Phase 3) ✅ COMPLETED 2025-06-10. **NEXT CRITICAL**: World Persistence Integration (08a) required for 08f Phase 3.5 completion. See `08c_world_generation_system.md` and `08f_world_generation_ui.md` for implementation plans. **Architecture**: [docs/WORLD_GENERATION_ARCHITECTURE.md](docs/WORLD_GENERATION_ARCHITECTURE.md) documents the dual-path system preserving legacy world generation.
 - [x] **🚨 URGENT BUG: Grass Side Texture Atlas Sampling Error** - ✅ **RESOLVED**: Fixed critical visual bug where grass side faces displayed incorrect textures. Root causes fixed: atlas_id integer attribute binding, flipped V coordinates in side atlas UV calculation, normalized quad UVs for proper tiling, corrected shader tile span (1/16 vs 1/32), and implemented proper face culling for transparent blocks. Grass blocks now render correctly with proper texturing and water transparency works as expected.
 - [x] **🎉 COMPLETED: Unified Block Resource System (08d.3)** - ✅ **PRODUCTION READY**: Complete centralized data source implemented for both texture generation (Python) and game logic (C++). Features auto-generated stable block IDs (257 blocks), C++ code generation, Python mapping synchronization, safe block removal system (deprecation/tombstone), and streamlined developer workflow. All code generation, atlas creation, and build integration tested and working. See 08d.3a.3_code_generation_infrastructure.md for technical details.
 - [x] **Comprehensive Block System** - ✅ **COMPLETE**: Comprehensive block taxonomy implemented with properties system. All subtasks complete: 08d.1 (✅ face-based atlas system), 08d.2 (✅ texture generator fixes), 08d.3 (✅ unified resource system), 08d.4 (✅ integration complete). **Key Achievement**: 65.5% atlas space savings, formal FacePattern system, texture generator bugfixes, transparency system, and production-ready block management infrastructure.
@@ -244,9 +251,23 @@ With the block system complete, we're now focused on enhancing the world generat
 - ✅ **Core Seed System (08c.1)** - Deterministic seed-based generation
 - ✅ **Generation Parameters (08c.2)** - Scalable configuration for different world sizes
 - ✅ **Basic Feature Parity (08c.3)** - Match with legacy generator with seed variation
+- ✅ **World Generation UI (08f Phase 3)** - Real backend integration with SeedWorldGenerator
 
-**Next Active Steps:**
-1. 🔄 **Biome System Implementation (08c.4)** - Create varied ecosystems and environments
+**🚨 CRITICAL NEXT STEP - BLOCKING DEPENDENCY:**
+1. 🔄 **World Persistence System Integration (08a)** - **REQUIRED** before any other world generation features
+   - **Current Issue**: Generated worlds exist only in memory and disappear after simulation
+   - **Task 1**: World Creation & Management Menu System (create world directories, metadata)
+   - **Task 3**: World Directory Structure (level.dat format, world storage)
+   - **Integration**: Connect WorldSimulationUI completion to persistent world storage
+   - **Impact**: Blocks "Play World" button and Load World functionality
+   - **Files**: [08a_save_file_architecture.md](development_tasks/04_essential_game_infrastructure/08a_save_file_architecture.md)
+
+**Next Active Steps (After 08a completion):**
+1. 🔄 **World Generation UI Completion (08f Phase 3.5 → 5)** - Complete the full world creation flow
+   - Add "Play World" button to transition from simulation to gameplay
+   - Connect generated worlds to Load World menu
+   - Implement world preview visualization
+2. 🔄 **Biome System Implementation (08c.4)** - Create varied ecosystems and environments
    - **📋 COMPREHENSIVE PLAN**: [docs/BIOME_IMPLEMENTATION_PLAN.md](docs/BIOME_IMPLEMENTATION_PLAN.md)
    - Implementation phases, task dependencies, and timeline all documented
    - Links to all detailed subtasks in development_tasks/04_essential_game_infrastructure/
