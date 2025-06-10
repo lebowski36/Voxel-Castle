@@ -5,10 +5,13 @@
 #include "world/chunk_segment.h"
 #include "world/regional_data.h"
 #include "world/tectonic_simulator.h"
+#include "world/GeologicalSimulator.h"  // New geological simulation system
 #include "world/biome/biome_types.h"  // For BiomeType enum
 #include "world/biome/biome_data.h"   // For BiomeData struct
 #include <memory>
 #include <random>
+#include <functional>
+#include <iostream>
 
 namespace VoxelCastle {
 namespace World {
@@ -31,12 +34,12 @@ public:
     SeedWorldGenerator(std::shared_ptr<WorldSeed> seed, std::shared_ptr<WorldParameters> parameters);
 
     /**
-     * @brief Constructor with legacy compatibility mode
+     * @brief Constructor with geological realism
      * @param seed The world seed
      * @param parameters The world parameters
-     * @param legacyCompatible If true, generates exactly like legacy system (no seed variation)
+     * @param useGeologicalRealism If true, uses new geological simulation system; if false, uses legacy mode
      */
-    SeedWorldGenerator(std::shared_ptr<WorldSeed> seed, std::shared_ptr<WorldParameters> parameters, bool legacyCompatible);
+    SeedWorldGenerator(std::shared_ptr<WorldSeed> seed, std::shared_ptr<WorldParameters> parameters, bool useGeologicalRealism);
 
     /**
      * @brief Generate a chunk segment with feature parity to legacy system
@@ -108,7 +111,37 @@ public:
     void setRegionalDatabase(std::unique_ptr<RegionalDatabase> database);
 
     /**
-     * @brief Initialize the tectonic simulation system
+     * @brief Initialize the geological simulation system (replaces tectonic simulation)
+     * @param worldSize World size parameters for geological simulation
+     * @param config Geological quality configuration
+     * @param progressCallback Optional callback for generation progress updates
+     */
+    void initializeGeologicalSimulation(float worldSizeKm = 2048.0f, const GeologicalConfig& config = GeologicalConfig{}, 
+                                       std::function<void(const PhaseInfo&)> progressCallback = nullptr);
+
+    /**
+     * @brief Run the complete geological simulation (3-phase system)
+     * @return True if simulation completed successfully
+     */
+    bool runGeologicalSimulation();
+
+    /**
+     * @brief Get the geological simulator instance
+     * @return Pointer to GeologicalSimulator, nullptr if not initialized
+     */
+    const GeologicalSimulator* getGeologicalSimulator() const { 
+        std::cout << "[SeedWorldGenerator] getGeologicalSimulator() called - useGeologicalRealism_: " << useGeologicalRealism_ 
+                  << ", geologicalSimulator_ exists: " << (geologicalSimulator_ ? "YES" : "NO") << std::endl;
+        return geologicalSimulator_.get(); 
+    }
+
+    /**
+     * @brief Check if geological realism is enabled
+     */
+    bool isGeologicalRealismEnabled() const { return useGeologicalRealism_; }
+
+    /**
+     * @brief Initialize the tectonic simulation system (legacy)
      * @param worldSize World size parameters for tectonic simulation
      */
     void initializeTectonicSimulation(float worldSizeKm = 2048.0f);
@@ -144,21 +177,33 @@ private:
     // Regional database for advanced world generation
     std::unique_ptr<RegionalDatabase> regionalDatabase_;
     
-    // Tectonic simulation system
+    // Geological simulation system (NEW)
+    std::unique_ptr<GeologicalSimulator> geologicalSimulator_;
+    bool useGeologicalRealism_;
+    std::function<void(const PhaseInfo&)> geologicalProgressCallback_;
+    
+    // Tectonic simulation system (LEGACY)
     std::unique_ptr<TectonicSimulator> tectonicSimulator_;
     
     // Compatibility mode flag
     bool legacyCompatible_;
 
     /**
-     * @brief Generate terrain height for a global coordinate using legacy-compatible algorithm
+     * @brief Generate terrain height using geological simulation or legacy algorithm
      * 
-     * This method replicates the exact noise calculation from the legacy system:
-     * - Same noise input scale (0.02f)
-     * - Same terrain amplitude (height * 1.5f)
-     * - Same base terrain offset (height / 8.0f)
+     * This method chooses between:
+     * - Geological simulation results (if enabled and available)
+     * - Legacy noise-based calculation (for compatibility/fallback)
      */
     int generateTerrainHeight(int globalX, int globalZ) const;
+
+    /**
+     * @brief Generate terrain height using geological simulation results
+     * 
+     * Samples the geological elevation field at the specified coordinates
+     * and converts to block-level terrain height.
+     */
+    int generateTerrainHeightGeological(int globalX, int globalZ) const;
 
     /**
      * @brief Determine voxel type based on height and position (legacy compatible)

@@ -35,7 +35,7 @@ bool checkAndConfineMouseToWindow(Game& game) {
     
     // Get current global mouse position and mouse button state
     float mouseX, mouseY;
-    Uint32 mouseState = SDL_GetMouseState(&mouseX, &mouseY);
+    SDL_GetMouseState(&mouseX, &mouseY);
     
     // Get global mouse position (needed for Wayland which may report relative coords)
     float globalMouseX, globalMouseY;
@@ -479,10 +479,10 @@ void processInput(Game& game) {
         else if (e.type == SDL_EVENT_MOUSE_WHEEL) {
             if (!game.isMouseCaptured() && game.isMenuOpen()) {
                 // Mouse wheel in UI mode - handle zoom in world map
-                int mouseX, mouseY;
+                float mouseX, mouseY;
                 SDL_GetMouseState(&mouseX, &mouseY);
                 float wheelDelta = static_cast<float>(e.wheel.y);
-                game.handleMenuMouseWheel(static_cast<float>(mouseX), static_cast<float>(mouseY), wheelDelta);
+                game.handleMenuMouseWheel(mouseX, mouseY, wheelDelta);
             } else if (game.isMouseCaptured()) {
                 // Mouse wheel cycles through block types
                 bool forward = e.wheel.y > 0;

@@ -32,6 +32,8 @@ add_library(VoxelEngine STATIC
     src/world/climate_data.cpp # Climate data structures and simulation
     src/world/tectonic_plate.cpp # Tectonic plate structures and operations
     src/world/tectonic_simulator.cpp # Tectonic simulation system
+    src/world/ContinuousField.cpp # Continuous field mathematics for geological simulation
+    src/world/GeologicalSimulator.cpp # Advanced geological simulation system
     src/world/quadtree.cpp      # Added Quadtree source
     # src/world/test_quadtree.cpp # Removed Quadtree test source
     src/world/test_voxel_system.cpp # Added Voxel System test source

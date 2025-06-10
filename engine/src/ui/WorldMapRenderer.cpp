@@ -225,9 +225,13 @@ void WorldMapRenderer::generateElevationData(VoxelCastle::World::SeedWorldGenera
     std::cout << "[WorldMapRenderer] Sampling world area: " << worldSizeKm_ << "km x " << worldSizeKm_ << "km" << std::endl;
     std::cout << "[WorldMapRenderer] World size in meters: " << worldSize << "m x " << worldSize << "m" << std::endl;
     
-    // Get tectonic simulator for elevation modifiers
+    // Get geological simulator for new elevation data
+    const VoxelCastle::World::GeologicalSimulator* geologicalSim = generator->getGeologicalSimulator();
+    
+    // Fallback to tectonic simulator if geological simulation is not available
     const VoxelCastle::TectonicSimulator* tectonicSim = generator->getTectonicSimulator();
     
+    std::cout << "[WorldMapRenderer] Geological simulator: " << (geologicalSim ? "Available" : "Not available") << std::endl;
     std::cout << "[WorldMapRenderer] Tectonic simulator: " << (tectonicSim ? "Available" : "Not available") << std::endl;
     if (tectonicSim) {
         std::cout << "[WorldMapRenderer] Tectonic simulation complete: " << (tectonicSim->IsSimulationComplete() ? "Yes" : "No") << std::endl;
@@ -260,9 +264,25 @@ void WorldMapRenderer::generateElevationData(VoxelCastle::World::SeedWorldGenera
             int heightVoxels = generator->getTerrainHeightAt((int)worldX, (int)worldZ);
             float baseHeight = heightVoxels * 0.25f; // Convert voxels to meters (25cm per voxel)
             
-            // Apply tectonic elevation modifiers if simulation is available
+            // Apply geological simulation data if available (NEW SYSTEM)
             float finalHeight = baseHeight;
-            if (tectonicSim && tectonicSim->IsSimulationComplete()) {
+            if (geologicalSim) {
+                // Use new geological simulation system
+                VoxelCastle::World::GeologicalSample sample = geologicalSim->getSampleAt(worldX, worldZ);
+                finalHeight = sample.elevation;
+                
+                // Debug: Check geological simulation data
+                if (x < 5 && y < 5) {
+                    std::cout << "[WorldMapRenderer] Geological sample - Pos(" << worldX << "," << worldZ 
+                              << ") Elevation:" << sample.elevation << "m RockType:" << (int)sample.rockType 
+                              << " Hardness:" << sample.rockHardness << std::endl;
+                }
+                
+                // Allow full elevation range including underwater regions (±2048m)
+                finalHeight = std::clamp(finalHeight, -2048.0f, 2048.0f);
+                
+            } else if (tectonicSim && tectonicSim->IsSimulationComplete()) {
+                // Fall back to legacy tectonic system
                 // Convert coordinates to kilometers for tectonic simulator
                 glm::vec2 worldPosKm(worldX / 1000.0f, worldZ / 1000.0f);
                 

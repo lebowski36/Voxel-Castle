@@ -1,6 +1,7 @@
 #pragma once
 
 #include "elements/BaseMenu.h"
+#include "world/GeologicalSimulator.h"  // For PhaseInfo type
 #include <functional>
 #include <memory>
 #include <chrono>
@@ -23,16 +24,18 @@ namespace VoxelCastle::World {
 
 class WorldSimulationUI : public VoxelEngine::UI::BaseMenu {
 public:
-    // World generation phases (from original WorldGenerationUI)
+    // World generation phases (updated for geological realism)
     enum class GenerationPhase {
-        CONFIGURATION,  // Parameter selection
-        TECTONICS,     // Mountain/terrain formation
-        EROSION,       // Valley carving and sediment
-        HYDROLOGY,     // Rivers and lakes
-        CLIMATE,       // Temperature and precipitation
-        BIOMES,        // Biome assignment
-        CIVILIZATION,  // Historical civilizations (optional)
-        COMPLETE       // Generation finished
+        CONFIGURATION,     // Parameter selection
+        TECTONICS,        // Continental drift and plate tectonics
+        MOUNTAIN_BUILDING, // Mountain formation and uplift
+        EROSION,          // Valley carving and weathering
+        WATER_SYSTEMS,    // Hydrological network formation
+        HYDROLOGY,        // Rivers and lakes
+        CLIMATE,          // Temperature and precipitation
+        BIOMES,           // Biome assignment
+        CIVILIZATION,     // Historical civilizations (optional)
+        COMPLETE          // Generation finished
     };
 
     // Visualization modes (from original WorldGenerationUI)
@@ -178,6 +181,9 @@ private:
     void onStopClicked();
     void onBackClicked();
     void onBeginGameClicked();
+    
+    // Geological simulation callbacks
+    void onGeologicalPhaseUpdate(const VoxelCastle::World::PhaseInfo& phaseInfo);
     
     // Helper methods
     std::string getPhaseDisplayName(GenerationPhase phase);

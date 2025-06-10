@@ -2,6 +2,7 @@
 #include "world/biome/biome_types.h"
 #include "world/biome/biome_registry.h"  // Add BiomeRegistry for biome-aware generation
 #include "world/tectonic_simulator.h"
+#include "world/GeologicalSimulator.h"   // New geological simulation system
 #include "util/noise.h"
 #include "world/voxel_types.h"
 #include "world/voxel.h"
@@ -17,7 +18,8 @@ namespace VoxelCastle {
 namespace World {
 
 SeedWorldGenerator::SeedWorldGenerator(std::shared_ptr<WorldSeed> seed, std::shared_ptr<WorldParameters> parameters)
-    : worldSeed_(seed), worldParameters_(parameters), regionalDatabase_(nullptr), tectonicSimulator_(nullptr), legacyCompatible_(false) {
+    : worldSeed_(seed), worldParameters_(parameters), regionalDatabase_(nullptr), 
+      geologicalSimulator_(nullptr), useGeologicalRealism_(false), tectonicSimulator_(nullptr), legacyCompatible_(false) {
     
     if (!worldSeed_) {
         throw std::invalid_argument("WorldSeed cannot be null");
@@ -29,11 +31,12 @@ SeedWorldGenerator::SeedWorldGenerator(std::shared_ptr<WorldSeed> seed, std::sha
     // Initialize RNG with the world seed
     rng_.seed(worldSeed_->getMasterSeed());
     
-    std::cout << "[SeedWorldGenerator] Initialized with seed: " << worldSeed_->getMasterSeed() << std::endl;
+    std::cout << "[SeedWorldGenerator] Initialized with seed: " << worldSeed_->getMasterSeed() << " (standard mode)" << std::endl;
 }
 
-SeedWorldGenerator::SeedWorldGenerator(std::shared_ptr<WorldSeed> seed, std::shared_ptr<WorldParameters> parameters, bool legacyCompatible)
-    : worldSeed_(seed), worldParameters_(parameters), regionalDatabase_(nullptr), tectonicSimulator_(nullptr), legacyCompatible_(legacyCompatible) {
+SeedWorldGenerator::SeedWorldGenerator(std::shared_ptr<WorldSeed> seed, std::shared_ptr<WorldParameters> parameters, bool useGeologicalRealism)
+    : worldSeed_(seed), worldParameters_(parameters), regionalDatabase_(nullptr), 
+      geologicalSimulator_(nullptr), useGeologicalRealism_(useGeologicalRealism), tectonicSimulator_(nullptr), legacyCompatible_(!useGeologicalRealism) {
     
     if (!worldSeed_) {
         throw std::invalid_argument("WorldSeed cannot be null");
@@ -46,7 +49,7 @@ SeedWorldGenerator::SeedWorldGenerator(std::shared_ptr<WorldSeed> seed, std::sha
     rng_.seed(worldSeed_->getMasterSeed());
     
     std::cout << "[SeedWorldGenerator] Initialized with seed: " << worldSeed_->getMasterSeed() 
-              << " (legacy compatible: " << (legacyCompatible ? "true" : "false") << ")" << std::endl;
+              << " (geological realism: " << (useGeologicalRealism ? "ENABLED" : "DISABLED") << ")" << std::endl;
 }
 
 void SeedWorldGenerator::generateChunkSegment(ChunkSegment& segment, int worldX, int worldY, int worldZ) {
@@ -154,6 +157,12 @@ void SeedWorldGenerator::setWorldParameters(std::shared_ptr<WorldParameters> par
 }
 
 int SeedWorldGenerator::generateTerrainHeight(int globalX, int globalZ) const {
+    // Use geological simulation if available and enabled
+    if (useGeologicalRealism_ && geologicalSimulator_) {
+        return generateTerrainHeightGeological(globalX, globalZ);
+    }
+    
+    // Legacy compatibility mode
     if (legacyCompatible_) {
         // Legacy algorithm for compatibility testing
         constexpr float noiseInputScale = 0.02f;
@@ -404,24 +413,25 @@ void SeedWorldGenerator::setRegionalDatabase(std::unique_ptr<RegionalDatabase> d
 }
 
 void SeedWorldGenerator::initializeTectonicSimulation(float worldSizeKm) {
-    // Create tectonic simulator
+    if (useGeologicalRealism_) {
+        std::cout << "[SeedWorldGenerator] Using geological realism, skipping legacy tectonic simulation" << std::endl;
+        return;
+    }
+    
+    std::cout << "[SeedWorldGenerator] Initializing legacy tectonic simulation..." << std::endl;
+    
     tectonicSimulator_ = std::make_unique<TectonicSimulator>();
     
-    // Use the region-level seed with a specific feature type for tectonics
-    uint64_t tectonicSeed = worldSeed_->getRegionFeatureSeed(0, 0, 0, FeatureType::TERRAIN);
+    // Calculate number of plates based on world size (heuristic: ~1 plate per 100km)
+    uint32_t plateCount = std::max(3u, static_cast<uint32_t>(worldSizeKm / 100.0f));
     
-    // Initialize plates with world-specific parameters
-    uint32_t plateCount = 0; // Auto-determine plate count based on world size
-    tectonicSimulator_->InitializePlates(static_cast<uint32_t>(tectonicSeed), worldSizeKm, plateCount);
+    tectonicSimulator_->InitializePlates(
+        static_cast<uint32_t>(worldSeed_->getMasterSeed()),
+        worldSizeKm,
+        plateCount
+    );
     
-    // Run the simulation with longer time for more dramatic geological features
-    float simulationTime = 1000.0f; // Extended simulation time for more dramatic results
-    uint32_t timeSteps = 20; // More time steps for better stress accumulation
-    tectonicSimulator_->SimulatePlateMovement(simulationTime, timeSteps);
-    
-    std::cout << "[SeedWorldGenerator] Tectonic simulation initialized with " 
-              << tectonicSimulator_->GetPlates().size() << " plates over " 
-              << worldSizeKm << "x" << worldSizeKm << " km world" << std::endl;
+    std::cout << "[SeedWorldGenerator] Legacy tectonic simulation initialized with " << plateCount << " plates" << std::endl;
 }
 
 RegionalData SeedWorldGenerator::getRegionalData(int globalX, int globalZ) const {
@@ -613,6 +623,71 @@ void SeedWorldGenerator::generatePreviewHeightmap(int centerX, int centerZ, int 
 
 int SeedWorldGenerator::getTerrainHeightAt(int globalX, int globalZ) const {
     return generateTerrainHeight(globalX, globalZ);
+}
+
+void SeedWorldGenerator::initializeGeologicalSimulation(float worldSizeKm, const GeologicalConfig& config, 
+                                                        std::function<void(const PhaseInfo&)> progressCallback) {
+    if (!useGeologicalRealism_) {
+        std::cout << "[SeedWorldGenerator] Geological realism disabled, skipping geological simulation initialization" << std::endl;
+        return;
+    }
+    
+    std::cout << "[SeedWorldGenerator] Initializing geological simulation system..." << std::endl;
+    
+    // Calculate world size in chunks (assuming 32m per chunk)
+    int worldSizeChunks = static_cast<int>(worldSizeKm / 0.032f);
+    
+    // Create geological simulator
+    geologicalSimulator_ = std::make_unique<GeologicalSimulator>(worldSizeChunks, config);
+    
+    // Store progress callback
+    geologicalProgressCallback_ = progressCallback;
+    
+    // Initialize with world seed
+    geologicalSimulator_->initialize(worldSeed_->getMasterSeed());
+    
+    std::cout << "[SeedWorldGenerator] Geological simulation initialized for " << worldSizeKm << "km world" << std::endl;
+}
+
+bool SeedWorldGenerator::runGeologicalSimulation() {
+    if (!useGeologicalRealism_ || !geologicalSimulator_) {
+        std::cout << "[SeedWorldGenerator] No geological simulator available" << std::endl;
+        return false;
+    }
+    
+    std::cout << "[SeedWorldGenerator] Starting geological simulation..." << std::endl;
+    
+    try {
+        // Run the full three-phase geological simulation
+        geologicalSimulator_->runFullSimulation(geologicalProgressCallback_);
+        
+        std::cout << "[SeedWorldGenerator] Geological simulation completed successfully" << std::endl;
+        return true;
+    } catch (const std::exception& e) {
+        std::cerr << "[SeedWorldGenerator] ERROR: Geological simulation failed: " << e.what() << std::endl;
+        return false;
+    }
+}
+
+int SeedWorldGenerator::generateTerrainHeightGeological(int globalX, int globalZ) const {
+    if (!geologicalSimulator_) {
+        std::cerr << "[SeedWorldGenerator] ERROR: Geological simulator not available, falling back to noise" << std::endl;
+        // Fall back to legacy noise-based generation
+        return generateTerrainHeight(globalX, globalZ);
+    }
+    
+    // Convert block coordinates to world meters
+    using namespace VoxelCastle::World::WorldCoordinates;
+    float worldX = globalX * VOXEL_SIZE_METERS;
+    float worldZ = globalZ * VOXEL_SIZE_METERS;
+    
+    // Sample geological data at this position
+    GeologicalSample sample = geologicalSimulator_->getSampleAt(worldX, worldZ);
+    
+    // Convert geological elevation (meters) to block height
+    int blockHeight = static_cast<int>(sample.elevation / VOXEL_SIZE_METERS);
+    
+    return blockHeight;
 }
 
 } // namespace World

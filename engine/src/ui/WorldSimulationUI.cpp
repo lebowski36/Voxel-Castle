@@ -630,14 +630,24 @@ void WorldSimulationUI::startSimulation(const WorldConfig& config, const std::st
         worldParameters_ = std::make_shared<VoxelCastle::World::WorldParameters>();
         // TODO: Set parameters based on config (worldSize, climateType, etc.)
         
-        // Create SeedWorldGenerator
-        worldGenerator_ = std::make_shared<VoxelCastle::World::SeedWorldGenerator>(worldSeed_, worldParameters_);
+        // Create SeedWorldGenerator with geological realism enabled
+        worldGenerator_ = std::make_shared<VoxelCastle::World::SeedWorldGenerator>(worldSeed_, worldParameters_, true); // Enable geological realism
         
-        // Initialize tectonic simulation immediately so visualization has data
-        addLogEntry("Initializing tectonic simulation", 2);
+        // Initialize geological simulation system 
+        addLogEntry("Initializing geological simulation system", 2);
         addLogEntry("World size: " + std::to_string(config.worldSize) + "x" + std::to_string(config.worldSize), 3);
-        worldGenerator_->initializeTectonicSimulation(static_cast<float>(config.worldSize));
-        addLogEntry("Tectonic simulation initialized", 3);
+        
+        // Create geological configuration based on user settings (default to BALANCED quality)
+        VoxelCastle::World::GeologicalConfig geoConfig;
+        geoConfig.preset = VoxelCastle::World::GeologicalPreset::BALANCED;
+        
+        // Set up progress callback for geological simulation
+        auto progressCallback = [this](const VoxelCastle::World::PhaseInfo& phaseInfo) {
+            this->onGeologicalPhaseUpdate(phaseInfo);
+        };
+        
+        worldGenerator_->initializeGeologicalSimulation(static_cast<float>(config.worldSize), geoConfig, progressCallback);
+        addLogEntry("Geological simulation initialized", 3);
         
         // Create WorldPersistenceManager
         worldPersistence_ = std::make_shared<VoxelCastle::World::WorldPersistenceManager>();
@@ -971,6 +981,47 @@ void WorldSimulationUI::addLogEntry(const std::string& message, int year) {
     }
 }
 
+// Geological phase update callback
+void WorldSimulationUI::onGeologicalPhaseUpdate(const VoxelCastle::World::PhaseInfo& phaseInfo) {
+    // Update current phase based on geological simulation
+    switch (phaseInfo.currentPhase) {
+        case VoxelCastle::World::GeologicalPhase::TECTONICS:
+            currentPhase_ = GenerationPhase::TECTONICS;
+            break;
+        case VoxelCastle::World::GeologicalPhase::MOUNTAIN_BUILDING:
+            currentPhase_ = GenerationPhase::MOUNTAIN_BUILDING;
+            break;
+        case VoxelCastle::World::GeologicalPhase::EROSION:
+            currentPhase_ = GenerationPhase::EROSION;
+            break;
+        default:
+            currentPhase_ = GenerationPhase::WATER_SYSTEMS;
+            break;
+    }
+    
+    // Update progress
+    phaseProgress_ = phaseInfo.phaseProgress;
+    currentProgress_ = phaseInfo.totalProgress;
+    
+    // Add log entries for major phase transitions
+    if (phaseInfo.phaseProgress <= 0.05f) { // New phase started (within first 5%)
+        std::string phaseName = getPhaseDisplayName(currentPhase_);
+        addLogEntry("Starting " + phaseName + " phase", static_cast<int>(phaseInfo.timeRemaining));
+    }
+    
+    // Add specific geological events
+    if (!phaseInfo.currentProcess.empty()) {
+        addLogEntry(phaseInfo.currentProcess, static_cast<int>(phaseInfo.timeRemaining));
+    }
+    
+    // Update world map visualization if progress changed significantly
+    static float lastUpdateProgress = -1.0f;
+    if (std::abs(phaseInfo.phaseProgress - lastUpdateProgress) > 0.1f) { // Update every 10%
+        updateWorldMapVisualization();
+        lastUpdateProgress = phaseInfo.phaseProgress;
+    }
+}
+
 // Event handlers
 void WorldSimulationUI::onVisualizationModeChanged(VisualizationMode mode) {
     visualizationMode_ = mode;
@@ -1089,81 +1140,44 @@ void WorldSimulationUI::startGenerationThread() {
 
 void WorldSimulationUI::generationWorker() {
     try {
-        addLogEntry("Starting tectonic simulation...", 0);
+        addLogEntry("Starting geological simulation system...", 0);
         currentPhase_ = GenerationPhase::TECTONICS;
         
-        // Simulate each generation phase
-        for (int phase = static_cast<int>(GenerationPhase::TECTONICS); 
-             phase < static_cast<int>(GenerationPhase::COMPLETE) && isRunning_; 
-             ++phase) {
-            
-            currentPhase_ = static_cast<GenerationPhase>(phase);
-            phaseProgress_ = 0.0f;
-            
-            std::string phaseName = getPhaseDisplayName(currentPhase_);
-            addLogEntry("Starting " + phaseName + "...", stats_.simulationYears);
-            
-            // Simulate this phase (each takes some time)
-            float phaseDuration = 3.0f; // 3 seconds per phase for demo
-            float phaseSteps = 100.0f;
-            
-            for (int step = 0; step <= phaseSteps && isRunning_; ++step) {
-                // Wait for pause/resume
-                while (isPaused_ && isRunning_) {
-                    std::this_thread::sleep_for(std::chrono::milliseconds(100));
-                }
-                
-                if (!isRunning_) break;
-                
-                // Update progress
-                phaseProgress_ = static_cast<float>(step) / phaseSteps;
-                currentProgress_ = (static_cast<float>(phase - static_cast<int>(GenerationPhase::TECTONICS)) + phaseProgress_) / 
-                                 (static_cast<int>(GenerationPhase::COMPLETE) - static_cast<int>(GenerationPhase::TECTONICS));
-                
-                // Add occasional log entries
-                if (step % 25 == 0 && step > 0) {
-                    addLogEntry(phaseName + " " + std::to_string((step * 100) / static_cast<int>(phaseSteps)) + "% complete", 
-                              stats_.simulationYears + step);
-                }
-                
-                // Sleep to simulate work
-                std::this_thread::sleep_for(std::chrono::milliseconds(static_cast<int>(phaseDuration * 1000.0f / phaseSteps)));
-            }
-            
-            if (!isRunning_) break;
-            
-            addLogEntry(phaseName + " complete!", stats_.simulationYears);
-            stats_.simulationYears += 10; // Each phase represents ~10 years
-        }
+        // Run the complete geological simulation
+        bool success = worldGenerator_->runGeologicalSimulation();
         
-        if (isRunning_) {
-            // Generation complete
+        if (success && isRunning_) {
+            addLogEntry("Geological simulation completed successfully!", stats_.simulationYears);
+            
+            // Finalize the simulation
             currentPhase_ = GenerationPhase::COMPLETE;
             currentProgress_ = 1.0f;
-            isRunning_ = false;
-            
-            addLogEntry("World generation complete!", stats_.simulationYears);
-            addLogEntry("Generated world ready for exploration", stats_.simulationYears);
+            phaseProgress_ = 1.0f;
             
             // Update final statistics
             updateFinalStatistics();
             
-            // Notify completion
-            if (onSimulationComplete_) {
-                onSimulationComplete_(stats_);
-            }
+            // Complete the simulation
+            completeSimulation();
+        } else if (!isRunning_) {
+            addLogEntry("Geological simulation cancelled by user", stats_.simulationYears);
+        } else {
+            addLogEntry("ERROR: Geological simulation failed", stats_.simulationYears);
+            isRunning_ = false;
         }
         
     } catch (const std::exception& e) {
-        addLogEntry("ERROR: Generation failed: " + std::string(e.what()), stats_.simulationYears);
+        addLogEntry("ERROR: Geological simulation crashed: " + std::string(e.what()), stats_.simulationYears);
         isRunning_ = false;
     }
 }
 
 std::string WorldSimulationUI::getPhaseDisplayName(GenerationPhase phase) const {
     switch (phase) {
-        case GenerationPhase::TECTONICS: return "Tectonic Simulation";
-        case GenerationPhase::EROSION: return "Erosion Modeling";
+        case GenerationPhase::TECTONICS: return "Tectonic Evolution";
+        case GenerationPhase::MOUNTAIN_BUILDING: return "Mountain Building";
+        case GenerationPhase::EROSION: return "Erosion & Weathering";
+        case GenerationPhase::WATER_SYSTEMS: return "Water Systems";
         case GenerationPhase::HYDROLOGY: return "Hydrology Simulation";
         case GenerationPhase::CLIMATE: return "Climate Modeling";
         case GenerationPhase::BIOMES: return "Biome Assignment";
