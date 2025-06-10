@@ -693,10 +693,114 @@ float getToroidalDistance(Point a, Point b, float worldWidth, float worldHeight)
 
 ---
 
-## **UNCLARITY #5: QUALITY SETTINGS & FALLBACKS** ⏳ PENDING
+## **UNCLARITY #5: QUALITY SETTINGS & FALLBACKS** ✅ RESOLVED
 
 **Question:** Performance fallback mechanisms and quality degradation strategies?
 
-*Will be addressed after Unclarity #4 is resolved*
+### **DECISION: Fixed Quality with Rich Feedback**
+
+**Quality Strategy: Fixed at World Creation**
+```cpp
+struct GeologicalWorldConfig {
+    GeologicalPreset qualityLevel = BALANCED;  // Set once, never changes
+    
+    // No dynamic fallbacks - consistent experience
+    // Player chooses quality based on their hardware capability
+};
+```
+
+**Performance Feedback Strategy:**
+```cpp
+class GeologicalProgressUI {
+    // Rich simulation progress information
+    void displayProgress() {
+        showCurrentPhase();           // "Tectonic Phase: Mountain Building"
+        showTimeRemaining();          // "2 minutes 30 seconds remaining"
+        showChunkGenerationRate();    // "Generating 3.2 chunks/second"
+        showMemoryUsage();            // "Using 2.1GB / 8GB available"
+        showQualitySettings();        // "Quality: BALANCED (15ms/chunk)"
+    }
+    
+    // Let players see exactly what their hardware can handle
+    void showPerformanceMetrics() {
+        displayAverageChunkTime();    // "Average: 14ms per chunk"
+        displayPeakMemoryUsage();     // "Peak memory: 2.8GB"
+        displayEstimatedCompletion(); // "World generation: 87% complete"
+    }
+};
+```
+
+**Quality Selection UI:**
+```cpp
+// World creation screen shows expected performance
+struct QualityPreview {
+    GeologicalPreset preset;
+    string description;
+    string expectedTime;
+    string memoryUsage;
+    string visualFeatures;
+};
+
+QualityPreview presets[] = {
+    {PERFORMANCE, "Fast generation, good visuals", "1-2 minutes", "1-2GB", "Basic erosion, simplified geology"},
+    {BALANCED, "Recommended for most users", "3-5 minutes", "2-3GB", "Realistic erosion, detailed geology"},
+    {QUALITY, "High detail, longer generation", "8-12 minutes", "4-6GB", "Advanced weathering, complex cave systems"},
+    {ULTRA_REALISM, "Maximum realism, very slow", "20-30 minutes", "6-8GB", "Research-grade geological accuracy"}
+};
+```
+
+**Rationale:**
+- **Predictable Performance:** Players know exactly what they're getting
+- **No Surprises:** Quality never changes mid-gameplay
+- **Rich Feedback:** Detailed progress information helps players choose appropriate quality for their hardware
+- **Simple Implementation:** No complex dynamic monitoring systems needed
+- **User Control:** Players can restart with different quality if needed
+
+**Feedback Elements:**
+- Real-time chunk generation speed display
+- Memory usage monitoring  
+- Phase progress with time estimates
+- Visual indicators of current geological process
+- Performance recommendations for future world creation
+
+---
+
+## 🎉 **ALL UNCLARITIES RESOLVED!**
+
+### **Summary of Critical Decisions:**
+
+1. ✅ **Geological Accuracy:** Quality Presets + Custom Overrides (Option C)
+2. ✅ **Memory & Streaming:** Multi-Tier Caching with Predictive Loading  
+3. ✅ **Multi-Timescale Architecture:** Three-Phase Pipeline (Tectonics → Erosion → Detail)
+4. ✅ **ContinuousField Mathematics:** Perlin-Enhanced + Geological Resistance + Toroidal Wrapping
+5. ✅ **Quality Settings:** Fixed Quality with Rich Progress Feedback
+
+**Status:** 🚀 **READY FOR IMPLEMENTATION** - All architectural decisions finalized!
+
+---
+
+## 📁 **IMPLEMENTATION SUBTASKS**
+
+The following detailed subtask files contain complete implementation plans for the geological realism system:
+
+### **Core Foundation**
+1. **[ContinuousField Implementation](../development_tasks/geological_realism/01_continuous_field_implementation.md)** - Mathematical foundation with Perlin-enhanced interpolation, geological resistance model, and toroidal wrapping (3-4 days)
+
+2. **[Geological Simulation Engine](../development_tasks/geological_realism/02_geological_simulation_engine.md)** - Three-phase timeline system (Tectonics → Erosion → Detail) with quality presets (5-6 days)
+
+### **Terrain Generation**
+3. **[Hybrid Detail Generator](../development_tasks/geological_realism/03_hybrid_detail_generator.md)** - Ultra-realistic chunk generation with rock-specific algorithms and 25cm-scale geological features (6-7 days)
+
+4. **[SeedWorldGenerator Integration](../development_tasks/geological_realism/04_seed_world_generator_integration.md)** - Replace existing system with new geological simulation, maintain legacy compatibility (4-5 days)
+
+### **User Experience**
+5. **[UI Components Implementation](../development_tasks/geological_realism/05_ui_components_implementation.md)** - World configuration and real-time progress visualization with quality presets (4-5 days)
+
+6. **[Chunk Management System](../development_tasks/geological_realism/06_chunk_management_system.md)** - Multi-tier caching, predictive loading, and boundary smoothing for seamless exploration (3-4 days)
+
+### **Implementation Timeline**
+- **Total Estimated Time:** 25-31 days
+- **Dependencies:** Sequential implementation recommended (1→2→3→4→5→6)
+- **Status:** 🚀 Ready to begin with ContinuousField implementation
 
 ---
