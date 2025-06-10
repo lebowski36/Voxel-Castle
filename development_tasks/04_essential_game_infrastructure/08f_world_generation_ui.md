@@ -14,7 +14,7 @@ This document tracks the implementation of the Dwarf Fortress-inspired World Gen
 
 This split architecture provides better separation of concerns and improved maintainability.
 
-## Status: ✅ PHASE 4A COMPLETED - WORLD PREVIEW RENDERING FIXED
+## Status: 🔄 PHASE 4B IN PROGRESS - WORLD SIMULATION VISUALIZATION
 **Major Achievements**: 
 - Successfully connected WorldSimulationUI to actual SeedWorldGenerator backend
 - Implemented full world persistence system (Task 08a)
@@ -22,11 +22,14 @@ This split architecture provides better separation of concerns and improved main
 - Fixed tectonic simulation segmentation fault
 - World creation, generation, and saving pipeline fully operational
 - **✅ FIXED: All parameter control buttons work perfectly without crashes or value disappearance**
-- **✅ FIXED: World preview rendering issue - magenta quad now visible in UI**
+- **✅ REMOVED: WorldConfigurationUI preview system** - Following Dwarf Fortress approach (configuration → simulation → embark)
 
-**Resolution**: The invisible preview was caused by a transparent UI panel being rendered on top of the preview area. Even though the panel had a transparent background ({0.0f, 0.0f, 0.0f, 0.0f}), the UI element itself was interfering with OpenGL rendering. Removing the transparent preview panel from the UI children allowed the magenta quad to become visible.
+**Current Focus**: Implementing Dwarf Fortress-style world generation visualization in WorldSimulationUI
 
-**Current Phase**: Basic world preview rendering working - ready for enhancement with actual heightmap visualization
+**Architecture Decision**: Adopted Dwarf Fortress UX pattern:
+1. **Configuration Phase**: Parameter selection only (no preview) ✅ COMPLETE
+2. **Generation Phase**: Full world map visualization during simulation 🔄 IN PROGRESS
+3. **Embark Phase**: Browse completed world to select spawn location (future)
 
 ## Related Files
 
@@ -37,6 +40,7 @@ This split architecture provides better separation of concerns and improved main
 - **Biome Implementation Plan**: `/docs/BIOME_IMPLEMENTATION_PLAN.md`
 - **World Generation Next Steps**: `/WORLD_GENERATION_NEXT_STEPS.md`
 - **Current TODO Tracking**: `/CURRENT_TODO.md`
+- **World Preview Backup**: `/docs/WORLD_PREVIEW_RENDERER_BACKUP.md` - Preserved preview system code and findings
 
 ### Core World Generation Tasks
 - **World Generation System Overview**: `/development_tasks/04_essential_game_infrastructure/08c_world_generation_system.md`
@@ -195,24 +199,30 @@ This split architecture provides better separation of concerns and improved main
 
 **Status**: **COMPLETED** - Generated worlds are now saved and can be loaded
 
-### Phase 4: World Preview Visualization 🔄 PHASE 4A IN PROGRESS - TECHNICAL ISSUES
-**Status**: ⚠️ **PARTIAL IMPLEMENTATION** - Backend data generation working, frontend rendering not visible
+### Phase 4: World Generation Visualization 🔄 IN PROGRESS - DWARF FORTRESS APPROACH
+**Status**: 🔄 **ACTIVE DEVELOPMENT** - Implementing proper world generation visualization
 
-#### ✅ **Phase 4a: Basic heightmap preview in WorldConfigurationUI** - **COMPLETED**
-- ✅ **WorldPreviewRenderer Class**: OpenGL texture-based preview system implemented
-  - **Files**: `engine/include/ui/WorldPreviewRenderer.h`, `engine/src/ui/WorldPreviewRenderer.cpp`
-  - **Features**: 256x256 heightmap generation, elevation-based color mapping
-  - **Status**: ✅ **Working** - texture creation, data generation, and visual rendering all functional
+#### ✅ **Phase 4a: WorldConfigurationUI Preview Removal** - **COMPLETED**
+- ✅ **Architecture Decision**: Adopted Dwarf Fortress UX pattern over Minecraft-style preview
+  - **Decision**: Configuration → Simulation → Embark selection (no preview in configuration)
+  - **Files Removed**: WorldPreviewRenderer integration from WorldConfigurationUI
+  - **Backup**: Complete system preserved in `/docs/WORLD_PREVIEW_RENDERER_BACKUP.md`
 
-- ✅ **SeedWorldGenerator Preview Methods**: Lightweight heightmap sampling working
-  - **Files**: `engine/include/world/seed_world_generator.h`, `engine/src/world/seed_world_generator.cpp`
-  - **Methods**: `generatePreviewHeightmap()`, `getTerrainHeightAt()`
-  - **Status**: ✅ **Data generation confirmed** - height range 27.75m to 322.5m properly calculated
+#### 🔄 **Phase 4b: WorldSimulationUI Visualization Enhancement** - **IN PROGRESS**
+- [ ] **Real-time World Map Visualization**: Implement large central world map display
+  - **Specification**: Following `/docs/WORLD_GENERATION_UI_SPECIFICATION.md` - Phase 2
+  - **Features**: Color-coded generation phases, progressive detail, zoom capability
+  - **Status**: 🔄 **Next Implementation Task**
 
-- ✅ **WorldConfigurationUI Integration**: Preview update system implemented
-  - **Files**: `engine/include/ui/WorldConfigurationUI.h`, `engine/src/ui/WorldConfigurationUI.cpp`
-  - **Features**: Parameter change detection, throttled updates (100ms), preview area positioning
-  - **Status**: ✅ **Integration complete** - preview updates triggered correctly
+- [ ] **Enhanced Progress Tracking**: Expand beyond basic progress bars
+  - **Features**: Generation statistics, time estimates, geological feature counts
+  - **Integration**: Connect to actual SeedWorldGenerator metrics
+  - **Status**: ⏳ **Waiting for world map**
+
+- [ ] **Generation Log Enhancement**: Dwarf Fortress-style narrative logging
+  - **Features**: Geological events, historical timeline, named features
+  - **Examples**: "The Dragonspine Mountains rise...", "Lake Mirrormere forms..."
+  - **Status**: ⏳ **Waiting for world map**
 
 - ✅ **UI Rendering Pipeline Fix**: Resolved transparent panel interference
   - **Issue**: Transparent UI panel with background {0.0f, 0.0f, 0.0f, 0.0f} was still interfering with OpenGL rendering
