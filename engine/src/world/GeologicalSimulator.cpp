@@ -17,8 +17,8 @@ GeologicalSimulator::GeologicalSimulator(int worldSize, const GeologicalConfig& 
     : config_(config), worldSize_(worldSize), seed_(0), currentPhase_(GeologicalPhase::TECTONICS),
       currentPhaseProgress_(0.0f) {
     
-    // Calculate world size in kilometers (assuming 32m chunks)
-    worldSizeKm_ = worldSize * 0.032f; // 32m per chunk
+    // Calculate world size in kilometers (chunks are 8m × 8m)
+    worldSizeKm_ = worldSize * 0.008f; // 8m per chunk
     
     std::cout << "[GeologicalSimulator] Initialized for " << worldSizeKm_ << "km world with " 
               << (config.preset == GeologicalPreset::BALANCED ? "BALANCED" : "OTHER") << " quality" << std::endl;

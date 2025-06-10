@@ -13,7 +13,7 @@ protected:
         // Setup balanced quality configuration
         config.preset = GeologicalPreset::PERFORMANCE; // Use fastest preset for testing
         
-        simulator = std::make_unique<GeologicalSimulator>(64, config); // 64x64 chunk world
+        simulator = std::make_unique<GeologicalSimulator>(32000, config); // 32000 chunks = 256km world (32000 × 8m = 256km)
         simulator->initialize(12345); // Fixed seed for reproducible results
     }
     
