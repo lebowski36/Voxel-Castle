@@ -75,12 +75,20 @@ void WorldPreviewRenderer::render(VoxelEngine::UI::UIRenderer* renderer, float x
         return;
     }
     
-    std::cout << "[WorldPreviewRenderer] render() called at (" << x << ", " << y << ") size " << width << "x" << height << std::endl;
-    std::cout << "[WorldPreviewRenderer] textureValid_=" << textureValid_ << ", heightData_=" << (heightData_ ? "valid" : "null") << std::endl;
+    // Reduce verbose logging - only log occasionally
+    static int renderCounter = 0;
+    bool shouldLog = (renderCounter++ % 300 == 0); // Log every 300 frames (~5 seconds at 60fps)
+    
+    if (shouldLog) {
+        std::cout << "[WorldPreviewRenderer] render() called at (" << x << ", " << y << ") size " << width << "x" << height << std::endl;
+        std::cout << "[WorldPreviewRenderer] textureValid_=" << textureValid_ << ", heightData_=" << (heightData_ ? "valid" : "null") << std::endl;
+    }
     
     // Check if we have valid heightmap data to render
     if (!textureValid_ || !heightData_) {
-        std::cout << "[WorldPreviewRenderer] Rendering placeholder - no valid data" << std::endl;
+        if (shouldLog) {
+            std::cout << "[WorldPreviewRenderer] Rendering placeholder - no valid data" << std::endl;
+        }
         // Render a placeholder colored rectangle when no data available
         glm::vec4 placeholderColor(0.3f, 0.3f, 0.3f, 1.0f); // Gray placeholder
         renderer->renderColoredQuad(x, y, width, height, placeholderColor);
@@ -92,11 +100,15 @@ void WorldPreviewRenderer::render(VoxelEngine::UI::UIRenderer* renderer, float x
         return;
     }
     
-    std::cout << "[WorldPreviewRenderer] Rendering heightmap texture" << std::endl;
+    if (shouldLog) {
+        std::cout << "[WorldPreviewRenderer] Rendering heightmap texture" << std::endl;
+    }
     
     // Check if we have a valid texture to render
     if (previewTexture_ == 0) {
-        std::cout << "[WorldPreviewRenderer] Warning: previewTexture_ is 0, rendering magenta fallback" << std::endl;
+        if (shouldLog) {
+            std::cout << "[WorldPreviewRenderer] Warning: previewTexture_ is 0, rendering magenta fallback" << std::endl;
+        }
         // Fallback to magenta debug quad if texture creation failed
         glm::vec4 errorColor(1.0f, 0.0f, 1.0f, 1.0f);
         renderer->renderColoredQuad(x, y, width, height, errorColor);
@@ -104,8 +116,10 @@ void WorldPreviewRenderer::render(VoxelEngine::UI::UIRenderer* renderer, float x
     }
     
     // Render the actual heightmap texture
-    std::cout << "[WorldPreviewRenderer] Rendering texture ID " << previewTexture_ 
-              << " at (" << x << ", " << y << ") size " << width << "x" << height << std::endl;
+    if (shouldLog) {
+        std::cout << "[WorldPreviewRenderer] Rendering texture ID " << previewTexture_ 
+                  << " at (" << x << ", " << y << ") size " << width << "x" << height << std::endl;
+    }
     
     // Use full texture coordinates (0,0,1,1) to display the entire texture
     glm::vec4 fullTexCoords(0.0f, 0.0f, 1.0f, 1.0f);

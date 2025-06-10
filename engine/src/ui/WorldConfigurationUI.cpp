@@ -769,18 +769,30 @@ void WorldConfigurationUI::updateWorldPreview() {
 }
 
 void WorldConfigurationUI::renderWorldPreview() {
-    std::cout << "[WorldConfigurationUI] renderWorldPreview() called" << std::endl;
-    std::cout << "[WorldConfigurationUI] previewRenderer_=" << (previewRenderer_ ? "valid" : "null") << std::endl;
+    // Reduce verbose logging - only log occasionally
+    static int previewRenderCounter = 0;
+    bool shouldLog = (previewRenderCounter++ % 300 == 0); // Log every 300 frames (~5 seconds at 60fps)
+    
+    if (shouldLog) {
+        std::cout << "[WorldConfigurationUI] renderWorldPreview() called" << std::endl;
+        std::cout << "[WorldConfigurationUI] previewRenderer_=" << (previewRenderer_ ? "valid" : "null") << std::endl;
+    }
     
     if (!previewRenderer_) {
-        std::cout << "[WorldConfigurationUI] No preview renderer available" << std::endl;
+        if (shouldLog) {
+            std::cout << "[WorldConfigurationUI] No preview renderer available" << std::endl;
+        }
         return;
     }
     
-    std::cout << "[WorldConfigurationUI] previewRenderer_->hasValidPreview()=" << previewRenderer_->hasValidPreview() << std::endl;
+    if (shouldLog) {
+        std::cout << "[WorldConfigurationUI] previewRenderer_->hasValidPreview()=" << previewRenderer_->hasValidPreview() << std::endl;
+    }
     
     if (!previewRenderer_->hasValidPreview()) {
-        std::cout << "[WorldConfigurationUI] Preview renderer has no valid preview" << std::endl;
+        if (shouldLog) {
+            std::cout << "[WorldConfigurationUI] Preview renderer has no valid preview" << std::endl;
+        }
         return;
     }
     
@@ -789,9 +801,11 @@ void WorldConfigurationUI::renderWorldPreview() {
     float finalX = previewX_ + menuPos.x;
     float finalY = previewY_ + menuPos.y;
     
-    std::cout << "[WorldConfigurationUI] Menu position: (" << menuPos.x << ", " << menuPos.y << ")" << std::endl;
-    std::cout << "[WorldConfigurationUI] Preview relative coords: (" << previewX_ << ", " << previewY_ << ")" << std::endl;
-    std::cout << "[WorldConfigurationUI] Final screen coords: (" << finalX << ", " << finalY << ") size " << previewWidth_ << "x" << previewHeight_ << std::endl;
+    if (shouldLog) {
+        std::cout << "[WorldConfigurationUI] Menu position: (" << menuPos.x << ", " << menuPos.y << ")" << std::endl;
+        std::cout << "[WorldConfigurationUI] Preview relative coords: (" << previewX_ << ", " << previewY_ << ")" << std::endl;
+        std::cout << "[WorldConfigurationUI] Final screen coords: (" << finalX << ", " << finalY << ") size " << previewWidth_ << "x" << previewHeight_ << std::endl;
+    }
     
     // Use the calculated final screen coordinates
     previewRenderer_->render(renderer_, finalX, finalY, previewWidth_, previewHeight_);
