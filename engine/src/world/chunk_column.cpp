@@ -16,7 +16,7 @@ namespace VoxelCastle
         ChunkColumn::ChunkColumn(int_fast64_t worldX, int_fast64_t worldZ)
             : m_coordinates{worldX, worldZ}
         {
-            // No longer pre-initialize all segments due to the large ±128 chunk range (256 total chunks).
+            // No longer pre-initialize all segments due to the large ±256 chunk range (512 total chunks).
             // Segments are now created on-demand via getOrCreateSegment() for better memory efficiency.
             // This supports the new coordinate system defined in world_coordinates.h.
             
@@ -29,7 +29,7 @@ namespace VoxelCastle
             ss << '.' << std::setfill('0') << std::setw(3) << ms.count();
             
             VoxelCastle::Utils::logToFile("[" + ss.str() + "] [CHUNK_CREATE] ChunkColumn created at coordinates (" + 
-                std::to_string(worldX) + ", " + std::to_string(worldZ) + ") - supports ±128 chunk range");
+                std::to_string(worldX) + ", " + std::to_string(worldZ) + ") - supports ±256 chunk range");
         }
 
         ChunkColumnCoord ChunkColumn::getCoordinates() const
@@ -38,7 +38,7 @@ namespace VoxelCastle
         }
 
         ::VoxelEngine::World::Voxel ChunkColumn::getVoxel(int_fast64_t worldX, int_fast64_t worldY, int_fast64_t worldZ) const {
-            // Use new coordinate system with ±128 chunk range
+            // Use new coordinate system with ±256 chunk range
             using namespace VoxelCastle::World::WorldCoordinates;
             
             // Validate coordinates are within world bounds
@@ -87,7 +87,7 @@ namespace VoxelCastle
         }
 
         void ChunkColumn::setVoxel(int_fast64_t worldX, int_fast64_t worldY, int_fast64_t worldZ, const VoxelEngine::World::Voxel& voxel) {
-            // Use new coordinate system with ±128 chunk range
+            // Use new coordinate system with ±256 chunk range
             using namespace VoxelCastle::World::WorldCoordinates;
             
             // Validate coordinates are within world bounds
@@ -193,7 +193,7 @@ namespace VoxelCastle
 
         int_fast32_t ChunkColumn::worldYToSegmentYIndex(int_fast64_t worldY)
         {
-            // Use new coordinate system for ±128 chunk range
+            // Use new coordinate system for ±256 chunk range
             using namespace VoxelCastle::World::WorldCoordinates;
             return BlockYToChunkY(static_cast<int32_t>(worldY));
         }
@@ -203,7 +203,7 @@ namespace VoxelCastle
             int_fast32_t& segmentX, int_fast32_t& segmentY, int_fast32_t& segmentZ,
             int_fast64_t columnWorldX, int_fast64_t columnWorldZ)
         {
-            // Use new coordinate system for ±128 chunk range
+            // Use new coordinate system for ±256 chunk range
             using namespace VoxelCastle::World::WorldCoordinates;
             
             int_fast64_t relativeX = worldX - columnWorldX;

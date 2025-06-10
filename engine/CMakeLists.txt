@@ -15,7 +15,7 @@ add_library(VoxelEngine STATIC
     src/world/world_generator.cpp # Added WorldGenerator source
     src/world/world_seed.cpp # Added WorldSeed source
     src/world/world_parameters.cpp # Added WorldParameters source
-    src/world/world_coordinates.cpp # Added WorldCoordinates source (±128 chunk range support)
+    src/world/world_coordinates.cpp # Added WorldCoordinates source (±256 chunk range support)
     src/world/seed_world_generator.cpp # Added SeedWorldGenerator source
     src/world/world_metadata.cpp # World metadata and persistence system
     src/world/world_persistence_manager.cpp # World creation, loading, and directory management

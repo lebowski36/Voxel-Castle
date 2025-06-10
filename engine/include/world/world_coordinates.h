@@ -10,7 +10,7 @@ namespace World {
  * @brief World coordinate system constants and utilities.
  * 
  * This defines the coordinate system for the Voxel Castle world generation,
- * implementing the symmetrical ±128 chunk vertical range as documented in
+ * implementing the symmetrical ±256 chunk vertical range as documented in
  * BIOME_IMPLEMENTATION_PLAN.md and 08c_world_generation_system.md.
  */
 namespace WorldCoordinates {
@@ -29,17 +29,17 @@ namespace WorldCoordinates {
     constexpr float CHUNK_SIZE_METERS = CHUNK_SIZE_VOXELS * VOXEL_SIZE_METERS;  // 8m × 8m × 8m per chunk
     
     // ============================================================================
-    // WORLD HEIGHT BOUNDARIES (±128 chunks)
+    // WORLD HEIGHT BOUNDARIES (±256 chunks)
     // ============================================================================
     
     /// Minimum chunk Y coordinate (deep underground)
-    constexpr int32_t MIN_CHUNK_Y = -128;
+    constexpr int32_t MIN_CHUNK_Y = -256;
     
     /// Maximum chunk Y coordinate (high altitude)
-    constexpr int32_t MAX_CHUNK_Y = 127;
+    constexpr int32_t MAX_CHUNK_Y = 255;
     
     /// Total number of chunk layers in the world
-    constexpr int32_t TOTAL_CHUNK_LAYERS = MAX_CHUNK_Y - MIN_CHUNK_Y + 1;  // 256 chunks
+    constexpr int32_t TOTAL_CHUNK_LAYERS = MAX_CHUNK_Y - MIN_CHUNK_Y + 1;  // 512 chunks
     
     /// Sea level chunk Y coordinate
     constexpr int32_t SEA_LEVEL_CHUNK_Y = 0;
@@ -49,14 +49,14 @@ namespace WorldCoordinates {
     // ============================================================================
     
     /// World boundaries in meters
-    constexpr float MIN_WORLD_Y_METERS = MIN_CHUNK_Y * CHUNK_SIZE_METERS;      // -1024m
-    constexpr float MAX_WORLD_Y_METERS = (MAX_CHUNK_Y + 1) * CHUNK_SIZE_METERS; // +1024m
-    constexpr float TOTAL_WORLD_HEIGHT_METERS = MAX_WORLD_Y_METERS - MIN_WORLD_Y_METERS; // 2048m
+    constexpr float MIN_WORLD_Y_METERS = MIN_CHUNK_Y * CHUNK_SIZE_METERS;      // -2048m
+    constexpr float MAX_WORLD_Y_METERS = (MAX_CHUNK_Y + 1) * CHUNK_SIZE_METERS; // +2048m
+    constexpr float TOTAL_WORLD_HEIGHT_METERS = MAX_WORLD_Y_METERS - MIN_WORLD_Y_METERS; // 4096m
     
     /// World boundaries in blocks/voxels
-    constexpr int32_t MIN_WORLD_Y_BLOCKS = MIN_CHUNK_Y * CHUNK_SIZE_VOXELS;    // -4096 blocks
-    constexpr int32_t MAX_WORLD_Y_BLOCKS = (MAX_CHUNK_Y + 1) * CHUNK_SIZE_VOXELS - 1; // +4095 blocks
-    constexpr int32_t TOTAL_WORLD_HEIGHT_BLOCKS = MAX_WORLD_Y_BLOCKS - MIN_WORLD_Y_BLOCKS + 1; // 8192 blocks
+    constexpr int32_t MIN_WORLD_Y_BLOCKS = MIN_CHUNK_Y * CHUNK_SIZE_VOXELS;    // -8192 blocks
+    constexpr int32_t MAX_WORLD_Y_BLOCKS = (MAX_CHUNK_Y + 1) * CHUNK_SIZE_VOXELS - 1; // +8191 blocks
+    constexpr int32_t TOTAL_WORLD_HEIGHT_BLOCKS = MAX_WORLD_Y_BLOCKS - MIN_WORLD_Y_BLOCKS + 1; // 16384 blocks
     
     /// Sea level in different units
     constexpr float SEA_LEVEL_METERS = SEA_LEVEL_CHUNK_Y * CHUNK_SIZE_METERS;  // 0m

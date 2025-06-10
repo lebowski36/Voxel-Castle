@@ -42,7 +42,7 @@ namespace World {
          * A ChunkColumn manages a stack of ChunkSegments at a specific XZ world coordinate.
          * It is responsible for creating, accessing, and managing these segments.
          * 
-         * Updated to support ±128 chunk range (-1024m to +1024m) as defined in world_coordinates.h
+         * Updated to support ±256 chunk range (-2048m to +2048m) as defined in world_coordinates.h
          */
         class ChunkColumn
         {

@@ -48,6 +48,7 @@ This split architecture provides better separation of concerns and improved main
 - **World Generation Next Steps**: `/WORLD_GENERATION_NEXT_STEPS.md`
 - **Current TODO Tracking**: `/CURRENT_TODO.md`
 - **World Preview Backup**: `/docs/WORLD_PREVIEW_RENDERER_BACKUP.md` - Preserved preview system code and findings
+- **World Height Increase**: `/docs/WORLD_HEIGHT_INCREASE_SUMMARY.md` - Enhanced 4096m height range benefits and technical details
 
 ### Core World Generation Tasks
 - **World Generation System Overview**: `/development_tasks/04_essential_game_infrastructure/08c_world_generation_system.md`

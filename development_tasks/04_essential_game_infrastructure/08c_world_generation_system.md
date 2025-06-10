@@ -18,32 +18,32 @@ This document outlines the implementation plan for Voxel Castle's world generati
 - **Current Terrain:** ~12m max height (temporary, will expand to full range)
 
 **Height Boundaries for Implementation:**
-- **Underground Limit:** Chunk Y = -128 (-1024m depth / -4096 blocks)
+- **Underground Limit:** Chunk Y = -256 (-2048m depth / -8192 blocks)
 - **Surface Level:** Chunk Y = 0 (0m elevation / sea level)
-- **Sky Limit:** Chunk Y = +128 (+1024m height / +4096 blocks)
-- **Total World Height:** 256 chunks (2048m / 8192 blocks) - perfectly symmetrical
+- **Sky Limit:** Chunk Y = +255 (+2048m height / +8191 blocks)
+- **Total World Height:** 512 chunks (4096m / 16384 blocks) - perfectly symmetrical
 
 **Implementation Priority:**
-- [x] **Phase 1:** Implement coordinate system and chunk loading for ±128 range ✅ COMPLETED 2025-06-08
-- [x] **Phase 2:** Expand terrain generation to use full vertical range ✅ COMPLETED 2025-06-08
+- [x] **Phase 1:** Implement coordinate system and chunk loading for ±256 range ✅ COMPLETED 2025-06-10
+- [x] **Phase 2:** Expand terrain generation to use full vertical range ✅ COMPLETED 2025-06-10
 - [ ] **Phase 3:** Implement altitude-based biome variations and underground systems
 - [ ] **Phase 4:** Add atmospheric/weather effects at high altitudes
 
 **Technical Notes:**
-- All world generation algorithms must support the full ±128 chunk range
-- Chunk coordinate system: `int32_t chunkY` ranges from -128 to +127
-- Block coordinate system: `int32_t blockY` ranges from -4096 to +4095
+- All world generation algorithms must support the full ±256 chunk range
+- Chunk coordinate system: `int32_t chunkY` ranges from -256 to +255
+- Block coordinate system: `int32_t blockY` ranges from -8192 to +8191
 - LOD systems must handle both deep underground and high-altitude chunks
 
 **Phase 1 Implementation Summary (COMPLETED):**
 - ✅ Created `engine/include/world/world_coordinates.h` and `engine/src/world/world_coordinates.cpp` with all world scale constants and coordinate conversion utilities
 - ✅ Updated `engine/include/world/world_parameters.h` and `engine/src/world/world_parameters.cpp` to support increased cave and ore depth ranges
-- ✅ Updated `engine/include/world/chunk_column.h` and `engine/src/world/chunk_column.cpp` to support dynamic vertical chunk range (±128), removed fixed pre-allocation, refactored coordinate logic
+- ✅ Updated `engine/include/world/chunk_column.h` and `engine/src/world/chunk_column.cpp` to support dynamic vertical chunk range (±256), removed fixed pre-allocation, refactored coordinate logic
 - ✅ Successfully tested coordinate system with legacy world generation - application runs correctly with new boundaries
 - ✅ Verified chunk loading works correctly for both positive and negative Y coordinates
 
 **Phase 2 Implementation Summary (COMPLETED):**
-- ✅ Enhanced `engine/src/world/seed_world_generator.cpp` with multi-scale noise terrain generation for full ±1024m vertical range
+- ✅ Enhanced `engine/src/world/seed_world_generator.cpp` with multi-scale noise terrain generation for full ±2048m vertical range
 - ✅ Implemented continental-scale (baseNoiseScale), terrain-detail (detailNoiseScale), and surface-variation (fineNoiseScale) noise layers
 - ✅ Added altitude-based voxel type assignment: surface materials vary by elevation (grass at low altitude, stone at high altitude)
 - ✅ Created depth-based subsurface material layers: topsoil (0-1m), subsoil (1-4m), weathered rock (4-20m), bedrock (20m+)

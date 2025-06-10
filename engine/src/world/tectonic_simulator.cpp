@@ -450,7 +450,7 @@ void TectonicSimulator::HandleConvergentBoundary(PlateBoundary& boundary) {
     if (!plate1 || !plate2) return;
     
     // Mountain formation at convergent boundaries
-    boundary.stress += boundary.interactionStrength * timeStep_ * 0.1f;
+    boundary.stress += boundary.interactionStrength * timeStep_ * 0.15f; // Increased accumulation rate
     
     // Generate multiple contact points along the boundary line for mountain ranges
     glm::vec2 midpoint = (plate1->centerPosition + plate2->centerPosition) * 0.5f;
@@ -492,7 +492,7 @@ void TectonicSimulator::HandleDivergentBoundary(PlateBoundary& boundary) {
     if (!plate1 || !plate2) return;
     
     // Rift formation at divergent boundaries
-    boundary.stress += boundary.interactionStrength * timeStep_ * 0.05f; // Less stress than convergent
+    boundary.stress += boundary.interactionStrength * timeStep_ * 0.08f; // Increased accumulation rate (still less than convergent)
     
     // Generate multiple contact points along the rift valley
     glm::vec2 midpoint = (plate1->centerPosition + plate2->centerPosition) * 0.5f;
@@ -524,7 +524,7 @@ void TectonicSimulator::HandleTransformBoundary(PlateBoundary& boundary) {
     if (!plate1 || !plate2) return;
     
     // Fault line formation at transform boundaries
-    boundary.stress += boundary.interactionStrength * timeStep_ * 0.15f; // High stress, different pattern
+    boundary.stress += boundary.interactionStrength * timeStep_ * 0.20f; // Higher stress for transform boundaries
     
     // Generate multiple contact points along the fault line
     glm::vec2 midpoint = (plate1->centerPosition + plate2->centerPosition) * 0.5f;
@@ -593,9 +593,10 @@ void TectonicSimulator::GenerateTerrainMaps() {
             for (const auto& boundary : boundaries_) {
                 for (const auto& contactPoint : boundary.contactPoints) {
                     float distance = glm::length(worldPos - contactPoint);
-                    float influence = std::exp(-distance / (worldSize_ * 0.1f)); // Exponential falloff
+                    float influenceRadius = worldSize_ * 0.25f; // Increase influence radius to 25% of world size
+                    float influence = std::exp(-distance / influenceRadius); // Exponential falloff
                     
-                    if (influence > 0.01f) { // Significant influence
+                    if (influence > 0.005f) { // Lower threshold for wider influence (was 0.01f)
                         float localStress = boundary.stress * influence;
                         if (localStress > maxStress) {
                             maxStress = localStress;
@@ -603,15 +604,15 @@ void TectonicSimulator::GenerateTerrainMaps() {
                             switch (boundary.type) {
                                 case BoundaryType::CONVERGENT:
                                     terrainType = TerrainType::MOUNTAIN;
-                                    elevationMod = localStress * 2000.0f; // Up to 2km elevation
+                                    elevationMod = localStress * 8000.0f + 500.0f; // Mountains: 500m to 8.5km elevation (dramatic mountain ranges)
                                     break;
                                 case BoundaryType::DIVERGENT:
                                     terrainType = TerrainType::RIFT;
-                                    elevationMod = -localStress * 500.0f; // Down to -500m
+                                    elevationMod = -localStress * 4000.0f - 300.0f; // Deep rifts: -300m to -4.3km depth (dramatic rift valleys)
                                     break;
                                 case BoundaryType::TRANSFORM:
                                     terrainType = TerrainType::FAULT;
-                                    elevationMod = localStress * 200.0f; // Small elevation changes
+                                    elevationMod = localStress * 1200.0f + 100.0f; // Faults: 100m to 1.3km ridges (more prominent fault lines)
                                     break;
                                 default:
                                     terrainType = TerrainType::STABLE;

@@ -21,18 +21,20 @@ This document outlines the comprehensive implementation plan for the Voxel Castl
 - **Current Terrain:** ~1-13 blocks high (25cm-3.25m) with 48-block amplitude (12m max height)
 
 **Height Boundaries for Advanced World Generation:**
-- **Underground Limit:** -128 chunks (-1024m depth) - Deep enough for extensive cave systems, multiple geological layers, underground rivers, crystal caverns, ancient ruins, and realistic mining operations
+- **Underground Limit:** -256 chunks (-2048m depth) - Extremely deep underground for extensive cave systems, multiple geological layers, underground rivers, crystal caverns, ancient ruins, deep mining operations, and the deepest secrets of the world
 - **Surface Level:** Chunk Y=0 at sea level (0m elevation)  
-- **Sky Limit:** +128 chunks (+1024m height) - Accommodates massive mountains, tall structures, flying mechanics, weather systems, atmospheric layers
-- **Total World Height:** 256 chunks (2048m) - perfectly balanced, symmetrical vertical exploration
+- **Sky Limit:** +255 chunks (+2048m height) - Enables massive mountain ranges, towering structures, flying mechanics, complex weather systems, atmospheric layers, and breathtaking vistas
+- **Total World Height:** 512 chunks (4096m) - perfectly balanced, symmetrical vertical exploration with dramatic geological features
 
 **Design Implications:**
-- **Geological Stratification**: 128 chunks underground allows for multiple distinct rock layers, ore distribution, and geological history
-- **Hydrological Systems**: Sufficient depth for aquifers, underground rivers, and complex water table simulation
-- **Biome Diversity**: Vertical range supports alpine zones, surface biomes, cave biomes, and deep underground ecosystems
-- **Mountain Systems**: 128 chunks above ground enables realistic mountain ranges, high-altitude biomes, and weather effects
+- **Geological Stratification**: 256 chunks underground allows for multiple distinct rock layers, extensive ore distribution, and complex geological history
+- **Hydrological Systems**: Sufficient depth for deep aquifers, underground rivers, complex water table simulation, and deep ocean trenches
+- **Biome Diversity**: Extended vertical range supports alpine zones, surface biomes, cave biomes, deep underground ecosystems, and high-altitude atmospheric zones
+- **Mountain Systems**: 255 chunks above ground enables realistic mountain ranges, high-altitude biomes, dramatic weather effects, and epic mountain vistas
+- **Dramatic Topography**: Mountain ranges can tower 2000m+ above sea level, creating truly awe-inspiring landscapes comparable to Earth's tallest peaks
+- **Underground Realms**: Deep enough for vast underground cities, labyrinthine cave networks, and mysterious ancient civilizations
 - **Symmetrical Balance**: Equal vertical exploration potential above and below ground
-- **Performance**: 256 total chunks manageable for LOD systems while providing extensive gameplay depth
+- **Performance**: 512 total chunks manageable for LOD systems while providing extensive gameplay depth and dramatic vertical features
 
 ## Vision & Goals
 

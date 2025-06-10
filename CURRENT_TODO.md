@@ -13,11 +13,12 @@ This file tracks our immediate high-level tasks and progress. Detailed sub-tasks
 **Essential Scale Reference:**
 - **Voxel Size:** 25cm × 25cm × 25cm (0.25m cubes) - NOT 1 meter blocks
 - **Chunk Size:** 32×32×32 voxels = 8m × 8m × 8m per chunk
-- **World Height:** ±128 chunks (±1024m) = 2048m total = 8192 blocks total
+- **World Height:** ±256 chunks (±2048m) = 4096m total = 16384 blocks total
 - **Current Terrain:** ~12m max height (temporary, will expand to full range)
 
 **Detailed Specifications:** See `docs/BIOME_IMPLEMENTATION_PLAN.md` → World Scale & Height Boundaries
 **Implementation Tasks:** See `development_tasks/04_essential_game_infrastructure/08c_world_generation_system.md`
+**Height Increase Summary:** See `docs/WORLD_HEIGHT_INCREASE_SUMMARY.md` for benefits and technical details
 
 ---
 
@@ -75,7 +76,7 @@ The project maintains **TWO SEPARATE WORLD GENERATION SYSTEMS** to ensure stabil
 
 **New Advanced System (Create/Load World Path):**
 - **Files**: `engine/src/world/seed_world_generator.cpp` + biome system
-- **What it will do**: Advanced biome system, ±1024m terrain range, climate simulation, erosion, geological features
+- **What it will do**: Advanced biome system, ±2048m terrain range, climate simulation, erosion, geological features
 - **Purpose**: Revolutionary world generation with realistic geological and ecological features
 - **Status**: **ACTIVE DEVELOPMENT** - Following BIOME_IMPLEMENTATION_PLAN.md
 - **UI**: Main menu "Create World" and "Load Game" buttons (future implementation)

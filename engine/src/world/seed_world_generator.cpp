@@ -167,7 +167,7 @@ int SeedWorldGenerator::generateTerrainHeight(int globalX, int globalZ) const {
         return columnHeight;
     }
     
-    // Enhanced terrain generation using full ±1024m vertical range
+    // Enhanced terrain generation using full ±2048m vertical range
     // Use world coordinate constants for proper scaling
     using namespace VoxelCastle::World::WorldCoordinates;
     
@@ -414,9 +414,9 @@ void SeedWorldGenerator::initializeTectonicSimulation(float worldSizeKm) {
     uint32_t plateCount = 0; // Auto-determine plate count based on world size
     tectonicSimulator_->InitializePlates(static_cast<uint32_t>(tectonicSeed), worldSizeKm, plateCount);
     
-    // Run the simulation
-    float simulationTime = 100.0f; // Million years
-    uint32_t timeSteps = 10;
+    // Run the simulation with longer time for more dramatic geological features
+    float simulationTime = 1000.0f; // Extended simulation time for more dramatic results
+    uint32_t timeSteps = 20; // More time steps for better stress accumulation
     tectonicSimulator_->SimulatePlateMovement(simulationTime, timeSteps);
     
     std::cout << "[SeedWorldGenerator] Tectonic simulation initialized with " 
