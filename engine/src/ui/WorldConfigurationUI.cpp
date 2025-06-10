@@ -521,13 +521,8 @@ void WorldConfigurationUI::createPreviewSection() {
     previewLabel->setBackgroundColor({0.2f, 0.2f, 0.2f, 0.8f});
     addChild(previewLabel);
     
-    // Preview panel
-    auto previewPanel = std::make_shared<VoxelEngine::UI::UIButton>(renderer_);
-    previewPanel->setText(""); // Remove placeholder text since we'll render over it
-    previewPanel->setPosition(rightColumnX, TITLE_HEIGHT + PANEL_MARGIN + TEXT_HEIGHT + 5.0f);
-    previewPanel->setSize(rightColumnWidth, 180.0f);
-    previewPanel->setBackgroundColor({0.0f, 0.0f, 0.0f, 0.0f}); // TRANSPARENT - don't cover the preview!
-    addChild(previewPanel);
+    // No preview panel - we'll render the preview directly without a UI element
+    // This prevents any UI element from potentially obscuring our OpenGL quad
     
     // Store preview area coordinates for rendering
     // IMPORTANT: These coordinates should be relative to the menu, not screen coordinates
