@@ -633,20 +633,23 @@ void WorldSimulationUI::startSimulation(const WorldConfig& config, const std::st
         // Create SeedWorldGenerator with geological realism enabled
         worldGenerator_ = std::make_shared<VoxelCastle::World::SeedWorldGenerator>(worldSeed_, worldParameters_, true); // Enable geological realism
         
+        // Convert world size from regions to kilometers (1 region = 1 km)
+        float worldSizeKm = static_cast<float>(config.worldSize);
+        
         // Initialize geological simulation system 
         addLogEntry("Initializing geological simulation system", 2);
-        addLogEntry("World size: " + std::to_string(config.worldSize) + "x" + std::to_string(config.worldSize), 3);
+        addLogEntry("World size: " + std::to_string(config.worldSize) + " chunks (" + std::to_string(worldSizeKm) + " km)", 3);
         
-        // Create geological configuration based on user settings (default to BALANCED quality)
+        // Create geological configuration based on user settings
         VoxelCastle::World::GeologicalConfig geoConfig;
-        geoConfig.preset = VoxelCastle::World::GeologicalPreset::BALANCED;
+        geoConfig.preset = config.geologicalQuality; // Use user-selected quality preset
         
         // Set up progress callback for geological simulation
         auto progressCallback = [this](const VoxelCastle::World::PhaseInfo& phaseInfo) {
             this->onGeologicalPhaseUpdate(phaseInfo);
         };
         
-        worldGenerator_->initializeGeologicalSimulation(static_cast<float>(config.worldSize), geoConfig, progressCallback);
+        worldGenerator_->initializeGeologicalSimulation(worldSizeKm, geoConfig, progressCallback);
         addLogEntry("Geological simulation initialized", 3);
         
         // Create WorldPersistenceManager

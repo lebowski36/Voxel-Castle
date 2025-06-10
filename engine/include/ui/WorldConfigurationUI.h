@@ -1,6 +1,7 @@
 #pragma once
 
 #include "elements/BaseMenu.h"
+#include "world/GeologicalTypes.h"
 #include <functional>
 #include <memory>
 #include <chrono>
@@ -28,6 +29,7 @@ public:
         int hydrologyLevel = 1;         // 0=Arid, 1=Normal, 2=Water-rich
         uint32_t customSeed = 0;        // 0=Random seed
         bool enableCivilizations = true;
+        VoxelCastle::World::GeologicalPreset geologicalQuality = VoxelCastle::World::GeologicalPreset::BALANCED; // Geological simulation quality
     };
 
     // Configuration completion callback

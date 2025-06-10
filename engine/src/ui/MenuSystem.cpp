@@ -69,6 +69,7 @@ bool MenuSystem::initialize(int screenWidth, int screenHeight, const std::string
         simConfig.hydrologyLevel = config.hydrologyLevel;
         simConfig.customSeed = config.customSeed;
         simConfig.enableCivilizations = config.enableCivilizations;
+        simConfig.geologicalQuality = config.geologicalQuality;
         
         // Switch to simulation UI and start the simulation
         showWorldSimulationUI();

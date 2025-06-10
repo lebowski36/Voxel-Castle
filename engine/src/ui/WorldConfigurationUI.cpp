@@ -25,6 +25,7 @@ WorldConfigurationUI::WorldConfigurationUI(VoxelEngine::UI::UIRenderer* renderer
     config_.hydrologyLevel = 1; // Normal
     config_.enableCivilizations = true;
     config_.customSeed = 0; // Random
+    config_.geologicalQuality = VoxelCastle::World::GeologicalPreset::BALANCED; // Default to Balanced quality
     
     // Initialize world name buffer
     strncpy(worldNameBuffer_, config_.worldName.c_str(), sizeof(worldNameBuffer_) - 1);
@@ -436,6 +437,79 @@ void WorldConfigurationUI::createParameterControls() {
     // Update geological activity value text after creating buttons
     std::vector<std::string> geoTypes = {"Stable", "Moderate", "Highly Active"};
     geoValueLabel->setText(geoTypes[config_.geologicalActivity]);
+    
+    paramY += rowSpacing;
+    
+    // Geological Quality Parameter
+    auto geoQualityLabel = std::make_shared<VoxelEngine::UI::UIButton>(renderer_);
+    geoQualityLabel->setText("Geological Quality:");
+    geoQualityLabel->setPosition(PANEL_MARGIN, paramY);
+    geoQualityLabel->autoSizeToText(8.0f);
+    geoQualityLabel->setBackgroundColor({0.1f, 0.1f, 0.1f, 0.6f});
+    addChild(geoQualityLabel);
+    
+    auto geoQualityValueLabel = std::make_shared<VoxelEngine::UI::UIButton>(renderer_);
+    geoQualityValueLabel->setPosition(valueColumnX, paramY);
+    geoQualityValueLabel->autoSizeToText(8.0f);
+    geoQualityValueLabel->setBackgroundColor({0.1f, 0.1f, 0.1f, 0.6f});
+    addChild(geoQualityValueLabel);
+    
+    // Helper function to get geological quality name
+    auto getGeoQualityName = [](VoxelCastle::World::GeologicalPreset preset) -> std::string {
+        switch (preset) {
+            case VoxelCastle::World::GeologicalPreset::PERFORMANCE: return "Performance";
+            case VoxelCastle::World::GeologicalPreset::BALANCED: return "Balanced";
+            case VoxelCastle::World::GeologicalPreset::QUALITY: return "Quality";
+            case VoxelCastle::World::GeologicalPreset::ULTRA_REALISM: return "Ultra Realism";
+            case VoxelCastle::World::GeologicalPreset::CUSTOM: return "Custom";
+            default: return "Unknown";
+        }
+    };
+    
+    geoQualityValueLabel->setText(getGeoQualityName(config_.geologicalQuality));
+    
+    auto geoQualityDecButton = std::make_shared<VoxelEngine::UI::UIButton>(renderer_);
+    geoQualityDecButton->setText("-");
+    geoQualityDecButton->setPosition(buttonColumnX, paramY);
+    geoQualityDecButton->setSize(TEXT_HEIGHT, TEXT_HEIGHT);
+    geoQualityDecButton->setBackgroundColor({0.3f, 0.2f, 0.2f, 0.8f});
+    geoQualityDecButton->setOnClick([this, geoQualityValueLabel, getGeoQualityName]() { 
+        int currentValue = static_cast<int>(config_.geologicalQuality);
+        if (currentValue > 0) {
+            config_.geologicalQuality = static_cast<VoxelCastle::World::GeologicalPreset>(currentValue - 1);
+            geoQualityValueLabel->setText(getGeoQualityName(config_.geologicalQuality));
+            std::cout << "[DEBUG] Geological quality decreased to: " << getGeoQualityName(config_.geologicalQuality) << std::endl;
+            onParameterChanged();
+            createUIElements(); // Refresh to update quality preview
+        }
+    });
+    addChild(geoQualityDecButton);
+    
+    auto geoQualityIncButton = std::make_shared<VoxelEngine::UI::UIButton>(renderer_);
+    geoQualityIncButton->setText("+");
+    geoQualityIncButton->setPosition(buttonColumnX + 30.0f, paramY);
+    geoQualityIncButton->setSize(TEXT_HEIGHT, TEXT_HEIGHT);
+    geoQualityIncButton->setBackgroundColor({0.2f, 0.3f, 0.2f, 0.8f});
+    geoQualityIncButton->setOnClick([this, geoQualityValueLabel, getGeoQualityName]() { 
+        int currentValue = static_cast<int>(config_.geologicalQuality);
+        if (currentValue < static_cast<int>(VoxelCastle::World::GeologicalPreset::CUSTOM)) {
+            config_.geologicalQuality = static_cast<VoxelCastle::World::GeologicalPreset>(currentValue + 1);
+            geoQualityValueLabel->setText(getGeoQualityName(config_.geologicalQuality));
+            std::cout << "[DEBUG] Geological quality increased to: " << getGeoQualityName(config_.geologicalQuality) << std::endl;
+            onParameterChanged();
+            createUIElements(); // Refresh to update quality preview
+        }
+    });
+    addChild(geoQualityIncButton);
+    
+    // Show performance preview for geological quality
+    auto geoPreviewLabel = std::make_shared<VoxelEngine::UI::UIButton>(renderer_);
+    auto qualityPreview = VoxelCastle::World::getQualityPreview(config_.geologicalQuality);
+    geoPreviewLabel->setText("⏱ " + qualityPreview.expectedTime + " | 🧠 " + qualityPreview.memoryUsage);
+    geoPreviewLabel->setPosition(PANEL_MARGIN, paramY + 5);
+    geoPreviewLabel->autoSizeToText(7.0f);
+    geoPreviewLabel->setBackgroundColor({0.2f, 0.2f, 0.3f, 0.6f});
+    addChild(geoPreviewLabel);
     
     paramY += rowSpacing;
     

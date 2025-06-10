@@ -634,11 +634,12 @@ void SeedWorldGenerator::initializeGeologicalSimulation(float worldSizeKm, const
     
     std::cout << "[SeedWorldGenerator] Initializing geological simulation system..." << std::endl;
     
-    // Calculate world size in chunks (assuming 32m per chunk)
-    int worldSizeChunks = static_cast<int>(worldSizeKm / 0.032f);
+    // Pass the world size in km directly to the geological simulator
+    // The geological simulator will handle converting this to appropriate resolution
+    int worldSizeKmInt = static_cast<int>(worldSizeKm);
     
     // Create geological simulator
-    geologicalSimulator_ = std::make_unique<GeologicalSimulator>(worldSizeChunks, config);
+    geologicalSimulator_ = std::make_unique<GeologicalSimulator>(worldSizeKmInt, config);
     
     // Store progress callback
     geologicalProgressCallback_ = progressCallback;

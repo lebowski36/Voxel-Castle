@@ -33,8 +33,7 @@ private:
     
     // Configuration
     GeologicalConfig config_;
-    int worldSize_;
-    float worldSizeKm_;
+    float worldSizeKm_;  // World size in kilometers
     uint64_t seed_;
     
     // Progress tracking
@@ -50,10 +49,10 @@ private:
 public:
     /**
      * @brief Constructor
-     * @param worldSize World size in chunks
+     * @param worldSizeKm World size in kilometers
      * @param config Geological configuration
      */
-    GeologicalSimulator(int worldSize, const GeologicalConfig& config);
+    GeologicalSimulator(int worldSizeKm, const GeologicalConfig& config);
     
     /**
      * @brief Destructor

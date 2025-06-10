@@ -278,8 +278,8 @@ void WorldMapRenderer::generateElevationData(VoxelCastle::World::SeedWorldGenera
                               << " Hardness:" << sample.rockHardness << std::endl;
                 }
                 
-                // Allow full elevation range including underwater regions (±2048m)
-                finalHeight = std::clamp(finalHeight, -2048.0f, 2048.0f);
+                // Allow extended elevation range for dramatic geological features (±4096m)
+                finalHeight = std::clamp(finalHeight, -4096.0f, 4096.0f);
                 
             } else if (tectonicSim && tectonicSim->IsSimulationComplete()) {
                 // Fall back to legacy tectonic system

@@ -13,12 +13,9 @@ using namespace VoxelCastle::World;
 namespace VoxelCastle {
 namespace World {
 
-GeologicalSimulator::GeologicalSimulator(int worldSize, const GeologicalConfig& config)
-    : config_(config), worldSize_(worldSize), seed_(0), currentPhase_(GeologicalPhase::TECTONICS),
+GeologicalSimulator::GeologicalSimulator(int worldSizeKm, const GeologicalConfig& config)
+    : config_(config), worldSizeKm_(static_cast<float>(worldSizeKm)), seed_(0), currentPhase_(GeologicalPhase::TECTONICS),
       currentPhaseProgress_(0.0f) {
-    
-    // Calculate world size in kilometers (chunks are 8m × 8m)
-    worldSizeKm_ = worldSize * 0.008f; // 8m per chunk
     
     std::cout << "[GeologicalSimulator] Initialized for " << worldSizeKm_ << "km world with " 
               << (config.preset == GeologicalPreset::BALANCED ? "BALANCED" : "OTHER") << " quality" << std::endl;
@@ -299,12 +296,12 @@ void GeologicalSimulator::simulateMantleConvection(float timeStep) {
         float margin = maxWorldDistance * 0.5f;
         float x = randomRange(margin, (worldSizeKm_ * 1000.0f) - margin);
         float z = randomRange(margin, (worldSizeKm_ * 1000.0f) - margin);
-        float strength = randomRange(0.1f, 0.8f) * timeStep; // More conservative strength values
+        float strength = randomRange(2.0f, 8.0f) * timeStep; // Stronger tectonic forces for visible changes
         float range = randomRange(maxWorldDistance * 0.3f, maxWorldDistance); // Variable range within safe limits
         
         // Ensure range doesn't exceed world boundaries and clamp strength
         range = std::min(range, maxWorldDistance);
-        strength = std::max(0.001f, std::min(2.0f, strength)); // Clamp strength to reasonable bounds
+        strength = std::max(0.1f, std::min(20.0f, strength)); // Higher strength for dramatic geological changes
         
         mantleStress_->propagateValue(strength, x, z, range, resistance);
     });
@@ -318,10 +315,10 @@ void GeologicalSimulator::simulatePlateMovement(float timeStep) {
     // Simple sequential processing for now to avoid segfaults
     for (int z = 0; z < height; ++z) {
         for (int x = 0; x < width; ++x) {        float mantleValue = mantleStress_->getSample(x, z);
-        float transferredStress = mantleValue * timeStep * 0.05f; // Reduced transfer rate
+        float transferredStress = mantleValue * timeStep * 0.3f; // Increased transfer rate for visible changes
         
         // Clamp stress values to prevent overflow
-        transferredStress = std::max(-10.0f, std::min(10.0f, transferredStress));
+        transferredStress = std::max(-50.0f, std::min(50.0f, transferredStress));
         crustStress_->addToSample(x, z, transferredStress);
         }
     }
@@ -338,10 +335,10 @@ void GeologicalSimulator::simulateMountainBuilding(float timeStep) {
             float stress = crustStress_->getSample(x, z);
             float rockHard = rockHardness_->getSample(x, z);
                  if (stress > 0.5f) { // Compression threshold
-            float uplift = stress * timeStep * 5.0f / rockHard; // Reduced uplift rate
+            float uplift = stress * timeStep * 25.0f / rockHard; // Increased uplift rate for dramatic mountain building
             
-            // Clamp uplift to prevent unrealistic mountain growth
-            uplift = std::max(-50.0f, std::min(50.0f, uplift));
+            // Clamp uplift to prevent unrealistic mountain growth but allow significant changes
+            uplift = std::max(-200.0f, std::min(200.0f, uplift));
             elevationField_->addToSample(x, z, uplift);
             
             // Determine new rock type based on pressure and temperature

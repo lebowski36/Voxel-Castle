@@ -2,6 +2,7 @@
 
 #include "elements/BaseMenu.h"
 #include "world/GeologicalSimulator.h"  // For PhaseInfo type
+#include "world/GeologicalTypes.h"      // For GeologicalPreset type
 #include <functional>
 #include <memory>
 #include <chrono>
@@ -58,6 +59,7 @@ public:
         int hydrologyLevel = 1;         
         uint32_t customSeed = 0;        
         bool enableCivilizations = true;
+        VoxelCastle::World::GeologicalPreset geologicalQuality = VoxelCastle::World::GeologicalPreset::BALANCED;
     };
 
     // Generation log entry (from original)
