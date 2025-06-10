@@ -1,0 +1,22 @@
+{
+    "version": 1,
+    "worldName": "GDSAGSAGSAG",
+    "seed": 8141948186198372724,
+    "gameMode": "creative",
+    "worldType": "infinite",
+    "spawnX": 0,
+    "spawnY": 64,
+    "spawnZ": 0,
+    "generateStructures": true,
+    "worldSize": 1024,
+    "mountainRanges": 5,
+    "majorRivers": 6,
+    "biomesIdentified": 16,
+    "simulationYears": 51,
+    "highestPeak": 1699.81,
+    "generatorName": "SeedWorldGenerator",
+    "generatorVersion": "1.0",
+    "createdDate": "2025-06-10T14:12:12Z",
+    "lastPlayed": "2025-06-10T14:12:12Z",
+    "playTime": 0
+}

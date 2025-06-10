@@ -106,19 +106,24 @@ void TectonicSimulator::SimulatePlateMovement(float simulationTime, uint32_t tim
     
     std::cout << "[TectonicSimulator] Simulation complete" << std::endl;
     
+    // Mark simulation as complete BEFORE generating boundary features
+    simulationComplete_ = true;
+    
     // Generate terrain features and elevation maps based on boundary interactions
     std::cout << "[TectonicSimulator] Generating boundary features and terrain maps..." << std::endl;
     GenerateBoundaryFeatures();
     std::cout << "[TectonicSimulator] Boundary features and terrain maps generated" << std::endl;
     
     totalSimulationTime_ += simulationTime;
-    simulationComplete_ = true;
 }
 
 void TectonicSimulator::GenerateBoundaryFeatures() {
     if (!simulationComplete_) {
+        std::cout << "[TectonicSimulator] GenerateBoundaryFeatures: Simulation not complete yet, skipping" << std::endl;
         return;
     }
+    
+    std::cout << "[TectonicSimulator] GenerateBoundaryFeatures: Processing " << boundaries_.size() << " boundaries" << std::endl;
     
     // Process each boundary and generate terrain features
     for (auto& boundary : boundaries_) {
@@ -137,6 +142,8 @@ void TectonicSimulator::GenerateBoundaryFeatures() {
                 break;
         }
     }
+    
+    std::cout << "[TectonicSimulator] GenerateBoundaryFeatures: Completed boundary processing, calling GenerateTerrainMaps" << std::endl;
     
     // Generate final terrain maps
     GenerateTerrainMaps();

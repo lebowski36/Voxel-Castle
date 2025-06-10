@@ -1,0 +1,22 @@
+{
+    "version": 1,
+    "worldName": "FSAIFUASOFA",
+    "seed": 11345482568131002463,
+    "gameMode": "creative",
+    "worldType": "infinite",
+    "spawnX": 0,
+    "spawnY": 64,
+    "spawnZ": 0,
+    "generateStructures": true,
+    "worldSize": 1024,
+    "mountainRanges": 5,
+    "majorRivers": 6,
+    "biomesIdentified": 16,
+    "simulationYears": 52,
+    "highestPeak": 1698.01,
+    "generatorName": "SeedWorldGenerator",
+    "generatorVersion": "1.0",
+    "createdDate": "2025-06-10T14:10:56Z",
+    "lastPlayed": "2025-06-10T14:10:56Z",
+    "playTime": 0
+}
