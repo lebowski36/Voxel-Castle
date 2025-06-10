@@ -245,6 +245,11 @@ float UIRenderer::getTextHeight(float scale) const {
 }
 
 void UIRenderer::renderColoredQuad(float x, float y, float width, float height, const glm::vec4& color) {
+    // Add specific debug logging for bright magenta to trace the issue
+    if (color.r > 0.9f && color.g < 0.1f && color.b > 0.9f) {
+        std::cout << "[UIRenderer] BRIGHT MAGENTA renderColoredQuad called! Position(" << x << ", " << y << ") Size(" << width << ", " << height << ")" << std::endl;
+    }
+    
     // This is essentially the same as renderQuad, which already handles colored quads
     renderQuad(x, y, width, height, color);
 }

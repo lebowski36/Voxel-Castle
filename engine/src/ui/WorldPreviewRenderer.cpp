@@ -117,7 +117,9 @@ void WorldPreviewRenderer::render(VoxelEngine::UI::UIRenderer* renderer, float x
     
     // DEBUGGING: Use a bright, obvious color instead of the calculated one to see if ANY quad renders
     glm::vec4 testColor(1.0f, 0.0f, 1.0f, 1.0f); // Bright magenta - impossible to miss!
+    std::cout << "[WorldPreviewRenderer] About to call renderer->renderColoredQuad(" << x << ", " << y << ", " << width << ", " << height << ", magenta)" << std::endl;
     renderer->renderColoredQuad(x, y, width, height, testColor);
+    std::cout << "[WorldPreviewRenderer] renderColoredQuad call completed" << std::endl;
     
     // Add a text overlay to show the height information
     if (renderer->isTextRendererAvailable()) {
