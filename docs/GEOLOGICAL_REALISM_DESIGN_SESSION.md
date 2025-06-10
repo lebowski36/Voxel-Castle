@@ -243,3 +243,234 @@ struct GenerationLOD {
 ---
 
 **Status:** Ready for next design session focusing on detail generation strategy and implementation architecture.
+
+---
+
+## 🧩 **DETAIL GENERATION STRATEGY - RESOLVED WITH USER FEEDBACK**
+
+### **Critical Clarification from User:**
+**Runtime Chunk Generation Strategy:**
+- ✅ **Detail calculation happens ONLY during chunk generation** (not upfront)
+- ✅ **Generated chunks are saved** - no recalculation needed
+- ✅ **Streaming approach** - generate detail as players explore
+
+**This makes ultra-realistic detail generation completely feasible!**
+
+### **User Requirements for Detail Generation:**
+- **Quality Priority:** ✅ **Ultra-realistic and good looking** (not performance-focused)
+- **Detail Level:** ✅ **Everything that makes sense at 25cm scale** - like Minecraft but more detailed and realistic
+- **Approach:** ✅ **Hybrid combination** of multiple techniques
+- **Generation Strategy:** ✅ **On-demand streaming** during chunk generation
+
+### **Recommended Hybrid Ultra-Realistic Approach:**
+
+```cpp
+class HybridDetailGenerator {
+public:
+    VoxelChunk generateChunkDetail(int chunkX, int chunkZ, GeologicalSample geoSample) {
+        VoxelChunk chunk(32, 32, 32);  // 8m × 8m × 8m chunk
+        
+        // Phase 1: Geological Type-Based Foundation (Option 2)
+        RockFormation rockBase = generateRockFormation(geoSample.rockType, chunkX, chunkZ);
+        
+        // Phase 2: Physics-Based Micro-Simulation (Option 3)
+        MicroGeologyResult microGeo = simulateMicroGeology(rockBase, geoSample);
+        
+        // Phase 3: Fractal Detail Enhancement (Option 4)
+        FractalDetail fractalLayer = generateFractalDetail(microGeo, geoSample.roughness);
+        
+        // Phase 4: Erosion Micro-Features (Custom)
+        ErosionDetail erosionLayer = simulateChunkErosion(fractalLayer, geoSample.waterFlow);
+        
+        // Phase 5: Combine all layers into final voxel data
+        return combineDetailLayers(rockBase, microGeo, fractalLayer, erosionLayer);
+    }
+    
+private:
+    // Ultra-realistic geological type simulation
+    RockFormation generateRockFormation(RockType rockType, int chunkX, int chunkZ) {
+        switch (rockType) {
+            case GRANITE:
+                return simulateGraniteFormation(chunkX, chunkZ);
+            case LIMESTONE:
+                return simulateLimestoneFormation(chunkX, chunkZ);
+            case SANDSTONE:
+                return simulateSandstoneFormation(chunkX, chunkZ);
+            case VOLCANIC:
+                return simulateVolcanicFormation(chunkX, chunkZ);
+        }
+    }
+    
+    // Micro-scale physics simulation (ultra-realistic)
+    MicroGeologyResult simulateMicroGeology(RockFormation base, GeologicalSample sample) {
+        MicroGeologyResult result;
+        
+        // Simulate thousands of years of micro-processes
+        for (int timeStep = 0; timeStep < 1000; timeStep++) {
+            simulateMicroWeathering(result, base.hardness, timeStep);
+            simulateMicroErosion(result, sample.waterFlow, timeStep);
+            simulateMicroDeposition(result, sample.sedimentFlow, timeStep);
+            simulateJointingAndFracturing(result, base.stressPattern, timeStep);
+        }
+        
+        return result;
+    }
+};
+```
+
+### **Ultra-Realistic Features at 25cm Scale:**
+
+#### **Granite Chunks:**
+- **Joint systems** - Natural fracture patterns every 1-3 meters
+- **Weathering spheroids** - Rounded granite boulders from chemical weathering
+- **Exfoliation sheets** - Curved fracture planes parallel to surface
+- **Quartz veins** - White mineral veins cutting through granite
+- **Scree slopes** - Angular rock fragments at cliff bases
+
+#### **Limestone Chunks:**
+- **Solution pits** - Small dissolved depressions (0.5-2m diameter)
+- **Karst features** - Cave entrances, sinkholes, underground streams
+- **Bedding planes** - Horizontal rock layers visible in cliff faces
+- **Flowstone formations** - Smooth, curved calcium carbonate deposits
+- **Underground caverns** - Multi-level cave systems
+
+#### **Sandstone Chunks:**
+- **Cross-bedding** - Diagonal layering patterns from ancient dunes
+- **Alcoves and arches** - Natural erosion features
+- **Desert varnish** - Dark mineral coating on exposed surfaces
+- **Slot canyons** - Narrow, deep erosion channels
+- **Hoodoos** - Tall, thin spires of resistant rock
+
+#### **Volcanic Chunks:**
+- **Columnar jointing** - Hexagonal rock columns from cooling lava
+- **Lava tubes** - Underground tunnels from flowing lava
+- **Volcanic bombs** - Large rounded rocks ejected from eruptions
+- **Pyroclastic layers** - Distinct ash and pumice layers
+- **Thermal features** - Hot springs, fumaroles, geysers
+
+### **Performance Analysis for Chunk-Based Generation:**
+
+#### **Memory Usage per Chunk:**
+- **Chunk size:** 32×32×32 = 32,768 voxels
+- **Generation time:** ~0.1-0.5 seconds per chunk (ultra-realistic)
+- **Memory per chunk:** ~130KB (much more manageable!)
+- **Concurrent chunks:** 10-20 chunks = ~1-3MB active memory
+
+#### **Generation Pipeline:**
+```cpp
+class ChunkGenerationPipeline {
+    void generateChunkOnDemand(int chunkX, int chunkZ) {
+        // 1. Get geological sample from 32m simulation (already computed)
+        GeologicalSample geoSample = geologicalSim.getSample(chunkX * 8, chunkZ * 8);
+        
+        // 2. Generate ultra-realistic chunk detail (0.1-0.5 seconds)
+        VoxelChunk chunk = hybridDetailGenerator.generateChunkDetail(chunkX, chunkZ, geoSample);
+        
+        // 3. Save chunk to disk (never recalculate)
+        chunkStorage.saveChunk(chunkX, chunkZ, chunk);
+        
+        // 4. Load into game world
+        world.loadChunk(chunkX, chunkZ, chunk);
+    }
+};
+```
+
+### **Dual-Path World Generation Integration:**
+
+#### **Create World Path (New System):**
+1. **Geological Simulation Phase:** Generate 32m precision geological data (2-5 minutes)
+2. **Chunk Streaming Phase:** Generate ultra-realistic chunks as player explores (0.1-0.5s per chunk)
+3. **Persistence:** Save both geological data and generated chunks
+
+#### **Resume Game Path (Legacy System):**
+- **Unchanged** - existing simple generation continues to work
+- **No interference** with new ultra-realistic system
+
+### **Technical Implementation Strategy:**
+
+#### **Phase 1: Geological Foundation Layer**
+```cpp
+RockFormation simulateGraniteFormation(int chunkX, int chunkZ) {
+    RockFormation formation;
+    
+    // Generate realistic granite jointing patterns
+    generateJointSystems(formation, chunkX, chunkZ);
+    
+    // Add weathering spheroids based on climate exposure
+    generateWeatheringFeatures(formation, getClimateData(chunkX, chunkZ));
+    
+    // Create quartz vein networks based on geological stress
+    generateQuartzVeins(formation, getStressField(chunkX, chunkZ));
+    
+    return formation;
+}
+```
+
+#### **Phase 2: Physics-Based Micro-Simulation**
+```cpp
+void simulateMicroWeathering(MicroGeologyResult& result, float hardness, int timeStep) {
+    // Chemical weathering - affects softer minerals first
+    for (each voxel in chunk) {
+        if (voxel.mineralType == FELDSPAR) {
+            // Feldspar weathers to clay faster than quartz
+            float weatheringRate = getWeatheringRate(voxel, climate);
+            voxel.hardness -= weatheringRate * timeStep;
+        }
+    }
+}
+
+void simulateMicroErosion(MicroGeologyResult& result, float waterFlow, int timeStep) {
+    // Water erosion - follows flow paths and removes loose material
+    for (each voxel in waterFlow path) {
+        if (voxel.isLoose() && waterFlow > threshold) {
+            removeVoxel(voxel);
+            addSedimentToFlow(voxel.material, waterFlow);
+        }
+    }
+}
+```
+
+#### **Phase 3: Ultra-Realistic Detail Features**
+```cpp
+void generateOverhangs(VoxelChunk& chunk, RockType rockType) {
+    if (rockType == SANDSTONE) {
+        // Sandstone creates natural alcoves and overhangs
+        for (each cliff face) {
+            if (hasWeakBeddingPlane(face)) {
+                erodeAlcove(face, getErosionPattern(SANDSTONE));
+            }
+        }
+    }
+}
+
+void generateCaveSystems(VoxelChunk& chunk, RockType rockType) {
+    if (rockType == LIMESTONE) {
+        // Limestone dissolves to create cave systems
+        for (each water flow zone) {
+            if (hasAcidicWater(zone)) {
+                dissolveLimestone(zone, getCavePattern(waterFlow));
+            }
+        }
+    }
+}
+```
+
+### **Success Criteria for Ultra-Realistic Detail:**
+
+#### **Visual Quality Goals:**
+- ✅ **Minecraft-level familiarity** but significantly more realistic
+- ✅ **Geological accuracy** - granite looks different from limestone
+- ✅ **Natural overhangs** and cliff faces from realistic erosion
+- ✅ **Cave systems** in appropriate rock types
+- ✅ **Realistic rock textures** and surface features
+- ✅ **Organic appearance** - no geometric or grid artifacts
+
+#### **Performance Goals:**
+- ✅ **0.1-0.5 seconds** per chunk generation (acceptable for exploration)
+- ✅ **Seamless streaming** - no lag during chunk loading
+- ✅ **Memory efficient** - only active chunks in memory
+- ✅ **Persistent storage** - never recalculate the same chunk
+
+**Status:** ✅ **READY FOR IMPLEMENTATION** - Ultra-realistic hybrid approach confirmed feasible with chunk-based streaming strategy.
+
+---
