@@ -65,7 +65,6 @@ add_library(VoxelEngine STATIC
     src/ui/elements/BaseMenu.cpp # Base menu class for consistent styling
     src/ui/elements/MainMenu.cpp # Main menu UI
     src/ui/elements/SettingsMenu.cpp # Settings menu UI
-    src/ui/elements/WorldCreationDialog.cpp # World creation dialog UI
     src/ui/WorldConfigurationUI.cpp # World generation setup UI
     src/ui/WorldSimulationUI.cpp # World generation simulation UI
     src/ui/BlockVisualizationPanel.cpp # Block visualization debug panel
