@@ -129,6 +129,12 @@ public:
      */
     RegionalData generateRegionalData(int regionX, int regionZ);
 
+    /**
+     * @brief Get the tectonic simulator instance
+     * @return Pointer to TectonicSimulator, nullptr if not initialized
+     */
+    const TectonicSimulator* getTectonicSimulator() const { return tectonicSimulator_.get(); }
+
 private:
     // Core systems
     std::shared_ptr<WorldSeed> worldSeed_;

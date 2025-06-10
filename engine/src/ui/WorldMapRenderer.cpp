@@ -1,6 +1,7 @@
 #include "ui/WorldMapRenderer.h"
 #include "ui/UIRenderer.h"
 #include "world/seed_world_generator.h"
+#include "world/tectonic_simulator.h"
 #include <iostream>
 #include <algorithm>
 #include <glad/glad.h>
@@ -160,16 +161,36 @@ void WorldMapRenderer::generateElevationData(VoxelCastle::World::SeedWorldGenera
     // Use a reasonable world area - let's say 8km x 8km for good detail
     float worldSize = 8000.0f; // 8km in meters
     
+    // Get tectonic simulator for elevation modifiers
+    const VoxelCastle::TectonicSimulator* tectonicSim = generator->getTectonicSimulator();
+    
     for (int y = 0; y < resolution_; y++) {
         for (int x = 0; x < resolution_; x++) {
             // Convert screen coordinates to world coordinates
             float worldX = (x / (float)resolution_) * worldSize;
             float worldZ = (y / (float)resolution_) * worldSize;
             
-            // Generate height using generator's terrain height method
+            // Start with base terrain height
             int heightVoxels = generator->getTerrainHeightAt((int)worldX, (int)worldZ);
-            float height = heightVoxels * 0.25f; // Convert voxels to meters (25cm per voxel)
-            elevationData_[y * resolution_ + x] = height;
+            float baseHeight = heightVoxels * 0.25f; // Convert voxels to meters (25cm per voxel)
+            
+            // Apply tectonic elevation modifiers if simulation is available
+            float finalHeight = baseHeight;
+            if (tectonicSim && tectonicSim->IsSimulationComplete()) {
+                // Convert coordinates to kilometers for tectonic simulator
+                glm::vec2 worldPosKm(worldX / 1000.0f, worldZ / 1000.0f);
+                
+                // Get tectonic elevation modifier (in meters)
+                float tectonicModifier = tectonicSim->GetElevationModifier(worldPosKm);
+                
+                // Apply tectonic effects to terrain
+                finalHeight = baseHeight + tectonicModifier;
+                
+                // Ensure realistic height bounds (prevent negative elevations for now)
+                finalHeight = std::max(0.0f, finalHeight);
+            }
+            
+            elevationData_[y * resolution_ + x] = finalHeight;
         }
     }
     
