@@ -6,6 +6,10 @@
 namespace VoxelCastle {
     namespace World {
         class SeedWorldGenerator;
+        struct ContinentalPlate;
+        struct OceanBasin;
+        struct RiverTemplate;
+        struct MountainRidge;
     }
 }
 
@@ -191,6 +195,13 @@ private:
     void elevationToColor(float heightMeters, GenerationPhase phase, unsigned char& r, unsigned char& g, unsigned char& b);
     void temperatureToColor(float tempCelsius, GenerationPhase phase, unsigned char& r, unsigned char& g, unsigned char& b);
     void precipitationToColor(float precMmYear, GenerationPhase phase, unsigned char& r, unsigned char& g, unsigned char& b);
+    
+    // 3.0 World Generation System visualization helpers
+    void overlayFractalContinentalFeatures(unsigned char* colorData, VoxelCastle::World::SeedWorldGenerator* generator);
+    void drawContinentalPlates(unsigned char* colorData, const std::vector<VoxelCastle::World::ContinentalPlate>& plates);
+    void drawOceanBasins(unsigned char* colorData, const std::vector<VoxelCastle::World::OceanBasin>& basins);
+    void drawRiverTemplates(unsigned char* colorData, const std::vector<VoxelCastle::World::RiverTemplate>& rivers);
+    void drawMountainRidges(unsigned char* colorData, const std::vector<VoxelCastle::World::MountainRidge>& ridges);
     
     // Frame counter for logging control
     mutable int renderCounter_;

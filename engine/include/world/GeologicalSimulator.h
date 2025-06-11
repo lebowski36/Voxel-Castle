@@ -111,6 +111,11 @@ public:
      */
     const PerformanceMetrics& getPerformanceMetrics() const { return metrics_; }
     
+    /**
+     * @brief Get fractal continent generator for preview visualization
+     */
+    const FractalContinentGenerator* getFractalContinentGenerator() const { return &continentGenerator_; }
+    
 private:
     /**
      * @brief Initialize geological fields with base values

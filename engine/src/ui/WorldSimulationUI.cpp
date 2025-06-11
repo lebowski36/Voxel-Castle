@@ -282,20 +282,28 @@ void WorldSimulationUI::createVisualizationControls() {
 
 void WorldSimulationUI::createWorldPreview() {
     float panelWidth = getSize().x - (PANEL_MARGIN * 2);
+    float panelHeight = getSize().y - currentY_ - (PANEL_MARGIN * 2);
     
-    // Calculate world map area (large central area following the specification)
-    float mapWidth = panelWidth * 0.65f;  // 65% of width for main visualization
-    float mapHeight = 400.0f;              // Substantial height for good visibility
+    // Calculate world map area - SQUARE preview to match square world
+    // Take the smaller dimension to ensure square fits properly
+    float availableWidth = panelWidth * 0.6f;  // Leave space for summary on the side
+    float availableHeight = panelHeight * 0.8f; // Leave space for controls below
+    float mapSize = std::min(availableWidth, availableHeight); // SQUARE
     
-    // Store world map coordinates for rendering
+    // Position map on the left side of the panel
     worldMapX_ = PANEL_MARGIN;
     worldMapY_ = currentY_;
-    worldMapWidth_ = mapWidth;
-    worldMapHeight_ = mapHeight;
+    worldMapWidth_ = mapSize;   // SQUARE: width = height
+    worldMapHeight_ = mapSize;  // SQUARE: height = width
     
-    // Note: No background panel needed - world map will render directly
+    // Note: Summary will be positioned to the right of the square preview
+    // The summary area starts at: worldMapX_ + worldMapWidth_ + ELEMENT_SPACING
+    // Available summary width: panelWidth - worldMapWidth_ - ELEMENT_SPACING
     
-    currentY_ += mapHeight + ELEMENT_SPACING;
+    std::cout << "[WorldSimulationUI] Square preview created: " << mapSize << "x" << mapSize 
+              << " at (" << worldMapX_ << "," << worldMapY_ << ")" << std::endl;
+    
+    currentY_ += mapSize + ELEMENT_SPACING;
 }
 
 void WorldSimulationUI::renderWorldMap() {
@@ -458,47 +466,65 @@ void WorldSimulationUI::updateWorldMapVisualization() {
 
 void WorldSimulationUI::createProgressPanels() {
     float panelWidth = getSize().x - (PANEL_MARGIN * 2);
+    
+    // Calculate summary area beside the square preview
+    float summaryX = worldMapX_ + worldMapWidth_ + ELEMENT_SPACING;
+    float summaryWidth = panelWidth - worldMapWidth_ - ELEMENT_SPACING;
+    float summaryY = worldMapY_; // Start at same height as preview
     float progressHeight = 80.0f;
     
-    // Current phase progress
+    std::cout << "[WorldSimulationUI] Creating summary beside square preview - "
+              << "Summary area: " << summaryWidth << "w x " << worldMapHeight_ << "h "
+              << "at (" << summaryX << "," << summaryY << ")" << std::endl;
+    
+    // Current phase progress (positioned beside square preview)
     auto progressLabel = std::make_shared<VoxelEngine::UI::UIButton>(renderer_);
     progressLabel->setText("Current Phase: " + getPhaseDisplayName(currentPhase_));
-    progressLabel->setPosition(PANEL_MARGIN, currentY_);
-    progressLabel->setSize(panelWidth, 25.0f);
+    progressLabel->setPosition(summaryX, summaryY);
+    progressLabel->setSize(summaryWidth, 25.0f);
     progressLabel->setBackgroundColor({0.2f, 0.2f, 0.2f, 0.8f});
     addChild(progressLabel);
-    currentY_ += 30.0f;
+    summaryY += 30.0f;
     
-    // Progress bar placeholder
+    // Progress bar placeholder (positioned beside square preview)
     auto progressBar = std::make_shared<VoxelEngine::UI::UIButton>(renderer_);
     std::string progressText = "Phase Progress: " + std::to_string((int)(phaseProgress_ * 100)) + "%\n";
     progressText += "Overall Progress: " + std::to_string((int)(currentProgress_ * 100)) + "%\n";
     float timeRemaining = calculateTimeRemaining();
     progressText += "Estimated Time Remaining: " + std::to_string((int)timeRemaining) + " seconds";
     progressBar->setText(progressText);
-    progressBar->setPosition(PANEL_MARGIN, currentY_);
-    progressBar->setSize(panelWidth, progressHeight);
+    progressBar->setPosition(summaryX, summaryY);
+    progressBar->setSize(summaryWidth, progressHeight);
     progressBar->setBackgroundColor({0.1f, 0.1f, 0.1f, 0.7f});
     addChild(progressBar);
-    currentY_ += progressHeight + ELEMENT_SPACING;
+    summaryY += progressHeight + ELEMENT_SPACING;
+    
+    // Note: currentY_ is not advanced here since summary is positioned beside preview, not below
 }
 
 void WorldSimulationUI::createGenerationLog() {
     float panelWidth = getSize().x - (PANEL_MARGIN * 2);
-    float logHeight = 100.0f;
     
-    // Generation log panel
+    // Calculate summary area beside the square preview
+    float summaryX = worldMapX_ + worldMapWidth_ + ELEMENT_SPACING;
+    float summaryWidth = panelWidth - worldMapWidth_ - ELEMENT_SPACING;
+    float logHeight = 120.0f; // Increased height since we have more vertical space
+    
+    // Position log below the progress panels in the summary area
+    float summaryY = worldMapY_ + 140.0f; // After progress panels (30 + 80 + 30 spacing)
+    
+    // Generation log panel (positioned beside square preview)
     auto logLabel = std::make_shared<VoxelEngine::UI::UIButton>(renderer_);
     logLabel->setText("Generation Log:");
-    logLabel->setPosition(PANEL_MARGIN, currentY_);
-    logLabel->setSize(panelWidth, 25.0f);
+    logLabel->setPosition(summaryX, summaryY);
+    logLabel->setSize(summaryWidth, 25.0f);
     logLabel->setBackgroundColor({0.2f, 0.2f, 0.2f, 0.8f});
     addChild(logLabel);
-    currentY_ += 30.0f;
+    summaryY += 30.0f;
     
     auto logPanel = std::make_shared<VoxelEngine::UI::UIButton>(renderer_);
     std::string logText = "";
-    size_t entriesToShow = std::min(static_cast<size_t>(5), generationLog_.size());
+    size_t entriesToShow = std::min(static_cast<size_t>(6), generationLog_.size()); // Show more entries
     if (entriesToShow > 0) {
         for (size_t i = generationLog_.size() - entriesToShow; i < generationLog_.size(); ++i) {
             logText += "Year " + std::to_string(generationLog_[i].simulationYear) + ": " + generationLog_[i].message + "\n";
@@ -507,11 +533,12 @@ void WorldSimulationUI::createGenerationLog() {
         logText = "Simulation starting...\n";
     }
     logPanel->setText(logText);
-    logPanel->setPosition(PANEL_MARGIN, currentY_);
-    logPanel->setSize(panelWidth, logHeight);
+    logPanel->setPosition(summaryX, summaryY);
+    logPanel->setSize(summaryWidth, logHeight);
     logPanel->setBackgroundColor({0.1f, 0.1f, 0.1f, 0.6f});
     addChild(logPanel);
-    currentY_ += logHeight + ELEMENT_SPACING;
+    
+    // Note: currentY_ is not advanced here since log is positioned beside preview, not below
 }
 
 void WorldSimulationUI::createWorldSummaryUI() {

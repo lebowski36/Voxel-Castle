@@ -2,6 +2,7 @@
 #include "ui/UIRenderer.h"
 #include "world/seed_world_generator.h"
 #include "world/tectonic_simulator.h"
+#include "world/FractalContinentGenerator.h"
 #include <iostream>
 #include <algorithm>
 #include <vector>
@@ -172,6 +173,10 @@ void WorldMapRenderer::generateWorldMap(VoxelCastle::World::SeedWorldGenerator* 
     unsigned char* colorData = new unsigned char[dataSize];
     worldDataToColorTexture(colorData);
     
+    // OVERLAY 3.0 World Generation System fractal continental features
+    // This adds visual markers for continental plates, rivers, and mountain ridges
+    overlayFractalContinentalFeatures(colorData, generator);
+    
     // Create OpenGL texture
     createTextureFromColorData(colorData, resolution_);
     
@@ -269,18 +274,23 @@ void WorldMapRenderer::generateElevationData(VoxelCastle::World::SeedWorldGenera
     std::cout << "[WorldMapRenderer] Sampling world area: " << worldSizeKm_ << "km x " << worldSizeKm_ << "km" << std::endl;
     std::cout << "[WorldMapRenderer] World size in meters: " << worldSize << "m x " << worldSize << "m" << std::endl;
     
-    // Get geological simulator for new elevation data
+    // Get geological simulator for new 3.0 World Generation System
     const VoxelCastle::World::GeologicalSimulator* geologicalSim = generator->getGeologicalSimulator();
     
     // Fallback to tectonic simulator if geological simulation is not available
     const VoxelCastle::TectonicSimulator* tectonicSim = generator->getTectonicSimulator();
     
-    std::cout << "[WorldMapRenderer] Geological simulator: " << (geologicalSim ? "Available" : "Not available") << std::endl;
-    std::cout << "[WorldMapRenderer] Tectonic simulator: " << (tectonicSim ? "Available" : "Not available") << std::endl;
+    std::cout << "[WorldMapRenderer] === 3.0 World Generation System Integration ===" << std::endl;
+    std::cout << "[WorldMapRenderer] Geological simulator: " << (geologicalSim ? "Available (PRIMARY)" : "Not available") << std::endl;
+    std::cout << "[WorldMapRenderer] Tectonic simulator: " << (tectonicSim ? "Available (FALLBACK)" : "Not available") << std::endl;
     if (tectonicSim) {
         std::cout << "[WorldMapRenderer] Tectonic simulation complete: " << (tectonicSim->IsSimulationComplete() ? "Yes" : "No") << std::endl;
         std::cout << "[WorldMapRenderer] Number of plates: " << tectonicSim->GetPlates().size() << std::endl;
     }
+    
+    // Prioritize geological simulator (3.0 World Gen) over legacy tectonic system
+    bool usingNewSystem = geologicalSim != nullptr;
+    std::cout << "[WorldMapRenderer] Using " << (usingNewSystem ? "3.0 World Generation System (Fractal Continental)" : "Legacy Tectonic System") << std::endl;
     
     for (int y = 0; y < resolution_; y++) {
         for (int x = 0; x < resolution_; x++) {
@@ -308,25 +318,34 @@ void WorldMapRenderer::generateElevationData(VoxelCastle::World::SeedWorldGenera
             int heightVoxels = generator->getTerrainHeightAt((int)worldX, (int)worldZ);
             float baseHeight = heightVoxels * 0.25f; // Convert voxels to meters (25cm per voxel)
             
-            // Apply geological simulation data if available (NEW SYSTEM)
+            // PRIMARY: Use new 3.0 World Generation System (Fractal Continental Foundation)
             float finalHeight = baseHeight;
             if (geologicalSim) {
-                // Use new geological simulation system
+                // Use new geological simulation system with fractal continental generation
                 VoxelCastle::World::GeologicalSample sample = geologicalSim->getSampleAt(worldX, worldZ);
                 finalHeight = sample.elevation;
                 
-                // Debug: Check geological simulation data
-                if (x < 5 && y < 5) {
-                    std::cout << "[WorldMapRenderer] Geological sample - Pos(" << worldX << "," << worldZ 
+                // Debug: Log fractal continental features for first few pixels
+                if (x < 3 && y < 3) {
+                    std::cout << "[WorldMapRenderer] 3.0 WorldGen Sample - Pos(" << worldX << "," << worldZ 
                               << ") Elevation:" << sample.elevation << "m RockType:" << (int)sample.rockType 
                               << " Hardness:" << sample.rockHardness << std::endl;
+                    
+                    // Check for continental vs oceanic features
+                    if (sample.elevation > 0) {
+                        std::cout << "[WorldMapRenderer] CONTINENTAL feature detected" << std::endl;
+                    } else if (sample.elevation < -200) {
+                        std::cout << "[WorldMapRenderer] DEEP OCEAN basin detected" << std::endl;
+                    } else {
+                        std::cout << "[WorldMapRenderer] COASTAL/SHELF feature detected" << std::endl;
+                    }
                 }
                 
-                // Clamp elevation to geological simulation range (±1800m)
-                finalHeight = std::clamp(finalHeight, -1800.0f, 1800.0f);
+                // Clamp elevation to expanded World Gen 3.0 range (±2048m as per spec)
+                finalHeight = std::clamp(finalHeight, -2048.0f, 2048.0f);
                 
             } else if (tectonicSim && tectonicSim->IsSimulationComplete()) {
-                // Fall back to legacy tectonic system
+                // FALLBACK: Use legacy tectonic system
                 // Convert coordinates to kilometers for tectonic simulator
                 glm::vec2 worldPosKm(worldX / 1000.0f, worldZ / 1000.0f);
                 
@@ -573,58 +592,70 @@ void WorldMapRenderer::worldDataToColorTexture(unsigned char* colorData) {
 }
 
 void WorldMapRenderer::elevationToColor(float heightMeters, GenerationPhase phase, unsigned char& r, unsigned char& g, unsigned char& b) {
-    // Updated elevation color scheme for geological simulation (±1800m range)
-    if (heightMeters < -1500.0f) {
-        // Deep ocean trenches (bottom 300m of range)
-        r = 0; g = 0; b = 80; // Very dark blue
-    } else if (heightMeters < -1000.0f) {
-        // Deep ocean (middle deep range)
-        r = 0; g = 0; b = 120; // Dark blue
-    } else if (heightMeters < -500.0f) {
-        // Ocean (middle range)
-        r = 0; g = 50; b = 160; // Medium dark blue
-    } else if (heightMeters < -100.0f) {
-        // Shallow ocean
-        r = 0; g = 100; b = 200; // Medium blue
+    // Updated elevation color scheme for 3.0 World Generation System (±2048m range)
+    // Designed to highlight fractal continental features, coastlines, and ocean basins
+    
+    if (heightMeters < -1800.0f) {
+        // Abyssal ocean trenches (deepest 250m of range)
+        r = 0; g = 0; b = 60; // Very dark navy blue
+    } else if (heightMeters < -1200.0f) {
+        // Deep ocean basins (continental margin)
+        r = 0; g = 0; b = 100; // Dark blue
+    } else if (heightMeters < -600.0f) {
+        // Ocean basins (typical deep ocean)
+        r = 0; g = 30; b = 140; // Ocean blue
+    } else if (heightMeters < -200.0f) {
+        // Continental shelf edge / slope
+        r = 0; g = 60; b = 180; // Medium blue
+    } else if (heightMeters < -50.0f) {
+        // Continental shelf (shallow ocean)
+        r = 20; g = 100; b = 220; // Lighter blue
     } else if (heightMeters < 0.0f) {
-        // Very shallow water/coastal
-        r = 100; g = 150; b = 255; // Light blue
-    } else if (heightMeters < 50.0f) {
-        // Beach/coastline/sea level
-        r = 238; g = 203; b = 173; // Tan
-    } else if (heightMeters < 200.0f) {
-        // Lowlands/plains
+        // Coastal waters / tidal zones
+        r = 80; g = 140; b = 255; // Light blue
+    } else if (heightMeters < 10.0f) {
+        // Immediate coastline / beaches
+        r = 255; g = 218; b = 185; // Sand color
+    } else if (heightMeters < 100.0f) {
+        // Coastal plains / river deltas
+        r = 144; g = 238; b = 144; // Light green
+    } else if (heightMeters < 300.0f) {
+        // Lowlands / river valleys
         r = 34; g = 139; b = 34; // Forest green
-    } else if (heightMeters < 500.0f) {
-        // Hills (low elevation)
+    } else if (heightMeters < 600.0f) {
+        // Rolling hills / plateaus
         r = 107; g = 142; b = 35; // Olive drab
-    } else if (heightMeters < 800.0f) {
-        // Lower mountains
+    } else if (heightMeters < 1000.0f) {
+        // Lower mountain ranges
         r = 139; g = 101; b = 54; // Brown
-    } else if (heightMeters < 1200.0f) {
+    } else if (heightMeters < 1400.0f) {
         // Higher mountains
         r = 160; g = 140; b = 120; // Light brown
-    } else if (heightMeters < 1600.0f) {
-        // High peaks (approaching upper limit)
+    } else if (heightMeters < 1800.0f) {
+        // High peaks (snow line)
         r = 200; g = 200; b = 200; // Light gray
     } else {
-        // Extreme peaks (1600m-1800m range)
+        // Extreme mountain peaks (1800m-2048m range)
         r = 255; g = 250; b = 250; // Snow white
     }
     
-    // Apply phase-based color tinting
+    // Apply phase-based color tinting for 3.0 World Generation System
     switch (phase) {
         case GenerationPhase::TECTONICS:
-            // Emphasize blue tones for geological phase
-            b = std::min(255, (int)(b * 1.2f));
+            // Emphasize blue tones for fractal continental foundation phase
+            b = std::min(255, (int)(b * 1.3f));
+            // Enhance contrast for continental vs oceanic features
+            if (heightMeters > 0) {
+                r = std::min(255, (int)(r * 1.1f)); // Enhance continental features
+            }
             break;
         case GenerationPhase::EROSION:
-            // Emphasize brown/earth tones
+            // Emphasize brown/earth tones for erosion effects
             r = std::min(255, (int)(r * 1.1f));
             g = std::min(255, (int)(g * 0.9f));
             break;
         case GenerationPhase::HYDROLOGY:
-            // Emphasize cyan/water tones
+            // Emphasize cyan/water tones for river networks
             g = std::min(255, (int)(g * 1.1f));
             b = std::min(255, (int)(b * 1.1f));
             break;
@@ -888,6 +919,125 @@ void WorldMapRenderer::getViewportInfo(float& outZoomLevel, float& outCenterX, f
         outScale = "Local Scale";
     } else {
         outScale = "Detailed Scale";
+    }
+}
+
+// 3.0 World Generation System - Fractal Continental Feature Visualization
+void WorldMapRenderer::overlayFractalContinentalFeatures(unsigned char* colorData, VoxelCastle::World::SeedWorldGenerator* generator) {
+    if (!generator) return;
+    
+    const VoxelCastle::World::GeologicalSimulator* geologicalSim = generator->getGeologicalSimulator();
+    if (!geologicalSim) return;
+    
+    // Get fractal continental generator from geological simulator
+    const VoxelCastle::World::FractalContinentGenerator* fractalGen = geologicalSim->getFractalContinentGenerator();
+    if (!fractalGen) return;
+    
+    std::cout << "[WorldMapRenderer] Overlaying fractal continental features..." << std::endl;
+    
+    // Overlay continental plates (subtle boundary highlighting)
+    drawContinentalPlates(colorData, fractalGen->GetContinentalPlates());
+    
+    // Overlay ocean basins (depth enhancement)
+    drawOceanBasins(colorData, fractalGen->GetOceanBasins());
+    
+    // Overlay river templates (blue pathways)
+    drawRiverTemplates(colorData, fractalGen->GetRiverTemplates());
+    
+    // Overlay mountain ridges (elevation highlighting)
+    drawMountainRidges(colorData, fractalGen->GetMountainRidges());
+}
+
+void WorldMapRenderer::drawContinentalPlates(unsigned char* colorData, const std::vector<VoxelCastle::World::ContinentalPlate>& plates) {
+    // Draw subtle boundaries around continental plates
+    for (const auto& plate : plates) {
+        // Convert world coordinates to pixel coordinates
+        int plateX = (int)((plate.center.x / (worldSizeKm_ * 1000.0f)) * resolution_);
+        int plateY = (int)((plate.center.y / (worldSizeKm_ * 1000.0f)) * resolution_);
+        
+        // Draw continental plate center marker (small cross)
+        if (plateX >= 2 && plateX < resolution_ - 2 && plateY >= 2 && plateY < resolution_ - 2) {
+            for (int dx = -2; dx <= 2; dx++) {
+                for (int dy = -2; dy <= 2; dy++) {
+                    if ((dx == 0 || dy == 0) && (plateX + dx >= 0) && (plateX + dx < resolution_) && 
+                        (plateY + dy >= 0) && (plateY + dy < resolution_)) {
+                        int idx = ((plateY + dy) * resolution_ + (plateX + dx)) * 4;
+                        // Highlight continental centers with white markers
+                        colorData[idx] = 255;     // R
+                        colorData[idx + 1] = 255; // G  
+                        colorData[idx + 2] = 255; // B
+                        // Keep alpha as is
+                    }
+                }
+            }
+        }
+    }
+}
+
+void WorldMapRenderer::drawOceanBasins(unsigned char* colorData, const std::vector<VoxelCastle::World::OceanBasin>& basins) {
+    // Enhance ocean basin visualization (already handled by elevation coloring)
+    // This could add special features like ridge highlighting in the future
+    for (const auto& basin : basins) {
+        // Ocean basins are primarily defined by their depth in the elevation field
+        // Future: Could add mid-ocean ridge visualization here
+        (void)basin; // Suppress unused parameter warning for now
+    }
+}
+
+void WorldMapRenderer::drawRiverTemplates(unsigned char* colorData, const std::vector<VoxelCastle::World::RiverTemplate>& rivers) {
+    // Draw river pathways as blue lines
+    for (const auto& river : rivers) {
+        // Draw main stem
+        for (size_t i = 0; i < river.mainStem.size(); i++) {
+            glm::vec2 point = river.mainStem[i];
+            int riverX = (int)((point.x / (worldSizeKm_ * 1000.0f)) * resolution_);
+            int riverY = (int)((point.y / (worldSizeKm_ * 1000.0f)) * resolution_);
+            
+            if (riverX >= 0 && riverX < resolution_ && riverY >= 0 && riverY < resolution_) {
+                int idx = (riverY * resolution_ + riverX) * 4;
+                // Draw river as bright blue line
+                colorData[idx] = 0;       // R
+                colorData[idx + 1] = 150; // G
+                colorData[idx + 2] = 255; // B
+                // Keep alpha as is
+            }
+        }
+        
+        // Draw tributaries
+        for (const auto& tributary : river.tributaries) {
+            for (const auto& point : tributary) {
+                int riverX = (int)((point.x / (worldSizeKm_ * 1000.0f)) * resolution_);
+                int riverY = (int)((point.y / (worldSizeKm_ * 1000.0f)) * resolution_);
+                
+                if (riverX >= 0 && riverX < resolution_ && riverY >= 0 && riverY < resolution_) {
+                    int idx = (riverY * resolution_ + riverX) * 4;
+                    // Draw tributaries as lighter blue
+                    colorData[idx] = 50;      // R
+                    colorData[idx + 1] = 180; // G
+                    colorData[idx + 2] = 255; // B
+                    // Keep alpha as is
+                }
+            }
+        }
+    }
+}
+
+void WorldMapRenderer::drawMountainRidges(unsigned char* colorData, const std::vector<VoxelCastle::World::MountainRidge>& ridges) {
+    // Draw mountain ridges as elevated pathways
+    for (const auto& ridge : ridges) {
+        for (const auto& point : ridge.ridgeLine) {
+            int ridgeX = (int)((point.x / (worldSizeKm_ * 1000.0f)) * resolution_);
+            int ridgeY = (int)((point.y / (worldSizeKm_ * 1000.0f)) * resolution_);
+            
+            if (ridgeX >= 0 && ridgeX < resolution_ && ridgeY >= 0 && ridgeY < resolution_) {
+                int idx = (ridgeY * resolution_ + ridgeX) * 4;
+                // Enhance mountain ridges with brighter colors
+                colorData[idx] = std::min(255, (int)(colorData[idx] * 1.3f));     // R (enhance existing)
+                colorData[idx + 1] = std::min(255, (int)(colorData[idx + 1] * 1.2f)); // G
+                colorData[idx + 2] = std::min(255, (int)(colorData[idx + 2] * 1.1f)); // B
+                // Keep alpha as is
+            }
+        }
     }
 }
 
