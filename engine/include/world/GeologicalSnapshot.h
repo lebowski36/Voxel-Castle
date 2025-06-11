@@ -1,7 +1,7 @@
 #pragma once
 
 #include "world/ContinuousField.h"
-#include "world/RockType.h"
+#include "world/geological_data.h"  // For RockType
 #include <string>
 #include <vector>
 #include <memory>

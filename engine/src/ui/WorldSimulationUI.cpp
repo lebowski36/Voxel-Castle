@@ -291,6 +291,57 @@ void WorldSimulationUI::createVisualizationControls() {
     addChild(zoomInButton);
     
     currentY_ += VERTICAL_SPACING;
+    
+    // Add geological snapshot navigation controls
+    createSnapshotControls();
+}
+
+void WorldSimulationUI::createSnapshotControls() {
+    // Snapshot navigation label
+    auto snapshotLabel = std::make_shared<VoxelEngine::UI::UIButton>(renderer_);
+    snapshotLabel->setText("Geological Timeline:");
+    snapshotLabel->setPosition(PANEL_MARGIN, currentY_);
+    snapshotLabel->autoSizeToText(8.0f);
+    snapshotLabel->setBackgroundColor({0.2f, 0.2f, 0.2f, 0.8f});
+    addChild(snapshotLabel);
+    
+    // Snapshot navigation controls
+    float snapshotButtonX = PANEL_MARGIN + 160.0f;
+    
+    // Previous snapshot button
+    auto prevSnapshotButton = std::make_shared<VoxelEngine::UI::UIButton>(renderer_);
+    prevSnapshotButton->setText("◀ Previous");
+    prevSnapshotButton->setPosition(snapshotButtonX, currentY_);
+    prevSnapshotButton->autoSizeToText(6.0f);
+    prevSnapshotButton->setBackgroundColor({0.2f, 0.2f, 0.4f, 0.6f});
+    prevSnapshotButton->setOnClick([this]() { onPreviousSnapshot(); });
+    addChild(prevSnapshotButton);
+    prevSnapshotButton_ = prevSnapshotButton;
+    
+    snapshotButtonX += 100.0f + ELEMENT_SPACING;
+    
+    // Snapshot info display
+    auto snapshotInfoButton = std::make_shared<VoxelEngine::UI::UIButton>(renderer_);
+    snapshotInfoButton->setText("1/1 - Initial");
+    snapshotInfoButton->setPosition(snapshotButtonX, currentY_);
+    snapshotInfoButton->autoSizeToText(6.0f);
+    snapshotInfoButton->setBackgroundColor({0.2f, 0.3f, 0.2f, 0.8f});
+    addChild(snapshotInfoButton);
+    snapshotInfoButton_ = snapshotInfoButton;
+    
+    snapshotButtonX += 150.0f + ELEMENT_SPACING;
+    
+    // Next snapshot button
+    auto nextSnapshotButton = std::make_shared<VoxelEngine::UI::UIButton>(renderer_);
+    nextSnapshotButton->setText("Next ▶");
+    nextSnapshotButton->setPosition(snapshotButtonX, currentY_);
+    nextSnapshotButton->autoSizeToText(6.0f);
+    nextSnapshotButton->setBackgroundColor({0.2f, 0.2f, 0.4f, 0.6f});
+    nextSnapshotButton->setOnClick([this]() { onNextSnapshot(); });
+    addChild(nextSnapshotButton);
+    nextSnapshotButton_ = nextSnapshotButton;
+    
+    currentY_ += VERTICAL_SPACING;
 }
 
 void WorldSimulationUI::createWorldPreview() {
@@ -837,6 +888,7 @@ void WorldSimulationUI::updateSimulation(float deltaTime) {
     lastUIUpdate += deltaTime;
     if (lastUIUpdate >= 0.5f) { // Update UI every 0.5 seconds
         createUIElements();
+        updateSnapshotControls();  // Keep snapshot navigation in sync
         lastUIUpdate = 0.0f;
     }
 }
@@ -1199,6 +1251,79 @@ void WorldSimulationUI::onBeginGameClicked() {
     if (onSimulationComplete_) {
         onSimulationComplete_(stats_);
     }
+}
+
+void WorldSimulationUI::onPreviousSnapshot() {
+    if (!worldMapRenderer_) return;
+    
+    auto geologicalSim = worldMapRenderer_->getGeologicalSimulator();
+    if (!geologicalSim) return;
+    
+    auto* snapshotManager = const_cast<VoxelCastle::World::GeologicalSimulator*>(geologicalSim)->getSnapshotManager();
+    if (!snapshotManager) return;
+    
+    if (snapshotManager->PreviousSnapshot()) {
+        updateSnapshotControls();
+        regenerateWorldMap();  // Update the visual display
+        std::cout << "[WorldSimulationUI] Moved to previous geological snapshot" << std::endl;
+    }
+}
+
+void WorldSimulationUI::onNextSnapshot() {
+    if (!worldMapRenderer_) return;
+    
+    auto geologicalSim = worldMapRenderer_->getGeologicalSimulator();
+    if (!geologicalSim) return;
+    
+    auto* snapshotManager = const_cast<VoxelCastle::World::GeologicalSimulator*>(geologicalSim)->getSnapshotManager();
+    if (!snapshotManager) return;
+    
+    if (snapshotManager->NextSnapshot()) {
+        updateSnapshotControls();
+        regenerateWorldMap();  // Update the visual display
+        std::cout << "[WorldSimulationUI] Moved to next geological snapshot" << std::endl;
+    }
+}
+
+void WorldSimulationUI::updateSnapshotControls() {
+    if (!worldMapRenderer_) return;
+    
+    auto geologicalSim = worldMapRenderer_->getGeologicalSimulator();
+    if (!geologicalSim) return;
+    
+    auto* snapshotManager = const_cast<VoxelCastle::World::GeologicalSimulator*>(geologicalSim)->getSnapshotManager();
+    if (!snapshotManager) return;
+    
+    size_t currentIndex = snapshotManager->GetCurrentSnapshotIndex();
+    size_t totalSnapshots = snapshotManager->GetSnapshotCount();
+    
+    // Update snapshot info display
+    if (snapshotInfoButton_) {
+        std::string snapshotInfo = std::to_string(currentIndex + 1) + "/" + std::to_string(totalSnapshots);
+        std::string phaseDescription = snapshotManager->GetCurrentPhaseDescription();
+        if (!phaseDescription.empty()) {
+            snapshotInfo += " - " + phaseDescription;
+        }
+        snapshotInfoButton_->setText(snapshotInfo);
+    }
+    
+    // Update button states
+    if (prevSnapshotButton_) {
+        bool canGoPrevious = (currentIndex > 0);
+        prevSnapshotButton_->setBackgroundColor(canGoPrevious ? 
+            glm::vec4{0.2f, 0.2f, 0.4f, 0.8f} : glm::vec4{0.1f, 0.1f, 0.2f, 0.4f});
+    }
+    
+    if (nextSnapshotButton_) {
+        bool canGoNext = (currentIndex < totalSnapshots - 1);
+        nextSnapshotButton_->setBackgroundColor(canGoNext ? 
+            glm::vec4{0.2f, 0.2f, 0.4f, 0.8f} : glm::vec4{0.1f, 0.1f, 0.2f, 0.4f});
+    }
+    
+    // Fixed variable scope - get phaseDescription within this scope
+    std::string phaseDescription = snapshotManager->GetCurrentPhaseDescription();
+    std::cout << "[WorldSimulationUI] Updated snapshot controls: " << (currentIndex + 1) 
+              << "/" << totalSnapshots << " - " << phaseDescription << std::endl;
 }
 
 // Helper methods

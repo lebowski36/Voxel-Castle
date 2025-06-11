@@ -152,6 +152,7 @@ public:
 private:
     void createUIElements();
     void createVisualizationControls();
+    void createSnapshotControls();  // NEW: Geological snapshot navigation
     void createWorldPreview();
     void createElevationLegend();  // NEW: Elevation legend UI component
     void createProgressPanels();
@@ -162,6 +163,11 @@ private:
     // World map rendering
     void renderWorldMap();
     void updateWorldMapVisualization();
+    
+    // Snapshot navigation handlers
+    void onPreviousSnapshot();
+    void onNextSnapshot();
+    void updateSnapshotControls();
     
     // Layout calculation helpers
     float calculateMaxVisualizationButtonWidth();
@@ -222,6 +228,11 @@ private:
     
     // World map visualization
     std::unique_ptr<VoxelEngine::UI::WorldMapRenderer> worldMapRenderer_;
+    
+    // Snapshot navigation UI controls
+    std::shared_ptr<VoxelEngine::UI::UIButton> prevSnapshotButton_;
+    std::shared_ptr<VoxelEngine::UI::UIButton> nextSnapshotButton_;
+    std::shared_ptr<VoxelEngine::UI::UIButton> snapshotInfoButton_;
     
     // World map area coordinates (set by createWorldPreview)
     float worldMapX_, worldMapY_, worldMapWidth_, worldMapHeight_;

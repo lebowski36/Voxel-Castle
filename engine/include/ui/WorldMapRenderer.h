@@ -7,6 +7,7 @@
 namespace VoxelCastle {
     namespace World {
         class SeedWorldGenerator;
+        class GeologicalSimulator;
         struct ContinentalPlate;
         struct OceanBasin;
         struct RiverTemplate;
@@ -169,6 +170,11 @@ public:
     static const char* getGenerationPhaseName(GenerationPhase phase);
 
     /**
+     * @brief Get geological simulator from current generator (for snapshot navigation)
+     */
+    const VoxelCastle::World::GeologicalSimulator* getGeologicalSimulator() const;
+
+    /**
      * @brief Track elevation change magnitude for adaptive updates
      * @param newElevationData New elevation data to compare
      * @return Change magnitude (0.0 = no change, 1.0 = maximum change)
@@ -197,6 +203,9 @@ private:
     float* precipitationData_;
     int resolution_;
     float worldSizeKm_;  // World size in kilometers for proper scale sampling
+    
+    // World generator reference for snapshot access
+    VoxelCastle::World::SeedWorldGenerator* currentGenerator_;  // Current generator (not owned)
     
     // Current visualization state
     VisualizationMode currentMode_;

@@ -23,6 +23,7 @@ WorldMapRenderer::WorldMapRenderer()
     , precipitationData_(nullptr)
     , resolution_(0)
     , worldSizeKm_(1024.0f)  // Default to 1024km (continent scale)
+    , currentGenerator_(nullptr)       // NEW: No generator initially
     , currentMode_(VisualizationMode::ELEVATION)
     , currentPhase_(GenerationPhase::TECTONICS)
     , previousElevationData_(nullptr)  // NEW: For adaptive update system
@@ -80,6 +81,9 @@ void WorldMapRenderer::generateWorldMap(VoxelCastle::World::SeedWorldGenerator* 
         std::cout << "[WorldMapRenderer] Error: Generator or data arrays not available" << std::endl;
         return;
     }
+    
+    // Store generator reference for snapshot access
+    currentGenerator_ = generator;
     
     // Check if we need to regenerate based on changed parameters
     static GenerationPhase lastPhase = GenerationPhase::TECTONICS;
@@ -349,26 +353,45 @@ void WorldMapRenderer::generateElevationData(VoxelCastle::World::SeedWorldGenera
             int heightVoxels = generator->getTerrainHeightAt((int)worldX, (int)worldZ);
             float baseHeight = heightVoxels * 0.25f; // Convert voxels to meters (25cm per voxel)
             
-            // PRIMARY: Use new 3.0 World Generation System (Fractal Continental Foundation)
+            // PRIMARY: Use new 3.0 World Generation System (Snapshot-Based Responsive UI)
             float finalHeight = baseHeight;
             if (geologicalSim) {
-                // Use new geological simulation system with fractal continental generation
-                VoxelCastle::World::GeologicalSample sample = geologicalSim->getSampleAt(worldX, worldZ);
-                finalHeight = sample.elevation;
-                
-                // Debug: Log fractal continental features for first few pixels
-                if (x < 3 && y < 3) {
-                    std::cout << "[WorldMapRenderer] 3.0 WorldGen Sample - Pos(" << worldX << "," << worldZ 
-                              << ") Elevation:" << sample.elevation << "m RockType:" << (int)sample.rockType 
-                              << " Hardness:" << sample.rockHardness << std::endl;
-                    
-                    // Check for continental vs oceanic features
-                    if (sample.elevation > 0) {
-                        std::cout << "[WorldMapRenderer] CONTINENTAL feature detected" << std::endl;
-                    } else if (sample.elevation < -200) {
-                        std::cout << "[WorldMapRenderer] DEEP OCEAN basin detected" << std::endl;
+                // Use snapshot system for responsive UI - no heavy geological computation on UI thread
+                const auto* snapshotManager = geologicalSim->getSnapshotManager();
+                if (snapshotManager && snapshotManager->GetSnapshotCount() > 0) {
+                    const auto* currentSnapshot = snapshotManager->GetCurrentSnapshot();
+                    if (currentSnapshot) {
+                        finalHeight = currentSnapshot->GetElevationAt(worldX, worldZ);
+                        
+                        // Debug: Log snapshot-based geological features for first few pixels
+                        if (x < 3 && y < 3) {
+                            std::cout << "[WorldMapRenderer] Snapshot-based Sample - Pos(" << worldX << "," << worldZ 
+                                      << ") Elevation:" << finalHeight << "m Snapshot:" << snapshotManager->GetCurrentSnapshotIndex()
+                                      << "/" << snapshotManager->GetSnapshotCount() << std::endl;
+                            
+                            // Check for continental vs oceanic features
+                            if (finalHeight > 0) {
+                                std::cout << "[WorldMapRenderer] CONTINENTAL feature detected" << std::endl;
+                            } else if (finalHeight < -200) {
+                                std::cout << "[WorldMapRenderer] DEEP OCEAN basin detected" << std::endl;
+                            } else {
+                                std::cout << "[WorldMapRenderer] COASTAL/SHELF feature detected" << std::endl;
+                            }
+                        }
                     } else {
-                        std::cout << "[WorldMapRenderer] COASTAL/SHELF feature detected" << std::endl;
+                        // Fallback: use legacy getSampleAt if no current snapshot (should be rare)
+                        VoxelCastle::World::GeologicalSample sample = geologicalSim->getSampleAt(worldX, worldZ);
+                        finalHeight = sample.elevation;
+                        if (x < 3 && y < 3) {
+                            std::cout << "[WorldMapRenderer] FALLBACK: Using getSampleAt (no snapshot available)" << std::endl;
+                        }
+                    }
+                } else {
+                    // Fallback: use legacy getSampleAt if no snapshots available yet
+                    VoxelCastle::World::GeologicalSample sample = geologicalSim->getSampleAt(worldX, worldZ);
+                    finalHeight = sample.elevation;
+                    if (x < 3 && y < 3) {
+                        std::cout << "[WorldMapRenderer] FALLBACK: Using getSampleAt (no snapshots yet)" << std::endl;
                     }
                 }
                 
@@ -1423,5 +1446,12 @@ void WorldMapRenderer::drawMountainRidges(unsigned char* colorData, const std::v
             }
         }
     }
+}
+
+const VoxelCastle::World::GeologicalSimulator* VoxelEngine::UI::WorldMapRenderer::getGeologicalSimulator() const {
+    if (!currentGenerator_) {
+        return nullptr;
+    }
+    return currentGenerator_->getGeologicalSimulator();
 }
 }

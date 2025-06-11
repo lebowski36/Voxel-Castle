@@ -35,6 +35,7 @@ add_library(VoxelEngine STATIC
     src/world/ContinuousField.cpp # Continuous field mathematics for geological simulation
     src/world/GeologicalSimulator.cpp # Advanced geological simulation system
     src/world/FractalContinentGenerator.cpp # Fractal continental generation system
+    src/world/GeologicalSnapshot.cpp # Geological snapshot system for UI visualization
     src/world/quadtree.cpp      # Added Quadtree source
     # src/world/test_quadtree.cpp # Removed Quadtree test source
     src/world/test_voxel_system.cpp # Added Voxel System test source
