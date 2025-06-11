@@ -737,9 +737,22 @@ void WorldMapRenderer::precipitationToColor(float precMmYear, GenerationPhase ph
 }
 
 void WorldMapRenderer::createTextureFromColorData(const unsigned char* colorData, int resolution) {
-    // Initialize textures if this is the first time
-    if (textureA_ == 0 && textureB_ == 0) {
-        // Create both textures initially
+    // Check if we need to recreate textures (resolution changed or textures don't exist)
+    bool needRecreateTextures = (textureA_ == 0 && textureB_ == 0) || 
+                               (!glIsTexture(textureA_) || !glIsTexture(textureB_));
+    
+    if (needRecreateTextures) {
+        // Clean up old textures if they exist
+        if (textureA_ != 0) {
+            glDeleteTextures(1, &textureA_);
+            textureA_ = 0;
+        }
+        if (textureB_ != 0) {
+            glDeleteTextures(1, &textureB_);
+            textureB_ = 0;
+        }
+        
+        // Create both textures
         glGenTextures(1, &textureA_);
         glGenTextures(1, &textureB_);
         
@@ -756,7 +769,7 @@ void WorldMapRenderer::createTextureFromColorData(const unsigned char* colorData
         }
         
         glBindTexture(GL_TEXTURE_2D, 0);
-        std::cout << "[WorldMapRenderer] Initialized double-buffered textures A:" << textureA_ << " B:" << textureB_ << std::endl;
+        std::cout << "[WorldMapRenderer] Created/recreated double-buffered textures A:" << textureA_ << " B:" << textureB_ << std::endl;
     }
     
     // Update the inactive texture (the one NOT currently being displayed)

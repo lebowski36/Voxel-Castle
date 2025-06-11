@@ -8,8 +8,6 @@
 #include <map>
 #include <limits>
 
-using namespace VoxelCastle::World;
-
 namespace VoxelCastle {
 namespace World {
 
@@ -148,12 +146,12 @@ void FractalContinentGenerator::generateOceanBasins(float worldSizeKm) {
     
     // Ocean depth varies from -1000m to -2000m
     std::mt19937 rng(seed_ + 1000); // Offset seed for ocean generation
-    std::uniform_real_distribution<float> depthDist(-2000.0f, -1000.0f);
+    std::uniform_real_distribution<float> dist(0.0f, 1.0f);
     
-    mainOcean.depth = depthDist(rng);
-    mainOcean.tectonicActivity = 0.2f; // Lower activity in ocean basins
+    mainOcean.depth = -1000.0f - (1000.0f * dist(rng)); // -1000m to -2000m
+    mainOcean.tectonicActivity = 0.1f + (0.3f * dist(rng)); // Low tectonic activity
     
-    // Boundary is the world boundary for now (can be refined later)
+    // Create boundary as world edges (simplified for now)
     float worldSizeMeters = worldSizeKm * 1000.0f;
     mainOcean.boundary = {
         {0.0f, 0.0f},
@@ -170,50 +168,30 @@ void FractalContinentGenerator::generateCoastlines(ContinuousField<float>& eleva
     int height = elevationField.getHeight();
     float spacing = elevationField.getSampleSpacing();
     
-    std::cout << "[FractalContinentGenerator] Generating coastlines for " << width << "x" << height 
-              << " grid with " << spacing << "m spacing" << std::endl;
-    
-    // Initialize all points to ocean depth
     for (int z = 0; z < height; ++z) {
         for (int x = 0; x < width; ++x) {
-            float worldX = x * spacing;
-            float worldZ = z * spacing;
-            glm::vec2 worldPos(worldX, worldZ);
+            glm::vec2 worldPos(x * spacing, z * spacing);
             
-            // Find nearest continental plate
+            // Find nearest continent and calculate distance
             ContinentalPlate* nearestPlate = findNearestContinent(worldPos);
             
             if (nearestPlate) {
                 float distanceToCenter = glm::length(worldPos - nearestPlate->center);
                 
-                // Base continental shape (circular for now, will add fractal detail)
-                if (distanceToCenter < nearestPlate->radius) {
-                    // Inside continent - use fractal elevation generation
-                    float elevationNoise = fractionalBrownianMotion(worldX, worldZ, 6, 0.5f);
+                if (distanceToCenter <= nearestPlate->radius) {
+                    // Inside continental plate - apply base elevation + coastline noise
+                    float baseElevation = nearestPlate->elevation;
+                    float coastlineNoise = generateCoastlineNoise(worldPos, nearestPlate);
+                    float finalElevation = baseElevation + coastlineNoise;
                     
-                    // Elevation decreases near coast, increases toward center
-                    float centerFactor = 1.0f - (distanceToCenter / nearestPlate->radius);
-                    centerFactor = std::pow(centerFactor, 0.7f); // Smoother falloff
-                    
-                    float elevation = nearestPlate->elevation * centerFactor + (elevationNoise * 200.0f);
-                    elevation = std::max(0.0f, elevation); // Ensure land is above sea level
-                    
-                    elevationField.setSample(x, z, elevation);
-                } else if (distanceToCenter < nearestPlate->radius * 1.2f) {
-                    // Continental shelf zone (-200m to 0m depth)
-                    float shelfFactor = (distanceToCenter - nearestPlate->radius) / (nearestPlate->radius * 0.2f);
-                    float shelfNoise = fractionalBrownianMotion(worldX, worldZ, 4, 0.3f);
-                    float shelfDepth = -200.0f * shelfFactor + (shelfNoise * 50.0f);
-                    shelfDepth = std::max(-200.0f, std::min(0.0f, shelfDepth));
-                    
-                    elevationField.setSample(x, z, shelfDepth);
+                    elevationField.setSample(x, z, finalElevation);
                 } else {
-                    // Deep ocean - check for special features
+                    // Outside continental plates - ocean depth
                     float oceanDepth = generateOceanDepth(worldPos, worldSizeKm);
                     elevationField.setSample(x, z, oceanDepth);
                 }
             } else {
-                // No nearby continent - deep ocean with special features
+                // No continents (shouldn't happen, but fallback to ocean)
                 float oceanDepth = generateOceanDepth(worldPos, worldSizeKm);
                 elevationField.setSample(x, z, oceanDepth);
             }
@@ -235,42 +213,36 @@ void FractalContinentGenerator::generateRiverTemplates(float worldSizeKm) {
             RiverTemplate river;
             river.continentId = continent.plateId;
             
-            // River source: high elevation area near continent center
+            // River source: random point in inner continent (30-70% of radius)
             float sourceAngle = dist(rng) * 2.0f * M_PI;
-            float sourceDistance = continent.radius * (0.3f + 0.4f * dist(rng)); // 30-70% from center
+            float sourceDistance = continent.radius * (0.3f + 0.4f * dist(rng));
             river.source = continent.center + glm::vec2(
                 std::cos(sourceAngle) * sourceDistance,
                 std::sin(sourceAngle) * sourceDistance
             );
             
-            // River mouth: find nearest coastline
+            // River mouth: point on continent edge (coastline)
             float mouthAngle = dist(rng) * 2.0f * M_PI;
-            float mouthDistance = continent.radius * (0.9f + 0.1f * dist(rng)); // Near edge
             river.mouth = continent.center + glm::vec2(
-                std::cos(mouthAngle) * mouthDistance,
-                std::sin(mouthAngle) * mouthDistance
+                std::cos(mouthAngle) * continent.radius,
+                std::sin(mouthAngle) * continent.radius
             );
             
-            // Generate L-System river network
+            // Generate main stem using L-System
             river.mainStem = generateLSystemRiver(river.source, river.mouth, worldSizeKm, 3);
             
-            // Generate 2-3 major tributaries
-            int numTributaries = 2 + (rng() % 2);
+            // Generate tributaries (simplified for now)
+            int numTributaries = 1 + (rng() % 3); // 1-3 tributaries per river
             for (int t = 0; t < numTributaries; ++t) {
-                if (river.mainStem.size() > 4) {
-                    // Pick a point along the main stem for tributary junction
-                    size_t junctionIndex = 2 + (rng() % (river.mainStem.size() - 3));
-                    glm::vec2 junction = river.mainStem[junctionIndex];
-                    
-                    // Generate tributary source point
-                    float tribAngle = dist(rng) * 2.0f * M_PI;
-                    float tribDistance = continent.radius * (0.2f + 0.3f * dist(rng));
-                    glm::vec2 tribSource = junction + glm::vec2(
-                        std::cos(tribAngle) * tribDistance,
-                        std::sin(tribAngle) * tribDistance
+                if (river.mainStem.size() > 2) {
+                    int branchIndex = 1 + (rng() % (river.mainStem.size() - 1));
+                    glm::vec2 branchStart = river.source + glm::vec2(
+                        (dist(rng) - 0.5f) * 1000.0f,
+                        (dist(rng) - 0.5f) * 1000.0f
                     );
-                    
-                    std::vector<glm::vec2> tributary = generateLSystemRiver(tribSource, junction, worldSizeKm, 2);
+                    std::vector<glm::vec2> tributary = generateLSystemRiver(
+                        branchStart, river.mainStem[branchIndex], worldSizeKm, 2
+                    );
                     river.tributaries.push_back(tributary);
                 }
             }
@@ -299,58 +271,30 @@ void FractalContinentGenerator::generateMountainRidges(ContinuousField<float>& e
             float distance = glm::length(plate1.center - plate2.center);
             float combinedRadius = plate1.radius + plate2.radius;
             
-            // Check if plates are close enough for mountain formation
-            if (distance < combinedRadius * 1.5f) {
+            // If plates are close enough, create mountain ridge between them
+            if (distance < combinedRadius * 1.2f) {
                 MountainRidge ridge;
                 ridge.continentId = plate1.plateId; // Assign to first plate
-                ridge.baseElevation = 400.0f + (400.0f * dist(rng)); // 400-800m base
-                ridge.maxElevation = ridge.baseElevation + (600.0f + 400.0f * dist(rng)); // +600-1000m peaks
-                ridge.isVolcanic = (dist(rng) < 0.3f); // 30% chance of volcanic activity
+                ridge.baseElevation = std::max(plate1.elevation, plate2.elevation);
+                ridge.maxElevation = ridge.baseElevation + 800.0f + (400.0f * dist(rng)); // +800-1200m
+                ridge.isVolcanic = dist(rng) < 0.3f; // 30% chance of volcanic activity
                 
-                // Create ridge line between collision zones
-                glm::vec2 midpoint = (plate1.center + plate2.center) * 0.5f;
-                glm::vec2 direction = glm::normalize(plate2.center - plate1.center);
-                glm::vec2 perpendicular = glm::vec2(-direction.y, direction.x);
-                
-                // Generate L-System mountain ridge
-                glm::vec2 ridgeStart = midpoint + perpendicular * (combinedRadius * 0.3f);
-                glm::vec2 ridgeEnd = midpoint - perpendicular * (combinedRadius * 0.3f);
-                ridge.ridgeLine = generateLSystemMountainRidge(ridgeStart, ridgeEnd, worldSizeKm, 2);
+                // Generate ridge line using L-System
+                ridge.ridgeLine = generateLSystemMountainRidge(plate1.center, plate2.center, worldSizeKm, 2);
                 
                 mountainRidges_.push_back(ridge);
                 
-                // Apply mountain elevation to the elevation field
-                for (const auto& ridgePoint : ridge.ridgeLine) {
-                    int x = static_cast<int>(ridgePoint.x / spacing);
-                    int z = static_cast<int>(ridgePoint.y / spacing);
+                // Apply elevation to the field
+                for (const auto& point : ridge.ridgeLine) {
+                    int gridX = static_cast<int>(point.x / spacing);
+                    int gridZ = static_cast<int>(point.y / spacing);
                     
-                    if (x >= 0 && x < width && z >= 0 && z < height) {
-                        float currentElevation = elevationField.getSample(x, z);
-                        if (currentElevation > 0.0f) { // Only affect land areas
-                            float mountainElevation = ridge.baseElevation + 
-                                (ridge.maxElevation - ridge.baseElevation) * dist(rng);
-                            elevationField.setSample(x, z, std::max(currentElevation, mountainElevation));
-                            
-                            // Add mountain influence to nearby points
-                            int radius = 3;
-                            for (int dx = -radius; dx <= radius; ++dx) {
-                                for (int dz = -radius; dz <= radius; ++dz) {
-                                    int nx = x + dx;
-                                    int nz = z + dz;
-                                    if (nx >= 0 && nx < width && nz >= 0 && nz < height) {
-                                        float distance = std::sqrt(dx*dx + dz*dz);
-                                        if (distance <= radius) {
-                                            float influence = 1.0f - (distance / radius);
-                                            float neighborElevation = elevationField.getSample(nx, nz);
-                                            if (neighborElevation > 0.0f) {
-                                                float addedHeight = mountainElevation * influence * 0.5f;
-                                                elevationField.setSample(nx, nz, neighborElevation + addedHeight);
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                        }
+                    if (gridX >= 0 && gridX < width && gridZ >= 0 && gridZ < height) {
+                        // Apply mountain elevation with falloff
+                        float currentElevation = elevationField.getSample(gridX, gridZ);
+                        float mountainElevation = ridge.baseElevation + (ridge.maxElevation - ridge.baseElevation) * dist(rng);
+                        float finalElevation = std::max(currentElevation, mountainElevation);
+                        elevationField.setSample(gridX, gridZ, finalElevation);
                     }
                 }
             }
@@ -365,28 +309,19 @@ void FractalContinentGenerator::assignRockTypes(ContinuousField<RockType>& rockT
     
     for (int z = 0; z < height; ++z) {
         for (int x = 0; x < width; ++x) {
-            float worldX = x * spacing;
-            float worldZ = z * spacing;
-            glm::vec2 worldPos(worldX, worldZ);
+            glm::vec2 worldPos(x * spacing, z * spacing);
             
             if (isInOcean(worldPos)) {
-                // Oceanic crust - primarily basalt
+                // Ocean areas get oceanic crust (basalt)
                 rockTypes.setSample(x, z, RockType::IGNEOUS_BASALT);
             } else {
-                // Continental crust - use continental plate's dominant rock type
+                // Continental areas get continental crust
                 ContinentalPlate* nearestPlate = findNearestContinent(worldPos);
                 if (nearestPlate) {
-                    // Add some variation to the dominant rock type
-                    float rockVariation = perlinNoise(worldX, worldZ, 0.001f);
-                    
-                    if (rockVariation > 0.7f) {
-                        // 30% chance of different rock type
-                        rockTypes.setSample(x, z, RockType::SEDIMENTARY_LIMESTONE);
-                    } else {
-                        rockTypes.setSample(x, z, nearestPlate->dominantRockType);
-                    }
+                    rockTypes.setSample(x, z, nearestPlate->dominantRockType);
                 } else {
-                    rockTypes.setSample(x, z, RockType::IGNEOUS_GRANITE); // Default
+                    // Fallback to granite
+                    rockTypes.setSample(x, z, RockType::IGNEOUS_GRANITE);
                 }
             }
         }
@@ -400,36 +335,26 @@ void FractalContinentGenerator::initializeMantleStress(ContinuousField<float>& m
     
     for (int z = 0; z < height; ++z) {
         for (int x = 0; x < width; ++x) {
-            float worldX = x * spacing;
-            float worldZ = z * spacing;
-            glm::vec2 worldPos(worldX, worldZ);
+            glm::vec2 worldPos(x * spacing, z * spacing);
             
-            // Initialize mantle stress based on continental layout
-            ContinentalPlate* nearestPlate = findNearestContinent(worldPos);
+            // Base stress level
+            float stress = 0.1f; // Low background stress
             
-            if (nearestPlate) {
-                float distanceToCenter = glm::length(worldPos - nearestPlate->center);
-                float plateInfluence = std::exp(-distanceToCenter / (nearestPlate->radius * 2.0f));
-                
-                // Higher stress near plate boundaries, lower at centers
-                float stressValue = nearestPlate->tectonicActivity * (1.0f - plateInfluence * 0.5f);
-                
-                // Add fractal variation
-                float stressNoise = fractionalBrownianMotion(worldX, worldZ, 4, 0.4f);
-                stressValue += stressNoise * 0.3f;
-                
-                mantleStress.setSample(x, z, stressValue);
-            } else {
-                // Ocean areas have different stress patterns
-                float stressNoise = fractionalBrownianMotion(worldX, worldZ, 3, 0.3f);
-                mantleStress.setSample(x, z, stressNoise * 0.5f);
+            // Higher stress near plate boundaries
+            for (const auto& plate : continentalPlates_) {
+                float distanceToEdge = std::abs(glm::length(worldPos - plate.center) - plate.radius);
+                float plateEdgeInfluence = std::exp(-distanceToEdge / 10000.0f); // 10km falloff
+                stress += plate.tectonicActivity * plateEdgeInfluence * 0.5f;
             }
+            
+            // Clamp stress to reasonable range
+            stress = std::min(1.0f, stress);
+            mantleStress.setSample(x, z, stress);
         }
     }
 }
 
-// Helper methods implementation
-
+// Helper methods
 ContinentalPlate* FractalContinentGenerator::findNearestContinent(const glm::vec2& point) {
     ContinentalPlate* nearest = nullptr;
     float nearestDistance = std::numeric_limits<float>::max();
@@ -448,36 +373,22 @@ ContinentalPlate* FractalContinentGenerator::findNearestContinent(const glm::vec
 bool FractalContinentGenerator::isInOcean(const glm::vec2& point) const {
     for (const auto& plate : continentalPlates_) {
         float distance = glm::length(point - plate.center);
-        if (distance < plate.radius) {
+        if (distance <= plate.radius) {
             return false; // Inside a continent
         }
     }
     return true; // Not inside any continent, must be ocean
 }
 
-float FractalContinentGenerator::perlinNoise(float x, float y, float frequency) const {
-    // Use existing noise utility
-    return VoxelEngine::Util::smoothValueNoise(x * frequency, 0.0f, y * frequency);
-}
-
-float FractalContinentGenerator::fractionalBrownianMotion(float x, float y, int octaves, float persistence) const {
-    float result = 0.0f;
-    float amplitude = 1.0f;
-    float frequency = 0.001f;
+float FractalContinentGenerator::calculateDistanceToNearestContinent(const glm::vec2& point) const {
+    float nearestDistance = std::numeric_limits<float>::max();
     
-    for (int i = 0; i < octaves; ++i) {
-        result += amplitude * perlinNoise(x, y, frequency);
-        amplitude *= persistence;
-        frequency *= 2.0f;
+    for (const auto& plate : continentalPlates_) {
+        float distance = glm::length(point - plate.center);
+        nearestDistance = std::min(nearestDistance, distance);
     }
     
-    return result;
-}
-
-glm::vec2 FractalContinentGenerator::generateCoastlinePoint(const glm::vec2& basePoint, float detail) const {
-    // Add fractal detail to coastline points
-    float detailNoise = fractionalBrownianMotion(basePoint.x, basePoint.y, 6, 0.6f);
-    return basePoint + glm::vec2(detailNoise * detail, detailNoise * detail);
+    return nearestDistance;
 }
 
 float FractalContinentGenerator::generateOceanDepth(const glm::vec2& point, float worldSizeKm) const {
@@ -533,11 +444,11 @@ std::vector<glm::vec2> FractalContinentGenerator::generateLSystemRiver(const glm
                                                                        float worldSizeKm, int iterations) const {
     // River L-System rules for branching patterns
     std::map<char, std::string> riverRules = {
-        {'F', "F[+F]F[-F]F"},  // Forward with branches
-        {'+', "+"},             // Turn right
-        {'-', "-"},             // Turn left
-        {'[', "["},             // Push state
-        {']', "]"}              // Pop state
+        {'F', "F[+F]F[-F]F"},
+        {'+', "+"},
+        {'-', "-"},
+        {'[', "["},
+        {']', "]"}
     };
     
     std::string axiom = "F";
@@ -553,9 +464,9 @@ std::vector<glm::vec2> FractalContinentGenerator::generateLSystemMountainRidge(c
                                                                                float worldSizeKm, int iterations) const {
     // Mountain ridge L-System rules for realistic ridge patterns
     std::map<char, std::string> ridgeRules = {
-        {'F', "F+F-F-F+F"},    // Forward with zigzag pattern
-        {'+', "+"},             // Turn right
-        {'-', "-"}              // Turn left
+        {'F', "F+F-F-F+F"},
+        {'+', "+"},
+        {'-', "-"}
     };
     
     std::string axiom = "F";
@@ -573,6 +484,7 @@ std::string FractalContinentGenerator::applyLSystemRules(const std::string& axio
     
     for (int i = 0; i < iterations; ++i) {
         std::string next;
+        
         for (char c : current) {
             auto it = rules.find(c);
             if (it != rules.end()) {
@@ -581,6 +493,7 @@ std::string FractalContinentGenerator::applyLSystemRules(const std::string& axio
                 next += c;
             }
         }
+        
         current = next;
     }
     
@@ -593,7 +506,7 @@ std::vector<glm::vec2> FractalContinentGenerator::interpretLSystemString(const s
     glm::vec2 position = start;
     glm::vec2 currentDirection = direction;
     
-    std::stack<std::pair<glm::vec2, glm::vec2>> stateStack; // Position and direction stack
+    std::stack<std::pair<glm::vec2, glm::vec2>> stateStack;
     
     float angleIncrement = M_PI / 6.0f; // 30 degrees
     
@@ -606,46 +519,98 @@ std::vector<glm::vec2> FractalContinentGenerator::interpretLSystemString(const s
                 position += currentDirection * stepSize;
                 path.push_back(position);
                 break;
+                
             case '+':
                 // Turn right
                 {
-                    float cos_a = std::cos(angleIncrement);
-                    float sin_a = std::sin(angleIncrement);
-                    glm::vec2 newDir;
-                    newDir.x = currentDirection.x * cos_a - currentDirection.y * sin_a;
-                    newDir.y = currentDirection.x * sin_a + currentDirection.y * cos_a;
-                    currentDirection = newDir;
+                    float cos_angle = std::cos(angleIncrement);
+                    float sin_angle = std::sin(angleIncrement);
+                    glm::vec2 newDirection;
+                    newDirection.x = currentDirection.x * cos_angle - currentDirection.y * sin_angle;
+                    newDirection.y = currentDirection.x * sin_angle + currentDirection.y * cos_angle;
+                    currentDirection = newDirection;
                 }
                 break;
+                
             case '-':
                 // Turn left
                 {
-                    float cos_a = std::cos(-angleIncrement);
-                    float sin_a = std::sin(-angleIncrement);
-                    glm::vec2 newDir;
-                    newDir.x = currentDirection.x * cos_a - currentDirection.y * sin_a;
-                    newDir.y = currentDirection.x * sin_a + currentDirection.y * cos_a;
-                    currentDirection = newDir;
+                    float cos_angle = std::cos(-angleIncrement);
+                    float sin_angle = std::sin(-angleIncrement);
+                    glm::vec2 newDirection;
+                    newDirection.x = currentDirection.x * cos_angle - currentDirection.y * sin_angle;
+                    newDirection.y = currentDirection.x * sin_angle + currentDirection.y * cos_angle;
+                    currentDirection = newDirection;
                 }
                 break;
+                
             case '[':
-                // Push current state
-                stateStack.push(std::make_pair(position, currentDirection));
+                // Push state
+                stateStack.push({position, currentDirection});
                 break;
+                
             case ']':
-                // Pop previous state
+                // Pop state
                 if (!stateStack.empty()) {
                     auto state = stateStack.top();
                     stateStack.pop();
                     position = state.first;
                     currentDirection = state.second;
-                    path.push_back(position); // Add branch start point
                 }
                 break;
         }
     }
     
     return path;
+}
+
+float FractalContinentGenerator::generateCoastlineNoise(const glm::vec2& worldPos, const ContinentalPlate* plate) const {
+    float scale = 0.0001f;
+    float amplitude = 8000.0f;
+    
+    // Multi-layer fractal noise for realistic coastlines
+    float largeScale = perlinNoise(worldPos.x * scale * 0.5f, worldPos.y * scale * 0.5f, 1.0f) * amplitude;
+    float mediumScale = perlinNoise(worldPos.x * scale * 2.0f, worldPos.y * scale * 2.0f, 1.0f) * amplitude * 0.4f;
+    float smallScale = perlinNoise(worldPos.x * scale * 8.0f, worldPos.y * scale * 8.0f, 1.0f) * amplitude * 0.15f;
+    
+    // Angular variation
+    glm::vec2 relativePos = worldPos - plate->center;
+    float angle = std::atan2(relativePos.y, relativePos.x);
+    float directionalNoise = std::sin(angle * 3.0f) * amplitude * 0.2f;
+    
+    float totalNoise = largeScale + mediumScale + smallScale + directionalNoise;
+    
+    // Reduce variation far from coastline
+    float distanceFromCenter = glm::length(relativePos);
+    float centerFactor = std::min(1.0f, distanceFromCenter / (plate->radius * 0.8f));
+    float variationFactor = std::sin(centerFactor * M_PI) * 0.8f + 0.2f;
+    
+    return totalNoise * variationFactor;
+}
+
+float FractalContinentGenerator::perlinNoise(float x, float y, float frequency) const {
+    // Use existing noise utility
+    return VoxelEngine::Util::smoothValueNoise(x * frequency, 0.0f, y * frequency);
+}
+
+float FractalContinentGenerator::fractionalBrownianMotion(float x, float y, int octaves, float persistence) const {
+    float result = 0.0f;
+    float amplitude = 1.0f;
+    float frequency = 0.001f;
+    
+    for (int i = 0; i < octaves; ++i) {
+        result += amplitude * perlinNoise(x, y, frequency);
+        amplitude *= persistence;
+        frequency *= 2.0f;
+    }
+    
+    return result;
+}
+
+glm::vec2 FractalContinentGenerator::generateCoastlinePoint(const glm::vec2& basePoint, float detail) const {
+    // Add fractal detail to coastline points
+    float detailNoise = fractionalBrownianMotion(basePoint.x, basePoint.y, 6, 0.6f);
+    return basePoint + glm::vec2(detailNoise * detail, detailNoise * detail);
 }
 
 } // namespace World

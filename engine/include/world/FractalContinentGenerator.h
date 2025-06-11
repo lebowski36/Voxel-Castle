@@ -131,6 +131,7 @@ private:
     float perlinNoise(float x, float y, float frequency) const;
     float fractionalBrownianMotion(float x, float y, int octaves, float persistence) const;
     glm::vec2 generateCoastlinePoint(const glm::vec2& basePoint, float detail) const;
+    float generateCoastlineNoise(const glm::vec2& worldPos, const ContinentalPlate* plate) const;
 };
 
 } // namespace World
