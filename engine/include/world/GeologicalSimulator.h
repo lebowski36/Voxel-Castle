@@ -3,6 +3,7 @@
 #include "world/ContinuousField.h"
 #include "world/GeologicalTypes.h"
 #include "world/FractalContinentGenerator.h"
+#include "world/GeologicalSnapshot.h"
 #include <memory>
 #include <functional>
 #include <chrono>
@@ -49,6 +50,9 @@ private:
     
     // Fractal continental generation system (initialized after other members)
     FractalContinentGenerator continentGenerator_;
+    
+    // Snapshot system for UI visualization
+    std::unique_ptr<GeologicalSnapshotManager> snapshotManager_;
     
 public:
     /**
@@ -115,6 +119,22 @@ public:
      * @brief Get fractal continent generator for preview visualization
      */
     const FractalContinentGenerator* getFractalContinentGenerator() const { return &continentGenerator_; }
+    
+    /**
+     * @brief Snapshot system methods for UI visualization
+     */
+    const GeologicalSnapshotManager* getSnapshotManager() const { return snapshotManager_.get(); }
+    GeologicalSnapshotManager* getSnapshotManager() { return snapshotManager_.get(); }
+    
+    /**
+     * @brief Force creation of a new snapshot at current simulation state
+     */
+    void createSnapshot(const std::string& phaseDescription, float completionPercentage);
+    
+    /**
+     * @brief Get elevation data directly from current snapshot (for UI optimization)
+     */
+    float getSnapshotElevationAt(float x, float z) const;
     
 private:
     /**

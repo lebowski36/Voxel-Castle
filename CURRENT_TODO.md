@@ -26,6 +26,27 @@ This file tracks our immediate high-level tasks and progress. Detailed sub-tasks
 
 This protocol outlines how the AI agent (GitHub Copilot) operates. Adherence to these guidelines is crucial for effective collaboration.
 
+### 🚨 TECHNICAL DEBT PREVENTION PROTOCOL
+
+**CRITICAL RULE: NO QUICK FIXES WITHOUT USER CONSULTATION**
+
+Before implementing ANY solution that could be considered a "quick fix" or architectural shortcut, the agent MUST:
+
+1. **Identify the Problem Clearly**: State the exact technical challenge or performance issue
+2. **Present Multiple Approaches**: Offer at least 2-3 different solution strategies with their trade-offs
+3. **Explain Complexity vs. Results**: Detail implementation complexity and expected immediate results for each approach
+4. **Request User Decision**: Ask which approach the user prefers before proceeding
+5. **Document the Decision**: Update relevant documentation files to reflect the chosen architectural approach
+
+**Examples of decisions requiring consultation:**
+- Performance optimization strategies (e.g., caching, LOD systems, threading)
+- Data structure changes (e.g., switching from arrays to maps, memory layout)
+- Architectural patterns (e.g., observer pattern, state machines, component systems)
+- UI responsiveness solutions (e.g., background processing, progressive loading, snapshot systems)
+- Scale bridging approaches (e.g., sampling strategies, interpolation methods)
+
+**The user prioritizes well-thought-through solutions over quick results, but still wants to see immediate progress without architectural compromises.**
+
 ### I. Core Collaborative Workflow (The Primary Loop)
 1.  **Task Identification:** Focus on a single, open sub-task from the relevant `development_tasks/*.md` file.
     *   If a detailed sub-task file is missing for a new high-level task, create it first, outlining steps.
@@ -116,6 +137,26 @@ This project enforces a **strict naming and capitalization standard** to prevent
 - If build errors occur due to naming: **CHECK THE STANDARD FIRST, THEN FIX**
 
 This standard is **NON-NEGOTIABLE** and prevents the recurring capitalization build errors we've experienced.
+
+### **🚨 CRITICAL: Technical Debt Prevention Protocol**
+
+**NEVER implement "quick fixes" for performance or architectural issues without user consultation.**
+
+**When encountering complex technical problems:**
+1. **Reason through the problem systematically** - understand root causes
+2. **Brainstorm multiple solution approaches** - consider trade-offs
+3. **Present options to user with analysis** - architectural implications
+4. **Discuss long-term maintainability** - avoid technical debt
+5. **Get explicit approval** before implementing significant changes
+
+**Example Issues Requiring Consultation:**
+- Performance bottlenecks affecting user experience
+- Architectural decisions with multiple valid approaches  
+- Trade-offs between code complexity and feature quality
+- Memory/CPU optimization strategies
+- Threading and concurrency architecture
+
+**Rationale**: Quick fixes typically create technical debt, maintenance burden, and future architectural constraints. Better to solve problems correctly once than repeatedly patch symptoms.
 
 ### III. Problem Solving & Iteration
 *   **Focused Approach:** Address one problem or feature at a time. If issues are tightly coupled, they can be addressed together, but this should be explicitly stated.

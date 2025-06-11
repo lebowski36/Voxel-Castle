@@ -58,6 +58,14 @@ void GeologicalSimulator::initialize(uint64_t seed) {
     }
     
     std::cout << "[GeologicalSimulator] Estimated simulation time: " << totalSimulationTime_ << " seconds" << std::endl;
+    
+    // Initialize snapshot manager for UI visualization
+    snapshotManager_ = std::make_unique<GeologicalSnapshotManager>(
+        worldSizeKm_, 
+        config_.preset == GeologicalPreset::BALANCED ? 512 : 256,  // Use lower resolution for snapshots
+        config_.preset == GeologicalPreset::BALANCED ? 512 : 256,
+        worldSizeKm_ * 1000.0f / (config_.preset == GeologicalPreset::BALANCED ? 512 : 256)
+    );
 }
 
 void GeologicalSimulator::initializeFields() {
@@ -128,6 +136,12 @@ void GeologicalSimulator::runFullSimulation(std::function<void(const PhaseInfo&)
     
     std::cout << "[GeologicalSimulator] Starting full geological simulation" << std::endl;
     
+    // Clear any existing snapshots and create initial snapshot
+    if (snapshotManager_) {
+        snapshotManager_->Clear();
+        createSnapshot("Initial Continental Formation", 0.0f);
+    }
+    
     // Phase 1: Tectonic Phase (40% of total time)
     updateProgress(0.0f, "Starting Tectonic Simulation");
     simulateTectonicPhase(100.0f); // 100 million years
@@ -143,6 +157,12 @@ void GeologicalSimulator::runFullSimulation(std::function<void(const PhaseInfo&)
     simulateDetailPhase(1000.0f); // 1 thousand years
     
     updateProgress(1.0f, "Simulation Complete");
+    
+    // Create final snapshot
+    if (snapshotManager_) {
+        createSnapshot("Final Geological State", 1.0f);
+    }
+    
     std::cout << "[GeologicalSimulator] Full simulation completed" << std::endl;
 }
 
@@ -256,6 +276,57 @@ GeologicalSample GeologicalSimulator::getSampleAt(float x, float z) const {
     }
     
     return sample;
+}
+
+void GeologicalSimulator::createSnapshot(const std::string& phaseDescription, float completionPercentage) {
+    if (!snapshotManager_) return;
+    
+    // Calculate current simulation time in millions of years
+    float simulationTimeMyears = 0.0f;
+    switch (currentPhase_) {
+        case GeologicalPhase::TECTONICS:
+            simulationTimeMyears = currentPhaseProgress_ * 100.0f; // 0-100 million years
+            break;
+        case GeologicalPhase::EROSION:
+            simulationTimeMyears = 100.0f + (currentPhaseProgress_ * 50.0f); // 100-150 million years
+            break;
+        case GeologicalPhase::DETAIL:
+            simulationTimeMyears = 150.0f + (currentPhaseProgress_ * 10.0f); // 150-160 million years
+            break;
+    }
+    
+    snapshotManager_->SetGenerating(true);
+    
+    // Create snapshot from current geological state
+    snapshotManager_->AddSnapshot(
+        *elevationField_,
+        *rockTypes_,
+        *mantleStress_,
+        simulationTimeMyears,
+        phaseDescription,
+        static_cast<int>(snapshotManager_->GetSnapshotCount()),
+        completionPercentage
+    );
+    
+    snapshotManager_->SetGenerating(false);
+    
+    std::cout << "[GeologicalSimulator] Created snapshot: " << phaseDescription 
+              << " (" << (completionPercentage * 100.0f) << "% complete)" << std::endl;
+}
+
+float GeologicalSimulator::getSnapshotElevationAt(float x, float z) const {
+    if (!snapshotManager_) {
+        // Fallback to direct geological sampling
+        return getSampleAt(x, z).elevation;
+    }
+    
+    const auto* currentSnapshot = snapshotManager_->GetCurrentSnapshot();
+    if (!currentSnapshot) {
+        // No snapshots available, fallback to direct sampling
+        return getSampleAt(x, z).elevation;
+    }
+    
+    return currentSnapshot->GetElevationAt(x, z);
 }
 
 // Implementation of simulation methods
