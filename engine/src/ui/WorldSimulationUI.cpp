@@ -565,17 +565,17 @@ void WorldSimulationUI::updateWorldMapVisualization() {
 void WorldSimulationUI::createProgressPanels() {
     float panelWidth = getSize().x - (PANEL_MARGIN * 2);
     
-    // Calculate summary area beside the square preview
-    float summaryX = worldMapX_ + worldMapWidth_ + ELEMENT_SPACING;
-    float summaryWidth = panelWidth - worldMapWidth_ - ELEMENT_SPACING;
+    // Calculate summary area AFTER the legend (legend takes up 120px + spacing)
+    float summaryX = legendBounds_.x + legendBounds_.width + ELEMENT_SPACING;
+    float summaryWidth = panelWidth - (legendBounds_.x - PANEL_MARGIN) - legendBounds_.width - (ELEMENT_SPACING * 2);
     float summaryY = worldMapY_; // Start at same height as preview
     float progressHeight = 80.0f;
     
-    std::cout << "[WorldSimulationUI] Creating summary beside square preview - "
-              << "Summary area: " << summaryWidth << "w x " << worldMapHeight_ << "h "
+    std::cout << "[WorldSimulationUI] Creating progress panels after legend - "
+              << "Summary area: " << summaryWidth << "w x " << progressHeight << "h "
               << "at (" << summaryX << "," << summaryY << ")" << std::endl;
     
-    // Current phase progress (positioned beside square preview)
+    // Current phase progress (positioned after legend)
     auto progressLabel = std::make_shared<VoxelEngine::UI::UIButton>(renderer_);
     progressLabel->setText("Current Phase: " + getPhaseDisplayName(currentPhase_));
     progressLabel->setPosition(summaryX, summaryY);
@@ -584,18 +584,37 @@ void WorldSimulationUI::createProgressPanels() {
     addChild(progressLabel);
     summaryY += 30.0f;
     
-    // Progress bar placeholder (positioned beside square preview)
-    auto progressBar = std::make_shared<VoxelEngine::UI::UIButton>(renderer_);
-    std::string progressText = "Phase Progress: " + std::to_string((int)(phaseProgress_ * 100)) + "%\n";
-    progressText += "Overall Progress: " + std::to_string((int)(currentProgress_ * 100)) + "%\n";
+    // Progress statistics - each on its own centered line
+    float lineHeight = 22.0f;
+    float availableProgressHeight = progressHeight;
+    
+    // Phase Progress
+    auto phaseProgressBar = std::make_shared<VoxelEngine::UI::UIButton>(renderer_);
+    phaseProgressBar->setText("Phase Progress: " + std::to_string((int)(phaseProgress_ * 100)) + "%");
+    phaseProgressBar->setPosition(summaryX, summaryY);
+    phaseProgressBar->setSize(summaryWidth, lineHeight);
+    phaseProgressBar->setBackgroundColor({0.1f, 0.1f, 0.1f, 0.7f});
+    addChild(phaseProgressBar);
+    summaryY += lineHeight + 2.0f;
+    
+    // Overall Progress
+    auto overallProgressBar = std::make_shared<VoxelEngine::UI::UIButton>(renderer_);
+    overallProgressBar->setText("Overall Progress: " + std::to_string((int)(currentProgress_ * 100)) + "%");
+    overallProgressBar->setPosition(summaryX, summaryY);
+    overallProgressBar->setSize(summaryWidth, lineHeight);
+    overallProgressBar->setBackgroundColor({0.1f, 0.1f, 0.1f, 0.7f});
+    addChild(overallProgressBar);
+    summaryY += lineHeight + 2.0f;
+    
+    // Time Remaining
+    auto timeRemainingBar = std::make_shared<VoxelEngine::UI::UIButton>(renderer_);
     float timeRemaining = calculateTimeRemaining();
-    progressText += "Estimated Time Remaining: " + std::to_string((int)timeRemaining) + " seconds";
-    progressBar->setText(progressText);
-    progressBar->setPosition(summaryX, summaryY);
-    progressBar->setSize(summaryWidth, progressHeight);
-    progressBar->setBackgroundColor({0.1f, 0.1f, 0.1f, 0.7f});
-    addChild(progressBar);
-    summaryY += progressHeight + ELEMENT_SPACING;
+    timeRemainingBar->setText("Est. Time Remaining: " + std::to_string((int)timeRemaining) + "s");
+    timeRemainingBar->setPosition(summaryX, summaryY);
+    timeRemainingBar->setSize(summaryWidth, lineHeight);
+    timeRemainingBar->setBackgroundColor({0.1f, 0.1f, 0.1f, 0.7f});
+    addChild(timeRemainingBar);
+    summaryY += lineHeight + ELEMENT_SPACING;
     
     // Note: currentY_ is not advanced here since summary is positioned beside preview, not below
 }
@@ -603,15 +622,19 @@ void WorldSimulationUI::createProgressPanels() {
 void WorldSimulationUI::createGenerationLog() {
     float panelWidth = getSize().x - (PANEL_MARGIN * 2);
     
-    // Calculate summary area beside the square preview
-    float summaryX = worldMapX_ + worldMapWidth_ + ELEMENT_SPACING;
-    float summaryWidth = panelWidth - worldMapWidth_ - ELEMENT_SPACING;
+    // Calculate log area AFTER the legend (legend takes up 120px + spacing)
+    float summaryX = legendBounds_.x + legendBounds_.width + ELEMENT_SPACING;
+    float summaryWidth = panelWidth - (legendBounds_.x - PANEL_MARGIN) - legendBounds_.width - (ELEMENT_SPACING * 2);
     float logHeight = 180.0f; // Increased height to accommodate better formatted text with line breaks
     
     // Position log below the progress panels in the summary area
     float summaryY = worldMapY_ + 140.0f; // After progress panels (30 + 80 + 30 spacing)
     
-    // Generation log panel (positioned beside square preview)
+    std::cout << "[WorldSimulationUI] Creating generation log after legend - "
+              << "Log area: " << summaryWidth << "w x " << logHeight << "h "
+              << "at (" << summaryX << "," << summaryY << ")" << std::endl;
+    
+    // Generation log panel (positioned after legend, below progress)
     auto logLabel = std::make_shared<VoxelEngine::UI::UIButton>(renderer_);
     logLabel->setText("Generation Log:");
     logLabel->setPosition(summaryX, summaryY);
@@ -629,21 +652,39 @@ void WorldSimulationUI::createGenerationLog() {
             std::string yearText = "Year " + std::to_string(generationLog_[i].simulationYear);
             std::string message = generationLog_[i].message;
             
-            // Break long messages into multiple lines to prevent horizontal scrolling
-            const size_t maxLineLength = 35; // Adjust based on panel width
-            if (message.length() > maxLineLength) {
-                // Find word boundaries for better wrapping
-                size_t breakPos = message.find_last_of(' ', maxLineLength);
-                if (breakPos == std::string::npos || breakPos < maxLineLength / 2) {
-                    breakPos = maxLineLength;
+            // Calculate max line length based on panel width (approximate characters per pixel)
+            const size_t maxLineLength = static_cast<size_t>(summaryWidth / 12.0f); // ~12 pixels per character
+            const size_t minLineLength = std::max(static_cast<size_t>(20), maxLineLength / 3); // Minimum line length
+            
+            // Add year header
+            logText += yearText + ":\n";
+            
+            // Wrap message text properly into multiple lines
+            std::string remainingText = message;
+            while (!remainingText.empty()) {
+                if (remainingText.length() <= maxLineLength) {
+                    // Last line or short enough to fit
+                    logText += "  " + remainingText + "\n";
+                    break;
+                } else {
+                    // Find good breaking point within maxLineLength
+                    size_t breakPos = remainingText.find_last_of(' ', maxLineLength);
+                    
+                    // If no space found or break position is too early, break at maxLineLength
+                    if (breakPos == std::string::npos || breakPos < minLineLength) {
+                        breakPos = maxLineLength;
+                    }
+                    
+                    // Add this line with indentation
+                    logText += "  " + remainingText.substr(0, breakPos) + "\n";
+                    
+                    // Prepare remaining text (skip space if we broke at a space)
+                    size_t nextStart = breakPos;
+                    if (breakPos < remainingText.length() && remainingText[breakPos] == ' ') {
+                        nextStart = breakPos + 1;
+                    }
+                    remainingText = remainingText.substr(nextStart);
                 }
-                
-                logText += yearText + ":\n  " + message.substr(0, breakPos) + "\n";
-                if (breakPos < message.length()) {
-                    logText += "  " + message.substr(breakPos + 1) + "\n";
-                }
-            } else {
-                logText += yearText + ": " + message + "\n";
             }
             
             // Add spacing between entries for better readability
@@ -1557,11 +1598,14 @@ void WorldSimulationUI::regenerateWorldMap() {
 }
 
 void WorldSimulationUI::createElevationLegend() {
-    // Position elevation legend to the right of the square preview
+    // Position elevation legend immediately to the right of the square preview
     float legendX = worldMapX_ + worldMapWidth_ + ELEMENT_SPACING;
     float legendY = worldMapY_;
     float legendWidth = 120.0f;
     float legendHeight = worldMapHeight_; // Same height as preview
+    
+    // Store legend bounds for use by other UI elements
+    legendBounds_ = {legendX, legendY, legendWidth, legendHeight};
     
     // Elevation legend title
     auto legendTitle = std::make_shared<VoxelEngine::UI::UIButton>(renderer_);

@@ -90,6 +90,12 @@ struct GeologicalSample {
     bool hasCaveSystems = false;
     bool hasQuartzVeins = false;
     float weatheringIntensity = 1.0f;
+    
+    // Step 3: Water & Cave System Framework - New water system features
+    bool hasWetlands = false;         // Wetland areas with shallow groundwater
+    bool hasNaturalSprings = false;   // Areas with spring discharge
+    bool hasLakes = false;            // Areas with standing surface water
+    bool hasRivers = false;           // Areas with flowing surface water
 };
 
 /**

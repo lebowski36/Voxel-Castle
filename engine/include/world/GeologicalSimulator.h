@@ -33,6 +33,21 @@ private:
     std::unique_ptr<ContinuousField<float>> waterFlow_;
     std::unique_ptr<ContinuousField<RockType>> rockTypes_;
     
+    // Step 3: Water & Cave System Framework - New fields
+    std::unique_ptr<ContinuousField<float>> precipitationField_;     // Precipitation patterns
+    std::unique_ptr<ContinuousField<float>> groundwaterTable_;       // Groundwater table depth
+    std::unique_ptr<ContinuousField<float>> permeabilityField_;      // Rock permeability for groundwater flow
+    std::unique_ptr<ContinuousField<float>> surfaceWaterDepth_;      // Surface water accumulation (rivers/lakes)
+    std::unique_ptr<ContinuousField<float>> sedimentLoad_;           // Sediment transported by water
+    std::unique_ptr<ContinuousField<float>> caveNetworkDensity_;     // Underground cave network density
+    std::unique_ptr<ContinuousField<float>> springFlow_;             // Spring discharge rates
+    
+    // Step 4: Physics-Based Geological Engine - New fields  
+    std::unique_ptr<ContinuousField<float>> crustalThickness_;       // Crustal thickness for isostasy
+    std::unique_ptr<ContinuousField<float>> mantleTemperature_;      // Mantle temperature for convection
+    std::unique_ptr<ContinuousField<float>> isostasyAdjustment_;     // Isostatic adjustment forces
+    std::unique_ptr<ContinuousField<float>> erosionRateField_;       // Spatially varying erosion rates
+    
     // Configuration
     GeologicalConfig config_;
     float worldSizeKm_;  // World size in kilometers
@@ -194,10 +209,70 @@ private:
     void simulateGlacialCarving(float timeStep);
     
     /**
+     * @brief Step 3: Surface Water Flow System Methods
+     */
+    void simulatePrecipitationPatterns(float timeStep);
+    void simulateSurfaceWaterAccumulation(float timeStep);
+    void simulateRiverFormation(float timeStep);
+    void simulateFloodPlains(float timeStep);
+    void simulateLakeFormation(float timeStep);
+    
+    /**
+     * @brief Step 3: Groundwater Aquifer System Methods
+     */
+    void simulateGroundwaterTable(float timeStep);
+    void simulateAquiferRecharge(float timeStep);
+    void simulateGroundwaterFlow(float timeStep);
+    void simulateSpringFormation(float timeStep);
+    void simulateWetlandFormation(float timeStep);
+    
+    /**
+     * @brief Step 3: Underground Cave Network Methods
+     */
+    void simulateCaveNetworkGrowth(float timeStep);
+    void simulateUndergroundRivers(float timeStep);
+    void simulateKarstWeathering(float timeStep);
+    void simulateCaveCollapse(float timeStep);
+    
+    /**
+     * @brief Step 3: Integrated Water-Erosion System Methods
+     */
+    void simulateSedimentTransport(float timeStep);
+    void simulateWaterDrivenErosion(float timeStep);
+    void simulateSedimentDeposition(float timeStep);
+    void simulateErosionUpliftBalance(float timeStep);
+    
+    /**
+     * @brief Step 4: Isostatic Equilibrium System Methods
+     */
+    void simulateCrustalBuoyancy(float timeStep);
+    void simulateMantleResponse(float timeStep);
+    void simulateIsostaticRebound(float timeStep);
+    void simulateRegionalIsostaticAdjustment(float timeStep);
+    void simulateGlacialIsostasy(float timeStep);
+    void simulatePostGlacialRebound(float timeStep);
+    
+    /**
+     * @brief Step 4: Steady-State Force System Methods
+     */
+    void simulateEquilibriumForceFields(float timeStep);
+    void simulateTectonicForceDecay(float timeStep);
+    void simulateCrustalStrengthLimits(float timeStep);
+    void simulateRealisticFaultFormation(float timeStep);
+    void simulateStressReleaseEarthquakes(float timeStep);
+    
+    /**
+     * @brief Step 4: Erosion-Uplift Balance Methods
+     */
+    void simulateElevationDependentErosion(float timeStep);
+    void simulateClimateErosionFeedback(float timeStep);
+    void simulateUpliftErosionEquilibrium(float timeStep);
+    void simulateTerrainStabilization(float timeStep);
+    
+    /**
      * @brief Detail simulation methods
      */
     void simulateMicroWeathering(float timeStep);
-    void simulateSedimentDeposition(float timeStep);
     void simulateJointFormation(float timeStep);
     void simulateCaveGeneration(float timeStep);
     

@@ -237,6 +237,9 @@ private:
     // World map area coordinates (set by createWorldPreview)
     float worldMapX_, worldMapY_, worldMapWidth_, worldMapHeight_;
     
+    // Legend bounds for layout coordination (x, y, width, height)
+    struct { float x, y, width, height; } legendBounds_;
+    
     // Callbacks
     OnSimulationCompleteCallback onSimulationComplete_;
     OnBackCallback onBack_;
