@@ -586,7 +586,7 @@ void WorldConfigurationUI::createParameterControls() {
     seedEditButton->setBackgroundColor({0.5f, 0.3f, 0.3f, 0.8f});
     seedEditButton->setOnClick([this, seedValueLabel]() { 
         // Simple seed editing - cycle through some interesting preset seeds
-        static const        // Generate preset seeds using the same random function for consistency
+        // Generate preset seeds using the same random function for consistency
         static std::vector<uint32_t> presetSeeds;
         static bool presetsInitialized = false;
         

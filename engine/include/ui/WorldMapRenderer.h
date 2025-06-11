@@ -86,7 +86,7 @@ public:
      * @brief Check if map data is ready for rendering
      * @return true if valid texture data exists
      */
-    bool isReady() const { return textureValid_; }
+    bool isReady() const { return (textureA_ != 0 && textureB_ != 0); }
 
     /**
      * @brief Set visualization mode for next generation
@@ -146,8 +146,10 @@ public:
     static const char* getGenerationPhaseName(GenerationPhase phase);
 
 private:
-    // OpenGL texture management
-    unsigned int worldTexture_;
+    // OpenGL resources - Double-buffered textures
+    unsigned int textureA_;      // First texture buffer
+    unsigned int textureB_;      // Second texture buffer  
+    bool useTextureA_;           // Which texture is currently displayed
     unsigned int vertexArray_;
     unsigned int vertexBuffer_;
     
@@ -156,7 +158,6 @@ private:
     float* temperatureData_;
     float* precipitationData_;
     int resolution_;
-    bool textureValid_;
     float worldSizeKm_;  // World size in kilometers for proper scale sampling
     
     // Current visualization state

@@ -11,14 +11,15 @@
 namespace VoxelEngine::UI {
 
 WorldMapRenderer::WorldMapRenderer()
-    : worldTexture_(0)
+    : textureA_(0)
+    , textureB_(0)
+    , useTextureA_(true)
     , vertexArray_(0)
     , vertexBuffer_(0)
     , elevationData_(nullptr)
     , temperatureData_(nullptr)
     , precipitationData_(nullptr)
     , resolution_(0)
-    , textureValid_(false)
     , worldSizeKm_(1024.0f)  // Default to 1024km (continent scale)
     , currentMode_(VisualizationMode::ELEVATION)
     , currentPhase_(GenerationPhase::TECTONICS)
@@ -73,7 +74,7 @@ void WorldMapRenderer::generateWorldMap(VoxelCastle::World::SeedWorldGenerator* 
     auto timeSinceGeneration = std::chrono::duration_cast<std::chrono::milliseconds>(currentTime - lastGenerationTime).count();
     
     // Only regenerate if at least 1 second has passed since last generation
-    if (textureValid_ && timeSinceGeneration < 1000) {
+    if ((textureA_ != 0 || textureB_ != 0) && timeSinceGeneration < 1000) {
         std::cout << "[WorldMapRenderer] Skipping regeneration - too frequent (last: " << timeSinceGeneration << "ms ago)" << std::endl;
         return;
     }
@@ -175,9 +176,10 @@ void WorldMapRenderer::render(UIRenderer* renderer, int x, int y, int width, int
     }
     
     // Check if we have valid world map data to render
-    if (!textureValid_ || worldTexture_ == 0) {
+    unsigned int currentTexture = useTextureA_ ? textureA_ : textureB_;
+    if (currentTexture == 0) {
         if (shouldLog) {
-            std::cout << "[WorldMapRenderer] Rendering placeholder - no valid world data" << std::endl;
+            std::cout << "[WorldMapRenderer] Rendering placeholder - textures not initialized" << std::endl;
         }
         
         // Render placeholder with phase-appropriate color
@@ -218,11 +220,11 @@ void WorldMapRenderer::render(UIRenderer* renderer, int x, int y, int width, int
     
     // Render the actual world map texture
     if (shouldLog) {
-        std::cout << "[WorldMapRenderer] Rendering world texture ID " << worldTexture_ << std::endl;
+        std::cout << "[WorldMapRenderer] Rendering world texture ID " << currentTexture << std::endl;
     }
     
     // Use UIRenderer's textured quad rendering
-    renderer->renderTexturedQuad(x, y, width, height, worldTexture_);
+    renderer->renderTexturedQuad(x, y, width, height, currentTexture);
 }
 
 void WorldMapRenderer::generateElevationData(VoxelCastle::World::SeedWorldGenerator* generator, unsigned int seed) {
@@ -641,67 +643,69 @@ void WorldMapRenderer::precipitationToColor(float precMmYear, GenerationPhase ph
 }
 
 void WorldMapRenderer::createTextureFromColorData(const unsigned char* colorData, int resolution) {
-    // Create new texture first (atomic approach - don't invalidate until new texture is ready)
-    GLuint newTexture = 0;
+    // Initialize textures if this is the first time
+    if (textureA_ == 0 && textureB_ == 0) {
+        // Create both textures initially
+        glGenTextures(1, &textureA_);
+        glGenTextures(1, &textureB_);
+        
+        // Initialize both textures with basic parameters
+        for (GLuint texture : {textureA_, textureB_}) {
+            glBindTexture(GL_TEXTURE_2D, texture);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+            
+            // Allocate texture storage (empty initially)
+            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, resolution, resolution, 0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
+        }
+        
+        glBindTexture(GL_TEXTURE_2D, 0);
+        std::cout << "[WorldMapRenderer] Initialized double-buffered textures A:" << textureA_ << " B:" << textureB_ << std::endl;
+    }
+    
+    // Update the inactive texture (the one NOT currently being displayed)
+    GLuint updateTexture = useTextureA_ ? textureB_ : textureA_;
     
     // Check for OpenGL errors before proceeding
     GLenum error = glGetError();
     if (error != GL_NO_ERROR) {
-        std::cerr << "[WorldMapRenderer] OpenGL error before texture creation: " << error << std::endl;
-        textureValid_ = false;
-        return;
-    }
-
-    // Generate new texture
-    glGenTextures(1, &newTexture);
-    error = glGetError();
-    if (error != GL_NO_ERROR) {
-        std::cerr << "[WorldMapRenderer] Error generating texture: " << error << std::endl;
-        textureValid_ = false;
+        std::cerr << "[WorldMapRenderer] OpenGL error before texture update: " << error << std::endl;
         return;
     }
     
-    glBindTexture(GL_TEXTURE_2D, newTexture);
+    // Bind and update the inactive texture
+    glBindTexture(GL_TEXTURE_2D, updateTexture);
+    glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, resolution, resolution, GL_RGBA, GL_UNSIGNED_BYTE, colorData);
+    
     error = glGetError();
     if (error != GL_NO_ERROR) {
-        std::cerr << "[WorldMapRenderer] Error binding texture: " << error << std::endl;
-        glDeleteTextures(1, &newTexture);
-        return;  // Don't invalidate existing texture if new one failed
+        std::cerr << "[WorldMapRenderer] Error updating texture data: " << error << std::endl;
+        glBindTexture(GL_TEXTURE_2D, 0);
+        return;
     }
-
-    // Set texture parameters
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-
-    // Upload texture data
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, resolution, resolution, 0, GL_RGBA, GL_UNSIGNED_BYTE, colorData);
-    error = glGetError();
-    if (error != GL_NO_ERROR) {
-        std::cerr << "[WorldMapRenderer] Error uploading texture data: " << error << std::endl;
-        glDeleteTextures(1, &newTexture);
-        return;  // Don't invalidate existing texture if new one failed
-    }
-
+    
     // Unbind texture
     glBindTexture(GL_TEXTURE_2D, 0);
-
-    // Atomically swap textures - delete old one and assign new one
-    if (worldTexture_ != 0) {
-        glDeleteTextures(1, &worldTexture_);
-    }
-    worldTexture_ = newTexture;
-    textureValid_ = true;
-
-    std::cout << "[WorldMapRenderer] Created texture ID " << worldTexture_ 
+    
+    // Atomic swap: flip which texture is displayed (no texture deletion needed!)
+    useTextureA_ = !useTextureA_;
+    
+    GLuint currentTexture = useTextureA_ ? textureA_ : textureB_;
+    std::cout << "[WorldMapRenderer] Updated texture buffer, now displaying ID " << currentTexture 
               << " with resolution " << resolution << "x" << resolution << std::endl;
 }
 
 void WorldMapRenderer::cleanupResources() {
-    if (worldTexture_ != 0) {
-        glDeleteTextures(1, &worldTexture_);
-        worldTexture_ = 0;
+    if (textureA_ != 0) {
+        glDeleteTextures(1, &textureA_);
+        textureA_ = 0;
+    }
+    
+    if (textureB_ != 0) {
+        glDeleteTextures(1, &textureB_);
+        textureB_ = 0;
     }
     
     if (vertexBuffer_ != 0) {
@@ -729,7 +733,7 @@ void WorldMapRenderer::cleanupResources() {
         precipitationData_ = nullptr;
     }
     
-    textureValid_ = false;
+    // Note: Textures are now persistent, no need to invalidate
 }
 
 const char* WorldMapRenderer::getVisualizationModeName(VisualizationMode mode) {
@@ -767,8 +771,7 @@ void WorldMapRenderer::setViewport(float zoomLevel, float centerX, float centerY
     centerX_ = std::clamp(centerX_, halfViewSize, 1.0f - halfViewSize);
     centerY_ = std::clamp(centerY_, halfViewSize, 1.0f - halfViewSize);
     
-    // Mark texture as invalid to trigger regeneration
-    textureValid_ = false;
+    // Note: With double-buffered textures, regeneration is handled automatically
 }
 
 bool WorldMapRenderer::handleMouseInput(int mouseX, int mouseY, int mapWidth, int mapHeight, 
