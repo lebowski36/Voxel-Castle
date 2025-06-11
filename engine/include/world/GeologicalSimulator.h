@@ -2,6 +2,7 @@
 
 #include "world/ContinuousField.h"
 #include "world/GeologicalTypes.h"
+#include "world/FractalContinentGenerator.h"
 #include <memory>
 #include <functional>
 #include <chrono>
@@ -45,6 +46,9 @@ private:
     GeologicalPhase currentPhase_;
     float currentPhaseProgress_;
     PerformanceMetrics metrics_;
+    
+    // Fractal continental generation system (initialized after other members)
+    FractalContinentGenerator continentGenerator_;
     
 public:
     /**
@@ -144,6 +148,7 @@ private:
     void updatePerformanceMetrics();
     float calculateResistance(float x, float z) const;
     RockType determineRockType(float elevation, float stress, float temperature) const;
+    float getRockHardness(RockType rockType) const;
     
     /**
      * @brief Random number generation

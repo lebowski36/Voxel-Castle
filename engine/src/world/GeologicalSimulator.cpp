@@ -15,7 +15,7 @@ namespace World {
 
 GeologicalSimulator::GeologicalSimulator(int worldSizeKm, const GeologicalConfig& config)
     : config_(config), worldSizeKm_(static_cast<float>(worldSizeKm)), seed_(0), currentPhase_(GeologicalPhase::TECTONICS),
-      currentPhaseProgress_(0.0f) {
+      currentPhaseProgress_(0.0f), continentGenerator_(0) {  // Initialize with temporary seed 0
     
     std::cout << "[GeologicalSimulator] Initialized for " << worldSizeKm_ << "km world with " 
               << (config.preset == GeologicalPreset::BALANCED ? "BALANCED" : "OTHER") << " quality" << std::endl;
@@ -24,6 +24,9 @@ GeologicalSimulator::GeologicalSimulator(int worldSizeKm, const GeologicalConfig
 void GeologicalSimulator::initialize(uint64_t seed) {
     seed_ = seed;
     rng_.seed(seed);
+    
+    // Initialize the fractal continent generator with the real seed
+    continentGenerator_ = FractalContinentGenerator(seed);
     
     std::cout << "[GeologicalSimulator] Initializing with seed: " << seed << std::endl;
     
@@ -99,49 +102,25 @@ void GeologicalSimulator::initializeFields() {
     waterFlow_->fill(0.0f);
     rockTypes_->fill(RockType::IGNEOUS_GRANITE);
     
-    // Add seed-based initial variation with realistic elevation range
+    // NEW: Replace noise-based initialization with fractal continental generation
+    std::cout << "[GeologicalSimulator] Generating fractal continental foundation..." << std::endl;
+    continentGenerator_.GenerateContinentalFoundation(
+        *elevationField_,
+        *rockTypes_,
+        *mantleStress_,
+        worldSizeKm_
+    );
+    
+    // Calculate rock hardness based on rock types
     for (int z = 0; z < resolution; ++z) {
         for (int x = 0; x < resolution; ++x) {
-            float worldX = x * spacing;
-            float worldZ = z * spacing;
-            
-            // Seed-based coordinates for noise - much stronger influence for terrain variety
-            float seedX = worldX + (seed_ % 10000) * 10.0f;    // 10x stronger seed influence
-            float seedZ = worldZ + ((seed_ >> 16) % 10000) * 10.0f;
-            
-            // Initial mantle convection pattern - less regular, more seed-dependent
-            float mantleBase = VoxelEngine::Util::smoothValueNoise(seedX * 0.0001f, 0.0f, seedZ * 0.0001f);
-            float mantleDetail = VoxelEngine::Util::smoothValueNoise(seedX * 0.0003f, 42.0f, seedZ * 0.0003f) * 0.5f;
-            float mantleValue = (mantleBase + mantleDetail) * 1.5f;
-            mantleStress_->setSample(x, z, mantleValue);
-            
-            // Initial elevation variation with realistic range (-400m to +400m for more balanced start)
-            float elevationBase = VoxelEngine::Util::smoothValueNoise(seedX * 0.0003f, 0.0f, seedZ * 0.0003f);
-            float elevationDetail = VoxelEngine::Util::smoothValueNoise(seedX * 0.0008f, 123.0f, seedZ * 0.0008f) * 0.6f;
-            float elevationFine = VoxelEngine::Util::smoothValueNoise(seedX * 0.002f, 456.0f, seedZ * 0.002f) * 0.3f;
-            
-            // Combine multiple octaves and scale to realistic range
-            float elevationNormalized = elevationBase + elevationDetail + elevationFine;
-            float elevationValue = elevationNormalized * 400.0f; // Range: -400m to +400m (more conservative start)
-            elevationField_->setSample(x, z, elevationValue);
-            
-            // Seed-based rock type distribution
-            float rockNoise = VoxelEngine::Util::smoothValueNoise(seedX * 0.001f, 789.0f, seedZ * 0.001f);
-            RockType initialRock;
-            if (rockNoise < -0.3f) {
-                initialRock = RockType::SEDIMENTARY_LIMESTONE;
-            } else if (rockNoise < 0.0f) {
-                initialRock = RockType::IGNEOUS_BASALT;
-            } else if (rockNoise < 0.3f) {
-                initialRock = RockType::IGNEOUS_GRANITE;
-            } else {
-                initialRock = RockType::METAMORPHIC_QUARTZITE;
-            }
-            rockTypes_->setSample(x, z, initialRock);
+            RockType rockType = rockTypes_->getSample(x, z);
+            float hardness = getRockHardness(rockType);
+            rockHardness_->setSample(x, z, hardness);
         }
     }
     
-    std::cout << "[GeologicalSimulator] Fields initialized with base variation" << std::endl;
+    std::cout << "[GeologicalSimulator] Fields initialized with fractal continental foundation" << std::endl;
 }
 
 void GeologicalSimulator::runFullSimulation(std::function<void(const PhaseInfo&)> progressCallback) {
@@ -765,6 +744,27 @@ RockType GeologicalSimulator::determineRockType(float elevation, float stress, f
         return RockType::SEDIMENTARY_SHALE;
     } else {
         return RockType::IGNEOUS_GRANITE;
+    }
+}
+
+float GeologicalSimulator::getRockHardness(RockType rockType) const {
+    switch (rockType) {
+        case RockType::IGNEOUS_GRANITE:
+            return 9.0f;  // Very hard
+        case RockType::IGNEOUS_BASALT:
+            return 8.5f;  // Hard
+        case RockType::METAMORPHIC_QUARTZITE:
+            return 9.5f;  // Extremely hard
+        case RockType::METAMORPHIC_SLATE:
+            return 7.0f;  // Moderately hard
+        case RockType::SEDIMENTARY_LIMESTONE:
+            return 4.0f;  // Soft
+        case RockType::SEDIMENTARY_SANDSTONE:
+            return 6.0f;  // Medium
+        case RockType::SEDIMENTARY_SHALE:
+            return 3.0f;  // Very soft
+        default:
+            return 5.0f;  // Default medium hardness
     }
 }
 
