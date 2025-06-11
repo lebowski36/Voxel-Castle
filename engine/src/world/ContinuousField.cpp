@@ -26,10 +26,9 @@ ContinuousField<T>::ContinuousField(int width, int height, float spacing)
 
 template<typename T>
 T ContinuousField<T>::sampleAt(float x, float z) const {
-    // Wrap coordinates for toroidal topology
-    Point wrapped = wrapCoordinates(x, z);
-    x = wrapped.x;
-    z = wrapped.z;
+    // Clamp coordinates to world boundaries (no wrapping for realistic geology)
+    x = std::max(0.0f, std::min(x, worldWidth_ - 0.001f));
+    z = std::max(0.0f, std::min(z, worldHeight_ - 0.001f));
     
     // Convert to grid coordinates
     int gridX, gridZ;
@@ -48,8 +47,7 @@ T ContinuousField<T>::sampleAt(float x, float z) const {
     T baseValue = bicubicInterpolate(fx, fz, samples);
     
     // Add Perlin noise enhancement for organic variation
-    // Use wrapped coordinates for noise to ensure seamless boundaries
-    float noiseValue = generatePerlinNoise(wrapped.x, wrapped.z, 4);
+    float noiseValue = generatePerlinNoise(x, z, 4);
     
     // For scalar types, add noise directly
     if constexpr (std::is_arithmetic_v<T>) {

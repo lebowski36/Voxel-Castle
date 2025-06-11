@@ -99,22 +99,44 @@ void GeologicalSimulator::initializeFields() {
     waterFlow_->fill(0.0f);
     rockTypes_->fill(RockType::IGNEOUS_GRANITE);
     
-    // Add some initial variation
+    // Add seed-based initial variation with realistic elevation range
     for (int z = 0; z < resolution; ++z) {
         for (int x = 0; x < resolution; ++x) {
             float worldX = x * spacing;
             float worldZ = z * spacing;
             
-            // Initial mantle convection pattern
-            float mantleValue = VoxelEngine::Util::smoothValueNoise(worldX * 0.0001f, 0.0f, worldZ * 0.0001f) * 2.0f;
+            // Seed-based coordinates for noise
+            float seedX = worldX + (seed_ % 10000) * 0.1f;
+            float seedZ = worldZ + ((seed_ >> 16) % 10000) * 0.1f;
+            
+            // Initial mantle convection pattern - less regular, more seed-dependent
+            float mantleBase = VoxelEngine::Util::smoothValueNoise(seedX * 0.0001f, 0.0f, seedZ * 0.0001f);
+            float mantleDetail = VoxelEngine::Util::smoothValueNoise(seedX * 0.0003f, 42.0f, seedZ * 0.0003f) * 0.5f;
+            float mantleValue = (mantleBase + mantleDetail) * 1.5f;
             mantleStress_->setSample(x, z, mantleValue);
             
-            // Initial elevation variation
-            float elevationValue = VoxelEngine::Util::smoothValueNoise(worldX * 0.0005f, 0.0f, worldZ * 0.0005f) * 100.0f;
+            // Initial elevation variation with realistic range (-200m to +400m)
+            float elevationBase = VoxelEngine::Util::smoothValueNoise(seedX * 0.0003f, 0.0f, seedZ * 0.0003f);
+            float elevationDetail = VoxelEngine::Util::smoothValueNoise(seedX * 0.0008f, 123.0f, seedZ * 0.0008f) * 0.6f;
+            float elevationFine = VoxelEngine::Util::smoothValueNoise(seedX * 0.002f, 456.0f, seedZ * 0.002f) * 0.3f;
+            
+            // Combine multiple octaves and scale to realistic range
+            float elevationNormalized = elevationBase + elevationDetail + elevationFine;
+            float elevationValue = (elevationNormalized * 300.0f) - 100.0f; // Range: -200m to +400m
             elevationField_->setSample(x, z, elevationValue);
             
-            // Initial rock type distribution
-            RockType initialRock = (random01() < 0.7f) ? RockType::IGNEOUS_GRANITE : RockType::IGNEOUS_BASALT;
+            // Seed-based rock type distribution
+            float rockNoise = VoxelEngine::Util::smoothValueNoise(seedX * 0.001f, 789.0f, seedZ * 0.001f);
+            RockType initialRock;
+            if (rockNoise < -0.3f) {
+                initialRock = RockType::SEDIMENTARY_LIMESTONE;
+            } else if (rockNoise < 0.0f) {
+                initialRock = RockType::IGNEOUS_BASALT;
+            } else if (rockNoise < 0.3f) {
+                initialRock = RockType::IGNEOUS_GRANITE;
+            } else {
+                initialRock = RockType::METAMORPHIC_QUARTZITE;
+            }
             rockTypes_->setSample(x, z, initialRock);
         }
     }
@@ -259,51 +281,52 @@ GeologicalSample GeologicalSimulator::getSampleAt(float x, float z) const {
 
 // Implementation of simulation methods
 void GeologicalSimulator::simulateMantleConvection(float timeStep) {
-    auto resistance = [this](float x, float z) -> float {
-        return 1.0f; // Uniform resistance for mantle convection
-    };
+    // Wave-based convection that naturally works with toroidal topology
+    // This creates seamless, realistic geological patterns without convergence artifacts
     
-    // Scale convection based on quality preset - realistic geological scales
-    int numCells, maxRange;
-    switch (config_.preset) {
-        case GeologicalPreset::PERFORMANCE:
-            numCells = 8; // Basic but visible convection patterns
-            maxRange = 50000; // 50km max range - continental scale features
-            break;
-        case GeologicalPreset::BALANCED:
-            numCells = 16; // Good number of convection patterns
-            maxRange = 100000; // 100km max range - realistic mantle cell size
-            break;
-        case GeologicalPreset::QUALITY:
-            numCells = 24; // Detailed convection patterns
-            maxRange = 200000; // 200km max range - large geological features
-            break;
-        default:
-            numCells = 32; // Maximum detail convection
-            maxRange = 300000; // 300km max range - continental-scale features
-            break;
-    }
+    // Seed-based wave parameters for variety
+    int numWavesX = 2 + (seed_ % 3);       // 2-4 waves horizontally
+    int numWavesZ = 2 + ((seed_ >> 8) % 3); // 2-4 waves vertically
+    float phaseX = (seed_ % 1000) * 0.001f * 2.0f * M_PI;
+    float phaseZ = ((seed_ >> 16) % 1000) * 0.001f * 2.0f * M_PI;
     
-    // Ensure we don't go beyond field boundaries
-    float maxWorldDistance = std::min(worldSizeKm_ * 1000.0f * 0.4f, static_cast<float>(maxRange));
+    // Process all points in parallel for efficiency
+    std::vector<int> indices(mantleStress_->getHeight() * mantleStress_->getWidth());
+    std::iota(indices.begin(), indices.end(), 0);
     
-    // Create convection cells with parallel processing
-    std::vector<int> cellIndices(numCells);
-    std::iota(cellIndices.begin(), cellIndices.end(), 0);
-    
-    std::for_each(std::execution::par_unseq, cellIndices.begin(), cellIndices.end(), [&](int i) {
-        // Ensure coordinates are well within bounds
-        float margin = maxWorldDistance * 0.5f;
-        float x = randomRange(margin, (worldSizeKm_ * 1000.0f) - margin);
-        float z = randomRange(margin, (worldSizeKm_ * 1000.0f) - margin);
-        float strength = randomRange(2.0f, 8.0f) * timeStep; // Stronger tectonic forces for visible changes
-        float range = randomRange(maxWorldDistance * 0.3f, maxWorldDistance); // Variable range within safe limits
+    std::for_each(std::execution::par_unseq, indices.begin(), indices.end(), [&](int idx) {
+        int z = idx / mantleStress_->getWidth();
+        int x = idx % mantleStress_->getWidth();
         
-        // Ensure range doesn't exceed world boundaries and clamp strength
-        range = std::min(range, maxWorldDistance);
-        strength = std::max(0.1f, std::min(20.0f, strength)); // Higher strength for dramatic geological changes
+        float worldX = x * mantleStress_->getSampleSpacing();
+        float worldZ = z * mantleStress_->getSampleSpacing();
         
-        mantleStress_->propagateValue(strength, x, z, range, resistance);
+        // Normalize coordinates to 0-1 for wave calculations
+        float normX = worldX / (worldSizeKm_ * 1000.0f);
+        float normZ = worldZ / (worldSizeKm_ * 1000.0f);
+        
+        // Create layered wave patterns for complex but natural terrain
+        float stress = 0.0f;
+        
+        // Large continental-scale waves (primary pattern)
+        float primaryWave = std::sin(normX * numWavesX * 2.0f * M_PI + phaseX) *
+                           std::cos(normZ * numWavesZ * 2.0f * M_PI + phaseZ);
+        stress += primaryWave * 0.8f;
+        
+        // Medium regional-scale waves (secondary pattern)
+        float secondaryWave = std::cos(normX * (numWavesX * 1.5f) * 2.0f * M_PI + phaseX * 1.3f) *
+                             std::sin(normZ * (numWavesZ * 1.7f) * 2.0f * M_PI + phaseZ * 0.7f);
+        stress += secondaryWave * 0.4f;
+        
+        // Small local-scale waves (tertiary pattern)
+        float tertiaryWave = std::sin(normX * (numWavesX * 2.5f) * 2.0f * M_PI + phaseX * 2.1f) *
+                            std::cos(normZ * (numWavesZ * 2.3f) * 2.0f * M_PI + phaseZ * 1.9f);
+        stress += tertiaryWave * 0.2f;
+        
+        // Apply realistic mantle convection strength
+        stress *= timeStep * 0.3f; // Reduced from 0.5f for more gradual changes
+        
+        mantleStress_->addToSample(x, z, stress);
     });
 }
 
@@ -315,10 +338,10 @@ void GeologicalSimulator::simulatePlateMovement(float timeStep) {
     // Simple sequential processing for now to avoid segfaults
     for (int z = 0; z < height; ++z) {
         for (int x = 0; x < width; ++x) {        float mantleValue = mantleStress_->getSample(x, z);
-        float transferredStress = mantleValue * timeStep * 0.3f; // Increased transfer rate for visible changes
+        float transferredStress = mantleValue * timeStep * 0.1f; // Reduced transfer rate for realistic changes
         
         // Clamp stress values to prevent overflow
-        transferredStress = std::max(-50.0f, std::min(50.0f, transferredStress));
+        transferredStress = std::max(-10.0f, std::min(10.0f, transferredStress)); // Reduced clamping range
         crustStress_->addToSample(x, z, transferredStress);
         }
     }
@@ -335,17 +358,17 @@ void GeologicalSimulator::simulateMountainBuilding(float timeStep) {
             float stress = crustStress_->getSample(x, z);
             float rockHard = rockHardness_->getSample(x, z);
                  if (stress > 0.5f) { // Compression threshold
-            float uplift = stress * timeStep * 25.0f / rockHard; // Increased uplift rate for dramatic mountain building
+            float uplift = stress * timeStep * 2.5f / rockHard; // Reduced from 25.0f to 2.5f for realistic elevations
             
-            // Clamp uplift to prevent unrealistic mountain growth but allow significant changes
-            uplift = std::max(-200.0f, std::min(200.0f, uplift));
+            // Clamp uplift to prevent unrealistic mountain growth
+            uplift = std::max(-15.0f, std::min(15.0f, uplift)); // Reduced from ±200.0f to ±15.0f
             elevationField_->addToSample(x, z, uplift);
             
             // Determine new rock type based on pressure and temperature
             float currentElevation = elevationField_->getSample(x, z);
             
-            // Clamp elevation to reasonable bounds
-            currentElevation = std::max(-5000.0f, std::min(10000.0f, currentElevation));
+            // Clamp elevation to realistic mountain/ocean range (-1800m to +1800m)
+            currentElevation = std::max(-1800.0f, std::min(1800.0f, currentElevation));
             elevationField_->setSample(x, z, currentElevation);
             
             if (currentElevation > 2000.0f && stress > 3.0f) {
@@ -358,56 +381,60 @@ void GeologicalSimulator::simulateMountainBuilding(float timeStep) {
 }
 
 void GeologicalSimulator::simulateVolcanicActivity(float timeStep) {
-    // Create volcanic hotspots - realistic number for geological realism
-    int numVolcanoes = 3 + static_cast<int>(random01() * 5); // 3-8 volcanic events for proper geological activity
+    // Wave-based volcanic activity that creates linear volcanic chains
+    // This avoids circular patterns and works beautifully with toroidal topology
     
-    for (int i = 0; i < numVolcanoes; ++i) {
-        float x = randomRange(0, worldSizeKm_ * 1000.0f);
-        float z = randomRange(0, worldSizeKm_ * 1000.0f);
+    // Seed-based parameters for volcanic distribution
+    int numChains = 1 + (seed_ % 3);  // 1-3 volcanic chains
+    float chainAngle = (seed_ % 1000) * 0.001f * 2.0f * M_PI; // Base angle for first chain
+    
+    for (int chain = 0; chain < numChains; ++chain) {
+        // Each chain has a different angle based on seed
+        float angle = chainAngle + (chain * M_PI / numChains);
         
-        // Convert to grid coordinates
-        int gridX = static_cast<int>(x / elevationField_->getSampleSpacing());
-        int gridZ = static_cast<int>(z / elevationField_->getSampleSpacing());
+        // Create linear volcanic activity using sine waves
+        int height = elevationField_->getHeight();
+        int width = elevationField_->getWidth();
         
-        // Validate grid coordinates
-        if (gridX < 0 || gridX >= elevationField_->getWidth() || 
-            gridZ < 0 || gridZ >= elevationField_->getHeight()) {
-            continue;
-        }
+        std::vector<int> indices(height * width);
+        std::iota(indices.begin(), indices.end(), 0);
         
-        // Create volcanic cone
-        float volcanoHeight = randomRange(500.0f, 2500.0f); // Realistic volcano height range
-        elevationField_->addToSample(gridX, gridZ, volcanoHeight);
-        rockTypes_->setSample(gridX, gridZ, RockType::IGNEOUS_BASALT);
-        rockHardness_->setSample(gridX, gridZ, 7.0f);
-        
-        // Volcanic influence radius - realistic geological impact
-        int radius = 8 + static_cast<int>(random01() * 15); // Larger radius for proper geological impact
-        
-        // Parallel processing of volcanic influence
-        std::vector<std::pair<int, int>> coords;
-        for (int dz = -radius; dz <= radius; ++dz) {
-            for (int dx = -radius; dx <= radius; ++dx) {
-                float distance = std::sqrt(dx*dx + dz*dz);
-                if (distance <= radius) {
-                    int targetX = gridX + dx;
-                    int targetZ = gridZ + dz;
-                    if (targetX >= 0 && targetX < elevationField_->getWidth() && 
-                        targetZ >= 0 && targetZ < elevationField_->getHeight()) {
-                        coords.push_back({targetX, targetZ});
-                    }
+        std::for_each(std::execution::par_unseq, indices.begin(), indices.end(), [&](int idx) {
+            int z = idx / width;
+            int x = idx % width;
+            
+            float worldX = x * elevationField_->getSampleSpacing();
+            float worldZ = z * elevationField_->getSampleSpacing();
+            
+            // Normalize coordinates
+            float normX = worldX / (worldSizeKm_ * 1000.0f);
+            float normZ = worldZ / (worldSizeKm_ * 1000.0f);
+            
+            // Create linear volcanic activity along specific directions
+            float distanceFromChain = std::abs(
+                normX * std::cos(angle + M_PI/2) + 
+                normZ * std::sin(angle + M_PI/2)
+            );
+            
+            // Volcanic activity intensity based on distance from chain
+            float volcanicIntensity = std::exp(-distanceFromChain * distanceFromChain * 50.0f);
+            
+            // Add variation along the chain using waves
+            float chainPosition = normX * std::cos(angle) + normZ * std::sin(angle);
+            float chainVariation = std::sin(chainPosition * 4.0f * M_PI + (seed_ % 100) * 0.01f);
+            volcanicIntensity *= (0.5f + 0.5f * chainVariation);
+            
+            // Only create volcanic features where intensity is significant
+            if (volcanicIntensity > 0.1f) {
+                float volcanoHeight = volcanicIntensity * randomRange(100.0f, 400.0f) * timeStep;
+                elevationField_->addToSample(x, z, volcanoHeight);
+                
+                // Set volcanic rock type for strong volcanic areas
+                if (volcanicIntensity > 0.3f) {
+                    rockTypes_->setSample(x, z, RockType::IGNEOUS_BASALT);
+                    rockHardness_->setSample(x, z, 7.0f + volcanicIntensity * 2.0f);
                 }
             }
-        }
-        
-        std::for_each(std::execution::par_unseq, coords.begin(), coords.end(), [&](const auto& coord) {
-            int targetX = coord.first;
-            int targetZ = coord.second;
-            float dx = targetX - gridX;
-            float dz = targetZ - gridZ;
-            float distance = std::sqrt(dx*dx + dz*dz);
-            float heightMod = volcanoHeight * (1.0f - distance / radius) * 0.3f;
-            elevationField_->addToSample(targetX, targetZ, heightMod);
         });
     }
 }

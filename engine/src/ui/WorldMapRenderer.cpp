@@ -5,6 +5,7 @@
 #include <iostream>
 #include <algorithm>
 #include <vector>
+#include <chrono>
 #include <glad/glad.h>
 
 namespace VoxelEngine::UI {
@@ -66,6 +67,19 @@ void WorldMapRenderer::generateWorldMap(VoxelCastle::World::SeedWorldGenerator* 
         return;
     }
     
+    // Throttle texture regeneration to prevent flickering during rapid updates
+    static auto lastGenerationTime = std::chrono::steady_clock::now();
+    auto currentTime = std::chrono::steady_clock::now();
+    auto timeSinceGeneration = std::chrono::duration_cast<std::chrono::milliseconds>(currentTime - lastGenerationTime).count();
+    
+    // Only regenerate if at least 1 second has passed since last generation
+    if (textureValid_ && timeSinceGeneration < 1000) {
+        std::cout << "[WorldMapRenderer] Skipping regeneration - too frequent (last: " << timeSinceGeneration << "ms ago)" << std::endl;
+        return;
+    }
+    
+    lastGenerationTime = currentTime;
+
     // Store the world size for proper sampling
     worldSizeKm_ = worldSizeKm;
     
@@ -145,7 +159,6 @@ void WorldMapRenderer::generateWorldMap(VoxelCastle::World::SeedWorldGenerator* 
     createTextureFromColorData(colorData, resolution_);
     
     delete[] colorData;
-    textureValid_ = true;
     
     std::cout << "[WorldMapRenderer] World map generation complete" << std::endl;
 }
@@ -628,6 +641,9 @@ void WorldMapRenderer::precipitationToColor(float precMmYear, GenerationPhase ph
 }
 
 void WorldMapRenderer::createTextureFromColorData(const unsigned char* colorData, int resolution) {
+    // Mark texture as invalid during recreation to prevent rendering attempts
+    textureValid_ = false;
+    
     // Delete existing texture if present
     if (worldTexture_ != 0) {
         glDeleteTextures(1, &worldTexture_);
@@ -638,6 +654,7 @@ void WorldMapRenderer::createTextureFromColorData(const unsigned char* colorData
     GLenum error = glGetError();
     if (error != GL_NO_ERROR) {
         std::cerr << "[WorldMapRenderer] OpenGL error before texture creation: " << error << std::endl;
+        textureValid_ = false;
         return;
     }
 
@@ -646,6 +663,7 @@ void WorldMapRenderer::createTextureFromColorData(const unsigned char* colorData
     error = glGetError();
     if (error != GL_NO_ERROR) {
         std::cerr << "[WorldMapRenderer] Error generating texture: " << error << std::endl;
+        textureValid_ = false;
         return;
     }
     
@@ -653,6 +671,7 @@ void WorldMapRenderer::createTextureFromColorData(const unsigned char* colorData
     error = glGetError();
     if (error != GL_NO_ERROR) {
         std::cerr << "[WorldMapRenderer] Error binding texture: " << error << std::endl;
+        textureValid_ = false;
         return;
     }
 
@@ -669,11 +688,15 @@ void WorldMapRenderer::createTextureFromColorData(const unsigned char* colorData
         std::cerr << "[WorldMapRenderer] Error uploading texture data: " << error << std::endl;
         glDeleteTextures(1, &worldTexture_);
         worldTexture_ = 0;
+        textureValid_ = false;  // Ensure invalid state on failure
         return;
     }
 
     // Unbind texture
     glBindTexture(GL_TEXTURE_2D, 0);
+
+    // Mark texture as valid now that creation is complete
+    textureValid_ = true;
 
     std::cout << "[WorldMapRenderer] Created texture ID " << worldTexture_ 
               << " with resolution " << resolution << "x" << resolution << std::endl;

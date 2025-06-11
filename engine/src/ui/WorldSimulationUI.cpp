@@ -1017,11 +1017,17 @@ void WorldSimulationUI::onGeologicalPhaseUpdate(const VoxelCastle::World::PhaseI
         addLogEntry(phaseInfo.currentProcess, static_cast<int>(phaseInfo.timeRemaining));
     }
     
-    // Update world map visualization if progress changed significantly
+    // Update world map visualization at reasonable intervals to avoid flickering
     static float lastUpdateProgress = -1.0f;
-    if (std::abs(phaseInfo.phaseProgress - lastUpdateProgress) > 0.1f) { // Update every 10%
+    static auto lastUpdateTime = std::chrono::steady_clock::now();
+    auto currentTime = std::chrono::steady_clock::now();
+    auto timeSinceUpdate = std::chrono::duration_cast<std::chrono::milliseconds>(currentTime - lastUpdateTime).count();
+    
+    // Only update map if significant progress change (25%) AND at least 2 seconds have passed
+    if (std::abs(phaseInfo.phaseProgress - lastUpdateProgress) > 0.25f && timeSinceUpdate > 2000) {
         updateWorldMapVisualization();
         lastUpdateProgress = phaseInfo.phaseProgress;
+        lastUpdateTime = currentTime;
     }
 }
 
