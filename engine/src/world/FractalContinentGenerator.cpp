@@ -65,31 +65,55 @@ void FractalContinentGenerator::generateContinentalPlates(float worldSizeKm) {
     // Generate continental seeds using Mitchell's best-candidate algorithm
     auto continentalSeeds = generateContinentalSeeds(worldSizeKm, numContinents);
     
-    // Create continental plates with varying sizes
+    // Create continental plates with organic size variation
     for (int i = 0; i < numContinents; ++i) {
         ContinentalPlate plate;
         plate.center = continentalSeeds[i];
         plate.plateId = i;
         
-        // Size variation: largest ~40% of world, smallest ~5%
-        float sizeVariation = 0.05f + (0.35f * dist(rng)); // 5% to 40% of world size
+        // Use fractal noise to determine continent size (more organic than pure random)
+        float sizeNoise = fractionalBrownianMotion(plate.center.x * 0.0001f, plate.center.y * 0.0001f, 3, 0.7f);
+        float normalizedSizeNoise = (sizeNoise + 1.0f) * 0.5f; // Normalize to 0-1
+        
+        // Create diverse continent sizes: some large landmasses, some smaller islands
+        float sizeVariation;
+        if (normalizedSizeNoise > 0.7f) {
+            // Large continents (20-45% of world size)
+            sizeVariation = 0.20f + (0.25f * dist(rng));
+        } else if (normalizedSizeNoise > 0.4f) {
+            // Medium continents (10-25% of world size)
+            sizeVariation = 0.10f + (0.15f * dist(rng));
+        } else {
+            // Small continents/large islands (3-12% of world size)
+            sizeVariation = 0.03f + (0.09f * dist(rng));
+        }
+        
         plate.radius = worldSizeMeters * sizeVariation * 0.5f; // Convert to radius
         
-        // Base elevation for continents (0m to +400m)
-        plate.elevation = 100.0f + (300.0f * dist(rng)); // 100m to 400m base elevation
+        // Base elevation varies with continent size (larger = higher average elevation)
+        float elevationBase = 50.0f + (sizeVariation * 800.0f); // Larger continents are higher
+        float elevationVariation = 150.0f * dist(rng);
+        plate.elevation = elevationBase + elevationVariation;
         
-        // Assign dominant rock type (continental crust)
+        // Assign dominant rock type based on location and size
         float rockChoice = dist(rng);
-        if (rockChoice < 0.4f) {
+        float locationFactor = fractionalBrownianMotion(plate.center.x * 0.0002f, plate.center.y * 0.0002f, 2, 0.5f);
+        
+        if (locationFactor > 0.3f && sizeVariation > 0.15f) {
+            // Large continents tend to have more granite (ancient cores)
             plate.dominantRockType = RockType::IGNEOUS_GRANITE;
+        } else if (rockChoice < 0.4f) {
+            plate.dominantRockType = RockType::SEDIMENTARY_SANDSTONE;
         } else if (rockChoice < 0.7f) {
             plate.dominantRockType = RockType::METAMORPHIC_QUARTZITE;
         } else {
-            plate.dominantRockType = RockType::SEDIMENTARY_SANDSTONE;
+            plate.dominantRockType = RockType::IGNEOUS_GRANITE;
         }
         
-        // Tectonic activity varies by plate
-        plate.tectonicActivity = 0.3f + (0.7f * dist(rng)); // 0.3 to 1.0
+        // Tectonic activity varies by plate size and location
+        float baseTectonicActivity = 0.2f + (0.6f * dist(rng));
+        float sizeFactor = std::min(1.0f, sizeVariation / 0.3f); // Larger plates more active
+        plate.tectonicActivity = baseTectonicActivity * (0.7f + 0.6f * sizeFactor);
         
         continentalPlates_.push_back(plate);
     }
@@ -101,38 +125,98 @@ std::vector<glm::vec2> FractalContinentGenerator::generateContinentalSeeds(float
     
     std::vector<glm::vec2> seeds;
     float worldSizeMeters = worldSizeKm * 1000.0f;
-    float minDistance = worldSizeMeters * 0.15f; // Minimum 15% of world size between continents
     
-    // Mitchell's best-candidate algorithm for good distribution
-    int maxAttempts = 100;
+    // Use fractal clustering instead of uniform distribution
+    // Generate primary clusters first, then place continents within clusters
+    int numClusters = std::max(1, numContinents / 2); // 1-3 clusters for 3-6 continents
+    std::vector<glm::vec2> clusterCenters;
     
-    for (int i = 0; i < numContinents; ++i) {
-        glm::vec2 bestCandidate;
-        float bestDistance = 0.0f;
+    // Generate cluster centers with some randomness but avoid edges
+    for (int i = 0; i < numClusters; ++i) {
+        glm::vec2 clusterCenter;
         
-        for (int attempt = 0; attempt < maxAttempts; ++attempt) {
-            // Generate random candidate position
+        // Bias toward interesting areas using noise
+        float searchAttempts = 50;
+        float bestNoise = -1.0f;
+        glm::vec2 bestPos;
+        
+        for (int attempt = 0; attempt < searchAttempts; ++attempt) {
             glm::vec2 candidate;
-            candidate.x = dist(rng) * worldSizeMeters;
-            candidate.y = dist(rng) * worldSizeMeters;
+            // Keep clusters away from world edges
+            candidate.x = (0.2f + 0.6f * dist(rng)) * worldSizeMeters;
+            candidate.y = (0.2f + 0.6f * dist(rng)) * worldSizeMeters;
             
-            // Find distance to nearest existing seed
-            float nearestDistance = worldSizeMeters; // Start with max possible
-            for (const auto& existingSeed : seeds) {
-                float distance = glm::length(candidate - existingSeed);
-                nearestDistance = std::min(nearestDistance, distance);
-            }
-            
-            // Keep candidate with best (largest) minimum distance
-            if (nearestDistance > bestDistance) {
-                bestDistance = nearestDistance;
-                bestCandidate = candidate;
+            // Use noise to find interesting cluster locations
+            float noiseValue = fractionalBrownianMotion(candidate.x * 0.0001f, candidate.y * 0.0001f, 4, 0.6f);
+            if (noiseValue > bestNoise) {
+                bestNoise = noiseValue;
+                bestPos = candidate;
             }
         }
         
-        // Accept best candidate if it meets minimum distance requirement or we're out of attempts
-        if (bestDistance >= minDistance || seeds.empty()) {
-            seeds.push_back(bestCandidate);
+        clusterCenters.push_back(bestPos);
+    }
+    
+    // Place continents within clusters with organic distribution
+    int continentsPlaced = 0;
+    for (int cluster = 0; cluster < numClusters && continentsPlaced < numContinents; ++cluster) {
+        int continentsInCluster = (numContinents - continentsPlaced) / (numClusters - cluster);
+        if (continentsInCluster < 1) continentsInCluster = 1;
+        
+        glm::vec2 clusterCenter = clusterCenters[cluster];
+        float clusterRadius = worldSizeMeters * 0.3f; // Clusters can span 30% of world
+        
+        for (int i = 0; i < continentsInCluster && continentsPlaced < numContinents; ++i) {
+            glm::vec2 continentPos;
+            bool positionFound = false;
+            int maxAttempts = 200;
+            
+            for (int attempt = 0; attempt < maxAttempts; ++attempt) {
+                // Generate position within cluster using fractal distribution
+                float angle = dist(rng) * 2.0f * M_PI;
+                float distance = std::pow(dist(rng), 0.7f) * clusterRadius; // Bias toward cluster center
+                
+                // Add fractal offset for organic positioning
+                float fractalOffsetX = fractionalBrownianMotion(angle * 10.0f, distance * 0.001f, 3, 0.5f) * clusterRadius * 0.3f;
+                float fractalOffsetY = fractionalBrownianMotion((angle + M_PI) * 10.0f, distance * 0.001f, 3, 0.5f) * clusterRadius * 0.3f;
+                
+                continentPos = clusterCenter + glm::vec2(
+                    std::cos(angle) * distance + fractalOffsetX,
+                    std::sin(angle) * distance + fractalOffsetY
+                );
+                
+                // Keep within world bounds
+                continentPos.x = std::max(worldSizeMeters * 0.05f, std::min(worldSizeMeters * 0.95f, continentPos.x));
+                continentPos.y = std::max(worldSizeMeters * 0.05f, std::min(worldSizeMeters * 0.95f, continentPos.y));
+                
+                // Check minimum distance to existing continents (but allow closer than before for organic clustering)
+                float minDistance = worldSizeMeters * 0.08f; // Reduced from 0.15f
+                bool tooClose = false;
+                
+                for (const auto& existingSeed : seeds) {
+                    if (glm::length(continentPos - existingSeed) < minDistance) {
+                        tooClose = true;
+                        break;
+                    }
+                }
+                
+                if (!tooClose) {
+                    positionFound = true;
+                    break;
+                }
+            }
+            
+            if (positionFound) {
+                seeds.push_back(continentPos);
+                continentsPlaced++;
+            } else {
+                // Fall back to any valid position if organic placement fails
+                glm::vec2 fallbackPos;
+                fallbackPos.x = (0.1f + 0.8f * dist(rng)) * worldSizeMeters;
+                fallbackPos.y = (0.1f + 0.8f * dist(rng)) * worldSizeMeters;
+                seeds.push_back(fallbackPos);
+                continentsPlaced++;
+            }
         }
     }
     
@@ -178,12 +262,34 @@ void FractalContinentGenerator::generateCoastlines(ContinuousField<float>& eleva
             if (nearestPlate) {
                 float distanceToCenter = glm::length(worldPos - nearestPlate->center);
                 
-                if (distanceToCenter <= nearestPlate->radius) {
-                    // Inside continental plate - apply base elevation + coastline noise
+                // Generate fractal coastline variation
+                float coastlineNoise = generateCoastlineNoise(worldPos, nearestPlate);
+                
+                // Apply MUCH more aggressive noise to effective radius for truly organic coastlines
+                float radiusVariation = coastlineNoise * 0.8f; // Increased from 0.3f - much more dramatic
+                
+                // Add secondary warping for even more organic shapes
+                float secondaryWarp = fractionalBrownianMotion(worldPos.x * 0.0002f, worldPos.y * 0.0002f, 6, 0.6f) * nearestPlate->radius * 0.4f;
+                
+                float effectiveRadius = nearestPlate->radius + radiusVariation + secondaryWarp;
+                
+                // Make coastlines even more irregular with distance-based modulation
+                float coastalZone = std::abs(distanceToCenter - nearestPlate->radius) / (nearestPlate->radius * 0.3f);
+                if (coastalZone < 1.0f) {
+                    // In coastal zone - add extra irregularity
+                    float coastalChaos = fractionalBrownianMotion(worldPos.x * 0.001f, worldPos.y * 0.001f, 8, 0.4f);
+                    effectiveRadius += coastalChaos * nearestPlate->radius * 0.3f * (1.0f - coastalZone);
+                }
+                
+                if (distanceToCenter <= effectiveRadius) {
+                    // Inside continental plate - apply base elevation with terrain variation
                     float baseElevation = nearestPlate->elevation;
-                    float coastlineNoise = generateCoastlineNoise(worldPos, nearestPlate);
-                    float finalElevation = baseElevation + coastlineNoise;
                     
+                    // Add terrain variation that decreases toward coastline
+                    float centerDistance = distanceToCenter / nearestPlate->radius;
+                    float terrainVariation = coastlineNoise * 0.1f * (1.0f - centerDistance); // Less variation near coast
+                    
+                    float finalElevation = baseElevation + terrainVariation;
                     elevationField.setSample(x, z, finalElevation);
                 } else {
                     // Outside continental plates - ocean depth
@@ -565,27 +671,70 @@ std::vector<glm::vec2> FractalContinentGenerator::interpretLSystemString(const s
 }
 
 float FractalContinentGenerator::generateCoastlineNoise(const glm::vec2& worldPos, const ContinentalPlate* plate) const {
-    float scale = 0.0001f;
-    float amplitude = 8000.0f;
+    // Use plate-specific seed for consistent but unique patterns per continent
+    uint64_t plateSpecificSeed = seed_ + (plate->plateId * 12345);
     
-    // Multi-layer fractal noise for realistic coastlines
-    float largeScale = perlinNoise(worldPos.x * scale * 0.5f, worldPos.y * scale * 0.5f, 1.0f) * amplitude;
-    float mediumScale = perlinNoise(worldPos.x * scale * 2.0f, worldPos.y * scale * 2.0f, 1.0f) * amplitude * 0.4f;
-    float smallScale = perlinNoise(worldPos.x * scale * 8.0f, worldPos.y * scale * 8.0f, 1.0f) * amplitude * 0.15f;
-    
-    // Angular variation
     glm::vec2 relativePos = worldPos - plate->center;
-    float angle = std::atan2(relativePos.y, relativePos.x);
-    float directionalNoise = std::sin(angle * 3.0f) * amplitude * 0.2f;
-    
-    float totalNoise = largeScale + mediumScale + smallScale + directionalNoise;
-    
-    // Reduce variation far from coastline
     float distanceFromCenter = glm::length(relativePos);
-    float centerFactor = std::min(1.0f, distanceFromCenter / (plate->radius * 0.8f));
-    float variationFactor = std::sin(centerFactor * M_PI) * 0.8f + 0.2f;
+    float normalizedDistance = distanceFromCenter / plate->radius;
     
-    return totalNoise * variationFactor;
+    // MUCH more aggressive domain warping for highly organic shapes
+    float warpScale = 0.0005f; // Increased frequency for more detail
+    float warpStrength = plate->radius * 0.8f; // Doubled warp strength
+    
+    // Multi-layer domain warping for extremely organic shapes
+    float warpX1 = fractionalBrownianMotion(worldPos.x * warpScale, worldPos.y * warpScale, 6, 0.7f) * warpStrength;
+    float warpY1 = fractionalBrownianMotion((worldPos.x + 1234.0f) * warpScale, (worldPos.y + 1234.0f) * warpScale, 6, 0.7f) * warpStrength;
+    
+    // Second layer of warping for even more chaos
+    float warpX2 = fractionalBrownianMotion(worldPos.x * warpScale * 3.0f, worldPos.y * warpScale * 3.0f, 4, 0.5f) * warpStrength * 0.3f;
+    float warpY2 = fractionalBrownianMotion((worldPos.x + 5678.0f) * warpScale * 3.0f, (worldPos.y + 5678.0f) * warpScale * 3.0f, 4, 0.5f) * warpStrength * 0.3f;
+    
+    glm::vec2 warpedPos = worldPos + glm::vec2(warpX1 + warpX2, warpY1 + warpY2);
+    
+    // Much more dramatic amplitude for highly irregular coastlines
+    float baseScale = 0.0004f; // Increased frequency
+    float amplitude = plate->radius * 0.5f; // Doubled from 0.25f - MUCH more variation
+    
+    // Multiple noise layers with varying characteristics for maximum organic complexity
+    float continentalShape = fractionalBrownianMotion(warpedPos.x * baseScale * 0.2f, warpedPos.y * baseScale * 0.2f, 4, 0.8f) * amplitude;
+    float coastalFeatures = fractionalBrownianMotion(warpedPos.x * baseScale * 1.0f, warpedPos.y * baseScale * 1.0f, 6, 0.6f) * amplitude * 0.8f;
+    float coastalDetail = fractionalBrownianMotion(warpedPos.x * baseScale * 4.0f, warpedPos.y * baseScale * 4.0f, 8, 0.4f) * amplitude * 0.6f;
+    float microDetail = fractionalBrownianMotion(warpedPos.x * baseScale * 12.0f, warpedPos.y * baseScale * 12.0f, 6, 0.3f) * amplitude * 0.3f;
+    
+    // Ridged noise for dramatic coastal features (fjords, cliffs, peninsulas)
+    float ridgedFeatures1 = (1.0f - std::abs(perlinNoise(warpedPos.x * baseScale * 1.5f, warpedPos.y * baseScale * 1.5f, 1.0f)));
+    ridgedFeatures1 = std::pow(ridgedFeatures1, 1.5f) * amplitude * 0.7f;
+    
+    float ridgedFeatures2 = (1.0f - std::abs(perlinNoise(warpedPos.x * baseScale * 6.0f, warpedPos.y * baseScale * 6.0f, 1.0f)));
+    ridgedFeatures2 = std::pow(ridgedFeatures2, 2.0f) * amplitude * 0.4f;
+    
+    // Multiple angular harmonics for maximum irregularity
+    float angle = std::atan2(relativePos.y, relativePos.x);
+    float angularVar1 = std::sin(angle * 2.0f + plateSpecificSeed) * amplitude * 0.3f;
+    float angularVar2 = std::sin(angle * 5.0f + plateSpecificSeed * 2) * amplitude * 0.2f;
+    float angularVar3 = std::sin(angle * 11.0f + plateSpecificSeed * 3) * amplitude * 0.15f;
+    float angularVar4 = std::sin(angle * 23.0f + plateSpecificSeed * 4) * amplitude * 0.1f;
+    
+    // Turbulence for chaotic coastlines
+    float turbulence = std::abs(fractionalBrownianMotion(warpedPos.x * baseScale * 8.0f, warpedPos.y * baseScale * 8.0f, 6, 0.5f)) * amplitude * 0.4f;
+    
+    // Combine all variations for maximum organic complexity
+    float totalNoise = continentalShape + coastalFeatures + coastalDetail + microDetail + 
+                      ridgedFeatures1 + ridgedFeatures2 + angularVar1 + angularVar2 + angularVar3 + angularVar4 + turbulence;
+    
+    // Apply organic falloff (not linear - use power function for more natural transitions)
+    float falloffFactor = 1.0f;
+    if (normalizedDistance < 0.3f) {
+        // Smooth interior with organic increase toward coast
+        falloffFactor = std::pow(normalizedDistance / 0.3f, 0.7f);
+    } else if (normalizedDistance > 0.9f) {
+        // Organic falloff beyond coastline
+        float beyondCoast = (normalizedDistance - 0.9f) / 0.3f;
+        falloffFactor = std::max(0.1f, 1.0f - std::pow(beyondCoast, 1.5f));
+    }
+    
+    return totalNoise * falloffFactor;
 }
 
 float FractalContinentGenerator::perlinNoise(float x, float y, float frequency) const {
