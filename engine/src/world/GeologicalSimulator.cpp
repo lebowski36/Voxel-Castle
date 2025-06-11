@@ -115,14 +115,14 @@ void GeologicalSimulator::initializeFields() {
             float mantleValue = (mantleBase + mantleDetail) * 1.5f;
             mantleStress_->setSample(x, z, mantleValue);
             
-            // Initial elevation variation with realistic range (-600m to +600m)
+            // Initial elevation variation with realistic range (-400m to +400m for more balanced start)
             float elevationBase = VoxelEngine::Util::smoothValueNoise(seedX * 0.0003f, 0.0f, seedZ * 0.0003f);
             float elevationDetail = VoxelEngine::Util::smoothValueNoise(seedX * 0.0008f, 123.0f, seedZ * 0.0008f) * 0.6f;
             float elevationFine = VoxelEngine::Util::smoothValueNoise(seedX * 0.002f, 456.0f, seedZ * 0.002f) * 0.3f;
             
             // Combine multiple octaves and scale to realistic range
             float elevationNormalized = elevationBase + elevationDetail + elevationFine;
-            float elevationValue = elevationNormalized * 600.0f; // Range: -600m to +600m
+            float elevationValue = elevationNormalized * 400.0f; // Range: -400m to +400m (more conservative start)
             elevationField_->setSample(x, z, elevationValue);
             
             // Seed-based rock type distribution
