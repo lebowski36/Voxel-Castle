@@ -2,6 +2,7 @@
 
 #include <cstddef>
 #include <vector>
+#include <array>
 
 namespace VoxelCastle {
     namespace World {
@@ -104,6 +105,24 @@ public:
      */
     void setGenerationPhase(GenerationPhase phase) { currentPhase_ = phase; }
 
+    // NEW: Step 1.4 - Water System Visualization Integration
+    
+    /**
+     * @brief Enable/disable water system overlay visualization
+     * @param showWaterFlow Show water flow direction arrows
+     * @param showAquifers Show aquifer levels as color overlay
+     * @param showRivers Highlight river/stream paths
+     * @param showSprings Show spring location indicators
+     */
+    void setWaterVisualization(bool showWaterFlow = true, bool showAquifers = true, 
+                              bool showRivers = true, bool showSprings = true);
+
+    /**
+     * @brief Get current water visualization settings
+     */
+    void getWaterVisualization(bool& showWaterFlow, bool& showAquifers, 
+                              bool& showRivers, bool& showSprings) const;
+
     /**
      * @brief Set the zoom level and center position for detailed viewing
      * @param zoomLevel Zoom factor (1.0 = full world, 2.0 = 2x zoom, etc.)
@@ -149,6 +168,21 @@ public:
      */
     static const char* getGenerationPhaseName(GenerationPhase phase);
 
+    /**
+     * @brief Track elevation change magnitude for adaptive updates
+     * @param newElevationData New elevation data to compare
+     * @return Change magnitude (0.0 = no change, 1.0 = maximum change)
+     */
+    float calculateChangeMagnitude(const float* newElevationData) const;
+
+    /**
+     * @brief Check if update is needed based on adaptive thresholds
+     * @param changeMagnitude Current change magnitude
+     * @param timeSinceLastUpdate Time since last update in seconds
+     * @return true if update should be performed
+     */
+    bool shouldUpdate(float changeMagnitude, float timeSinceLastUpdate) const;
+
 private:
     // OpenGL resources - Double-buffered textures
     unsigned int textureA_;      // First texture buffer
@@ -168,6 +202,13 @@ private:
     VisualizationMode currentMode_;
     GenerationPhase currentPhase_;
     
+    // Adaptive update system (NEW for 1.3)
+    float* previousElevationData_;     // Previous elevation data for change tracking
+    float changeThreshold_;            // Minimum change magnitude to trigger update (0.1%)
+    float maxUpdateInterval_;          // Maximum time between updates (2.0 seconds)
+    mutable float lastUpdateTime_;     // Time of last update
+    mutable float accumulatedChange_;  // Accumulated change magnitude
+    
     // Zoom and pan state
     float zoomLevel_;        // Current zoom level (1.0 = full world view)
     float centerX_;          // Center X coordinate in world space (0.0 to 1.0)
@@ -177,6 +218,12 @@ private:
     bool isDragging_;        // Whether user is currently dragging the map
     float minZoom_;          // Minimum zoom level (1.0 = full world)
     float maxZoom_;          // Maximum zoom level (64.0 = very detailed)
+    
+    // NEW: Step 1.4 - Water System Visualization settings
+    bool showWaterFlow_;     // Show water flow direction arrows
+    bool showAquifers_;      // Show aquifer levels as color overlay  
+    bool showRivers_;        // Highlight river/stream paths
+    bool showSprings_;       // Show spring location indicators
     
     // Internal helper methods
     void cleanupResources();
@@ -202,6 +249,16 @@ private:
     void drawOceanBasins(unsigned char* colorData, const std::vector<VoxelCastle::World::OceanBasin>& basins);
     void drawRiverTemplates(unsigned char* colorData, const std::vector<VoxelCastle::World::RiverTemplate>& rivers);
     void drawMountainRidges(unsigned char* colorData, const std::vector<VoxelCastle::World::MountainRidge>& ridges);
+    
+    // NEW: Step 1.4 - Water System Visualization methods
+    void overlayWaterSystemFeatures(unsigned char* colorData, VoxelCastle::World::SeedWorldGenerator* generator);
+    void drawWaterFlowArrows(unsigned char* colorData, VoxelCastle::World::SeedWorldGenerator* generator);
+    void overlayAquiferLevels(unsigned char* colorData, VoxelCastle::World::SeedWorldGenerator* generator);
+    void highlightRiverPaths(unsigned char* colorData, VoxelCastle::World::SeedWorldGenerator* generator);
+    void drawSpringIndicators(unsigned char* colorData, VoxelCastle::World::SeedWorldGenerator* generator);
+    
+    // Helper method for drawing lines
+    void drawLine(unsigned char* colorData, int x1, int y1, int x2, int y2, const std::array<unsigned char, 4>& color);
     
     // Frame counter for logging control
     mutable int renderCounter_;

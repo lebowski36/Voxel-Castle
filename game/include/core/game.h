@@ -340,7 +340,7 @@ private:
     bool isWorldFullyLoaded_ = false; // Whether world is ready for block operations
 
     // Configuration
-    const int screenWidth_ = 1280; 
-    const int screenHeight_ = 720;
+    const int screenWidth_ = 1920; 
+    const int screenHeight_ = 1080;
     const std::string projectRoot_ = "/home/system-x1/Projects/Voxel Castle/"; // Needed for paths
 };

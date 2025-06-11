@@ -24,11 +24,9 @@ WorldSimulationUI::WorldSimulationUI(VoxelEngine::UI::UIRenderer* renderer)
     , onBack_(nullptr)
     , currentY_(TITLE_HEIGHT + PANEL_MARGIN) {
     
-    // Initialize world map renderer
+    // Initialize world map renderer with adaptive resolution
     worldMapRenderer_ = std::make_unique<VoxelEngine::UI::WorldMapRenderer>();
-    if (!worldMapRenderer_->initialize(512)) {
-        std::cerr << "[WorldSimulationUI] Warning: Failed to initialize world map renderer" << std::endl;
-    }
+    // Note: Resolution will be set dynamically based on actual display size
 }
 
 WorldSimulationUI::~WorldSimulationUI() {
@@ -147,6 +145,21 @@ bool WorldSimulationUI::isMouseOverMap(float mouseX, float mouseY) const {
 void WorldSimulationUI::update(float deltaTime) {
     BaseMenu::update(deltaTime);
     
+    // Always update world map visualization regardless of pause state to keep preview fresh
+    if (worldMapRenderer_ && isRunning_) {
+        // Update world map at reduced frequency during pause to maintain visual feedback
+        static float lastUpdateTime = 0.0f;
+        lastUpdateTime += deltaTime;
+        
+        // Update every 1 second during pause, every 0.1 seconds during run
+        float updateInterval = isPaused_ ? 1.0f : 0.1f;
+        if (lastUpdateTime >= updateInterval) {
+            updateWorldMapVisualization();
+            lastUpdateTime = 0.0f;
+        }
+    }
+    
+    // Only advance simulation when not paused
     if (isRunning_ && !isPaused_) {
         updateSimulation(deltaTime * generationSpeed_);
     }
@@ -296,6 +309,9 @@ void WorldSimulationUI::createWorldPreview() {
     worldMapWidth_ = mapSize;   // SQUARE: width = height
     worldMapHeight_ = mapSize;  // SQUARE: height = width
     
+    // Create elevation legend beside the square preview
+    createElevationLegend();
+    
     // Note: Summary will be positioned to the right of the square preview
     // The summary area starts at: worldMapX_ + worldMapWidth_ + ELEMENT_SPACING
     // Available summary width: panelWidth - worldMapWidth_ - ELEMENT_SPACING
@@ -304,6 +320,37 @@ void WorldSimulationUI::createWorldPreview() {
               << " at (" << worldMapX_ << "," << worldMapY_ << ")" << std::endl;
     
     currentY_ += mapSize + ELEMENT_SPACING;
+    
+    // NEW: Initialize WorldMapRenderer with adaptive resolution based on actual display size
+    if (worldMapRenderer_ && worldMapWidth_ > 0 && worldMapHeight_ > 0) {
+        // Use the larger dimension to ensure good quality, but cap at reasonable limits
+        int targetResolution = static_cast<int>(std::max(worldMapWidth_, worldMapHeight_));
+        
+        // Scale up for better quality but keep performance reasonable:
+        // - Small previews (< 500px): Use 2x resolution for crisp zoom
+        // - Medium previews (500-1000px): Use 1.5x resolution 
+        // - Large previews (1000px+): Use 1:1 resolution
+        if (targetResolution < 500) {
+            targetResolution *= 2;
+        } else if (targetResolution < 1000) {
+            targetResolution = static_cast<int>(targetResolution * 1.5f);
+        }
+        
+        // Cap resolution for performance (max 2048x2048 texture)
+        targetResolution = std::min(targetResolution, 2048);
+        
+        // Ensure minimum resolution for quality
+        targetResolution = std::max(targetResolution, 512);
+        
+        std::cout << "[WorldSimulationUI] Initializing WorldMapRenderer with adaptive resolution: " 
+                  << targetResolution << "x" << targetResolution 
+                  << " (display size: " << worldMapWidth_ << "x" << worldMapHeight_ << ")" << std::endl;
+        
+        if (!worldMapRenderer_->initialize(targetResolution)) {
+            std::cerr << "[WorldSimulationUI] Warning: Failed to initialize world map renderer with resolution " 
+                      << targetResolution << std::endl;
+        }
+    }
 }
 
 void WorldSimulationUI::renderWorldMap() {
@@ -701,14 +748,32 @@ void WorldSimulationUI::startSimulation(const WorldConfig& config, const std::st
 
 void WorldSimulationUI::pauseSimulation() {
     isPaused_ = true;
-    addLogEntry("Simulation paused", stats_.simulationYears);
+    addLogEntry("Simulation paused - preview remains active", stats_.simulationYears);
+    
+    // Update UI to show pause state while keeping preview visible
     createUIElements();
+    
+    // Ensure current preview frame is preserved and visible
+    if (worldMapRenderer_) {
+        updateWorldMapVisualization();
+    }
+    
+    std::cout << "[WorldSimulationUI] Simulation paused - keeping preview visible at current frame" << std::endl;
 }
 
 void WorldSimulationUI::resumeSimulation() {
     isPaused_ = false;
     addLogEntry("Simulation resumed", stats_.simulationYears);
+    
+    // Update UI to show running state
     createUIElements();
+    
+    // Refresh world map to ensure continuity
+    if (worldMapRenderer_) {
+        updateWorldMapVisualization();
+    }
+    
+    std::cout << "[WorldSimulationUI] Simulation resumed seamlessly" << std::endl;
 }
 
 void WorldSimulationUI::stopSimulation() {
@@ -731,8 +796,31 @@ void WorldSimulationUI::updateSimulation(float deltaTime) {
     phaseProgress_ += deltaTime / getPhaseExpectedDuration(currentPhase_);
     stats_.simulationYears += (int)(deltaTime * 10); // Arbitrary time scaling
     
-    // Simulate current phase
-    simulatePhase(currentPhase_, deltaTime);
+    // Simulate current phase and check for unimplemented features
+    bool encounteredUnimplementedFeature = false;
+    try {
+        simulatePhase(currentPhase_, deltaTime);
+    } catch (const std::runtime_error& e) {
+        // Check if this is an unimplemented feature error
+        std::string errorMsg = e.what();
+        if (errorMsg.find("not implemented") != std::string::npos || 
+            errorMsg.find("unimplemented") != std::string::npos ||
+            errorMsg.find("coming soon") != std::string::npos) {
+            encounteredUnimplementedFeature = true;
+            addLogEntry("Paused: " + errorMsg, stats_.simulationYears);
+            std::cout << "[WorldSimulationUI] Encountered unimplemented feature: " << errorMsg << std::endl;
+        } else {
+            // Re-throw if it's a different kind of error
+            throw;
+        }
+    }
+    
+    // Gracefully pause if we hit an unimplemented feature
+    if (encounteredUnimplementedFeature) {
+        pauseSimulation();
+        addLogEntry("Simulation paused due to unimplemented feature - preview preserved", stats_.simulationYears);
+        return; // Don't continue processing
+    }
     
     // Check for phase completion
     if (phaseProgress_ >= 1.0f) {
@@ -851,6 +939,12 @@ void WorldSimulationUI::simulatePhase(GenerationPhase phase, float deltaTime) {
                     stats_.largestLakeSize = (50.0f + phaseProgress * 150.0f) * worldScale; // 50-200 * scale
                     lastLogEntry = 0.0f;
                 }
+                
+                // Check for advanced water features that might not be implemented
+                if (phaseProgress > 0.7f && config_.hydrologyLevel > 3) {
+                    // Advanced hydrology features (underground rivers, karst landscapes, etc.)
+                    throw std::runtime_error("Advanced hydrology features (level > 3) not implemented yet - coming soon!");
+                }
                 break;
                 
             case GenerationPhase::CLIMATE:
@@ -860,6 +954,12 @@ void WorldSimulationUI::simulatePhase(GenerationPhase phase, float deltaTime) {
                 if (lastLogEntry >= 1.5f) {
                     addLogEntry("Weather patterns stabilizing...", stats_.simulationYears);
                     lastLogEntry = 0.0f;
+                }
+                
+                // Check for advanced climate features
+                if (phaseProgress > 0.5f && config_.climateType > 2) {
+                    // Advanced climate modeling (ice ages, monsoons, etc.)
+                    throw std::runtime_error("Advanced climate modeling (type > 2) not implemented yet - coming soon!");
                 }
                 break;
                 
@@ -871,6 +971,12 @@ void WorldSimulationUI::simulatePhase(GenerationPhase phase, float deltaTime) {
                     addLogEntry("Flora and fauna establishing territories...", stats_.simulationYears);
                     lastLogEntry = 0.0f;
                 }
+                
+                // Check for extremely large worlds that need special handling
+                if (phaseProgress > 0.8f && config_.worldSize > 2048) {
+                    // Massive world biome generation
+                    throw std::runtime_error("Biome generation for worlds > 2048km not implemented yet - coming soon!");
+                }
                 break;
                 
             case GenerationPhase::CIVILIZATION:
@@ -880,6 +986,12 @@ void WorldSimulationUI::simulatePhase(GenerationPhase phase, float deltaTime) {
                 if (lastLogEntry >= 1.5f) {
                     addLogEntry("Early settlements appearing...", stats_.simulationYears);
                     lastLogEntry = 0.0f;
+                }
+                
+                // Check for advanced civilization features
+                if (phaseProgress > 0.6f && config_.simulationDepth > 3) {
+                    // Deep historical simulation
+                    throw std::runtime_error("Deep historical simulation (depth > 3) not implemented yet - coming soon!");
                 }
                 break;
                 
@@ -1250,4 +1362,57 @@ void WorldSimulationUI::regenerateWorldMap() {
             static_cast<float>(config_.worldSize)
         );
     }
+}
+
+void WorldSimulationUI::createElevationLegend() {
+    // Position elevation legend to the right of the square preview
+    float legendX = worldMapX_ + worldMapWidth_ + ELEMENT_SPACING;
+    float legendY = worldMapY_;
+    float legendWidth = 120.0f;
+    float legendHeight = worldMapHeight_; // Same height as preview
+    
+    // Elevation legend title
+    auto legendTitle = std::make_shared<VoxelEngine::UI::UIButton>(renderer_);
+    legendTitle->setText("Elevation Legend");
+    legendTitle->setPosition(legendX, legendY);
+    legendTitle->setSize(legendWidth, 25.0f);
+    legendTitle->setBackgroundColor({0.2f, 0.2f, 0.2f, 0.8f});
+    addChild(legendTitle);
+    
+    // Create elevation bands with colors and labels
+    std::vector<std::pair<std::string, glm::vec4>> elevationBands = {
+        {"2000m+ Mountains", {1.0f, 1.0f, 1.0f, 1.0f}},          // White
+        {"1000-2000m Hills", {0.67f, 0.4f, 0.27f, 1.0f}},        // Brown
+        {"500-1000m Hills", {0.53f, 0.8f, 0.27f, 1.0f}},         // Yellow-green
+        {"100-500m Plains", {0.27f, 0.67f, 0.27f, 1.0f}},        // Green
+        {"0-100m Coast", {0.8f, 0.67f, 0.53f, 1.0f}},            // Tan/beige
+        {"-200-0m Shelf", {0.27f, 0.53f, 0.8f, 1.0f}},           // Light blue
+        {"-2000m Ocean", {0.0f, 0.19f, 0.55f, 1.0f}}             // Dark blue
+    };
+    
+    float bandHeight = (legendHeight - 35.0f) / elevationBands.size(); // Account for title
+    float currentBandY = legendY + 30.0f;
+    
+    for (const auto& band : elevationBands) {
+        // Color square
+        auto colorSquare = std::make_shared<VoxelEngine::UI::UIButton>(renderer_);
+        colorSquare->setText("");
+        colorSquare->setPosition(legendX + 5.0f, currentBandY);
+        colorSquare->setSize(20.0f, bandHeight - 2.0f);
+        colorSquare->setBackgroundColor(band.second);
+        addChild(colorSquare);
+        
+        // Elevation label
+        auto elevationLabel = std::make_shared<VoxelEngine::UI::UIButton>(renderer_);
+        elevationLabel->setText(band.first);
+        elevationLabel->setPosition(legendX + 30.0f, currentBandY);
+        elevationLabel->setSize(legendWidth - 35.0f, bandHeight - 2.0f);
+        elevationLabel->setBackgroundColor({0.1f, 0.1f, 0.1f, 0.7f});
+        addChild(elevationLabel);
+        
+        currentBandY += bandHeight;
+    }
+    
+    std::cout << "[WorldSimulationUI] Created elevation legend at (" << legendX << "," << legendY 
+              << ") size " << legendWidth << "x" << legendHeight << std::endl;
 }

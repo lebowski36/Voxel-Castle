@@ -286,8 +286,8 @@ bool Window::toggleFullscreen() {
         }
         
         // CRITICAL FIX: Explicitly restore the window to its original windowed dimensions
-        const int WINDOWED_WIDTH = 1280;
-        const int WINDOWED_HEIGHT = 720;
+        const int WINDOWED_WIDTH = 1920;
+        const int WINDOWED_HEIGHT = 1080;
         FS_LOG("Explicitly restoring window to initial dimensions: " + std::to_string(WINDOWED_WIDTH) + "x" + std::to_string(WINDOWED_HEIGHT));
         SDL_SetWindowSize(sdlWindow, WINDOWED_WIDTH, WINDOWED_HEIGHT);
     }
@@ -341,8 +341,8 @@ bool Window::toggleFullscreen() {
         }
     } else {
         // CRITICAL FIX: In windowed mode, use the fixed window size we set earlier
-        const int WINDOWED_WIDTH = 1280;
-        const int WINDOWED_HEIGHT = 720;
+        const int WINDOWED_WIDTH = 1920;
+        const int WINDOWED_HEIGHT = 1080;
         FS_LOG("OVERRIDE: Using fixed windowed dimensions: " + std::to_string(WINDOWED_WIDTH) + "x" + std::to_string(WINDOWED_HEIGHT));
         newDrawableWidth = WINDOWED_WIDTH;
         newDrawableHeight = WINDOWED_HEIGHT;

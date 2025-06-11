@@ -7,6 +7,7 @@
 #include <algorithm>
 #include <vector>
 #include <chrono>
+#include <cstring>  // For std::memcpy
 #include <glad/glad.h>
 
 namespace VoxelEngine::UI {
@@ -24,6 +25,11 @@ WorldMapRenderer::WorldMapRenderer()
     , worldSizeKm_(1024.0f)  // Default to 1024km (continent scale)
     , currentMode_(VisualizationMode::ELEVATION)
     , currentPhase_(GenerationPhase::TECTONICS)
+    , previousElevationData_(nullptr)  // NEW: For adaptive update system
+    , changeThreshold_(0.001f)         // NEW: 0.1% change minimum
+    , maxUpdateInterval_(2.0f)         // NEW: Maximum 2 seconds between updates
+    , lastUpdateTime_(0.0f)            // NEW: Track last update time
+    , accumulatedChange_(0.0f)         // NEW: Track accumulated changes
     , renderCounter_(0)
     , zoomLevel_(1.0f)       // Start with full world view
     , centerX_(0.5f)         // Center the view
@@ -32,7 +38,11 @@ WorldMapRenderer::WorldMapRenderer()
     , lastMouseY_(0.0f)
     , isDragging_(false)
     , minZoom_(1.0f)         // Minimum zoom shows full world
-    , maxZoom_(64.0f) {      // Maximum zoom shows 1/64th of world (very detailed)
+    , maxZoom_(64.0f)        // Maximum zoom shows 1/64th of world (very detailed)
+    , showWaterFlow_(true)   // NEW: Step 1.4 - Enable water flow arrows by default
+    , showAquifers_(true)    // NEW: Step 1.4 - Enable aquifer overlay by default
+    , showRivers_(true)      // NEW: Step 1.4 - Enable river highlighting by default
+    , showSprings_(true) {   // NEW: Step 1.4 - Enable spring indicators by default
 }
 
 WorldMapRenderer::~WorldMapRenderer() {
@@ -47,12 +57,14 @@ bool WorldMapRenderer::initialize(int resolution) {
     elevationData_ = new float[dataSize];
     temperatureData_ = new float[dataSize];
     precipitationData_ = new float[dataSize];
+    previousElevationData_ = new float[dataSize]; // NEW: For adaptive update tracking
     
     // Initialize with default values
     for (int i = 0; i < dataSize; i++) {
         elevationData_[i] = 0.0f;
         temperatureData_[i] = 15.0f;     // 15°C default
         precipitationData_[i] = 800.0f;  // 800mm/year default
+        previousElevationData_[i] = 0.0f; // NEW: Initialize previous data
     }
     
     std::cout << "[WorldMapRenderer] Initialized with resolution " << resolution << "x" << resolution << std::endl;
@@ -81,18 +93,35 @@ void WorldMapRenderer::generateWorldMap(VoxelCastle::World::SeedWorldGenerator* 
                             (worldSizeKm != lastWorldSize) ||
                             (textureA_ == 0 && textureB_ == 0);  // No textures exist yet
     
-    // Throttle texture regeneration to prevent excessive updates, but allow important changes
-    static auto lastGenerationTime = std::chrono::steady_clock::now();
+    // Adaptive Update System (1.3) - Replace static throttling with intelligent updates
     auto currentTime = std::chrono::steady_clock::now();
-    auto timeSinceGeneration = std::chrono::duration_cast<std::chrono::milliseconds>(currentTime - lastGenerationTime).count();
+    float timeSinceLastUpdate = std::chrono::duration<float>(currentTime - std::chrono::steady_clock::time_point{}).count() - lastUpdateTime_;
     
-    // Only skip if it's too frequent AND nothing important has changed
-    if (!needsRegeneration && timeSinceGeneration < 500) {
-        std::cout << "[WorldMapRenderer] Skipping regeneration - no changes needed (last: " << timeSinceGeneration << "ms ago)" << std::endl;
+    // Generate new elevation data first to calculate change magnitude
+    generateElevationData(generator, worldSeed);
+    
+    // Calculate change magnitude for adaptive updates
+    float changeMagnitude = calculateChangeMagnitude(elevationData_);
+    
+    // Check if we should update based on adaptive thresholds
+    bool shouldUpdateNow = needsRegeneration || shouldUpdate(changeMagnitude, timeSinceLastUpdate);
+    
+    if (!shouldUpdateNow) {
+        std::cout << "[WorldMapRenderer] Adaptive update - change magnitude " << changeMagnitude 
+                  << " below threshold, time since update " << timeSinceLastUpdate << "s" << std::endl;
         return;
     }
     
-    lastGenerationTime = currentTime;
+    // Update previous data and reset tracking
+    if (previousElevationData_ && elevationData_) {
+        int dataSize = resolution_ * resolution_;
+        std::memcpy(previousElevationData_, elevationData_, dataSize * sizeof(float));
+    }
+    lastUpdateTime_ = std::chrono::duration<float>(currentTime - std::chrono::steady_clock::time_point{}).count();
+    accumulatedChange_ = 0.0f; // Reset accumulated change
+    
+    std::cout << "[WorldMapRenderer] Adaptive update triggered - change magnitude: " << changeMagnitude 
+              << ", time since last: " << timeSinceLastUpdate << "s" << std::endl;
     lastPhase = phase;
     lastMode = mode;
     lastSeed = worldSeed;
@@ -109,25 +138,22 @@ void WorldMapRenderer::generateWorldMap(VoxelCastle::World::SeedWorldGenerator* 
     std::cout << "[WorldMapRenderer] World size: " << worldSizeKm_ << "km x " << worldSizeKm_ << "km" << std::endl;
     
     // Generate data based on current phase - make visualization dynamic
+    // Note: elevation data was already generated above for adaptive update check
     switch (phase) {
         case GenerationPhase::TECTONICS:
-            // Pure tectonic terrain - dramatic geological features
-            generateElevationData(generator, worldSeed);
+            // Pure tectonic terrain - elevation already generated
             break;
         case GenerationPhase::EROSION:
             // Apply erosion effects to existing terrain
-            generateElevationData(generator, worldSeed);
             applyErosionEffects();
             break;
         case GenerationPhase::HYDROLOGY:
             // Generate water features and modify terrain for rivers/lakes
-            generateElevationData(generator, worldSeed);
             applyErosionEffects();
             generateWaterFeatures();
             break;
         case GenerationPhase::CLIMATE:
             // Focus on temperature and precipitation
-            generateElevationData(generator, worldSeed);
             applyErosionEffects();
             generateWaterFeatures();
             generateTemperatureData(generator, worldSeed);
@@ -176,6 +202,11 @@ void WorldMapRenderer::generateWorldMap(VoxelCastle::World::SeedWorldGenerator* 
     // OVERLAY 3.0 World Generation System fractal continental features
     // This adds visual markers for continental plates, rivers, and mountain ridges
     overlayFractalContinentalFeatures(colorData, generator);
+    
+    // NEW: Step 1.4 - Overlay water system features if HYDROLOGY mode or enabled
+    if (currentMode_ == VisualizationMode::HYDROLOGY || currentPhase_ == GenerationPhase::HYDROLOGY) {
+        overlayWaterSystemFeatures(colorData, generator);
+    }
     
     // Create OpenGL texture
     createTextureFromColorData(colorData, resolution_);
@@ -803,6 +834,12 @@ void WorldMapRenderer::cleanupResources() {
         precipitationData_ = nullptr;
     }
     
+    // NEW: Cleanup adaptive update system data
+    if (previousElevationData_) {
+        delete[] previousElevationData_;
+        previousElevationData_ = nullptr;
+    }
+    
     // Note: Textures are now persistent, no need to invalidate
 }
 
@@ -948,7 +985,334 @@ void WorldMapRenderer::overlayFractalContinentalFeatures(unsigned char* colorDat
     drawMountainRidges(colorData, fractalGen->GetMountainRidges());
 }
 
+// NEW: Step 1.4 - Water System Visualization Integration
+
+void WorldMapRenderer::setWaterVisualization(bool showWaterFlow, bool showAquifers, 
+                                            bool showRivers, bool showSprings) {
+    showWaterFlow_ = showWaterFlow;
+    showAquifers_ = showAquifers;
+    showRivers_ = showRivers;
+    showSprings_ = showSprings;
+    
+    std::cout << "[WorldMapRenderer] Water visualization settings: "
+              << "Flow=" << (showWaterFlow ? "ON" : "OFF") << " "
+              << "Aquifers=" << (showAquifers ? "ON" : "OFF") << " "
+              << "Rivers=" << (showRivers ? "ON" : "OFF") << " "
+              << "Springs=" << (showSprings ? "ON" : "OFF") << std::endl;
+}
+
+void WorldMapRenderer::getWaterVisualization(bool& showWaterFlow, bool& showAquifers, 
+                                            bool& showRivers, bool& showSprings) const {
+    showWaterFlow = showWaterFlow_;
+    showAquifers = showAquifers_;
+    showRivers = showRivers_;
+    showSprings = showSprings_;
+}
+
+void WorldMapRenderer::overlayWaterSystemFeatures(unsigned char* colorData, VoxelCastle::World::SeedWorldGenerator* generator) {
+    if (!generator || !colorData) return;
+    
+    std::cout << "[WorldMapRenderer] Overlaying water system features..." << std::endl;
+    
+    // Apply water overlays based on enabled features
+    if (showAquifers_) {
+        overlayAquiferLevels(colorData, generator);
+    }
+    
+    if (showRivers_) {
+        highlightRiverPaths(colorData, generator);
+    }
+    
+    if (showSprings_) {
+        drawSpringIndicators(colorData, generator);
+    }
+    
+    if (showWaterFlow_) {
+        drawWaterFlowArrows(colorData, generator);
+    }
+}
+
+void WorldMapRenderer::drawWaterFlowArrows(unsigned char* colorData, VoxelCastle::World::SeedWorldGenerator* generator) {
+    if (!generator || !colorData || !elevationData_) return;
+    
+    std::cout << "[WorldMapRenderer] Drawing water flow arrows..." << std::endl;
+    
+    // Sample water flow direction every 32 pixels to avoid overcrowding
+    int sampleStep = std::max(8, resolution_ / 64);
+    
+    for (int y = sampleStep; y < resolution_ - sampleStep; y += sampleStep) {
+        for (int x = sampleStep; x < resolution_ - sampleStep; x += sampleStep) {
+            int currentIdx = y * resolution_ + x;
+            float currentHeight = elevationData_[currentIdx];
+            
+            // Skip if this is underwater (below sea level)
+            if (currentHeight <= 0.0f) continue;
+            
+            // Find steepest descent direction (water flow direction)
+            float maxSlope = 0.0f;
+            int flowX = 0, flowY = 0;
+            
+            // Check 8 surrounding cells for steepest descent
+            for (int dy = -1; dy <= 1; dy++) {
+                for (int dx = -1; dx <= 1; dx++) {
+                    if (dx == 0 && dy == 0) continue;
+                    
+                    int nx = x + dx;
+                    int ny = y + dy;
+                    if (nx >= 0 && nx < resolution_ && ny >= 0 && ny < resolution_) {
+                        int neighborIdx = ny * resolution_ + nx;
+                        float neighborHeight = elevationData_[neighborIdx];
+                        float slope = (currentHeight - neighborHeight) / std::sqrt(dx*dx + dy*dy);
+                        
+                        if (slope > maxSlope) {
+                            maxSlope = slope;
+                            flowX = dx;
+                            flowY = dy;
+                        }
+                    }
+                }
+            }
+            
+            // Draw flow arrow if there's significant slope (indicating water flow)
+            if (maxSlope > 10.0f) { // 10m height difference threshold
+                // Draw a small blue arrow in the flow direction
+                int arrowLength = 3;
+                for (int i = 0; i < arrowLength; i++) {
+                    int arrowX = x + (flowX * i);
+                    int arrowY = y + (flowY * i);
+                    
+                    if (arrowX >= 0 && arrowX < resolution_ && arrowY >= 0 && arrowY < resolution_) {
+                        int arrowIdx = (arrowY * resolution_ + arrowX) * 4;
+                        // Blue arrows with transparency
+                        colorData[arrowIdx] = static_cast<unsigned char>(std::min(255, static_cast<int>(colorData[arrowIdx]) + 50)); // Slight red tint
+                        colorData[arrowIdx + 1] = static_cast<unsigned char>(std::min(255, static_cast<int>(colorData[arrowIdx + 1]) + 100)); // More green
+                        colorData[arrowIdx + 2] = 255; // Full blue
+                    }
+                }
+            }
+        }
+    }
+}
+
+void WorldMapRenderer::overlayAquiferLevels(unsigned char* colorData, VoxelCastle::World::SeedWorldGenerator* generator) {
+    if (!generator || !colorData || !elevationData_) return;
+    
+    std::cout << "[WorldMapRenderer] Overlaying aquifer levels..." << std::endl;
+    
+    // Create aquifer visualization based on elevation and proximity to water
+    for (int i = 0; i < resolution_ * resolution_; i++) {
+        float elevation = elevationData_[i];
+        
+        // Generate simple aquifer level based on elevation and position
+        // Lower areas and areas near sea level have higher water table
+        float distanceFromSeaLevel = std::abs(elevation);
+        float aquiferLevel = std::max(0.0f, 100.0f - distanceFromSeaLevel * 0.5f);
+        
+        // Add some noise for realism
+        int x = i % resolution_;
+        int y = i / resolution_;
+        float noise = (std::sin(x * 0.1f) + std::cos(y * 0.1f)) * 10.0f;
+        aquiferLevel += noise;
+        
+        // Apply aquifer visualization as a blue-green tint
+        if (aquiferLevel > 20.0f) {
+            int colorIdx = i * 4;
+            float aquiferIntensity = std::min(1.0f, aquiferLevel / 100.0f);
+            
+            // Add cyan/aqua tint to represent high water table areas
+            unsigned char blueTint = static_cast<unsigned char>(aquiferIntensity * 60);
+            unsigned char greenTint = static_cast<unsigned char>(aquiferIntensity * 40);
+            
+            colorData[colorIdx + 1] = static_cast<unsigned char>(std::min(255, static_cast<int>(colorData[colorIdx + 1]) + greenTint));
+            colorData[colorIdx + 2] = static_cast<unsigned char>(std::min(255, static_cast<int>(colorData[colorIdx + 2]) + blueTint));
+        }
+    }
+}
+
+void WorldMapRenderer::highlightRiverPaths(unsigned char* colorData, VoxelCastle::World::SeedWorldGenerator* generator) {
+    if (!generator || !colorData) return;
+    
+    std::cout << "[WorldMapRenderer] Highlighting river paths..." << std::endl;
+    
+    // Get geological simulator for river template access
+    const VoxelCastle::World::GeologicalSimulator* geologicalSim = generator->getGeologicalSimulator();
+    if (!geologicalSim) return;
+    
+    const VoxelCastle::World::FractalContinentGenerator* fractalGen = geologicalSim->getFractalContinentGenerator();
+    if (!fractalGen) return;
+    
+    // Get river templates and enhance their visibility
+    const auto& riverTemplates = fractalGen->GetRiverTemplates();
+    
+    for (const auto& river : riverTemplates) {
+        // Draw each river path as a bright blue line
+        for (size_t i = 1; i < river.mainStem.size(); i++) {
+            const auto& start = river.mainStem[i-1];
+            const auto& end = river.mainStem[i];
+            
+            // Convert world coordinates to pixel coordinates
+            int x1 = static_cast<int>((start.x / (worldSizeKm_ * 1000.0f)) * resolution_);
+            int y1 = static_cast<int>((start.y / (worldSizeKm_ * 1000.0f)) * resolution_);
+            int x2 = static_cast<int>((end.x / (worldSizeKm_ * 1000.0f)) * resolution_);
+            int y2 = static_cast<int>((end.y / (worldSizeKm_ * 1000.0f)) * resolution_);
+            
+            // Draw line between points with enhanced blue color
+            drawLine(colorData, x1, y1, x2, y2, {0, 150, 255, 255}); // Bright blue
+        }
+    }
+}
+
+void WorldMapRenderer::drawSpringIndicators(unsigned char* colorData, VoxelCastle::World::SeedWorldGenerator* generator) {
+    if (!generator || !colorData || !elevationData_) return;
+    
+    std::cout << "[WorldMapRenderer] Drawing spring indicators..." << std::endl;
+    
+    // Create spring locations based on geological features
+    // Springs typically occur where aquifers meet the surface or along fault lines
+    
+    for (int y = 10; y < resolution_ - 10; y += 20) {
+        for (int x = 10; x < resolution_ - 10; x += 20) {
+            int idx = y * resolution_ + x;
+            float elevation = elevationData_[idx];
+            
+            // Springs are likely near hillsides where water emerges
+            // Check for elevation gradient (hillside conditions)
+            bool hasGradient = false;
+            for (int dy = -5; dy <= 5; dy += 5) {
+                for (int dx = -5; dx <= 5; dx += 5) {
+                    if (dx == 0 && dy == 0) continue;
+                    
+                    int nx = x + dx;
+                    int ny = y + dy;
+                    if (nx >= 0 && nx < resolution_ && ny >= 0 && ny < resolution_) {
+                        int neighborIdx = ny * resolution_ + nx;
+                        float heightDiff = std::abs(elevation - elevationData_[neighborIdx]);
+                        if (heightDiff > 50.0f) { // Significant elevation change
+                            hasGradient = true;
+                            break;
+                        }
+                    }
+                }
+                if (hasGradient) break;
+            }
+            
+            // Add some randomness for spring placement
+            bool isSpring = hasGradient && (elevation > 50.0f) && (elevation < 800.0f) && 
+                           ((x * y + static_cast<int>(elevation)) % 137 == 0); // Pseudo-random distribution
+            
+            if (isSpring) {
+                // Draw spring indicator as a bright cyan dot with radiating effect
+                for (int dy = -2; dy <= 2; dy++) {
+                    for (int dx = -2; dx <= 2; dx++) {
+                        int springX = x + dx;
+                        int springY = y + dy;
+                        
+                        if (springX >= 0 && springX < resolution_ && springY >= 0 && springY < resolution_) {
+                            int springIdx = (springY * resolution_ + springX) * 4;
+                            
+                            // Bright cyan spring indicator
+                            if (dx == 0 && dy == 0) {
+                                // Center: bright white
+                                colorData[springIdx] = 255;     // R
+                                colorData[springIdx + 1] = 255; // G
+                                colorData[springIdx + 2] = 255; // B
+                            } else {
+                                // Surrounding: cyan
+                                colorData[springIdx] = 0;       // R
+                                colorData[springIdx + 1] = 255; // G
+                                colorData[springIdx + 2] = 255; // B
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+// Helper method to draw lines for river paths
+void WorldMapRenderer::drawLine(unsigned char* colorData, int x1, int y1, int x2, int y2, const std::array<unsigned char, 4>& color) {
+    // Simple Bresenham line algorithm
+    int dx = std::abs(x2 - x1);
+    int dy = std::abs(y2 - y1);
+    int x = x1;
+    int y = y1;
+    int n = 1 + dx + dy;
+    int x_inc = (x2 > x1) ? 1 : -1;
+    int y_inc = (y2 > y1) ? 1 : -1;
+    int error = dx - dy;
+    
+    dx *= 2;
+    dy *= 2;
+    
+    for (; n > 0; --n) {
+        if (x >= 0 && x < resolution_ && y >= 0 && y < resolution_) {
+            int idx = (y * resolution_ + x) * 4;
+            colorData[idx] = color[0];     // R
+            colorData[idx + 1] = color[1]; // G
+            colorData[idx + 2] = color[2]; // B
+            // Keep existing alpha
+        }
+        
+        if (error > 0) {
+            x += x_inc;
+            error -= dy;
+        } else {
+            y += y_inc;
+            error += dx;
+        }
+    }
+}
+
+// Adaptive Update System Implementation (1.3)
+float WorldMapRenderer::calculateChangeMagnitude(const float* newElevationData) const {
+    if (!previousElevationData_ || !newElevationData) {
+        return 1.0f; // Force update if no previous data
+    }
+    
+    float totalChange = 0.0f;
+    float maxChange = 0.0f;
+    int dataSize = resolution_ * resolution_;
+    
+    for (int i = 0; i < dataSize; i++) {
+        float change = std::abs(newElevationData[i] - previousElevationData_[i]);
+        totalChange += change;
+        maxChange = std::max(maxChange, change);
+    }
+    
+    // Calculate relative change magnitude (0.0 to 1.0)
+    float averageChange = totalChange / dataSize;
+    float normalizedChange = averageChange / 100.0f; // Normalize to 100m change = 1.0
+    
+    // Clamp to reasonable range
+    return std::clamp(normalizedChange, 0.0f, 1.0f);
+}
+
+bool WorldMapRenderer::shouldUpdate(float changeMagnitude, float timeSinceLastUpdate) const {
+    // Always update if significant change occurred
+    if (changeMagnitude > changeThreshold_) {
+        return true;
+    }
+    
+    // Force update if too much time has passed (prevent visual stagnation)
+    if (timeSinceLastUpdate > maxUpdateInterval_) {
+        return true;
+    }
+    
+    // Accumulate small changes over time
+    if (accumulatedChange_ + changeMagnitude > changeThreshold_) {
+        return true;
+    }
+    
+    return false;
+}
+
+// Missing fractal continental feature drawing methods - basic implementations
 void WorldMapRenderer::drawContinentalPlates(unsigned char* colorData, const std::vector<VoxelCastle::World::ContinentalPlate>& plates) {
+    if (!colorData || plates.empty()) return;
+    
+    std::cout << "[WorldMapRenderer] Drawing " << plates.size() << " continental plates..." << std::endl;
+    
     // Draw subtle boundaries around continental plates
     for (const auto& plate : plates) {
         // Convert world coordinates to pixel coordinates
@@ -975,70 +1339,76 @@ void WorldMapRenderer::drawContinentalPlates(unsigned char* colorData, const std
 }
 
 void WorldMapRenderer::drawOceanBasins(unsigned char* colorData, const std::vector<VoxelCastle::World::OceanBasin>& basins) {
-    // Enhance ocean basin visualization (already handled by elevation coloring)
-    // This could add special features like ridge highlighting in the future
+    if (!colorData || basins.empty()) return;
+    
+    std::cout << "[WorldMapRenderer] Drawing " << basins.size() << " ocean basins..." << std::endl;
+    
+    // Draw ocean basin indicators
     for (const auto& basin : basins) {
-        // Ocean basins are primarily defined by their depth in the elevation field
-        // Future: Could add mid-ocean ridge visualization here
-        (void)basin; // Suppress unused parameter warning for now
+        // Calculate center from boundary points
+        if (basin.boundary.empty()) continue;
+        
+        glm::vec2 center(0.0f, 0.0f);
+        for (const auto& point : basin.boundary) {
+            center += point;
+        }
+        center /= static_cast<float>(basin.boundary.size());
+        
+        // Convert world coordinates to pixel coordinates
+        int basinX = (int)((center.x / (worldSizeKm_ * 1000.0f)) * resolution_);
+        int basinY = (int)((center.y / (worldSizeKm_ * 1000.0f)) * resolution_);
+        
+        // Draw a small blue marker for ocean basin center
+        if (basinX >= 1 && basinX < resolution_ - 1 && basinY >= 1 && basinY < resolution_ - 1) {
+            int idx = (basinY * resolution_ + basinX) * 4;
+            colorData[idx] = 0;       // R
+            colorData[idx + 1] = 50;  // G
+            colorData[idx + 2] = 150; // B (deep blue)
+        }
     }
 }
 
 void WorldMapRenderer::drawRiverTemplates(unsigned char* colorData, const std::vector<VoxelCastle::World::RiverTemplate>& rivers) {
-    // Draw river pathways as blue lines
-    for (const auto& river : rivers) {
-        // Draw main stem
-        for (size_t i = 0; i < river.mainStem.size(); i++) {
-            glm::vec2 point = river.mainStem[i];
-            int riverX = (int)((point.x / (worldSizeKm_ * 1000.0f)) * resolution_);
-            int riverY = (int)((point.y / (worldSizeKm_ * 1000.0f)) * resolution_);
-            
-            if (riverX >= 0 && riverX < resolution_ && riverY >= 0 && riverY < resolution_) {
-                int idx = (riverY * resolution_ + riverX) * 4;
-                // Draw river as bright blue line
-                colorData[idx] = 0;       // R
-                colorData[idx + 1] = 150; // G
-                colorData[idx + 2] = 255; // B
-                // Keep alpha as is
-            }
-        }
+    // This method is already implemented above in highlightRiverPaths
+    // Just call that method for consistency
+    highlightRiverPaths(colorData, nullptr);
+}
+
+void WorldMapRenderer::drawMountainRidges(unsigned char* colorData, const std::vector<VoxelCastle::World::MountainRidge>& ridges) {
+    if (!colorData || ridges.empty()) return;
+    
+    std::cout << "[WorldMapRenderer] Drawing " << ridges.size() << " mountain ridges..." << std::endl;
+    
+    // Draw mountain ridge indicators
+    for (const auto& ridge : ridges) {
+        // Calculate center from ridge line
+        if (ridge.ridgeLine.empty()) continue;
         
-        // Draw tributaries
-        for (const auto& tributary : river.tributaries) {
-            for (const auto& point : tributary) {
-                int riverX = (int)((point.x / (worldSizeKm_ * 1000.0f)) * resolution_);
-                int riverY = (int)((point.y / (worldSizeKm_ * 1000.0f)) * resolution_);
-                
-                if (riverX >= 0 && riverX < resolution_ && riverY >= 0 && riverY < resolution_) {
-                    int idx = (riverY * resolution_ + riverX) * 4;
-                    // Draw tributaries as lighter blue
-                    colorData[idx] = 50;      // R
-                    colorData[idx + 1] = 180; // G
-                    colorData[idx + 2] = 255; // B
-                    // Keep alpha as is
+        glm::vec2 center(0.0f, 0.0f);
+        for (const auto& point : ridge.ridgeLine) {
+            center += point;
+        }
+        center /= static_cast<float>(ridge.ridgeLine.size());
+        
+        // Convert world coordinates to pixel coordinates
+        int ridgeX = (int)((center.x / (worldSizeKm_ * 1000.0f)) * resolution_);
+        int ridgeY = (int)((center.y / (worldSizeKm_ * 1000.0f)) * resolution_);
+        
+        // Draw a brown mountain marker
+        if (ridgeX >= 1 && ridgeX < resolution_ - 1 && ridgeY >= 1 && ridgeY < resolution_ - 1) {
+            for (int dy = -1; dy <= 1; dy++) {
+                for (int dx = -1; dx <= 1; dx++) {
+                    int mx = ridgeX + dx;
+                    int my = ridgeY + dy;
+                    if (mx >= 0 && mx < resolution_ && my >= 0 && my < resolution_) {
+                        int idx = (my * resolution_ + mx) * 4;
+                        colorData[idx] = 139;     // R (brown)
+                        colorData[idx + 1] = 90;  // G
+                        colorData[idx + 2] = 43;  // B
+                    }
                 }
             }
         }
     }
 }
-
-void WorldMapRenderer::drawMountainRidges(unsigned char* colorData, const std::vector<VoxelCastle::World::MountainRidge>& ridges) {
-    // Draw mountain ridges as elevated pathways
-    for (const auto& ridge : ridges) {
-        for (const auto& point : ridge.ridgeLine) {
-            int ridgeX = (int)((point.x / (worldSizeKm_ * 1000.0f)) * resolution_);
-            int ridgeY = (int)((point.y / (worldSizeKm_ * 1000.0f)) * resolution_);
-            
-            if (ridgeX >= 0 && ridgeX < resolution_ && ridgeY >= 0 && ridgeY < resolution_) {
-                int idx = (ridgeY * resolution_ + ridgeX) * 4;
-                // Enhance mountain ridges with brighter colors
-                colorData[idx] = std::min(255, (int)(colorData[idx] * 1.3f));     // R (enhance existing)
-                colorData[idx + 1] = std::min(255, (int)(colorData[idx + 1] * 1.2f)); // G
-                colorData[idx + 2] = std::min(255, (int)(colorData[idx + 2] * 1.1f)); // B
-                // Keep alpha as is
-            }
-        }
-    }
 }
-
-} // namespace VoxelEngine::UI

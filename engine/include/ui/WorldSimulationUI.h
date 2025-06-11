@@ -153,6 +153,7 @@ private:
     void createUIElements();
     void createVisualizationControls();
     void createWorldPreview();
+    void createElevationLegend();  // NEW: Elevation legend UI component
     void createProgressPanels();
     void createGenerationLog();
     void createActionButtons();
