@@ -322,8 +322,8 @@ void WorldMapRenderer::generateElevationData(VoxelCastle::World::SeedWorldGenera
                               << " Hardness:" << sample.rockHardness << std::endl;
                 }
                 
-                // Allow extended elevation range for dramatic geological features (±4096m)
-                finalHeight = std::clamp(finalHeight, -4096.0f, 4096.0f);
+                // Clamp elevation to geological simulation range (±1800m)
+                finalHeight = std::clamp(finalHeight, -1800.0f, 1800.0f);
                 
             } else if (tectonicSim && tectonicSim->IsSimulationComplete()) {
                 // Fall back to legacy tectonic system
@@ -353,8 +353,8 @@ void WorldMapRenderer::generateElevationData(VoxelCastle::World::SeedWorldGenera
                               << "m Final:" << finalHeight << "m" << std::endl;
                 }
                 
-                // Allow full elevation range including underwater regions (±2048m)
-                finalHeight = std::clamp(finalHeight, -2048.0f, 2048.0f);
+                // Clamp elevation to geological simulation range (±1800m)
+                finalHeight = std::clamp(finalHeight, -1800.0f, 1800.0f);
             } else {
                 // Debug: log that we're using base terrain only
                 if (x < 3 && y < 3) {
@@ -573,39 +573,42 @@ void WorldMapRenderer::worldDataToColorTexture(unsigned char* colorData) {
 }
 
 void WorldMapRenderer::elevationToColor(float heightMeters, GenerationPhase phase, unsigned char& r, unsigned char& g, unsigned char& b) {
-    // Updated elevation color scheme for dramatic geological features (±2048m range)
+    // Updated elevation color scheme for geological simulation (±1800m range)
     if (heightMeters < -1500.0f) {
-        // Deep ocean trenches
-        r = 0; g = 0; b = 100; // Very dark blue
+        // Deep ocean trenches (bottom 300m of range)
+        r = 0; g = 0; b = 80; // Very dark blue
+    } else if (heightMeters < -1000.0f) {
+        // Deep ocean (middle deep range)
+        r = 0; g = 0; b = 120; // Dark blue
     } else if (heightMeters < -500.0f) {
-        // Deep ocean
-        r = 0; g = 0; b = 139; // Dark blue
+        // Ocean (middle range)
+        r = 0; g = 50; b = 160; // Medium dark blue
     } else if (heightMeters < -100.0f) {
-        // Ocean
+        // Shallow ocean
         r = 0; g = 100; b = 200; // Medium blue
     } else if (heightMeters < 0.0f) {
-        // Shallow water  
+        // Very shallow water/coastal
         r = 100; g = 150; b = 255; // Light blue
     } else if (heightMeters < 50.0f) {
-        // Beach/coastline
+        // Beach/coastline/sea level
         r = 238; g = 203; b = 173; // Tan
     } else if (heightMeters < 200.0f) {
         // Lowlands/plains
         r = 34; g = 139; b = 34; // Forest green
     } else if (heightMeters < 500.0f) {
-        // Hills
+        // Hills (low elevation)
         r = 107; g = 142; b = 35; // Olive drab
-    } else if (heightMeters < 1000.0f) {
-        // Low mountains
+    } else if (heightMeters < 800.0f) {
+        // Lower mountains
         r = 139; g = 101; b = 54; // Brown
-    } else if (heightMeters < 1500.0f) {
-        // High mountains
+    } else if (heightMeters < 1200.0f) {
+        // Higher mountains
         r = 160; g = 140; b = 120; // Light brown
-    } else if (heightMeters < 2000.0f) {
-        // Very high peaks
+    } else if (heightMeters < 1600.0f) {
+        // High peaks (approaching upper limit)
         r = 200; g = 200; b = 200; // Light gray
     } else {
-        // Extreme peaks (above 2000m)
+        // Extreme peaks (1600m-1800m range)
         r = 255; g = 250; b = 250; // Snow white
     }
     

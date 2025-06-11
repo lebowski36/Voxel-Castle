@@ -115,14 +115,14 @@ void GeologicalSimulator::initializeFields() {
             float mantleValue = (mantleBase + mantleDetail) * 1.5f;
             mantleStress_->setSample(x, z, mantleValue);
             
-            // Initial elevation variation with realistic range (-200m to +400m)
+            // Initial elevation variation with realistic range (-600m to +600m)
             float elevationBase = VoxelEngine::Util::smoothValueNoise(seedX * 0.0003f, 0.0f, seedZ * 0.0003f);
             float elevationDetail = VoxelEngine::Util::smoothValueNoise(seedX * 0.0008f, 123.0f, seedZ * 0.0008f) * 0.6f;
             float elevationFine = VoxelEngine::Util::smoothValueNoise(seedX * 0.002f, 456.0f, seedZ * 0.002f) * 0.3f;
             
             // Combine multiple octaves and scale to realistic range
             float elevationNormalized = elevationBase + elevationDetail + elevationFine;
-            float elevationValue = (elevationNormalized * 300.0f) - 100.0f; // Range: -200m to +400m
+            float elevationValue = elevationNormalized * 600.0f; // Range: -600m to +600m
             elevationField_->setSample(x, z, elevationValue);
             
             // Seed-based rock type distribution
@@ -305,26 +305,33 @@ void GeologicalSimulator::simulateMantleConvection(float timeStep) {
         float normX = worldX / (worldSizeKm_ * 1000.0f);
         float normZ = worldZ / (worldSizeKm_ * 1000.0f);
         
-        // Create layered wave patterns for complex but natural terrain
+        // Create layered geological patterns with noise-based organic variation
         float stress = 0.0f;
         
-        // Large continental-scale waves (primary pattern)
-        float primaryWave = std::sin(normX * numWavesX * 2.0f * M_PI + phaseX) *
-                           std::cos(normZ * numWavesZ * 2.0f * M_PI + phaseZ);
-        stress += primaryWave * 0.8f;
+        // Add seed-based noise for organic base variation
+        float seedX = normX + (seed_ % 10000) * 0.0001f;
+        float seedZ = normZ + ((seed_ >> 16) % 10000) * 0.0001f;
         
-        // Medium regional-scale waves (secondary pattern)
-        float secondaryWave = std::cos(normX * (numWavesX * 1.5f) * 2.0f * M_PI + phaseX * 1.3f) *
-                             std::sin(normZ * (numWavesZ * 1.7f) * 2.0f * M_PI + phaseZ * 0.7f);
-        stress += secondaryWave * 0.4f;
+        // Organic noise-based base stress (primary geological variation)
+        float noiseBase = VoxelEngine::Util::smoothValueNoise(seedX * 8.0f, 0.0f, seedZ * 8.0f);
+        float noiseDetail = VoxelEngine::Util::smoothValueNoise(seedX * 16.0f, 42.0f, seedZ * 16.0f) * 0.5f;
+        float noiseFine = VoxelEngine::Util::smoothValueNoise(seedX * 32.0f, 123.0f, seedZ * 32.0f) * 0.25f;
+        stress += (noiseBase + noiseDetail + noiseFine) * 0.6f;
         
-        // Small local-scale waves (tertiary pattern)
-        float tertiaryWave = std::sin(normX * (numWavesX * 2.5f) * 2.0f * M_PI + phaseX * 2.1f) *
-                            std::cos(normZ * (numWavesZ * 2.3f) * 2.0f * M_PI + phaseZ * 1.9f);
-        stress += tertiaryWave * 0.2f;
+        // Gentle large-scale waves (much more organic than pure sine/cosine)
+        float waveX = normX * numWavesX + VoxelEngine::Util::smoothValueNoise(seedX * 4.0f, 456.0f, seedZ * 4.0f) * 0.3f;
+        float waveZ = normZ * numWavesZ + VoxelEngine::Util::smoothValueNoise(seedX * 3.0f, 789.0f, seedZ * 3.0f) * 0.3f;
+        
+        float primaryWave = std::sin(waveX * 2.0f * M_PI + phaseX) *
+                           std::cos(waveZ * 2.0f * M_PI + phaseZ);
+        stress += primaryWave * 0.3f; // Reduced from 0.8f to reduce artificial patterns
+        
+        // Medium-scale variation with noise modulation
+        float mediumNoise = VoxelEngine::Util::smoothValueNoise(seedX * 12.0f, 321.0f, seedZ * 12.0f);
+        stress += mediumNoise * 0.2f;
         
         // Apply realistic mantle convection strength
-        stress *= timeStep * 0.3f; // Reduced from 0.5f for more gradual changes
+        stress *= timeStep * 0.25f; // Reduced from 0.3f for more gradual, organic changes
         
         mantleStress_->addToSample(x, z, stress);
     });
@@ -358,10 +365,10 @@ void GeologicalSimulator::simulateMountainBuilding(float timeStep) {
             float stress = crustStress_->getSample(x, z);
             float rockHard = rockHardness_->getSample(x, z);
                  if (stress > 0.5f) { // Compression threshold
-            float uplift = stress * timeStep * 2.5f / rockHard; // Reduced from 25.0f to 2.5f for realistic elevations
+            float uplift = stress * timeStep * 8.0f / rockHard; // Increased from 2.5f to 8.0f for more visible elevation changes
             
-            // Clamp uplift to prevent unrealistic mountain growth
-            uplift = std::max(-15.0f, std::min(15.0f, uplift)); // Reduced from ±200.0f to ±15.0f
+            // Clamp uplift to prevent unrealistic mountain growth per step
+            uplift = std::max(-30.0f, std::min(30.0f, uplift)); // Increased from ±15.0f to ±30.0f
             elevationField_->addToSample(x, z, uplift);
             
             // Determine new rock type based on pressure and temperature
@@ -371,9 +378,13 @@ void GeologicalSimulator::simulateMountainBuilding(float timeStep) {
             currentElevation = std::max(-1800.0f, std::min(1800.0f, currentElevation));
             elevationField_->setSample(x, z, currentElevation);
             
-            if (currentElevation > 2000.0f && stress > 3.0f) {
+            // Update rock types based on realistic elevation thresholds
+            if (currentElevation > 1000.0f && stress > 3.0f) {
                 rockTypes_->setSample(x, z, RockType::METAMORPHIC_SLATE);
                 rockHardness_->setSample(x, z, 9.0f);
+            } else if (currentElevation > 500.0f) {
+                rockTypes_->setSample(x, z, RockType::IGNEOUS_GRANITE);
+                rockHardness_->setSample(x, z, 8.0f);
             }
         }
         }
@@ -426,8 +437,13 @@ void GeologicalSimulator::simulateVolcanicActivity(float timeStep) {
             
             // Only create volcanic features where intensity is significant
             if (volcanicIntensity > 0.1f) {
-                float volcanoHeight = volcanicIntensity * randomRange(100.0f, 400.0f) * timeStep;
-                elevationField_->addToSample(x, z, volcanoHeight);
+                float volcanoHeight = volcanicIntensity * randomRange(50.0f, 200.0f) * timeStep; // Reduced max volcanic height
+                float currentElevation = elevationField_->getSample(x, z);
+                float newElevation = currentElevation + volcanoHeight;
+                
+                // Clamp to elevation bounds
+                newElevation = std::max(-1800.0f, std::min(1800.0f, newElevation));
+                elevationField_->setSample(x, z, newElevation);
                 
                 // Set volcanic rock type for strong volcanic areas
                 if (volcanicIntensity > 0.3f) {
@@ -481,8 +497,15 @@ void GeologicalSimulator::simulateChemicalWeathering(float timeStep) {
             float climateMultiplier = (temperature / 30.0f) * (rainfall / 1000.0f);
             float erosion = weatheringRate * timeStep * climateMultiplier * 0.1f; // Reduced erosion rate
             
-            // Clamp erosion to prevent extreme changes
+            // Clamp erosion to prevent extreme changes and respect elevation bounds
             erosion = std::max(0.0f, std::min(10.0f, erosion));
+            
+            // Ensure we don't erode below deep ocean level
+            float currentElevation = elevationField_->getSample(x, z);
+            if (currentElevation - erosion < -1800.0f) {
+                erosion = std::max(0.0f, currentElevation + 1800.0f);
+            }
+            
             elevationField_->addToSample(x, z, -erosion);
         }
     });
@@ -506,12 +529,23 @@ void GeologicalSimulator::simulatePhysicalErosion(float timeStep) {
         
         // Physical erosion increases with water flow and slope
         if (waterFlowValue > 0.1f) {
-            float erosion = waterFlowValue * timeStep * 0.05f; // Reduced erosion rate
-            float flowIncrease = erosion * 0.05f; // Reduced flow increase
+            float erosion = waterFlowValue * timeStep * 0.01f; // Much reduced erosion rate
+            float flowIncrease = erosion * 0.02f; // Much reduced flow increase
             
-            // Clamp values to prevent overflow
-            erosion = std::max(0.0f, std::min(5.0f, erosion));
-            flowIncrease = std::max(0.0f, std::min(2.0f, flowIncrease));
+            // Prevent erosion below reasonable deep ocean level (-1500m)
+            float currentElevation = elevationField_->getSample(x, z);
+            if (currentElevation <= -1500.0f) {
+                erosion = std::max(0.0f, erosion * 0.1f); // Greatly reduce deep ocean erosion
+            }
+            
+            // Clamp values to prevent overflow and respect elevation bounds
+            erosion = std::max(0.0f, std::min(2.0f, erosion));
+            flowIncrease = std::max(0.0f, std::min(1.0f, flowIncrease));
+            
+            // Ensure we don't erode below deep ocean level
+            if (currentElevation - erosion < -1800.0f) {
+                erosion = std::max(0.0f, currentElevation + 1800.0f);
+            }
             
             elevationField_->addToSample(x, z, -erosion);
             waterFlow_->addToSample(x, z, flowIncrease);
@@ -589,6 +623,12 @@ void GeologicalSimulator::simulateGlacialCarving(float timeStep) {
             float glacialIntensity = std::min(1.0f, (elevation - 1200.0f) / 2000.0f);
             float temperatureFactor = std::max(0.1f, (-temperature - 2.0f) / 10.0f);
             float erosion = timeStep * glacialIntensity * temperatureFactor * 1.5f;
+            
+            // Ensure we don't erode below deep ocean level
+            if (elevation - erosion < -1800.0f) {
+                erosion = std::max(0.0f, elevation + 1800.0f);
+            }
+            
             elevationField_->addToSample(x, z, -erosion);
         }
     });
