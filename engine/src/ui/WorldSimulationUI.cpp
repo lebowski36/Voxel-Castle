@@ -606,7 +606,7 @@ void WorldSimulationUI::createGenerationLog() {
     // Calculate summary area beside the square preview
     float summaryX = worldMapX_ + worldMapWidth_ + ELEMENT_SPACING;
     float summaryWidth = panelWidth - worldMapWidth_ - ELEMENT_SPACING;
-    float logHeight = 120.0f; // Increased height since we have more vertical space
+    float logHeight = 180.0f; // Increased height to accommodate better formatted text with line breaks
     
     // Position log below the progress panels in the summary area
     float summaryY = worldMapY_ + 140.0f; // After progress panels (30 + 80 + 30 spacing)
@@ -622,18 +622,42 @@ void WorldSimulationUI::createGenerationLog() {
     
     auto logPanel = std::make_shared<VoxelEngine::UI::UIButton>(renderer_);
     std::string logText = "";
-    size_t entriesToShow = std::min(static_cast<size_t>(6), generationLog_.size()); // Show more entries
+    size_t entriesToShow = std::min(static_cast<size_t>(4), generationLog_.size()); // Show fewer entries to fit better
     if (entriesToShow > 0) {
         for (size_t i = generationLog_.size() - entriesToShow; i < generationLog_.size(); ++i) {
-            logText += "Year " + std::to_string(generationLog_[i].simulationYear) + ": " + generationLog_[i].message + "\n";
+            // Format log entries with proper line breaks for vertical stacking
+            std::string yearText = "Year " + std::to_string(generationLog_[i].simulationYear);
+            std::string message = generationLog_[i].message;
+            
+            // Break long messages into multiple lines to prevent horizontal scrolling
+            const size_t maxLineLength = 35; // Adjust based on panel width
+            if (message.length() > maxLineLength) {
+                // Find word boundaries for better wrapping
+                size_t breakPos = message.find_last_of(' ', maxLineLength);
+                if (breakPos == std::string::npos || breakPos < maxLineLength / 2) {
+                    breakPos = maxLineLength;
+                }
+                
+                logText += yearText + ":\n  " + message.substr(0, breakPos) + "\n";
+                if (breakPos < message.length()) {
+                    logText += "  " + message.substr(breakPos + 1) + "\n";
+                }
+            } else {
+                logText += yearText + ": " + message + "\n";
+            }
+            
+            // Add spacing between entries for better readability
+            logText += "\n";
         }
     } else {
-        logText = "Simulation starting...\n";
+        logText = "Simulation starting...\nInitializing systems...\n";
     }
+    
     logPanel->setText(logText);
     logPanel->setPosition(summaryX, summaryY);
     logPanel->setSize(summaryWidth, logHeight);
     logPanel->setBackgroundColor({0.1f, 0.1f, 0.1f, 0.6f});
+    logPanel->setTextColor({0.9f, 0.9f, 0.9f, 1.0f}); // Better text contrast
     addChild(logPanel);
     
     // Note: currentY_ is not advanced here since log is positioned beside preview, not below
@@ -798,8 +822,19 @@ void WorldSimulationUI::startSimulation(const WorldConfig& config, const std::st
 }
 
 void WorldSimulationUI::pauseSimulation() {
-    isPaused_ = true;
-    addLogEntry("Simulation paused - preview remains active", stats_.simulationYears);
+    if (worldGenerator_) {
+        if (worldGenerator_->isGeologicalSimulationPaused()) {
+            worldGenerator_->resumeGeologicalSimulation();
+            isPaused_ = false;
+            addLogEntry("Simulation resumed", stats_.simulationYears);
+        } else {
+            worldGenerator_->pauseGeologicalSimulation();
+            isPaused_ = true;
+            addLogEntry("Simulation paused - preview remains active", stats_.simulationYears);
+        }
+    } else {
+        isPaused_ = !isPaused_;
+    }
     
     // Update UI to show pause state while keeping preview visible
     createUIElements();
@@ -1413,13 +1448,45 @@ void WorldSimulationUI::startGenerationThread() {
 
 void WorldSimulationUI::generationWorker() {
     try {
-        addLogEntry("Starting geological simulation system...", 0);
+        addLogEntry("Initializing geological simulation system...", 0);
         currentPhase_ = GenerationPhase::TECTONICS;
         
-        // Run the complete geological simulation
-        bool success = worldGenerator_->runGeologicalSimulation();
+        // Initialize the step-based geological simulation
+        if (!worldGenerator_->initializeStepBasedGeologicalSimulation()) {
+            addLogEntry("ERROR: Failed to initialize geological simulation", 0);
+            isRunning_ = false;
+            return;
+        }
         
-        if (success && isRunning_) {
+        addLogEntry("Starting step-based geological simulation...", 0);
+        
+        // Run the simulation step by step with small time slices
+        while (isRunning_ && !worldGenerator_->isGeologicalSimulationComplete()) {
+            // Handle pause/resume
+            if (isPaused_) {
+                worldGenerator_->pauseGeologicalSimulation();
+                std::this_thread::sleep_for(std::chrono::milliseconds(100));
+                continue;
+            } else {
+                worldGenerator_->resumeGeologicalSimulation();
+            }
+            
+            if (!isRunning_) break;
+            
+            // Execute one simulation step
+            bool success = worldGenerator_->stepGeologicalSimulation();
+            
+            if (!success) {
+                addLogEntry("ERROR: Geological simulation step failed", stats_.simulationYears);
+                isRunning_ = false;
+                break;
+            }
+            
+            // Small delay to keep UI responsive (10ms per step)
+            std::this_thread::sleep_for(std::chrono::milliseconds(10));
+        }
+        
+        if (isRunning_ && worldGenerator_->isGeologicalSimulationComplete()) {
             addLogEntry("Geological simulation completed successfully!", stats_.simulationYears);
             
             // Finalize the simulation

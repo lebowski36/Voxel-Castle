@@ -19,6 +19,17 @@ GeologicalSimulator::GeologicalSimulator(int worldSizeKm, const GeologicalConfig
     
     std::cout << "[GeologicalSimulator] Initialized for " << worldSizeKm_ << "km world with " 
               << (config.preset == GeologicalPreset::BALANCED ? "BALANCED" : "OTHER") << " quality" << std::endl;
+
+    // Initialize step-based simulation state
+    simulationInitialized_ = false;
+    simulationComplete_ = false;
+    simulationPaused_ = false;
+    currentStep_ = 0;
+    totalSteps_ = 0;
+    phaseStep_ = 0;
+    totalPhaseSteps_ = 0;
+    phaseTimeStep_ = 0.0f;
+    lastSnapshotTime_ = std::chrono::steady_clock::now();
 }
 
 void GeologicalSimulator::initialize(uint64_t seed) {
@@ -287,11 +298,14 @@ void GeologicalSimulator::createSnapshot(const std::string& phaseDescription, fl
         case GeologicalPhase::TECTONICS:
             simulationTimeMyears = currentPhaseProgress_ * 100.0f; // 0-100 million years
             break;
+        case GeologicalPhase::MOUNTAIN_BUILDING:
+            simulationTimeMyears = 100.0f + (currentPhaseProgress_ * 25.0f); // 100-125 million years
+            break;
         case GeologicalPhase::EROSION:
-            simulationTimeMyears = 100.0f + (currentPhaseProgress_ * 50.0f); // 100-150 million years
+            simulationTimeMyears = 125.0f + (currentPhaseProgress_ * 50.0f); // 125-175 million years
             break;
         case GeologicalPhase::DETAIL:
-            simulationTimeMyears = 150.0f + (currentPhaseProgress_ * 10.0f); // 150-160 million years
+            simulationTimeMyears = 175.0f + (currentPhaseProgress_ * 10.0f); // 175-185 million years
             break;
     }
     
@@ -760,10 +774,13 @@ void GeologicalSimulator::updateProgress(float phaseProgress, const std::string&
     float totalProgress = 0.0f;
     switch (currentPhase_) {
         case GeologicalPhase::TECTONICS:
-            totalProgress = phaseProgress * 0.4f; // 40% of total time
+            totalProgress = phaseProgress * 0.3f; // 30% of total time
+            break;
+        case GeologicalPhase::MOUNTAIN_BUILDING:
+            totalProgress = 0.3f + (phaseProgress * 0.2f); // 30% + mountain building progress
             break;
         case GeologicalPhase::EROSION:
-            totalProgress = 0.4f + (phaseProgress * 0.4f); // 40% + current erosion progress
+            totalProgress = 0.5f + (phaseProgress * 0.3f); // 50% + current erosion progress
             break;
         case GeologicalPhase::DETAIL:
             totalProgress = 0.8f + (phaseProgress * 0.2f); // 80% + current detail progress
@@ -863,9 +880,250 @@ void GeologicalSimulator::setProgressCallback(std::function<void(const PhaseInfo
     progressCallback_ = callback;
 }
 
+// Step-based simulation implementation
+bool GeologicalSimulator::initializeSimulation() {
+    if (simulationInitialized_) {
+        return true; // Already initialized
+    }
+    
+    std::cout << "[GeologicalSimulator] Initializing step-based simulation..." << std::endl;
+    
+    // Reset simulation state
+    currentStep_ = 0;
+    currentPhase_ = GeologicalPhase::TECTONICS;
+    currentPhaseProgress_ = 0.0f;
+    simulationComplete_ = false;
+    simulationPaused_ = false;
+    
+    // Calculate total steps based on quality preset
+    int tectonicSteps = std::max(30, config_.getSimulationSteps() / 3);
+    int erosionSteps = std::max(30, config_.getSimulationSteps() / 3);
+    int detailSteps = std::max(10, config_.getSimulationSteps() / 3);
+    totalSteps_ = tectonicSteps + erosionSteps + detailSteps;
+    
+    // Initialize first phase (tectonics)
+    phaseStep_ = 0;
+    totalPhaseSteps_ = tectonicSteps;
+    phaseTimeStep_ = 100.0f / tectonicSteps; // 100 million years divided by steps
+    
+    // Create initial snapshot
+    createSnapshot("Simulation initialized", 0.0f);
+    
+    simulationInitialized_ = true;
+    lastSnapshotTime_ = std::chrono::steady_clock::now();
+    
+    std::cout << "[GeologicalSimulator] Step-based simulation initialized (" << totalSteps_ << " total steps)" << std::endl;
+    return true;
+}
+
+bool GeologicalSimulator::stepSimulation() {
+    if (!simulationInitialized_ || simulationComplete_ || simulationPaused_) {
+        return false; // Can't step if not initialized, complete, or paused
+    }
+    
+    // Execute one simulation step based on current phase
+    switch (currentPhase_) {
+        case GeologicalPhase::TECTONICS: {
+            // Execute one step of tectonic simulation
+            simulateMantleConvection(phaseTimeStep_);
+            simulatePlateMovement(phaseTimeStep_);
+            simulateMountainBuilding(phaseTimeStep_);
+            
+            // Occasionally simulate volcanic activity
+            if (phaseStep_ % 4 == 0) {
+                simulateVolcanicActivity(phaseTimeStep_ * 4);
+            }
+            
+            phaseStep_++;
+            currentStep_++;
+            
+            // Check if tectonic phase is complete
+            if (phaseStep_ >= totalPhaseSteps_) {
+                std::cout << "[GeologicalSimulator] Tectonic phase complete" << std::endl;
+                createSnapshot("Tectonic evolution complete", 100.0f);
+                
+                // Move to mountain building phase
+                currentPhase_ = GeologicalPhase::MOUNTAIN_BUILDING;
+                phaseStep_ = 0;
+                totalPhaseSteps_ = std::max(20, config_.getSimulationSteps() / 4);
+                phaseTimeStep_ = 20000.0f / totalPhaseSteps_; // 20 thousand years divided by steps
+            }
+            break;
+        }
+        
+        case GeologicalPhase::MOUNTAIN_BUILDING: {
+            // Execute one step of mountain building simulation
+            simulateMountainBuilding(phaseTimeStep_ * 2.0f); // More intensive mountain building
+            simulateVolcanicActivity(phaseTimeStep_);         // Active volcanism during mountain building
+            
+            // Occasionally simulate mantle convection effects
+            if (phaseStep_ % 3 == 0) {
+                simulateMantleConvection(phaseTimeStep_ * 0.5f);
+            }
+            
+            phaseStep_++;
+            currentStep_++;
+            
+            // Check if mountain building phase is complete
+            if (phaseStep_ >= totalPhaseSteps_) {
+                std::cout << "[GeologicalSimulator] Mountain building phase complete" << std::endl;
+                createSnapshot("Mountain building complete", 100.0f);
+                
+                // Move to erosion phase
+                currentPhase_ = GeologicalPhase::EROSION;
+                phaseStep_ = 0;
+                totalPhaseSteps_ = std::max(30, config_.getSimulationSteps() / 3);
+                phaseTimeStep_ = 10000.0f / totalPhaseSteps_; // 10 thousand years divided by steps
+            }
+            break;
+        }
+        
+        case GeologicalPhase::EROSION: {
+            // Execute one step of erosion simulation
+            simulateChemicalWeathering(phaseTimeStep_);
+            simulatePhysicalErosion(phaseTimeStep_);
+            simulateRiverSystems(phaseTimeStep_);
+            
+            // Occasionally simulate glacial activity
+            if (phaseStep_ % 8 == 0) {
+                simulateGlacialCarving(phaseTimeStep_ * 8);
+            }
+            
+            phaseStep_++;
+            currentStep_++;
+            
+            // Check if erosion phase is complete
+            if (phaseStep_ >= totalPhaseSteps_) {
+                std::cout << "[GeologicalSimulator] Erosion phase complete" << std::endl;
+                createSnapshot("Erosion and weathering complete", 100.0f);
+                
+                // Move to detail phase
+                currentPhase_ = GeologicalPhase::DETAIL;
+                phaseStep_ = 0;
+                totalPhaseSteps_ = std::max(10, config_.getSimulationSteps() / 3);
+                phaseTimeStep_ = 1000.0f / totalPhaseSteps_; // 1 thousand years divided by steps
+            }
+            break;
+        }
+        
+        case GeologicalPhase::DETAIL: {
+            // Execute one step of detail simulation
+            simulateChemicalWeathering(phaseTimeStep_ * 0.1f); // Slower weathering
+            simulatePhysicalErosion(phaseTimeStep_ * 0.1f);    // Slower erosion
+            simulateRiverSystems(phaseTimeStep_);              // Continue river evolution
+            
+            phaseStep_++;
+            currentStep_++;
+            
+            // Check if detail phase is complete
+            if (phaseStep_ >= totalPhaseSteps_) {
+                std::cout << "[GeologicalSimulator] Detail phase complete" << std::endl;
+                createSnapshot("Geological simulation complete", 100.0f);
+                simulationComplete_ = true;
+            }
+            break;
+        }
+    }
+    
+    // Update phase progress
+    currentPhaseProgress_ = static_cast<float>(phaseStep_) / static_cast<float>(totalPhaseSteps_);
+    
+    // Create periodic snapshots for UI preview
+    auto now = std::chrono::steady_clock::now();
+    float timeSinceLastSnapshot = std::chrono::duration<float>(now - lastSnapshotTime_).count();
+    if (timeSinceLastSnapshot >= SNAPSHOT_INTERVAL_SECONDS) {
+        std::string description = getPhaseDisplayName() + " (" + 
+                                std::to_string(static_cast<int>(currentPhaseProgress_ * 100)) + "%)";
+        createSnapshot(description, currentPhaseProgress_ * 100.0f);
+        lastSnapshotTime_ = now;
+    }
+    
+    // Call progress callback if set
+    if (progressCallback_) {
+        PhaseInfo info = getProgressInfo();
+        info.totalProgress = static_cast<float>(currentStep_) / static_cast<float>(totalSteps_);
+        progressCallback_(info);
+    }
+    
+    return !simulationComplete_;
+}
+
+bool GeologicalSimulator::isSimulationComplete() const {
+    return simulationComplete_;
+}
+
+void GeologicalSimulator::pauseSimulation() {
+    simulationPaused_ = true;
+    std::cout << "[GeologicalSimulator] Simulation paused" << std::endl;
+}
+
+void GeologicalSimulator::resumeSimulation() {
+    simulationPaused_ = false;
+    std::cout << "[GeologicalSimulator] Simulation resumed" << std::endl;
+}
+
+bool GeologicalSimulator::isSimulationPaused() const {
+    return simulationPaused_;
+}
+
+std::string GeologicalSimulator::getPhaseDisplayName() const {
+    switch (currentPhase_) {
+        case GeologicalPhase::TECTONICS: return "Tectonic Evolution";
+        case GeologicalPhase::MOUNTAIN_BUILDING: return "Mountain Building";
+        case GeologicalPhase::EROSION: return "Erosion & Weathering";
+        case GeologicalPhase::DETAIL: return "Surface Detail";
+        default: return "Unknown Phase";
+    }
+}
+
+// Snapshot management methods  
+void GeologicalSimulator::createSnapshot(const std::string& description) {
+    // Call the existing createSnapshot method with a default completion percentage
+    createSnapshot(description, currentPhaseProgress_ * 100.0f);
+}
+
+bool GeologicalSimulator::hasSnapshots() const {
+    return snapshotManager_ && snapshotManager_->GetSnapshotCount() > 0;
+}
+
+std::vector<std::string> GeologicalSimulator::getSnapshotDescriptions() const {
+    std::vector<std::string> descriptions;
+    if (snapshotManager_) {
+        for (size_t i = 0; i < snapshotManager_->GetSnapshotCount(); ++i) {
+            const auto* snapshot = snapshotManager_->GetSnapshot(i);
+            if (snapshot) {
+                descriptions.push_back(snapshot->phaseDescription);
+            }
+        }
+    }
+    return descriptions;
+}
+
+bool GeologicalSimulator::setCurrentSnapshot(size_t index) {
+    if (snapshotManager_) {
+        return snapshotManager_->SetCurrentSnapshot(index);
+    }
+    return false;
+}
+
+size_t GeologicalSimulator::getCurrentSnapshotIndex() const {
+    if (snapshotManager_) {
+        return snapshotManager_->GetCurrentSnapshotIndex();
+    }
+    return 0;
+}
+
+size_t GeologicalSimulator::getSnapshotCount() const {
+    if (snapshotManager_) {
+        return snapshotManager_->GetSnapshotCount();
+    }
+    return 0;
+}
+
 std::unique_ptr<ContinuousField<GeologicalSample>> GeologicalSimulator::exportGeologicalData() const {
-    // This would create a field of GeologicalSample objects for chunk generation
-    // For now, return nullptr - this will be implemented with the HybridDetailGenerator
+    // For now, return nullptr as this method is only used by tests
+    // In a full implementation, we would create a new ContinuousField with proper template instantiation
+    std::cout << "[GeologicalSimulator] exportGeologicalData() not fully implemented - returning nullptr" << std::endl;
     return nullptr;
 }
 

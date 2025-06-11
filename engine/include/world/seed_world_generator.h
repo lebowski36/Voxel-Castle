@@ -125,6 +125,14 @@ public:
      */
     bool runGeologicalSimulation();
 
+    // Step-based geological simulation for responsive UI
+    bool initializeStepBasedGeologicalSimulation();
+    bool stepGeologicalSimulation();
+    bool isGeologicalSimulationComplete() const;
+    void pauseGeologicalSimulation();
+    void resumeGeologicalSimulation();
+    bool isGeologicalSimulationPaused() const;
+
     /**
      * @brief Get the geological simulator instance
      * @return Pointer to GeologicalSimulator, nullptr if not initialized

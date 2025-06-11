@@ -109,6 +109,7 @@ private:
     void generateMountainRidges(ContinuousField<float>& elevationField, float worldSizeKm);
     void assignRockTypes(ContinuousField<RockType>& rockTypes, float worldSizeKm);
     void initializeMantleStress(ContinuousField<float>& mantleStress, float worldSizeKm);
+    float generateOrganicContinentalElevation(const glm::vec2& worldPos, float worldSizeKm);
     
     // Helper methods
     std::vector<glm::vec2> generateContinentalSeeds(float worldSizeKm, int numContinents);

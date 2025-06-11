@@ -252,57 +252,23 @@ void FractalContinentGenerator::generateCoastlines(ContinuousField<float>& eleva
     int height = elevationField.getHeight();
     float spacing = elevationField.getSampleSpacing();
     
+    std::cout << "[FractalContinentGenerator] Generating organic coastlines using fractal domains..." << std::endl;
+    
+    // Clear any existing continent data and generate completely organic continents
+    continentalPlates_.clear();
+    
     for (int z = 0; z < height; ++z) {
         for (int x = 0; x < width; ++x) {
             glm::vec2 worldPos(x * spacing, z * spacing);
             
-            // Find nearest continent and calculate distance
-            ContinentalPlate* nearestPlate = findNearestContinent(worldPos);
+            // Generate completely organic continental structure using fractal domains
+            float elevation = generateOrganicContinentalElevation(worldPos, worldSizeKm);
             
-            if (nearestPlate) {
-                float distanceToCenter = glm::length(worldPos - nearestPlate->center);
-                
-                // Generate fractal coastline variation
-                float coastlineNoise = generateCoastlineNoise(worldPos, nearestPlate);
-                
-                // Apply MUCH more aggressive noise to effective radius for truly organic coastlines
-                float radiusVariation = coastlineNoise * 0.8f; // Increased from 0.3f - much more dramatic
-                
-                // Add secondary warping for even more organic shapes
-                float secondaryWarp = fractionalBrownianMotion(worldPos.x * 0.0002f, worldPos.y * 0.0002f, 6, 0.6f) * nearestPlate->radius * 0.4f;
-                
-                float effectiveRadius = nearestPlate->radius + radiusVariation + secondaryWarp;
-                
-                // Make coastlines even more irregular with distance-based modulation
-                float coastalZone = std::abs(distanceToCenter - nearestPlate->radius) / (nearestPlate->radius * 0.3f);
-                if (coastalZone < 1.0f) {
-                    // In coastal zone - add extra irregularity
-                    float coastalChaos = fractionalBrownianMotion(worldPos.x * 0.001f, worldPos.y * 0.001f, 8, 0.4f);
-                    effectiveRadius += coastalChaos * nearestPlate->radius * 0.3f * (1.0f - coastalZone);
-                }
-                
-                if (distanceToCenter <= effectiveRadius) {
-                    // Inside continental plate - apply base elevation with terrain variation
-                    float baseElevation = nearestPlate->elevation;
-                    
-                    // Add terrain variation that decreases toward coastline
-                    float centerDistance = distanceToCenter / nearestPlate->radius;
-                    float terrainVariation = coastlineNoise * 0.1f * (1.0f - centerDistance); // Less variation near coast
-                    
-                    float finalElevation = baseElevation + terrainVariation;
-                    elevationField.setSample(x, z, finalElevation);
-                } else {
-                    // Outside continental plates - ocean depth
-                    float oceanDepth = generateOceanDepth(worldPos, worldSizeKm);
-                    elevationField.setSample(x, z, oceanDepth);
-                }
-            } else {
-                // No continents (shouldn't happen, but fallback to ocean)
-                float oceanDepth = generateOceanDepth(worldPos, worldSizeKm);
-                elevationField.setSample(x, z, oceanDepth);
-            }
+            elevationField.setSample(x, z, elevation);
         }
     }
+    
+    std::cout << "[FractalContinentGenerator] Generated organic continental structure" << std::endl;
 }
 
 void FractalContinentGenerator::generateRiverTemplates(float worldSizeKm) {
@@ -760,6 +726,95 @@ glm::vec2 FractalContinentGenerator::generateCoastlinePoint(const glm::vec2& bas
     // Add fractal detail to coastline points
     float detailNoise = fractionalBrownianMotion(basePoint.x, basePoint.y, 6, 0.6f);
     return basePoint + glm::vec2(detailNoise * detail, detailNoise * detail);
+}
+
+float FractalContinentGenerator::generateOrganicContinentalElevation(const glm::vec2& worldPos, float worldSizeKm) {
+    float worldSizeMeters = worldSizeKm * 1000.0f;
+    
+    // Normalize position to 0-1 range for consistent noise sampling
+    glm::vec2 normalizedPos = worldPos / worldSizeMeters;
+    
+    // Multiple fractal domain layers for HIGHLY organic continental structure
+    
+    // 1. Continental mass distribution - large scale features with MUCH more variation
+    float continentalScale = 0.6f;  // Smaller scale = more variation
+    float continentalBase = fractionalBrownianMotion(normalizedPos.x * continentalScale, normalizedPos.y * continentalScale, 6, 0.9f);
+    
+    // 2. AGGRESSIVE domain warping for highly irregular shapes
+    float warpStrength = 0.7f; // Increased from 0.3f for much more distortion
+    float warpX = fractionalBrownianMotion(normalizedPos.x * 1.5f + 1000.0f, normalizedPos.y * 1.5f + 1000.0f, 8, 0.8f) * warpStrength;
+    float warpY = fractionalBrownianMotion(normalizedPos.x * 1.5f + 2000.0f, normalizedPos.y * 1.5f + 2000.0f, 8, 0.8f) * warpStrength;
+    
+    glm::vec2 warpedPos = normalizedPos + glm::vec2(warpX, warpY);
+    
+    // 3. Continental-scale features with warped coordinates and MORE octaves
+    float continentMask = fractionalBrownianMotion(warpedPos.x * 0.8f, warpedPos.y * 0.8f, 8, 0.8f);
+    
+    // 4. Multiple ridged noise layers for VERY dramatic coastlines
+    float ridged1 = 1.0f - std::abs(perlinNoise(warpedPos.x * 3.5f, warpedPos.y * 3.5f, 1.0f));
+    ridged1 = std::pow(ridged1, 2.5f); // More dramatic ridges
+    
+    float ridged2 = 1.0f - std::abs(perlinNoise(warpedPos.x * 7.0f + 500.0f, warpedPos.y * 7.0f + 500.0f, 1.0f));
+    ridged2 = std::pow(ridged2, 3.0f); // Even sharper ridges
+    
+    float ridged3 = 1.0f - std::abs(perlinNoise(warpedPos.x * 12.0f + 1500.0f, warpedPos.y * 12.0f + 1500.0f, 1.0f));
+    ridged3 = std::pow(ridged3, 2.0f); // Fine-scale ridges
+    
+    // 5. Much more fine detail for coastal complexity
+    float detail = fractionalBrownianMotion(warpedPos.x * 12.0f, warpedPos.y * 12.0f, 10, 0.3f);
+    
+    // 6. TRIPLE domain warping for maximum organic complexity
+    float warp2X = fractionalBrownianMotion(warpedPos.x * 6.0f + 3000.0f, warpedPos.y * 6.0f + 3000.0f, 6, 0.7f) * 0.4f;
+    float warp2Y = fractionalBrownianMotion(warpedPos.x * 6.0f + 4000.0f, warpedPos.y * 6.0f + 4000.0f, 6, 0.7f) * 0.4f;
+    
+    glm::vec2 doubleWarpedPos = warpedPos + glm::vec2(warp2X, warp2Y);
+    
+    // 7. Third level warping for ultimate irregularity
+    float warp3X = fractionalBrownianMotion(doubleWarpedPos.x * 10.0f + 5000.0f, doubleWarpedPos.y * 10.0f + 5000.0f, 4, 0.6f) * 0.2f;
+    float warp3Y = fractionalBrownianMotion(doubleWarpedPos.x * 10.0f + 6000.0f, doubleWarpedPos.y * 10.0f + 6000.0f, 4, 0.6f) * 0.2f;
+    
+    glm::vec2 tripleWarpedPos = doubleWarpedPos + glm::vec2(warp3X, warp3Y);
+    
+    // 8. Additional organic shape with triple-warped coordinates
+    float organicShape = fractionalBrownianMotion(tripleWarpedPos.x * 2.5f, tripleWarpedPos.y * 2.5f, 9, 0.7f);
+    
+    // 9. Archipelago-style island chains
+    float islandChains = fractionalBrownianMotion(tripleWarpedPos.x * 15.0f + 7000.0f, tripleWarpedPos.y * 15.0f + 7000.0f, 6, 0.5f);
+    
+    // Combine all layers for MAXIMUM organic complexity with more dramatic weighting
+    float combinedNoise = (continentalBase * 0.3f + continentMask * 0.25f + organicShape * 0.25f) + 
+                         (ridged1 * 0.35f + ridged2 * 0.25f + ridged3 * 0.15f) + 
+                         (detail * 0.15f) + (islandChains * 0.1f);
+    
+    // More aggressive sea level threshold for more irregular coastlines
+    float seaLevel = 0.0f;
+    float landThreshold = 0.05f; // Lower threshold = more irregular coastlines
+    
+    if (combinedNoise > landThreshold) {
+        // Above sea level - continental landmass with more dramatic elevation
+        float landHeight = (combinedNoise - landThreshold) / (1.0f - landThreshold); // Normalize to 0-1
+        
+        // Apply highly organic elevation scaling
+        float baseElevation = 20.0f + (landHeight * 500.0f); // Higher base elevation
+        
+        // Add MUCH more dramatic mountain ranges
+        float mountainFactor = (ridged1 + ridged2 * 0.7f + ridged3 * 0.3f) * 0.6f;
+        float mountainHeight = mountainFactor * 1200.0f * landHeight; // Much higher mountains
+        
+        // Add more terrain variation
+        float terrainVariation = detail * 150.0f * landHeight;
+        
+        return baseElevation + mountainHeight + terrainVariation;
+    } else {
+        // Below sea level - ocean with more varied depths
+        float oceanDepth = (landThreshold - combinedNoise) / landThreshold; // Normalize ocean depth
+        float baseDepth = -30.0f - (oceanDepth * 500.0f); // Ocean depths from -30m to -530m
+        
+        // Add more ocean floor variation
+        float oceanVariation = detail * 80.0f * oceanDepth;
+        
+        return baseDepth - oceanVariation;
+    }
 }
 
 } // namespace World

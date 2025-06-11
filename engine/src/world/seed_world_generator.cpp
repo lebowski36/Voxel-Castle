@@ -670,6 +670,53 @@ bool SeedWorldGenerator::runGeologicalSimulation() {
     }
 }
 
+// Step-based geological simulation methods
+bool SeedWorldGenerator::initializeStepBasedGeologicalSimulation() {
+    if (!useGeologicalRealism_ || !geologicalSimulator_) {
+        std::cout << "[SeedWorldGenerator] No geological simulator available for step-based simulation" << std::endl;
+        return false;
+    }
+    
+    std::cout << "[SeedWorldGenerator] Initializing step-based geological simulation..." << std::endl;
+    return geologicalSimulator_->initializeSimulation();
+}
+
+bool SeedWorldGenerator::stepGeologicalSimulation() {
+    if (!useGeologicalRealism_ || !geologicalSimulator_) {
+        return false;
+    }
+    
+    return geologicalSimulator_->stepSimulation();
+}
+
+bool SeedWorldGenerator::isGeologicalSimulationComplete() const {
+    if (!useGeologicalRealism_ || !geologicalSimulator_) {
+        return true; // Consider complete if not using geological simulation
+    }
+    
+    return geologicalSimulator_->isSimulationComplete();
+}
+
+void SeedWorldGenerator::pauseGeologicalSimulation() {
+    if (useGeologicalRealism_ && geologicalSimulator_) {
+        geologicalSimulator_->pauseSimulation();
+    }
+}
+
+void SeedWorldGenerator::resumeGeologicalSimulation() {
+    if (useGeologicalRealism_ && geologicalSimulator_) {
+        geologicalSimulator_->resumeSimulation();
+    }
+}
+
+bool SeedWorldGenerator::isGeologicalSimulationPaused() const {
+    if (!useGeologicalRealism_ || !geologicalSimulator_) {
+        return false;
+    }
+    
+    return geologicalSimulator_->isSimulationPaused();
+}
+
 int SeedWorldGenerator::generateTerrainHeightGeological(int globalX, int globalZ) const {
     if (!geologicalSimulator_) {
         std::cerr << "[SeedWorldGenerator] ERROR: Geological simulator not available, falling back to noise" << std::endl;

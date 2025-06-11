@@ -54,6 +54,22 @@ private:
     // Snapshot system for UI visualization
     std::unique_ptr<GeologicalSnapshotManager> snapshotManager_;
     
+    // Step-based simulation state
+    bool simulationInitialized_;
+    bool simulationComplete_;
+    bool simulationPaused_;
+    int currentStep_;
+    int totalSteps_;
+    
+    // Current phase state
+    int phaseStep_;
+    int totalPhaseSteps_;
+    float phaseTimeStep_;
+    
+    // Timing for responsive updates
+    std::chrono::steady_clock::time_point lastSnapshotTime_;
+    static constexpr float SNAPSHOT_INTERVAL_SECONDS = 2.0f;  // Create snapshot every 2 seconds
+    
 public:
     /**
      * @brief Constructor
@@ -78,6 +94,14 @@ public:
      * @param progressCallback Optional callback for progress updates
      */
     void runFullSimulation(std::function<void(const PhaseInfo&)> progressCallback = nullptr);
+    
+    // Step-based simulation for responsive UI
+    bool initializeSimulation();                    // Initialize simulation state
+    bool stepSimulation();                          // Run one simulation step
+    bool isSimulationComplete() const;              // Check if simulation is done
+    void pauseSimulation();                         // Pause/resume simulation
+    void resumeSimulation();
+    bool isSimulationPaused() const;
     
     /**
      * @brief Run individual simulation phases
@@ -135,6 +159,17 @@ public:
      * @brief Get elevation data directly from current snapshot (for UI optimization)
      */
     float getSnapshotElevationAt(float x, float z) const;
+    
+    // Snapshot management for UI preview
+    void createSnapshot(const std::string& description = "");
+    bool hasSnapshots() const;
+    std::vector<std::string> getSnapshotDescriptions() const;
+    bool setCurrentSnapshot(size_t index);
+    size_t getCurrentSnapshotIndex() const;
+    size_t getSnapshotCount() const;
+    
+    // Phase display utility
+    std::string getPhaseDisplayName() const;
     
 private:
     /**
