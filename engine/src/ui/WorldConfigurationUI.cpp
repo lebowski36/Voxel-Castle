@@ -6,6 +6,8 @@
 #include <iostream>
 #include <random>
 #include <cstring>
+#include <algorithm>
+#include <vector>
 
 WorldConfigurationUI::WorldConfigurationUI(VoxelEngine::UI::UIRenderer* renderer) 
     : BaseMenu(renderer, "World Configuration")
@@ -536,6 +538,86 @@ void WorldConfigurationUI::createParameterControls() {
         onParameterChanged();
     });
     addChild(civToggleButton);
+    paramY += rowSpacing;
+    
+    // World Seed Parameter
+    auto seedLabel = std::make_shared<VoxelEngine::UI::UIButton>(renderer_);
+    seedLabel->setText("World Seed:");
+    seedLabel->setPosition(PANEL_MARGIN, paramY);
+    seedLabel->autoSizeToText(8.0f);
+    seedLabel->setBackgroundColor({0.1f, 0.1f, 0.1f, 0.6f});
+    addChild(seedLabel);
+    
+    auto seedValueLabel = std::make_shared<VoxelEngine::UI::UIButton>(renderer_);
+    std::string seedText;
+    if (config_.customSeed == 0) {
+        seedText = "Random";
+    } else {
+        seedText = std::to_string(config_.customSeed);
+    }
+    seedValueLabel->setText(seedText);
+    seedValueLabel->setPosition(valueColumnX, paramY);
+    seedValueLabel->autoSizeToText(8.0f);
+    seedValueLabel->setBackgroundColor({0.1f, 0.1f, 0.1f, 0.6f});
+    addChild(seedValueLabel);
+    
+    // Randomize seed button
+    auto seedRandomButton = std::make_shared<VoxelEngine::UI::UIButton>(renderer_);
+    seedRandomButton->setText("🎲");
+    seedRandomButton->setPosition(buttonColumnX, paramY);
+    seedRandomButton->setSize(TEXT_HEIGHT, TEXT_HEIGHT);
+    seedRandomButton->setBackgroundColor({0.3f, 0.3f, 0.5f, 0.8f});
+    seedRandomButton->setOnClick([this, seedValueLabel]() { 
+        // Generate new random seed
+        std::random_device rd;
+        std::mt19937 gen(rd());
+        config_.customSeed = gen();
+        seedValueLabel->setText(std::to_string(config_.customSeed));
+        std::cout << "[DEBUG] New random seed generated: " << config_.customSeed << std::endl;
+        onParameterChanged();
+    });
+    addChild(seedRandomButton);
+    
+    // Edit seed button
+    auto seedEditButton = std::make_shared<VoxelEngine::UI::UIButton>(renderer_);
+    seedEditButton->setText("✏️");
+    seedEditButton->setPosition(buttonColumnX + 30.0f, paramY);
+    seedEditButton->setSize(TEXT_HEIGHT, TEXT_HEIGHT);
+    seedEditButton->setBackgroundColor({0.5f, 0.3f, 0.3f, 0.8f});
+    seedEditButton->setOnClick([this, seedValueLabel]() { 
+        // Simple seed editing - cycle through some interesting preset seeds
+        static const        // Generate preset seeds using the same random function for consistency
+        static std::vector<uint32_t> presetSeeds;
+        static bool presetsInitialized = false;
+        
+        if (!presetsInitialized) {
+            std::random_device rd;
+            std::mt19937 gen(42); // Fixed seed for consistent presets
+            std::uniform_int_distribution<uint32_t> dist(1000000000, 4294967295);
+            
+            // Generate 12 preset seeds with proper 10-digit length
+            for (int i = 0; i < 12; i++) {
+                presetSeeds.push_back(dist(gen));
+            }
+            presetsInitialized = true;
+        }
+        static size_t currentPresetIndex = 0;
+        
+        // Find current seed in presets, or start from beginning
+        auto it = std::find(presetSeeds.begin(), presetSeeds.end(), config_.customSeed);
+        if (it != presetSeeds.end()) {
+            currentPresetIndex = (std::distance(presetSeeds.begin(), it) + 1) % presetSeeds.size();
+        } else {
+            currentPresetIndex = 0;
+        }
+        
+        config_.customSeed = presetSeeds[currentPresetIndex];
+        seedValueLabel->setText(std::to_string(config_.customSeed));
+        std::cout << "[WorldConfigurationUI] Preset seed selected: " << config_.customSeed << std::endl;
+        onParameterChanged();
+    });
+    addChild(seedEditButton);
+    
     paramY += rowSpacing + ELEMENT_SPACING;
     
     currentY_ = paramY;

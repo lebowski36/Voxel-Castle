@@ -641,15 +641,9 @@ void WorldMapRenderer::precipitationToColor(float precMmYear, GenerationPhase ph
 }
 
 void WorldMapRenderer::createTextureFromColorData(const unsigned char* colorData, int resolution) {
-    // Mark texture as invalid during recreation to prevent rendering attempts
-    textureValid_ = false;
+    // Create new texture first (atomic approach - don't invalidate until new texture is ready)
+    GLuint newTexture = 0;
     
-    // Delete existing texture if present
-    if (worldTexture_ != 0) {
-        glDeleteTextures(1, &worldTexture_);
-        worldTexture_ = 0;
-    }
-
     // Check for OpenGL errors before proceeding
     GLenum error = glGetError();
     if (error != GL_NO_ERROR) {
@@ -659,7 +653,7 @@ void WorldMapRenderer::createTextureFromColorData(const unsigned char* colorData
     }
 
     // Generate new texture
-    glGenTextures(1, &worldTexture_);
+    glGenTextures(1, &newTexture);
     error = glGetError();
     if (error != GL_NO_ERROR) {
         std::cerr << "[WorldMapRenderer] Error generating texture: " << error << std::endl;
@@ -667,12 +661,12 @@ void WorldMapRenderer::createTextureFromColorData(const unsigned char* colorData
         return;
     }
     
-    glBindTexture(GL_TEXTURE_2D, worldTexture_);
+    glBindTexture(GL_TEXTURE_2D, newTexture);
     error = glGetError();
     if (error != GL_NO_ERROR) {
         std::cerr << "[WorldMapRenderer] Error binding texture: " << error << std::endl;
-        textureValid_ = false;
-        return;
+        glDeleteTextures(1, &newTexture);
+        return;  // Don't invalidate existing texture if new one failed
     }
 
     // Set texture parameters
@@ -686,16 +680,18 @@ void WorldMapRenderer::createTextureFromColorData(const unsigned char* colorData
     error = glGetError();
     if (error != GL_NO_ERROR) {
         std::cerr << "[WorldMapRenderer] Error uploading texture data: " << error << std::endl;
-        glDeleteTextures(1, &worldTexture_);
-        worldTexture_ = 0;
-        textureValid_ = false;  // Ensure invalid state on failure
-        return;
+        glDeleteTextures(1, &newTexture);
+        return;  // Don't invalidate existing texture if new one failed
     }
 
     // Unbind texture
     glBindTexture(GL_TEXTURE_2D, 0);
 
-    // Mark texture as valid now that creation is complete
+    // Atomically swap textures - delete old one and assign new one
+    if (worldTexture_ != 0) {
+        glDeleteTextures(1, &worldTexture_);
+    }
+    worldTexture_ = newTexture;
     textureValid_ = true;
 
     std::cout << "[WorldMapRenderer] Created texture ID " << worldTexture_ 

@@ -105,9 +105,9 @@ void GeologicalSimulator::initializeFields() {
             float worldX = x * spacing;
             float worldZ = z * spacing;
             
-            // Seed-based coordinates for noise
-            float seedX = worldX + (seed_ % 10000) * 0.1f;
-            float seedZ = worldZ + ((seed_ >> 16) % 10000) * 0.1f;
+            // Seed-based coordinates for noise - much stronger influence for terrain variety
+            float seedX = worldX + (seed_ % 10000) * 10.0f;    // 10x stronger seed influence
+            float seedZ = worldZ + ((seed_ >> 16) % 10000) * 10.0f;
             
             // Initial mantle convection pattern - less regular, more seed-dependent
             float mantleBase = VoxelEngine::Util::smoothValueNoise(seedX * 0.0001f, 0.0f, seedZ * 0.0001f);
