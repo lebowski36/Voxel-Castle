@@ -1,0 +1,22 @@
+{
+    "version": 1,
+    "worldName": "New World",
+    "seed": 14375069904591812939,
+    "gameMode": "creative",
+    "worldType": "infinite",
+    "spawnX": 0,
+    "spawnY": 64,
+    "spawnZ": 0,
+    "generateStructures": true,
+    "worldSize": 256,
+    "mountainRanges": 14,
+    "majorRivers": 8,
+    "biomesIdentified": 19,
+    "simulationYears": 52,
+    "highestPeak": 939,
+    "generatorName": "SeedWorldGenerator",
+    "generatorVersion": "1.0",
+    "createdDate": "2025-06-11T12:51:35Z",
+    "lastPlayed": "2025-06-11T12:51:35Z",
+    "playTime": 0
+}

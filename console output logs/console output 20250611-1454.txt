@@ -1,0 +1,561 @@
+[WorldMapRenderer] Geological simulator: Available
+[WorldMapRenderer] Tectonic simulator: Not available
+[WorldMapRenderer] Geological sample - Pos(0,0) Elevation:174.393m RockType:4 Hardness:5
+[WorldMapRenderer] Geological sample - Pos(500,0) Elevation:408.845m RockType:4 Hardness:5.27732
+[WorldMapRenderer] Geological sample - Pos(1000,0) Elevation:373.61m RockType:4 Hardness:5.24224
+[WorldMapRenderer] Geological sample - Pos(1500,0) Elevation:399.199m RockType:4 Hardness:5.37881
+[WorldMapRenderer] Geological sample - Pos(2000,0) Elevation:419.796m RockType:4 Hardness:5.35867
+[WorldMapRenderer] Geological sample - Pos(0,500) Elevation:230.171m RockType:4 Hardness:5.21665
+[WorldMapRenderer] Geological sample - Pos(500,500) Elevation:1748.42m RockType:4 Hardness:8.85208
+[WorldMapRenderer] Geological sample - Pos(1000,500) Elevation:1308.75m RockType:4 Hardness:8.43952
+[WorldMapRenderer] Geological sample - Pos(1500,500) Elevation:1497.21m RockType:4 Hardness:8.84742
+[WorldMapRenderer] Geological sample - Pos(2000,500) Elevation:1578.48m RockType:4 Hardness:8.62767
+[WorldMapRenderer] Geological sample - Pos(0,1000) Elevation:255.951m RockType:4 Hardness:5.31291
+[WorldMapRenderer] Geological sample - Pos(500,1000) Elevation:1558.29m RockType:4 Hardness:8.69703
+[WorldMapRenderer] Geological sample - Pos(1000,1000) Elevation:1280.82m RockType:4 Hardness:8.97258
+[WorldMapRenderer] Geological sample - Pos(1500,1000) Elevation:1415.52m RockType:4 Hardness:8.9175
+[WorldMapRenderer] Geological sample - Pos(2000,1000) Elevation:1373.13m RockType:4 Hardness:8.48845
+[WorldMapRenderer] Geological sample - Pos(0,1500) Elevation:178.448m RockType:4 Hardness:5.28477
+[WorldMapRenderer] Geological sample - Pos(500,1500) Elevation:1766.84m RockType:4 Hardness:9.23136
+[WorldMapRenderer] Geological sample - Pos(1000,1500) Elevation:1425.75m RockType:4 Hardness:8.81929
+[WorldMapRenderer] Geological sample - Pos(1500,1500) Elevation:1877.68m RockType:4 Hardness:8.78033
+[WorldMapRenderer] Geological sample - Pos(2000,1500) Elevation:1472.18m RockType:4 Hardness:9.00779
+[WorldMapRenderer] Geological sample - Pos(0,2000) Elevation:202.202m RockType:4 Hardness:5.38091
+[WorldMapRenderer] Geological sample - Pos(500,2000) Elevation:1675.38m RockType:4 Hardness:8.96833
+[WorldMapRenderer] Geological sample - Pos(1000,2000) Elevation:1563.76m RockType:4 Hardness:8.90306
+[WorldMapRenderer] Geological sample - Pos(1500,2000) Elevation:1839.72m RockType:4 Hardness:8.62506
+[WorldMapRenderer] Geological sample - Pos(2000,2000) Elevation:1752.13m RockType:4 Hardness:8.8675
+[WorldMapRenderer] Rendering world map at (84, 166) size 722x400
+[WorldMapRenderer] Mode: Elevation, Phase: Tectonic Formation
+[WorldMapRenderer] Rendering world texture ID 6 (using texture A)
+[WorldMapRenderer] Elevation range: -35.415m to 2075.71m
+[WorldMapRenderer] Error: Texture ID 7 is not a valid texture!
+[WorldMapRenderer] World map generation complete
+[GeologicalSimulator] Tectonic step 132/333 (39%)
+[WorldMapRenderer] Rendering world map at (84, 166) size 722x400
+[WorldMapRenderer] Mode: Elevation, Phase: Tectonic Formation
+[WorldMapRenderer] Rendering world texture ID 6 (using texture A)
+[GeologicalSimulator] Tectonic step 198/333 (59%)
+[WorldMapRenderer] Generating world map - Phase: Tectonic Formation, Mode: Elevation
+[WorldMapRenderer] World size: 256km x 256km
+[WorldMapRenderer] Generating elevation data...
+[WorldMapRenderer] Sampling world area: 256km x 256km
+[WorldMapRenderer] World size in meters: 256000m x 256000m
+[SeedWorldGenerator] getGeologicalSimulator() called - useGeologicalRealism_: 1, geologicalSimulator_ exists: YES
+[WorldMapRenderer] Geological simulator: Available
+[WorldMapRenderer] Tectonic simulator: Not available
+[WorldMapRenderer] Geological sample - Pos(0,0) Elevation:175.313m RockType:4 Hardness:5
+[WorldMapRenderer] Geological sample - Pos(500,0) Elevation:523.235m RockType:4 Hardness:5.27732
+[WorldMapRenderer] Geological sample - Pos(1000,0) Elevation:479.303m RockType:4 Hardness:5.24224
+[WorldMapRenderer] Geological sample - Pos(1500,0) Elevation:459.522m RockType:4 Hardness:5.37881
+[WorldMapRenderer] Geological sample - Pos(2000,0) Elevation:469.372m RockType:4 Hardness:5.35867
+[WorldMapRenderer] Geological sample - Pos(0,500) Elevation:230.171m RockType:4 Hardness:5.21665
+[WorldMapRenderer] Geological sample - Pos(500,500) Elevation:2506.95m RockType:4 Hardness:8.85208
+[WorldMapRenderer] Geological sample - Pos(1000,500) Elevation:1885.35m RockType:4 Hardness:8.43952
+[WorldMapRenderer] Geological sample - Pos(1500,500) Elevation:2370.58m RockType:4 Hardness:8.84742
+[WorldMapRenderer] Geological sample - Pos(2000,500) Elevation:1855.78m RockType:4 Hardness:8.62767
+[WorldMapRenderer] Geological sample - Pos(0,1000) Elevation:255.951m RockType:4 Hardness:5.31291
+[WorldMapRenderer] Geological sample - Pos(500,1000) Elevation:2133.17m RockType:4 Hardness:8.69703
+[WorldMapRenderer] Geological sample - Pos(1000,1000) Elevation:2057.62m RockType:4 Hardness:8.97258
+[WorldMapRenderer] Geological sample - Pos(1500,1000) Elevation:2164.96m RockType:4 Hardness:8.9175
+[WorldMapRenderer] Geological sample - Pos(2000,1000) Elevation:1821m RockType:4 Hardness:8.48845
+[WorldMapRenderer] Geological sample - Pos(0,1500) Elevation:178.448m RockType:4 Hardness:5.28477
+[WorldMapRenderer] Geological sample - Pos(500,1500) Elevation:2511.24m RockType:4 Hardness:9.23136
+[WorldMapRenderer] Geological sample - Pos(1000,1500) Elevation:2161.56m RockType:4 Hardness:8.81929
+[WorldMapRenderer] Geological sample - Pos(1500,1500) Elevation:2455.95m RockType:4 Hardness:8.78033
+[WorldMapRenderer] Geological sample - Pos(2000,1500) Elevation:1927.38m RockType:4 Hardness:9.00779
+[WorldMapRenderer] Geological sample - Pos(0,2000) Elevation:202.202m RockType:4 Hardness:5.38091
+[WorldMapRenderer] Geological sample - Pos(500,2000) Elevation:2246.6m RockType:4 Hardness:8.96833
+[WorldMapRenderer] Geological sample - Pos(1000,2000) Elevation:2465.13m RockType:4 Hardness:8.90306
+[WorldMapRenderer] Geological sample - Pos(1500,2000) Elevation:2552.24m RockType:4 Hardness:8.62506
+[WorldMapRenderer] Geological sample - Pos(2000,2000) Elevation:1892.48m RockType:4 Hardness:8.8675
+[WorldMapRenderer] Elevation range: -35.415m to 2948.65m
+[WorldMapRenderer] Error: Texture ID 7 is not a valid texture!
+[WorldMapRenderer] World map generation complete
+[WorldMapRenderer] Rendering world map at (84, 166) size 722x400
+[WorldMapRenderer] Mode: Elevation, Phase: Tectonic Formation
+[WorldMapRenderer] Rendering world texture ID 6 (using texture A)
+[GeologicalSimulator] Tectonic step 264/333 (79%)
+[WorldMapRenderer] Rendering world map at (84, 166) size 722x400
+[WorldMapRenderer] Mode: Elevation, Phase: Tectonic Formation
+[WorldMapRenderer] Rendering world texture ID 6 (using texture A)
+[WorldMapRenderer] Generating world map - Phase: Tectonic Formation, Mode: Elevation
+[WorldMapRenderer] World size: 256km x 256km
+[WorldMapRenderer] Generating elevation data...
+[WorldMapRenderer] Sampling world area: 256km x 256km
+[WorldMapRenderer] World size in meters: 256000m x 256000m
+[SeedWorldGenerator] getGeologicalSimulator() called - useGeologicalRealism_: 1, geologicalSimulator_ exists: YES
+[WorldMapRenderer] Geological simulator: Available
+[WorldMapRenderer] Tectonic simulator: Not available
+[WorldMapRenderer] Geological sample - Pos(0,0) Elevation:175.313m RockType:4 Hardness:5
+[WorldMapRenderer] Geological sample - Pos(500,0) Elevation:588.989m RockType:4 Hardness:5.27732
+[WorldMapRenderer] Geological sample - Pos(1000,0) Elevation:529.8m RockType:4 Hardness:5.24224
+[WorldMapRenderer] Geological sample - Pos(1500,0) Elevation:506.886m RockType:4 Hardness:5.37881
+[WorldMapRenderer] Geological sample - Pos(2000,0) Elevation:497.932m RockType:4 Hardness:5.35867
+[WorldMapRenderer] Geological sample - Pos(0,500) Elevation:230.171m RockType:4 Hardness:5.21665
+[WorldMapRenderer] Geological sample - Pos(500,500) Elevation:3257.97m RockType:4 Hardness:8.85208
+[WorldMapRenderer] Geological sample - Pos(1000,500) Elevation:2441.3m RockType:4 Hardness:8.43952
+[WorldMapRenderer] Geological sample - Pos(1500,500) Elevation:2884.2m RockType:4 Hardness:8.84742
+[WorldMapRenderer] Geological sample - Pos(2000,500) Elevation:2413.98m RockType:4 Hardness:8.62767
+[WorldMapRenderer] Geological sample - Pos(0,1000) Elevation:255.951m RockType:4 Hardness:5.31291
+[WorldMapRenderer] Geological sample - Pos(500,1000) Elevation:2763.77m RockType:4 Hardness:8.69703
+[WorldMapRenderer] Geological sample - Pos(1000,1000) Elevation:2568.77m RockType:4 Hardness:8.97258
+[WorldMapRenderer] Geological sample - Pos(1500,1000) Elevation:2594.66m RockType:4 Hardness:8.9175
+[WorldMapRenderer] Geological sample - Pos(2000,1000) Elevation:2615.79m RockType:4 Hardness:8.48845
+[WorldMapRenderer] Geological sample - Pos(0,1500) Elevation:178.448m RockType:4 Hardness:5.28477
+[WorldMapRenderer] Geological sample - Pos(500,1500) Elevation:3032.88m RockType:4 Hardness:9.23136
+[WorldMapRenderer] Geological sample - Pos(1000,1500) Elevation:3054.37m RockType:4 Hardness:8.81929
+[WorldMapRenderer] Geological sample - Pos(1500,1500) Elevation:3168.92m RockType:4 Hardness:8.78033
+[WorldMapRenderer] Geological sample - Pos(2000,1500) Elevation:2509.79m RockType:4 Hardness:9.00779
+[WorldMapRenderer] Geological sample - Pos(0,2000) Elevation:202.202m RockType:4 Hardness:5.38091
+[WorldMapRenderer] Geological sample - Pos(500,2000) Elevation:2807.6m RockType:4 Hardness:8.96833
+[WorldMapRenderer] Geological sample - Pos(1000,2000) Elevation:3045.43m RockType:4 Hardness:8.90306
+[WorldMapRenderer] Geological sample - Pos(1500,2000) Elevation:3166.15m RockType:4 Hardness:8.62506
+[WorldMapRenderer] Geological sample - Pos(2000,2000) Elevation:2651.58m RockType:4 Hardness:8.8675
+[WorldMapRenderer] Generating world map - Phase: Erosion & Weathering, Mode: Elevation
+[WorldMapRenderer] World size: 256km x 256km
+[WorldMapRenderer] Generating elevation data...
+[WorldMapRenderer] Sampling world area: 256km x 256km
+[WorldMapRenderer] World size in meters: 256000m x 256000m
+[SeedWorldGenerator] getGeologicalSimulator() called - useGeologicalRealism_: 1, geologicalSimulator_ exists: YES
+[WorldMapRenderer] Geological simulator: Available
+[WorldMapRenderer] Tectonic simulator: Not available
+[WorldMapRenderer] Geological sample - Pos(0,0) Elevation:175.313m RockType:4 Hardness:5
+[WorldMapRenderer] Geological sample - Pos(500,0) Elevation:588.989m RockType:4 Hardness:5.27732
+[WorldMapRenderer] Geological sample - Pos(1000,0) Elevation:529.8m RockType:4 Hardness:5.24224
+[WorldMapRenderer] Geological sample - Pos(1500,0) Elevation:506.886m RockType:4 Hardness:5.37881
+[WorldMapRenderer] Geological sample - Pos(2000,0) Elevation:497.932m RockType:4 Hardness:5.35867
+[WorldMapRenderer] Geological sample - Pos(0,500) Elevation:230.171m RockType:4 Hardness:5.21665
+[WorldMapRenderer] Geological sample - Pos(500,500) Elevation:3257.97m RockType:4 Hardness:8.85208
+[WorldMapRenderer] Geological sample - Pos(1000,500) Elevation:2441.3m RockType:4 Hardness:8.43952
+[WorldMapRenderer] Geological sample - Pos(1500,500) Elevation:2884.2m RockType:4 Hardness:8.84742
+[WorldMapRenderer] Geological sample - Pos(2000,500) Elevation:2413.98m RockType:4 Hardness:8.62767
+[WorldMapRenderer] Geological sample - Pos(0,1000) Elevation:255.951m RockType:4 Hardness:5.31291
+[WorldMapRenderer] Geological sample - Pos(500,1000) Elevation:2763.77m RockType:4 Hardness:8.69703
+[WorldMapRenderer] Geological sample - Pos(1000,1000) Elevation:2568.77m RockType:4 Hardness:8.97258
+[WorldMapRenderer] Geological sample - Pos(1500,1000) Elevation:2594.66m RockType:4 Hardness:8.9175
+[WorldMapRenderer] Geological sample - Pos(2000,1000) Elevation:2615.79m RockType:4 Hardness:8.48845
+[WorldMapRenderer] Geological sample - Pos(0,1500) Elevation:178.448m RockType:4 Hardness:5.28477
+[WorldMapRenderer] Geological sample - Pos(500,1500) Elevation:3032.88m RockType:4 Hardness:9.23136
+[WorldMapRenderer] Geological sample - Pos(1000,1500) Elevation:3054.37m RockType:4 Hardness:8.81929
+[WorldMapRenderer] Geological sample - Pos(1500,1500) Elevation:3168.92m RockType:4 Hardness:8.78033
+[WorldMapRenderer] Geological sample - Pos(2000,1500) Elevation:2509.79m RockType:4 Hardness:9.00779
+[WorldMapRenderer] Geological sample - Pos(0,2000) Elevation:202.202m RockType:4 Hardness:5.38091
+[WorldMapRenderer] Geological sample - Pos(500,2000) Elevation:2807.6m RockType:4 Hardness:8.96833
+[WorldMapRenderer] Geological sample - Pos(1000,2000) Elevation:3045.43m RockType:4 Hardness:8.90306
+[WorldMapRenderer] Geological sample - Pos(1500,2000) Elevation:3166.15m RockType:4 Hardness:8.62506
+[WorldMapRenderer] Geological sample - Pos(2000,2000) Elevation:2651.58m RockType:4 Hardness:8.8675
+[WorldMapRenderer] Elevation range: -35.415m to 3827.05m
+[WorldMapRenderer] Error: Texture ID 7 is not a valid texture!
+[WorldMapRenderer] World map generation complete
+[WorldMapRenderer] Elevation range: -35.415m to 3827.05m
+[WorldMapRenderer] Applying erosion effects...
+[WorldMapRenderer] Erosion complete - new range: -27.0948m to 3407.91m
+[WorldMapRenderer] Updated texture buffer, now displaying ID 7 (swapped from 7) with resolution 512x512
+[WorldMapRenderer] World map generation complete
+[GeologicalSimulator] Tectonic step 330/333 (99%)
+[GeologicalSimulator] Tectonic phase completed
+[WorldMapRenderer] Generating world map - Phase: Erosion & Weathering, Mode: Elevation
+[WorldMapRenderer] World size: 256km x 256km
+[WorldMapRenderer] Generating elevation data...
+[WorldMapRenderer] Sampling world area: 256km x 256km
+[WorldMapRenderer] World size in meters: 256000m x 256000m
+[SeedWorldGenerator] getGeologicalSimulator() called - useGeologicalRealism_: 1, geologicalSimulator_ exists: YES
+[WorldMapRenderer] Geological simulator: Available
+[WorldMapRenderer] Tectonic simulator: Not available
+[WorldMapRenderer] Geological sample - Pos(0,0) Elevation:175.313m RockType:4 Hardness:5
+[WorldMapRenderer] Geological sample - Pos(500,0) Elevation:640.769m RockType:4 Hardness:5.27732
+[WorldMapRenderer] Geological sample - Pos(1000,0) Elevation:622.049m RockType:4 Hardness:5.24224
+[WorldMapRenderer] Geological sample - Pos(1500,0) Elevation:590.718m RockType:4 Hardness:5.37881
+[WorldMapRenderer] Geological sample - Pos(2000,0) Elevation:577.909m RockType:4 Hardness:5.35867
+[WorldMapRenderer] Geological sample - Pos(0,500) Elevation:230.171m RockType:4 Hardness:5.21665
+[WorldMapRenderer] Geological sample - Pos(500,500) Elevation:3893.83m RockType:4 Hardness:8.85208
+[WorldMapRenderer] Geological sample - Pos(1000,500) Elevation:3158.63m RockType:4 Hardness:8.43952
+[WorldMapRenderer] Geological sample - Pos(1500,500) Elevation:3826.26m RockType:4 Hardness:8.84742
+[WorldMapRenderer] Geological sample - Pos(2000,500) Elevation:3205.98m RockType:4 Hardness:8.62767
+[WorldMapRenderer] Geological sample - Pos(0,1000) Elevation:255.951m RockType:4 Hardness:5.31291
+[WorldMapRenderer] Geological sample - Pos(500,1000) Elevation:3269.71m RockType:4 Hardness:8.69703
+[WorldMapRenderer] Geological sample - Pos(1000,1000) Elevation:3218.35m RockType:4 Hardness:8.97258
+[WorldMapRenderer] Geological sample - Pos(1500,1000) Elevation:3188.15m RockType:4 Hardness:8.9175
+[WorldMapRenderer] Geological sample - Pos(2000,1000) Elevation:3304.18m RockType:4 Hardness:8.48845
+[WorldMapRenderer] Geological sample - Pos(0,1500) Elevation:178.448m RockType:4 Hardness:5.28477
+[WorldMapRenderer] Geological sample - Pos(500,1500) Elevation:3853.06m RockType:4 Hardness:9.23136
+[WorldMapRenderer] Geological sample - Pos(1000,1500) Elevation:3843.22m RockType:4 Hardness:8.81929
+[WorldMapRenderer] Geological sample - Pos(1500,1500) Elevation:3967.83m RockType:4 Hardness:8.78033
+[WorldMapRenderer] Geological sample - Pos(2000,1500) Elevation:3107.72m RockType:4 Hardness:9.00779
+[WorldMapRenderer] Geological sample - Pos(0,2000) Elevation:202.202m RockType:4 Hardness:5.38091
+[WorldMapRenderer] Geological sample - Pos(500,2000) Elevation:3609.86m RockType:4 Hardness:8.96833
+[WorldMapRenderer] Geological sample - Pos(1000,2000) Elevation:3710.64m RockType:4 Hardness:8.90306
+[WorldMapRenderer] Geological sample - Pos(1500,2000) Elevation:3921.93m RockType:4 Hardness:8.62506
+[WorldMapRenderer] Geological sample - Pos(2000,2000) Elevation:3272.06m RockType:4 Hardness:8.8675
+[WorldMapRenderer] Elevation range: -35.415m to 4096m
+[WorldMapRenderer] Applying erosion effects...
+[WorldMapRenderer] Erosion complete - new range: -27.0948m to 3729.05m
+[WorldMapRenderer] Error: Texture ID 6 is not a valid texture!
+[WorldMapRenderer] World map generation complete
+[GeologicalSimulator] Erosion Phase: Simulating 10000 thousand years
+[WorldMapRenderer] Rendering world map at (84, 166) size 722x400
+[WorldMapRenderer] Mode: Elevation, Phase: Erosion & Weathering
+[WorldMapRenderer] Rendering world texture ID 7 (using texture B)
+[WorldMapRenderer] Generating world map - Phase: Erosion & Weathering, Mode: Elevation
+[WorldMapRenderer] World size: 256km x 256km
+[WorldMapRenderer] Generating elevation data...
+[WorldMapRenderer] Sampling world area: 256km x 256km
+[WorldMapRenderer] World size in meters: 256000m x 256000m
+[SeedWorldGenerator] getGeologicalSimulator() called - useGeologicalRealism_: 1, geologicalSimulator_ exists: YES
+[WorldMapRenderer] Geological simulator: Available
+[WorldMapRenderer] Tectonic simulator: Not available
+[WorldMapRenderer] Geological sample - Pos(0,0) Elevation:169.239m RockType:4 Hardness:5
+[WorldMapRenderer] Geological sample - Pos(500,0) Elevation:629.445m RockType:4 Hardness:5.27732
+[WorldMapRenderer] Geological sample - Pos(1000,0) Elevation:610.746m RockType:4 Hardness:5.24224
+[WorldMapRenderer] Geological sample - Pos(1500,0) Elevation:133.932m RockType:4 Hardness:5.37881
+[WorldMapRenderer] Geological sample - Pos(2000,0) Elevation:566.143m RockType:4 Hardness:5.35867
+[WorldMapRenderer] Geological sample - Pos(0,500) Elevation:217.626m RockType:4 Hardness:5.21665
+[WorldMapRenderer] Geological sample - Pos(500,500) Elevation:3893.83m RockType:4 Hardness:8.85208
+[WorldMapRenderer] Geological sample - Pos(1000,500) Elevation:3158.63m RockType:4 Hardness:8.43952
+[WorldMapRenderer] Geological sample - Pos(1500,500) Elevation:3826.26m RockType:4 Hardness:8.84742
+[WorldMapRenderer] Geological sample - Pos(2000,500) Elevation:3205.98m RockType:4 Hardness:8.62767
+[WorldMapRenderer] Geological sample - Pos(0,1000) Elevation:243.238m RockType:4 Hardness:5.31291
+[WorldMapRenderer] Geological sample - Pos(500,1000) Elevation:3269.71m RockType:4 Hardness:8.69703
+[WorldMapRenderer] Geological sample - Pos(1000,1000) Elevation:3218.35m RockType:4 Hardness:8.97258
+[WorldMapRenderer] Geological sample - Pos(1500,1000) Elevation:2747.33m RockType:4 Hardness:8.9175
+[WorldMapRenderer] Geological sample - Pos(2000,1000) Elevation:3304.18m RockType:4 Hardness:8.48845
+[WorldMapRenderer] Geological sample - Pos(0,1500) Elevation:-271.491m RockType:4 Hardness:5.28477
+[WorldMapRenderer] Geological sample - Pos(500,1500) Elevation:3853.06m RockType:4 Hardness:9.23136
+[WorldMapRenderer] Geological sample - Pos(1000,1500) Elevation:3843.22m RockType:4 Hardness:8.81929
+[WorldMapRenderer] Geological sample - Pos(1500,1500) Elevation:3967.83m RockType:4 Hardness:8.78033
+[WorldMapRenderer] Geological sample - Pos(2000,1500) Elevation:2663.36m RockType:4 Hardness:9.00779
+[WorldMapRenderer] Geological sample - Pos(0,2000) Elevation:189.159m RockType:4 Hardness:5.38091
+[WorldMapRenderer] Geological sample - Pos(500,2000) Elevation:3609.86m RockType:4 Hardness:8.96833
+[WorldMapRenderer] Geological sample - Pos(1000,2000) Elevation:3710.64m RockType:4 Hardness:8.90306
+[WorldMapRenderer] Geological sample - Pos(1500,2000) Elevation:3921.93m RockType:4 Hardness:8.62506
+[WorldMapRenderer] Geological sample - Pos(2000,2000) Elevation:3272.06m RockType:4 Hardness:8.8675
+[WorldMapRenderer] Elevation range: -481.84m to 4096m
+[WorldMapRenderer] Applying erosion effects...
+[WorldMapRenderer] Erosion complete - new range: -472.245m to 3729.05m
+[WorldMapRenderer] Error: Texture ID 6 is not a valid texture!
+[WorldMapRenderer] World map generation complete
+[WorldMapRenderer] Rendering world map at (84, 166) size 722x400
+[WorldMapRenderer] Mode: Elevation, Phase: Erosion & Weathering
+[WorldMapRenderer] Rendering world texture ID 7 (using texture B)
+[WorldMapRenderer] Generating world map - Phase: Erosion & Weathering, Mode: Elevation
+[WorldMapRenderer] World size: 256km x 256km
+[WorldMapRenderer] Generating elevation data...
+[WorldMapRenderer] Sampling world area: 256km x 256km
+[WorldMapRenderer] World size in meters: 256000m x 256000m
+[SeedWorldGenerator] getGeologicalSimulator() called - useGeologicalRealism_: 1, geologicalSimulator_ exists: YES
+[WorldMapRenderer] Geological simulator: Available
+[WorldMapRenderer] Tectonic simulator: Not available
+[WorldMapRenderer] Geological sample - Pos(0,0) Elevation:163.156m RockType:4 Hardness:5
+[WorldMapRenderer] Geological sample - Pos(500,0) Elevation:618.078m RockType:4 Hardness:5.27732
+[WorldMapRenderer] Geological sample - Pos(1000,0) Elevation:599.401m RockType:4 Hardness:5.24224
+[WorldMapRenderer] Geological sample - Pos(1500,0) Elevation:-331.672m RockType:4 Hardness:5.37881
+[WorldMapRenderer] Geological sample - Pos(2000,0) Elevation:554.334m RockType:4 Hardness:5.35867
+[WorldMapRenderer] Geological sample - Pos(0,500) Elevation:205.043m RockType:4 Hardness:5.21665
+[WorldMapRenderer] Geological sample - Pos(500,500) Elevation:3893.83m RockType:4 Hardness:8.85208
+[WorldMapRenderer] Geological sample - Pos(1000,500) Elevation:3158.63m RockType:4 Hardness:8.43952
+[WorldMapRenderer] Geological sample - Pos(1500,500) Elevation:3826.26m RockType:4 Hardness:8.84742
+[WorldMapRenderer] Geological sample - Pos(2000,500) Elevation:3205.98m RockType:4 Hardness:8.62767
+[WorldMapRenderer] Geological sample - Pos(0,1000) Elevation:230.488m RockType:4 Hardness:5.31291
+[WorldMapRenderer] Geological sample - Pos(500,1000) Elevation:3269.71m RockType:4 Hardness:8.69703
+[WorldMapRenderer] Geological sample - Pos(1000,1000) Elevation:3218.35m RockType:4 Hardness:8.97258
+[WorldMapRenderer] Geological sample - Pos(1500,1000) Elevation:2300.17m RockType:4 Hardness:8.9175
+[WorldMapRenderer] Geological sample - Pos(2000,1000) Elevation:3304.18m RockType:4 Hardness:8.48845
+[WorldMapRenderer] Geological sample - Pos(0,1500) Elevation:-729.745m RockType:4 Hardness:5.28477
+[WorldMapRenderer] Geological sample - Pos(500,1500) Elevation:3853.06m RockType:4 Hardness:9.23136
+[WorldMapRenderer] Geological sample - Pos(1000,1500) Elevation:3843.22m RockType:4 Hardness:8.81929
+[WorldMapRenderer] Geological sample - Pos(1500,1500) Elevation:3967.83m RockType:4 Hardness:8.78033
+[WorldMapRenderer] Geological sample - Pos(2000,1500) Elevation:2211.92m RockType:4 Hardness:9.00779
+[WorldMapRenderer] Geological sample - Pos(0,2000) Elevation:176.077m RockType:4 Hardness:5.38091
+[WorldMapRenderer] Geological sample - Pos(500,2000) Elevation:3609.86m RockType:4 Hardness:8.96833
+[WorldMapRenderer] Geological sample - Pos(1000,2000) Elevation:3710.64m RockType:4 Hardness:8.90306
+[WorldMapRenderer] Geological sample - Pos(1500,2000) Elevation:3921.93m RockType:4 Hardness:8.62506
+[WorldMapRenderer] Geological sample - Pos(2000,2000) Elevation:3272.06m RockType:4 Hardness:8.8675
+[WorldMapRenderer] Rendering world map at (84, 166) size 722x400
+[WorldMapRenderer] Mode: Elevation, Phase: Erosion & Weathering
+[WorldMapRenderer] Rendering world texture ID 7 (using texture B)
+[WorldMapRenderer] Elevation range: -957.866m to 4096m
+[WorldMapRenderer] Applying erosion effects...
+[WorldMapRenderer] Erosion complete - new range: -937.66m to 3729.05m
+[WorldMapRenderer] Error: Texture ID 6 is not a valid texture!
+[WorldMapRenderer] World map generation complete
+[WorldMapRenderer] Rendering world map at (84, 166) size 722x400
+[WorldMapRenderer] Mode: Elevation, Phase: Erosion & Weathering
+[WorldMapRenderer] Rendering world texture ID 7 (using texture B)
+[WorldMapRenderer] Rendering world map at (84, 166) size 722x400
+[WorldMapRenderer] Mode: Elevation, Phase: Erosion & Weathering
+[WorldMapRenderer] Rendering world texture ID 7 (using texture B)
+[WorldMapRenderer] Generating world map - Phase: Erosion & Weathering, Mode: Elevation
+[WorldMapRenderer] World size: 256km x 256km
+[WorldMapRenderer] Generating elevation data...
+[WorldMapRenderer] Sampling world area: 256km x 256km
+[WorldMapRenderer] World size in meters: 256000m x 256000m
+[SeedWorldGenerator] getGeologicalSimulator() called - useGeologicalRealism_: 1, geologicalSimulator_ exists: YES
+[WorldMapRenderer] Geological simulator: Available
+[WorldMapRenderer] Tectonic simulator: Not available
+[WorldMapRenderer] Geological sample - Pos(0,0) Elevation:157.065m RockType:4 Hardness:5
+[WorldMapRenderer] Geological sample - Pos(500,0) Elevation:606.669m RockType:4 Hardness:5.27732
+[WorldMapRenderer] Geological sample - Pos(1000,0) Elevation:588.015m RockType:4 Hardness:5.24224
+[WorldMapRenderer] Geological sample - Pos(1500,0) Elevation:-798.165m RockType:4 Hardness:5.37881
+[WorldMapRenderer] Geological sample - Pos(2000,0) Elevation:542.484m RockType:4 Hardness:5.35867
+[WorldMapRenderer] Geological sample - Pos(0,500) Elevation:192.424m RockType:4 Hardness:5.21665
+[WorldMapRenderer] Geological sample - Pos(500,500) Elevation:3893.83m RockType:4 Hardness:8.85208
+[WorldMapRenderer] Geological sample - Pos(1000,500) Elevation:3158.63m RockType:4 Hardness:8.43952
+[WorldMapRenderer] Geological sample - Pos(1500,500) Elevation:3826.26m RockType:4 Hardness:8.84742
+[WorldMapRenderer] Geological sample - Pos(2000,500) Elevation:3205.98m RockType:4 Hardness:8.62767
+[WorldMapRenderer] Geological sample - Pos(0,1000) Elevation:217.699m RockType:4 Hardness:5.31291
+[WorldMapRenderer] Geological sample - Pos(500,1000) Elevation:3269.71m RockType:4 Hardness:8.69703
+[WorldMapRenderer] Geological sample - Pos(1000,1000) Elevation:3218.35m RockType:4 Hardness:8.97258
+[WorldMapRenderer] Geological sample - Pos(1500,1000) Elevation:1849.99m RockType:4 Hardness:8.9175
+[WorldMapRenderer] Geological sample - Pos(2000,1000) Elevation:3304.18m RockType:4 Hardness:8.48845
+[WorldMapRenderer] Geological sample - Pos(0,1500) Elevation:-1188.52m RockType:4 Hardness:5.28477
+[WorldMapRenderer] Geological sample - Pos(500,1500) Elevation:3853.06m RockType:4 Hardness:9.23136
+[WorldMapRenderer] Geological sample - Pos(1000,1500) Elevation:3843.22m RockType:4 Hardness:8.81929
+[WorldMapRenderer] Geological sample - Pos(1500,1500) Elevation:3967.83m RockType:4 Hardness:8.78033
+[WorldMapRenderer] Geological sample - Pos(2000,1500) Elevation:1757.44m RockType:4 Hardness:9.00779
+[WorldMapRenderer] Geological sample - Pos(0,2000) Elevation:162.959m RockType:4 Hardness:5.38091
+[WorldMapRenderer] Geological sample - Pos(500,2000) Elevation:3609.86m RockType:4 Hardness:8.96833
+[WorldMapRenderer] Geological sample - Pos(1000,2000) Elevation:3710.64m RockType:4 Hardness:8.90306
+[WorldMapRenderer] Geological sample - Pos(1500,2000) Elevation:3921.93m RockType:4 Hardness:8.62506
+[WorldMapRenderer] Geological sample - Pos(2000,2000) Elevation:3272.06m RockType:4 Hardness:8.8675
+[WorldMapRenderer] Rendering world map at (84, 166) size 722x400
+[WorldMapRenderer] Mode: Elevation, Phase: Erosion & Weathering
+[WorldMapRenderer] Rendering world texture ID 7 (using texture B)
+[WorldMapRenderer] Elevation range: -1434.26m to 4096m
+[WorldMapRenderer] Applying erosion effects...
+[WorldMapRenderer] Erosion complete - new range: -1407.39m to 3729.05m
+[WorldMapRenderer] Error: Texture ID 6 is not a valid texture!
+[WorldMapRenderer] World map generation complete
+[WorldMapRenderer] Rendering world map at (84, 166) size 722x400
+[WorldMapRenderer] Mode: Elevation, Phase: Erosion & Weathering
+[WorldMapRenderer] Rendering world texture ID 7 (using texture B)
+[WorldMapRenderer] Rendering world map at (84, 166) size 722x400
+[WorldMapRenderer] Mode: Elevation, Phase: Erosion & Weathering
+[WorldMapRenderer] Rendering world texture ID 7 (using texture B)
+[WorldMapRenderer] Generating world map - Phase: Water Systems, Mode: Elevation
+[WorldMapRenderer] World size: 256km x 256km
+[WorldMapRenderer] Generating elevation data...
+[WorldMapRenderer] Sampling world area: 256km x 256km
+[WorldMapRenderer] World size in meters: 256000m x 256000m
+[SeedWorldGenerator] getGeologicalSimulator() called - useGeologicalRealism_: 1, geologicalSimulator_ exists: YES
+[WorldMapRenderer] Geological simulator: Available
+[WorldMapRenderer] Tectonic simulator: Not available
+[WorldMapRenderer] Geological sample - Pos(0,0) Elevation:151.328m RockType:4 Hardness:5
+[WorldMapRenderer] Geological sample - Pos(500,0) Elevation:595.902m RockType:4 Hardness:5.27732
+[WorldMapRenderer] Geological sample - Pos(1000,0) Elevation:577.268m RockType:4 Hardness:5.24224
+[WorldMapRenderer] Geological sample - Pos(1500,0) Elevation:-1237.34m RockType:4 Hardness:5.37881
+[WorldMapRenderer] Geological sample - Pos(2000,0) Elevation:531.3m RockType:4 Hardness:5.35867
+[WorldMapRenderer] Geological sample - Pos(0,500) Elevation:180.522m RockType:4 Hardness:5.21665
+[WorldMapRenderer] Geological sample - Pos(500,500) Elevation:3893.83m RockType:4 Hardness:8.85208
+[WorldMapRenderer] Geological sample - Pos(1000,500) Elevation:3158.63m RockType:4 Hardness:8.43952
+[WorldMapRenderer] Geological sample - Pos(1500,500) Elevation:3826.26m RockType:4 Hardness:8.84742
+[WorldMapRenderer] Geological sample - Pos(2000,500) Elevation:3205.98m RockType:4 Hardness:8.62767
+[WorldMapRenderer] Geological sample - Pos(0,1000) Elevation:205.637m RockType:4 Hardness:5.31291
+[WorldMapRenderer] Geological sample - Pos(500,1000) Elevation:3269.71m RockType:4 Hardness:8.69703
+[WorldMapRenderer] Geological sample - Pos(1000,1000) Elevation:3218.35m RockType:4 Hardness:8.97258
+[WorldMapRenderer] Geological sample - Pos(1500,1000) Elevation:1424.12m RockType:4 Hardness:8.9175
+[WorldMapRenderer] Geological sample - Pos(2000,1000) Elevation:3304.18m RockType:4 Hardness:8.48845
+[WorldMapRenderer] Geological sample - Pos(0,1500) Elevation:-1620.1m RockType:4 Hardness:5.28477
+[WorldMapRenderer] Geological sample - Pos(500,1500) Elevation:3853.06m RockType:4 Hardness:9.23136
+[WorldMapRenderer] Geological sample - Pos(1000,1500) Elevation:3843.22m RockType:4 Hardness:8.81929
+[WorldMapRenderer] Geological sample - Pos(1500,1500) Elevation:3967.83m RockType:4 Hardness:8.78033
+[WorldMapRenderer] Geological sample - Pos(2000,1500) Elevation:1327.59m RockType:4 Hardness:9.00779
+[WorldMapRenderer] Geological sample - Pos(0,2000) Elevation:150.587m RockType:4 Hardness:5.38091
+[WorldMapRenderer] Geological sample - Pos(500,2000) Elevation:3609.86m RockType:4 Hardness:8.96833
+[WorldMapRenderer] Geological sample - Pos(1000,2000) Elevation:3710.64m RockType:4 Hardness:8.90306
+[WorldMapRenderer] Geological sample - Pos(1500,2000) Elevation:3921.93m RockType:4 Hardness:8.62506
+[WorldMapRenderer] Geological sample - Pos(2000,2000) Elevation:3272.06m RockType:4 Hardness:8.8675
+[WorldMapRenderer] Generating world map - Phase: World Complete, Mode: Elevation
+[WorldMapRenderer] World size: 256km x 256km
+[WorldMapRenderer] Generating elevation data...
+[WorldMapRenderer] Sampling world area: 256km x 256km
+[WorldMapRenderer] World size in meters: 256000m x 256000m
+[SeedWorldGenerator] getGeologicalSimulator() called - useGeologicalRealism_: 1, geologicalSimulator_ exists: YES
+[WorldMapRenderer] Geological simulator: Available
+[WorldMapRenderer] Tectonic simulator: Not available
+[WorldMapRenderer] Geological sample - Pos(0,0) Elevation:151.183m RockType:4 Hardness:5
+[WorldMapRenderer] Geological sample - Pos(500,0) Elevation:595.628m RockType:4 Hardness:5.27732
+[WorldMapRenderer] Geological sample - Pos(1000,0) Elevation:576.995m RockType:4 Hardness:5.24224
+[WorldMapRenderer] Geological sample - Pos(1500,0) Elevation:-1248.46m RockType:4 Hardness:5.37881
+[WorldMapRenderer] Geological sample - Pos(2000,0) Elevation:531.017m RockType:4 Hardness:5.35867
+[WorldMapRenderer] Geological sample - Pos(0,500) Elevation:180.22m RockType:4 Hardness:5.21665
+[WorldMapRenderer] Geological sample - Pos(500,500) Elevation:3893.83m RockType:4 Hardness:8.85208
+[WorldMapRenderer] Geological sample - Pos(1000,500) Elevation:3158.63m RockType:4 Hardness:8.43952
+[WorldMapRenderer] Geological sample - Pos(1500,500) Elevation:3826.26m RockType:4 Hardness:8.84742
+[WorldMapRenderer] Geological sample - Pos(2000,500) Elevation:3205.98m RockType:4 Hardness:8.62767
+[WorldMapRenderer] Geological sample - Pos(0,1000) Elevation:205.331m RockType:4 Hardness:5.31291
+[WorldMapRenderer] Geological sample - Pos(500,1000) Elevation:3269.71m RockType:4 Hardness:8.69703
+[WorldMapRenderer] Geological sample - Pos(1000,1000) Elevation:3218.35m RockType:4 Hardness:8.97258
+[WorldMapRenderer] Geological sample - Pos(1500,1000) Elevation:1413.31m RockType:4 Hardness:8.9175
+[WorldMapRenderer] Geological sample - Pos(2000,1000) Elevation:3304.18m RockType:4 Hardness:8.48845
+[WorldMapRenderer] Geological sample - Pos(0,1500) Elevation:-1631.03m RockType:4 Hardness:5.28477
+[WorldMapRenderer] Geological sample - Pos(500,1500) Elevation:3853.06m RockType:4 Hardness:9.23136
+[WorldMapRenderer] Geological sample - Pos(1000,1500) Elevation:3843.22m RockType:4 Hardness:8.81929
+[WorldMapRenderer] Geological sample - Pos(1500,1500) Elevation:3967.83m RockType:4 Hardness:8.78033
+[WorldMapRenderer] Geological sample - Pos(2000,1500) Elevation:1316.67m RockType:4 Hardness:9.00779
+[WorldMapRenderer] Geological sample - Pos(0,2000) Elevation:150.273m RockType:4 Hardness:5.38091
+[WorldMapRenderer] Geological sample - Pos(500,2000) Elevation:3609.86m RockType:4 Hardness:8.96833
+[WorldMapRenderer] Geological sample - Pos(1000,2000) Elevation:3710.64m RockType:4 Hardness:8.90306
+[WorldMapRenderer] Geological sample - Pos(1500,2000) Elevation:3921.93m RockType:4 Hardness:8.62506
+[WorldMapRenderer] Geological sample - Pos(2000,2000) Elevation:3272.06m RockType:4 Hardness:8.8675
+[WorldMapRenderer] Elevation range: -1893.59m to 4096m
+[WorldMapRenderer] Applying erosion effects...
+[WorldMapRenderer] Erosion complete - new range: -1860.31m to 3729.05m
+[WorldMapRenderer] Generating water features...
+[WorldMapRenderer] Water features complete - new range: -1926.78m to 3729.05m
+[WorldMapRenderer] Updated texture buffer, now displaying ID 6 (swapped from 6) with resolution 512x512
+[WorldMapRenderer] World map generation complete
+[WorldMapRenderer] Elevation range: -1926.78m to 3729.05m
+[WorldMapRenderer] Applying erosion effects...
+[WorldMapRenderer] Erosion complete - new range: -1904.21m to 3396.72m
+[WorldMapRenderer] Generating water features...
+[WorldMapRenderer] Water features complete - new range: -2011.23m to 3396.72m
+[WorldMapRenderer] Generating temperature data...
+[WorldMapRenderer] Generating precipitation data...
+[WorldMapRenderer] Error: Texture ID 7 is not a valid texture!
+[WorldMapRenderer] World map generation complete
+[GeologicalSimulator] Detail Phase: Simulating 1000 hundred years
+[WorldMapRenderer] Rendering world map at (84, 166) size 722x400
+[WorldMapRenderer] Mode: Elevation, Phase: World Complete
+[WorldMapRenderer] Rendering world texture ID 6 (using texture A)
+[WorldMapRenderer] Generating world map - Phase: World Complete, Mode: Elevation
+[WorldMapRenderer] World size: 256km x 256km
+[WorldMapRenderer] Generating elevation data...
+[WorldMapRenderer] Sampling world area: 256km x 256km
+[WorldMapRenderer] World size in meters: 256000m x 256000m
+[SeedWorldGenerator] getGeologicalSimulator() called - useGeologicalRealism_: 1, geologicalSimulator_ exists: YES
+[WorldMapRenderer] Geological simulator: Available
+[WorldMapRenderer] Tectonic simulator: Not available
+[WorldMapRenderer] Geological sample - Pos(0,0) Elevation:159.255m RockType:4 Hardness:4
+[WorldMapRenderer] Geological sample - Pos(500,0) Elevation:595.628m RockType:4 Hardness:5.27732
+[WorldMapRenderer] Geological sample - Pos(1000,0) Elevation:576.995m RockType:4 Hardness:5.24224
+[WorldMapRenderer] Geological sample - Pos(1500,0) Elevation:-1248.46m RockType:4 Hardness:5.37881
+[WorldMapRenderer] Geological sample - Pos(2000,0) Elevation:535.96m RockType:4 Hardness:4.28694
+[WorldMapRenderer] Geological sample - Pos(0,500) Elevation:188.643m RockType:4 Hardness:4.17332
+[WorldMapRenderer] Geological sample - Pos(500,500) Elevation:3893.83m RockType:4 Hardness:8.85208
+[WorldMapRenderer] Geological sample - Pos(1000,500) Elevation:3158.63m RockType:4 Hardness:8.43952
+[WorldMapRenderer] Geological sample - Pos(1500,500) Elevation:3826.26m RockType:4 Hardness:8.84742
+[WorldMapRenderer] Geological sample - Pos(2000,500) Elevation:3205.98m RockType:4 Hardness:8.62767
+[WorldMapRenderer] Geological sample - Pos(0,1000) Elevation:213.909m RockType:4 Hardness:4.25032
+[WorldMapRenderer] Geological sample - Pos(500,1000) Elevation:3269.71m RockType:4 Hardness:8.69703
+[WorldMapRenderer] Geological sample - Pos(1000,1000) Elevation:3218.35m RockType:4 Hardness:8.97258
+[WorldMapRenderer] Geological sample - Pos(1500,1000) Elevation:1413.31m RockType:4 Hardness:8.9175
+[WorldMapRenderer] Geological sample - Pos(2000,1000) Elevation:3304.18m RockType:4 Hardness:8.48845
+[WorldMapRenderer] Geological sample - Pos(0,1500) Elevation:-1631.03m RockType:4 Hardness:5.28477
+[WorldMapRenderer] Geological sample - Pos(500,1500) Elevation:3853.06m RockType:4 Hardness:9.23136
+[WorldMapRenderer] Geological sample - Pos(1000,1500) Elevation:3843.22m RockType:4 Hardness:8.81929
+[WorldMapRenderer] Geological sample - Pos(1500,1500) Elevation:3967.83m RockType:4 Hardness:8.78033
+[WorldMapRenderer] Geological sample - Pos(2000,1500) Elevation:1316.67m RockType:4 Hardness:9.00779
+[WorldMapRenderer] Geological sample - Pos(0,2000) Elevation:158.961m RockType:4 Hardness:4.30473
+[WorldMapRenderer] Geological sample - Pos(500,2000) Elevation:3609.86m RockType:4 Hardness:8.96833
+[WorldMapRenderer] Geological sample - Pos(1000,2000) Elevation:3710.64m RockType:4 Hardness:8.90306
+[WorldMapRenderer] Geological sample - Pos(1500,2000) Elevation:3921.93m RockType:4 Hardness:8.62506
+[WorldMapRenderer] Geological sample - Pos(2000,2000) Elevation:3272.06m RockType:4 Hardness:8.8675
+[WorldMapRenderer] Elevation range: -1893.59m to 4096m
+[WorldMapRenderer] Applying erosion effects...
+[WorldMapRenderer] Erosion complete - new range: -1860.31m to 3729.05m
+[WorldMapRenderer] Generating water features...
+[WorldMapRenderer] Water features complete - new range: -1926.78m to 3729.05m
+[WorldMapRenderer] Generating temperature data...
+[WorldMapRenderer] Generating precipitation data...
+[WorldMapRenderer] Error: Texture ID 7 is not a valid texture!
+[WorldMapRenderer] World map generation complete
+[WorldMapRenderer] Rendering world map at (84, 166) size 722x400
+[WorldMapRenderer] Mode: Elevation, Phase: World Complete
+[WorldMapRenderer] Rendering world texture ID 6 (using texture A)
+[WorldMapRenderer] Generating world map - Phase: World Complete, Mode: Elevation
+[WorldMapRenderer] World size: 256km x 256km
+[WorldMapRenderer] Generating elevation data...
+[WorldMapRenderer] Sampling world area: 256km x 256km
+[WorldMapRenderer] World size in meters: 256000m x 256000m
+[SeedWorldGenerator] getGeologicalSimulator() called - useGeologicalRealism_: 1, geologicalSimulator_ exists: YES
+[WorldMapRenderer] Geological simulator: Available
+[WorldMapRenderer] Tectonic simulator: Not available
+[WorldMapRenderer] Geological sample - Pos(0,0) Elevation:167.328m RockType:4 Hardness:4
+[WorldMapRenderer] Geological sample - Pos(500,0) Elevation:595.628m RockType:4 Hardness:5.27732
+[WorldMapRenderer] Geological sample - Pos(1000,0) Elevation:576.995m RockType:4 Hardness:5.24224
+[WorldMapRenderer] Geological sample - Pos(1500,0) Elevation:-1248.46m RockType:4 Hardness:5.37881
+[WorldMapRenderer] Geological sample - Pos(2000,0) Elevation:535.96m RockType:4 Hardness:4.28694
+[WorldMapRenderer] Geological sample - Pos(0,500) Elevation:197.065m RockType:4 Hardness:4.17332
+[WorldMapRenderer] Geological sample - Pos(500,500) Elevation:3893.83m RockType:4 Hardness:8.85208
+[WorldMapRenderer] Geological sample - Pos(1000,500) Elevation:3158.63m RockType:4 Hardness:8.43952
+[WorldMapRenderer] Geological sample - Pos(1500,500) Elevation:3826.26m RockType:4 Hardness:8.84742
+[WorldMapRenderer] Geological sample - Pos(2000,500) Elevation:3205.98m RockType:4 Hardness:8.62767
+[WorldMapRenderer] Geological sample - Pos(0,1000) Elevation:222.486m RockType:4 Hardness:4.25032
+[WorldMapRenderer] Geological sample - Pos(500,1000) Elevation:3269.71m RockType:4 Hardness:8.69703
+[WorldMapRenderer] Geological sample - Pos(1000,1000) Elevation:3218.35m RockType:4 Hardness:8.97258
+[WorldMapRenderer] Geological sample - Pos(1500,1000) Elevation:1413.31m RockType:4 Hardness:8.9175
+[WorldMapRenderer] Geological sample - Pos(2000,1000) Elevation:3304.18m RockType:4 Hardness:8.48845
+[WorldMapRenderer] Geological sample - Pos(0,1500) Elevation:-1631.03m RockType:4 Hardness:5.28477
+[WorldMapRenderer] Geological sample - Pos(500,1500) Elevation:3853.06m RockType:4 Hardness:9.23136
+[WorldMapRenderer] Geological sample - Pos(1000,1500) Elevation:3843.22m RockType:4 Hardness:8.81929
+[WorldMapRenderer] Geological sample - Pos(1500,1500) Elevation:3967.83m RockType:4 Hardness:8.78033
+[WorldMapRenderer] Geological sample - Pos(2000,1500) Elevation:1316.67m RockType:4 Hardness:9.00779
+[WorldMapRenderer] Geological sample - Pos(0,2000) Elevation:167.648m RockType:4 Hardness:4.30473
+[WorldMapRenderer] Geological sample - Pos(500,2000) Elevation:3609.86m RockType:4 Hardness:8.96833
+[WorldMapRenderer] Geological sample - Pos(1000,2000) Elevation:3710.64m RockType:4 Hardness:8.90306
+[WorldMapRenderer] Geological sample - Pos(1500,2000) Elevation:3921.93m RockType:4 Hardness:8.62506
+[WorldMapRenderer] Geological sample - Pos(2000,2000) Elevation:3272.06m RockType:4 Hardness:8.8675
+[WorldMapRenderer] Elevation range: -1893.59m to 4096m
+[WorldMapRenderer] Applying erosion effects...
+[WorldMapRenderer] Erosion complete - new range: -1860.31m to 3729.05m
+[WorldMapRenderer] Generating water features...
+[WorldMapRenderer] Water features complete - new range: -1926.78m to 3729.05m
+[WorldMapRenderer] Generating temperature data...
+[WorldMapRenderer] Generating precipitation data...
+[WorldMapRenderer] Error: Texture ID 7 is not a valid texture!
+[WorldMapRenderer] World map generation complete
+[WorldMapRenderer] Generating world map - Phase: World Complete, Mode: Elevation
+[WorldMapRenderer] World size: 256km x 256km
+[WorldMapRenderer] Generating elevation data...
+[WorldMapRenderer] Sampling world area: 256km x 256km
+[WorldMapRenderer] World size in meters: 256000m x 256000m
+[SeedWorldGenerator] getGeologicalSimulator() called - useGeologicalRealism_: 1, geologicalSimulator_ exists: YES
+[WorldMapRenderer] Geological simulator: Available
+[WorldMapRenderer] Tectonic simulator: Not available
+[WorldMapRenderer] Geological sample - Pos(0,0) Elevation:175.4m RockType:4 Hardness:4
+[WorldMapRenderer] Geological sample - Pos(500,0) Elevation:595.628m RockType:4 Hardness:5.27732
+[WorldMapRenderer] Geological sample - Pos(1000,0) Elevation:576.995m RockType:4 Hardness:5.24224
+[WorldMapRenderer] Geological sample - Pos(1500,0) Elevation:-1248.46m RockType:4 Hardness:5.37881
+[WorldMapRenderer] Geological sample - Pos(2000,0) Elevation:535.96m RockType:4 Hardness:4.28694
+[WorldMapRenderer] Geological sample - Pos(0,500) Elevation:205.487m RockType:4 Hardness:4.17332
+[WorldMapRenderer] Geological sample - Pos(500,500) Elevation:3893.83m RockType:4 Hardness:8.85208
+[WorldMapRenderer] Geological sample - Pos(1000,500) Elevation:3158.63m RockType:4 Hardness:8.43952
+[WorldMapRenderer] Geological sample - Pos(1500,500) Elevation:3826.26m RockType:4 Hardness:8.84742
+[WorldMapRenderer] Geological sample - Pos(2000,500) Elevation:3205.98m RockType:4 Hardness:8.62767
+[WorldMapRenderer] Geological sample - Pos(0,1000) Elevation:231.064m RockType:4 Hardness:4.25032
+[WorldMapRenderer] Geological sample - Pos(500,1000) Elevation:3269.71m RockType:4 Hardness:8.69703
+[WorldMapRenderer] Geological sample - Pos(1000,1000) Elevation:3218.35m RockType:4 Hardness:8.97258
+[WorldMapRenderer] Geological sample - Pos(1500,1000) Elevation:1413.31m RockType:4 Hardness:8.9175
+[WorldMapRenderer] Geological sample - Pos(2000,1000) Elevation:3304.18m RockType:4 Hardness:8.48845
+[WorldMapRenderer] Geological sample - Pos(0,1500) Elevation:-1631.03m RockType:4 Hardness:5.28477
+[WorldMapRenderer] Geological sample - Pos(500,1500) Elevation:3853.06m RockType:4 Hardness:9.23136
+[WorldMapRenderer] Geological sample - Pos(1000,1500) Elevation:3843.22m RockType:4 Hardness:8.81929
+[WorldMapRenderer] Geological sample - Pos(1500,1500) Elevation:3967.83m RockType:4 Hardness:8.78033
+[WorldMapRenderer] Geological sample - Pos(2000,1500) Elevation:1316.67m RockType:4 Hardness:9.00779
+[WorldMapRenderer] Geological sample - Pos(0,2000) Elevation:176.335m RockType:4 Hardness:4.30473
+[WorldMapRenderer] Geological sample - Pos(500,2000) Elevation:3609.86m RockType:4 Hardness:8.96833
+[WorldMapRenderer] Geological sample - Pos(1000,2000) Elevation:3710.64m RockType:4 Hardness:8.90306
+[WorldMapRenderer] Geological sample - Pos(1500,2000) Elevation:3921.93m RockType:4 Hardness:8.62506
+[WorldMapRenderer] Geological sample - Pos(2000,2000) Elevation:3272.06m RockType:4 Hardness:8.8675
+[WorldMapRenderer] Elevation range: -1893.59m to 4096m
+[WorldMapRenderer] Applying erosion effects...
+[WorldMapRenderer] Erosion complete - new range: -1860.31m to 3729.05m
+[WorldMapRenderer] Generating water features...
+[WorldMapRenderer] Water features complete - new range: -1926.78m to 3729.05m
+[WorldMapRenderer] Generating temperature data...
+[WorldMapRenderer] Generating precipitation data...
+[WorldMapRenderer] Error: Texture ID 7 is not a valid texture!
+[WorldMapRenderer] World map generation complete
+[GeologicalSimulator] Full simulation completed
+[SeedWorldGenerator] Geological simulation completed successfully
+[INFO] Generated unique world name: New_World_20250611_145135_905 (from: New_World)
+[INFO] Created world directory structure: ./worlds/New_World_20250611_145135_905
+[INFO] Saved world metadata to: ./worlds/New_World_20250611_145135_905/level.dat
+[INFO] Successfully created world: New World at ./worlds/New_World_20250611_145135_905
+^C[InputManager] [CRIT] SDL_EVENT_QUIT received - shutting down
+[GameLoop] Main game loop ended after 5260 frames.
+[MouseCaptureManager] Shutdown complete
+[INFO] Game session ended - goodbye!
+[SaveManager] Continuous auto-save disabled
+system-x1@fedora:~/Projects/Voxel Castle$ 
