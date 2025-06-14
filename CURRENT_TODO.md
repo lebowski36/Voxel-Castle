@@ -381,6 +381,7 @@ With the block system complete, the next logical major milestones are:
 ### 6. Geological Realism System (C++)
 *Detailed sub-tasks in `/home/system-x1/Projects/Voxel Castle/development_tasks/geological_realism/`. A main task in this section is marked `[x]` ONLY if ALL its detailed sub-tasks in the corresponding file are complete.*
 *Design Documentation: `/home/system-x1/Projects/Voxel Castle/docs/GEOLOGICAL_REALISM_DESIGN_SESSION.md`*
+*Advanced Features Tracking: `/home/system-x1/Projects/Voxel Castle/development_tasks/geological_realism/Advanced_Hydrological_Geomorphological_Features.md`*
 - [x] **ContinuousField Implementation (01)** - ✅ **COMPLETED 2025-06-10**: Mathematical foundation for smooth, organic field interpolation with force propagation, geological resistance modeling, and toroidal wrapping support. All 19 unit tests pass, performance targets met (<1ms sample lookup, <50ms force propagation), comprehensive API documentation created following modern game engine standards.
 - [ ] **Geological Simulation Engine (02)** - Three-phase geological simulation system (Tectonics → Mountain Building → Erosion) with multi-timescale processes and visual timeline
 - [ ] **Hybrid Detail Generator (03)** - Ultra-realistic chunk-scale detail generation with geological type-based micro-simulation
