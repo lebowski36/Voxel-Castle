@@ -12,6 +12,7 @@
 
 namespace VoxelEngine::UI {
     class UIButton;
+    class UITextPanel;
     class UIRenderer;
     class WorldMapRenderer;
 }
@@ -236,7 +237,7 @@ private:
     std::shared_ptr<VoxelEngine::UI::UIButton> snapshotInfoButton_;
     
     // Generation log UI control
-    std::shared_ptr<VoxelEngine::UI::UIButton> logPanel_;
+    std::shared_ptr<VoxelEngine::UI::UITextPanel> logPanel_;
     
     // World map area coordinates (set by createWorldPreview)
     float worldMapX_, worldMapY_, worldMapWidth_, worldMapHeight_;

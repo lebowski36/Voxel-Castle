@@ -67,6 +67,7 @@ add_library(VoxelEngine STATIC
     src/ui/elements/Crosshair.cpp # Crosshair targeting reticle
     src/ui/MenuSystem.cpp # Menu system manager
     src/ui/elements/UIButton.cpp # Button UI element
+    src/ui/elements/UITextPanel.cpp # Multi-line text panel with scrolling support
     src/ui/elements/UICheckbox.cpp # Checkbox UI element
     src/ui/elements/BaseMenu.cpp # Base menu class for consistent styling
     src/ui/elements/MainMenu.cpp # Main menu UI

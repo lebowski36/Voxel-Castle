@@ -1,5 +1,6 @@
 #include "ui/WorldSimulationUI.h"
 #include "ui/elements/UIButton.h"
+#include "ui/elements/UITextPanel.h"
 #include "ui/WorldMapRenderer.h"
 #include "world/seed_world_generator.h"
 #include "world/world_seed.h"
@@ -567,13 +568,18 @@ void WorldSimulationUI::createProgressPanels() {
     
     // Calculate summary area AFTER the legend (legend takes up 120px + spacing)
     float summaryX = legendBounds_.x + legendBounds_.width + ELEMENT_SPACING;
-    float summaryWidth = panelWidth - (legendBounds_.x - PANEL_MARGIN) - legendBounds_.width - (ELEMENT_SPACING * 2);
+    float availableSummaryWidth = panelWidth - (legendBounds_.x - PANEL_MARGIN) - legendBounds_.width - (ELEMENT_SPACING * 2);
+    
+    // Use full available summary width
+    float summaryWidth = availableSummaryWidth;
+    summaryWidth = std::max(summaryWidth, 250.0f); // Minimum 250 pixels wide
+    
     float summaryY = worldMapY_; // Start at same height as preview
     float progressHeight = 80.0f;
     
     std::cout << "[WorldSimulationUI] Creating progress panels after legend - "
               << "Summary area: " << summaryWidth << "w x " << progressHeight << "h "
-              << "at (" << summaryX << "," << summaryY << ")" << std::endl;
+              << "at (" << summaryX << "," << summaryY << ") [constrained from " << availableSummaryWidth << "w]" << std::endl;
     
     // Current phase progress (positioned after legend)
     auto progressLabel = std::make_shared<VoxelEngine::UI::UIButton>(renderer_);
@@ -624,17 +630,22 @@ void WorldSimulationUI::createGenerationLog() {
     
     // Calculate log area AFTER the legend (legend takes up 120px + spacing)
     float summaryX = legendBounds_.x + legendBounds_.width + ELEMENT_SPACING;
-    float summaryWidth = panelWidth - (legendBounds_.x - PANEL_MARGIN) - legendBounds_.width - (ELEMENT_SPACING * 2);
-    float logHeight = 180.0f; // Increased height to accommodate better formatted text with line breaks
+    float availableSummaryWidth = panelWidth - (legendBounds_.x - PANEL_MARGIN) - legendBounds_.width - (ELEMENT_SPACING * 2);
+    
+    // Use full available summary width
+    float summaryWidth = availableSummaryWidth;
+    summaryWidth = std::max(summaryWidth, 250.0f); // Minimum 250 pixels wide
+    
+    float logHeight = 180.0f; // Height for the log container
     
     // Position log below the progress panels in the summary area
     float summaryY = worldMapY_ + 140.0f; // After progress panels (30 + 80 + 30 spacing)
     
     std::cout << "[WorldSimulationUI] Creating generation log after legend - "
               << "Log area: " << summaryWidth << "w x " << logHeight << "h "
-              << "at (" << summaryX << "," << summaryY << ")" << std::endl;
+              << "at (" << summaryX << "," << summaryY << ") [using full available width]" << std::endl;
     
-    // Generation log panel (positioned after legend, below progress)
+    // Generation log panel label
     auto logLabel = std::make_shared<VoxelEngine::UI::UIButton>(renderer_);
     logLabel->setText("Generation Log:");
     logLabel->setPosition(summaryX, summaryY);
@@ -643,17 +654,24 @@ void WorldSimulationUI::createGenerationLog() {
     addChild(logLabel);
     summaryY += 30.0f;
     
-    auto logPanel = std::make_shared<VoxelEngine::UI::UIButton>(renderer_);
-    logPanel_ = logPanel; // Store reference for dynamic updates
+    // Create the new UITextPanel for multi-line text with proper wrapping
+    auto textPanel = std::make_shared<VoxelEngine::UI::UITextPanel>(renderer_);
+    logPanel_ = textPanel; // Store reference for dynamic updates
     
-    // Call refresh function to set the initial content
+    // Configure the text panel
+    textPanel->setPosition(summaryX, summaryY);
+    textPanel->setSize(summaryWidth, logHeight);
+    textPanel->setBackgroundColor({0.1f, 0.1f, 0.1f, 0.6f});
+    textPanel->setTextColor({0.9f, 0.9f, 0.9f}); // Light gray text
+    textPanel->setTextScale(0.8f); // Slightly smaller text for more content
+    textPanel->setPadding(8.0f);
+    textPanel->setScrollEnabled(true);
+    textPanel->setMaxVisibleLines(0); // Auto-calculate based on panel height
+    
+    // Set initial content
     refreshGenerationLog();
     
-    logPanel_->setPosition(summaryX, summaryY);
-    logPanel_->setSize(summaryWidth, logHeight);
-    logPanel_->setBackgroundColor({0.1f, 0.1f, 0.1f, 0.6f});
-    logPanel_->setTextColor({0.9f, 0.9f, 0.9f, 1.0f}); // Better text contrast
-    addChild(logPanel_);
+    addChild(textPanel);
     
     // Note: currentY_ is not advanced here since log is positioned beside preview, not below
 }
@@ -661,89 +679,27 @@ void WorldSimulationUI::createGenerationLog() {
 void WorldSimulationUI::refreshGenerationLog() {
     if (!logPanel_) return; // Panel not created yet
     
-    // Get current panel size for dynamic wrapping calculation
-    auto panelSize = logPanel_->getSize();
-    float summaryWidth = panelSize.x;
-    
     std::string logText = "";
-    size_t entriesToShow = std::min(static_cast<size_t>(4), generationLog_.size());
+    size_t entriesToShow = std::min(static_cast<size_t>(8), generationLog_.size()); // Show more entries since wrapping is automatic
     
     if (entriesToShow > 0) {
         for (size_t i = generationLog_.size() - entriesToShow; i < generationLog_.size(); ++i) {
-            // Format log entries with proper line breaks for vertical stacking
+            // Format log entries with year and message
             std::string yearText = "Year " + std::to_string(generationLog_[i].simulationYear);
             std::string message = generationLog_[i].message;
             
-            // More accurate character width estimation - use actual font metrics if available
-            // For now, use a more conservative estimate based on typical UI font
-            const size_t maxLineLength = static_cast<size_t>(summaryWidth / 7.0f); // ~7 pixels per character (conservative)
-            const size_t minLineLength = std::max(static_cast<size_t>(20), maxLineLength / 3); // Minimum ~1/3 of max
-            
-            // Add year header
-            logText += yearText + ":\n";
-            
-            // Smart text wrapping that handles dynamic content
-            std::string remainingText = message;
-            while (!remainingText.empty()) {
-                if (remainingText.length() <= maxLineLength) {
-                    // Last line or short enough to fit
-                    logText += "  " + remainingText + "\n";
-                    break;
-                } else {
-                    // Find optimal breaking point
-                    size_t breakPos = maxLineLength;
-                    
-                    // Priority 1: Break at space within reasonable range
-                    size_t spacePos = remainingText.find_last_of(' ', maxLineLength);
-                    if (spacePos != std::string::npos && spacePos >= minLineLength) {
-                        breakPos = spacePos;
-                    } else {
-                        // Priority 2: Break at punctuation
-                        size_t punctPos = remainingText.find_last_of(",.;:!?-)", maxLineLength);
-                        if (punctPos != std::string::npos && punctPos >= minLineLength) {
-                            breakPos = punctPos + 1; // Include punctuation in line
-                        } else {
-                            // Priority 3: Break at parentheses or brackets
-                            size_t parenPos = remainingText.find_last_of("([{", maxLineLength);
-                            if (parenPos != std::string::npos && parenPos >= minLineLength) {
-                                breakPos = parenPos;
-                            } else {
-                                // Last resort: Force break at maxLineLength (with hyphen for long words)
-                                breakPos = maxLineLength;
-                                if (breakPos < remainingText.length() && remainingText[breakPos] != ' ') {
-                                    // Add hyphen for word break
-                                    logText += "  " + remainingText.substr(0, breakPos) + "-\n";
-                                } else {
-                                    logText += "  " + remainingText.substr(0, breakPos) + "\n";
-                                }
-                                remainingText = remainingText.substr(breakPos);
-                                continue;
-                            }
-                        }
-                    }
-                    
-                    // Add this line with indentation
-                    logText += "  " + remainingText.substr(0, breakPos) + "\n";
-                    
-                    // Prepare remaining text (skip whitespace/punctuation at break point)
-                    size_t nextStart = breakPos;
-                    while (nextStart < remainingText.length() && 
-                           (remainingText[nextStart] == ' ' || remainingText[nextStart] == '\t')) {
-                        nextStart++;
-                    }
-                    remainingText = remainingText.substr(nextStart);
-                }
-            }
-            
-            // Add spacing between entries
-            logText += "\n";
+            // Add entry with proper line separation
+            logText += yearText + ": " + message + "\n\n";
         }
     } else {
         logText = "Simulation starting...\nInitializing systems...\n";
     }
     
-    // Update the panel text content
+    // Set the text - UITextPanel will handle wrapping and scrolling automatically
     logPanel_->setText(logText);
+    
+    // Auto-scroll to bottom to show latest entries
+    logPanel_->scrollToBottom();
 }
 
 void WorldSimulationUI::createWorldSummaryUI() {

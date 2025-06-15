@@ -427,6 +427,9 @@ void GeologicalSimulator::createSnapshot(const std::string& phaseDescription, fl
     
     snapshotManager_->SetGenerating(true);
     
+    // ===== CRITICAL: Validate entire elevation field before snapshot =====
+    validateEntireElevationField("Pre-Snapshot Validation");
+    
     // ===== Step 4.1.2: Create snapshot with water system data =====
     snapshotManager_->AddSnapshot(
         *elevationField_,
@@ -2707,6 +2710,59 @@ void GeologicalSimulator::simulateErosionUpliftBalance(float timeStep) {
             elevationField_->addToSample(x, z, -isostaticSinking);
         }
     });
+}
+
+void GeologicalSimulator::validateEntireElevationField(const std::string& processName) {
+    if (!elevationField_) return;
+    
+    int height = elevationField_->getHeight();
+    int width = elevationField_->getWidth();
+    
+    int extremeValueCount = 0;
+    float minFound = 0.0f, maxFound = 0.0f;
+    
+    // Fast parallel validation and clamping
+    std::vector<int> indices(height * width);
+    std::iota(indices.begin(), indices.end(), 0);
+    
+    std::atomic<int> extremeCount{0};
+    std::atomic<float> atomicMin{0.0f}, atomicMax{0.0f};
+    
+    std::for_each(std::execution::par_unseq, indices.begin(), indices.end(), [&](int idx) {
+        int z = idx / width;
+        int x = idx % width;
+        
+        float elevation = elevationField_->getSample(x, z);
+        
+        // Update min/max tracking
+        float currentMin = atomicMin.load();
+        while (elevation < currentMin && !atomicMin.compare_exchange_weak(currentMin, elevation)) {}
+        
+        float currentMax = atomicMax.load();
+        while (elevation > currentMax && !atomicMax.compare_exchange_weak(currentMax, elevation)) {}
+        
+        // Check for extreme values
+        if (std::abs(elevation) > 3000.0f) { // Even more extreme than our -1800 to +1200 bounds
+            extremeCount++;
+            
+            // Clamp to realistic bounds
+            float clampedElevation = std::max(-1800.0f, std::min(1200.0f, elevation));
+            elevationField_->setSample(x, z, clampedElevation);
+        }
+    });
+    
+    extremeValueCount = extremeCount.load();
+    minFound = atomicMin.load();
+    maxFound = atomicMax.load();
+    
+    if (extremeValueCount > 0) {
+        std::cout << "[ELEVATION_VALIDATION] " << processName << " found " << extremeValueCount 
+                  << " extreme values (range: " << minFound << "m to " << maxFound 
+                  << "m) - clamped to realistic bounds" << std::endl;
+    } else {
+        std::cout << "[ELEVATION_VALIDATION] " << processName << " - all elevations within bounds (range: " 
+                  << minFound << "m to " << maxFound << "m)" << std::endl;
+    }
 }
 
 } // namespace World

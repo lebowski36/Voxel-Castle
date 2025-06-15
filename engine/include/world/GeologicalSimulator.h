@@ -300,6 +300,7 @@ private:
     RockType determineRockType(float elevation, float stress, float temperature) const;
     float getRockHardness(RockType rockType) const;
     void validateAndClampElevation(int x, int z, const std::string& processName);
+    void validateEntireElevationField(const std::string& processName);
     
     /**
      * @brief Random number generation
