@@ -8,6 +8,24 @@ This file tracks our immediate high-level tasks and progress. Detailed sub-tasks
 
 ---
 
+## 🏞️ GEOLOGICAL REALISM & WORLD GENERATION ENHANCEMENTS
+This section tracks the progress of the new geological simulation system.
+
+### Geological Simulation Steps Status:
+- **Step 1: Tectonic Framework** - COMPLETED
+- **Step 2: Basic Terrain Sculpting** - COMPLETED
+- **Step 3: Water & Cave System Framework** - IMPLEMENTED (Visual verification pending - water not appearing in preview)
+  - For advanced/optional features beyond core Step 3, see: [Advanced Hydrological and Geomorphological Features](/home/system-x1/Projects/Voxel Castle/development_tasks/geological_realism/Advanced_Hydrological_Geomorphological_Features.md)
+- **Step 4: Physics-Based Geological Engine** - PENDING
+- **Step 4.1: Simulation Architecture Overhaul** - ACTIVE (Addresses sequential vs interleaved process architecture)
+  - See: [71a_Step4.1_Simulation_Architecture_Overhaul.md](/home/system-x1/Projects/Voxel Castle/development_tasks/geological_realism/71a_Step4.1_Simulation_Architecture_Overhaul.md)
+- **Step 5: Climate & Biome Simulation** - PENDING
+- **Step 6: Erosion & Weathering Refinement** - PENDING
+- **Step 7: Resource & Feature Distribution** - PENDING
+- **Step 8: Fine-Grained Detail & Polish** - PENDING
+
+---
+
 ## 🏗️ WORLD SCALE & HEIGHT BOUNDARIES
 
 **Essential Scale Reference:**

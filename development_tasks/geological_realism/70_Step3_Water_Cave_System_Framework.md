@@ -4,6 +4,8 @@
 
 ## 🎯 **Goal: Implement Comprehensive Hydrology with Underground Cave Networks**
 
+**NOTE: Water visualization and process integration issues are addressed in Step 4.1 (Simulation Architecture Overhaul). See [71a_Step4.1_Simulation_Architecture_Overhaul.md](71a_Step4.1_Simulation_Architecture_Overhaul.md) for the interleaved process architecture that makes water systems always active.**
+
 Create a complete water system with surface rivers, groundwater aquifers, and 3D underground cave networks that integrate with geological processes to provide realistic erosion, sediment transport, and terrain evolution.
 
 **Visual Feedback**: Rivers, lakes, springs, aquifer visualization (caves logged but not visually rendered yet)

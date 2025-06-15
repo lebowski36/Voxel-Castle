@@ -73,6 +73,7 @@ private:
     bool simulationInitialized_;
     bool simulationComplete_;
     bool simulationPaused_;
+    bool hasResumedSincePause_; // <<< ADDED
     int currentStep_;
     int totalSteps_;
     

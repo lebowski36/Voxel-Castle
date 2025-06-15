@@ -4,6 +4,8 @@
 
 ## 🎯 **Goal: Replace Exponential Growth with Realistic Geological Physics**
 
+**NOTE: This step is superseded by Step 4.1 (Simulation Architecture Overhaul) which addresses the fundamental sequential vs interleaved process architecture. See [71a_Step4.1_Simulation_Architecture_Overhaul.md](71a_Step4.1_Simulation_Architecture_Overhaul.md) for the new implementation approach.**
+
 Implement proper geological physics including isostatic equilibrium, erosion-uplift balance, and steady-state force systems to create stable, realistic terrain evolution instead of the current terrain flattening problem.
 
 **Visual Feedback**: Continental drift, realistic mountain building, terrain that reaches natural equilibrium

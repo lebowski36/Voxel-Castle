@@ -15,21 +15,16 @@ namespace World {
 
 GeologicalSimulator::GeologicalSimulator(int worldSizeKm, const GeologicalConfig& config)
     : config_(config), worldSizeKm_(static_cast<float>(worldSizeKm)), seed_(0), currentPhase_(GeologicalPhase::TECTONICS),
-      currentPhaseProgress_(0.0f), continentGenerator_(0) {  // Initialize with temporary seed 0
+      currentPhaseProgress_(0.0f), continentGenerator_(0),
+      simulationInitialized_(false), simulationComplete_(false), simulationPaused_(false),
+      hasResumedSincePause_(false), // <<< ADDED INITIALIZATION
+      currentStep_(0), totalSteps_(0), phaseStep_(0), totalPhaseSteps_(0), phaseTimeStep_(0.0f) {
     
     std::cout << "[GeologicalSimulator] Initialized for " << worldSizeKm_ << "km world with " 
               << (config.preset == GeologicalPreset::BALANCED ? "BALANCED" : "OTHER") << " quality" << std::endl;
 
-    // Initialize step-based simulation state
-    simulationInitialized_ = false;
-    simulationComplete_ = false;
-    simulationPaused_ = false;
-    currentStep_ = 0;
-    totalSteps_ = 0;
-    phaseStep_ = 0;
-    totalPhaseSteps_ = 0;
-    phaseTimeStep_ = 0.0f;
-    lastSnapshotTime_ = std::chrono::steady_clock::now();
+    // lastSnapshotTime_ initialization was missing, assuming it's intended to be initialized here or in initialize()
+    lastSnapshotTime_ = std::chrono::steady_clock::now(); 
 }
 
 void GeologicalSimulator::initialize(uint64_t seed) {
@@ -1255,13 +1250,21 @@ bool GeologicalSimulator::isSimulationComplete() const {
 }
 
 void GeologicalSimulator::pauseSimulation() {
-    simulationPaused_ = true;
-    std::cout << "[GeologicalSimulator] Simulation paused" << std::endl;
+    if (!simulationPaused_) {
+        simulationPaused_ = true;
+        hasResumedSincePause_ = false; // Reset flag when actually pausing
+        std::cout << "[GeologicalSimulator] Simulation paused" << std::endl;
+    }
 }
 
 void GeologicalSimulator::resumeSimulation() {
-    simulationPaused_ = false;
-    std::cout << "[GeologicalSimulator] Simulation resumed" << std::endl;
+    if (simulationPaused_) {
+        simulationPaused_ = false;
+        if (!hasResumedSincePause_) {
+            std::cout << "[GeologicalSimulator] Simulation resumed" << std::endl;
+            hasResumedSincePause_ = true;
+        }
+    }
 }
 
 bool GeologicalSimulator::isSimulationPaused() const {
@@ -1280,8 +1283,17 @@ std::string GeologicalSimulator::getPhaseDisplayName() const {
 
 // Snapshot management methods  
 void GeologicalSimulator::createSnapshot(const std::string& description) {
-    // Call the existing createSnapshot method with a default completion percentage
-    createSnapshot(description, currentPhaseProgress_ * 100.0f);
+    // Ensure currentPhaseProgress_ is a ratio (0.0 to 1.0) if it's used as completionPercentage
+    // Or, better, calculate overall progress if this is for step-based simulation.
+    // For now, assuming currentPhaseProgress_ is correctly representing phase-specific progress for this overload.
+    // The problematic log output suggests the `completionPercentage` in the other overload needs attention.
+    float overallCompletion = 0.0f;
+    if (totalSteps_ > 0 && simulationInitialized_) { // Check if step-based sim is active
+        overallCompletion = static_cast<float>(currentStep_) / static_cast<float>(totalSteps_);
+    } else { // Fallback for non-step-based or pre-init
+        overallCompletion = currentPhaseProgress_; // This might be phase progress, not overall
+    }
+    createSnapshot(description, overallCompletion);
 }
 
 bool GeologicalSimulator::hasSnapshots() const {
@@ -1542,6 +1554,7 @@ void GeologicalSimulator::simulateFloodPlains(float timeStep) {
             float maxNeighborFlow = 0.0f;
             
             // Check 8 neighbors for river presence
+
             for (int dz = -1; dz <= 1; ++dz) {
                 for (int dx = -1; dx <= 1; ++dx) {
                     if (dx == 0 && dz == 0) continue;
