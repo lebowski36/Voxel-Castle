@@ -13,18 +13,20 @@ Transform the current sequential phase system (all tectonic → all erosion → 
 ## 🚨 **Critical Problems This Solves**
 
 The current sequential phase system causes:
+- **UI Thread Blocking**: Simulation runs on main thread, freezing entire interface
 - **Terrain flattening**: Tectonic phase creates mountains, then erosion phase flattens them completely
 - **Unrealistic isolation**: Processes don't interact naturally (no feedback loops)
 - **Poor visual progression**: Long periods of single-process dominance
 - **Missing water visualization**: Water systems only active in late phases
-- **Confusing UI display**: Shows "Tectonic Evolution" even when other processes should be running
+- **Unresponsive controls**: Cannot pause, adjust parameters, or interact during simulation
 
-**Interleaved architecture will provide:**
+**Background thread + interleaved architecture will provide:**
+- **Responsive UI**: Simulation runs independently, UI never freezes
 - **Simultaneous processes**: All systems active every step (like real Earth)
 - **Natural feedback loops**: Erosion counteracts mountain building immediately
 - **Smooth terrain evolution**: No sudden phase transitions
-- **Consistent water presence**: Hydrological systems always active
-- **Accurate UI display**: Shows current process mix, not single phase
+- **Consistent water presence**: Hydrological systems always active and visible
+- **Real-time control**: Pause, resume, adjust parameters instantly
 
 ## 🔧 **New Architecture Design**
 
@@ -32,20 +34,27 @@ The current sequential phase system causes:
 
 **Current System:**
 ```
-Step 1-30:   100% Tectonic (mountains grow unchecked)
-Step 31-60:  100% Erosion (mountains flatten completely)  
-Step 61-70:  100% Detail (minor adjustments)
+UI Thread: Simulation blocks → UI freezes → User frustration
+Sequential: Step 1-30: 100% Tectonic → Step 31-60: 100% Erosion → Step 61-70: 100% Detail
 ```
 
 **New System:**
 ```
-Each Step:   20% Tectonic + 40% Erosion + 20% Water + 10% Detail + 10% Volcanic
-             (All processes active, balanced by time scaling)
+Background Thread: Simulation runs independently → UI always responsive
+UI Thread: Real-time updates from snapshots → Smooth user experience  
+Interleaved: Each Step: 20% Tectonic + 40% Erosion + 20% Water + 10% Detail + 10% Volcanic
 ```
 
-### **Process Time Scaling**
+### **Process Threading Architecture**
 ```cpp
-class InterleaveGeologicalSimulator {
+class BackgroundGeologicalSimulator {
+    std::thread simulationThread_;
+    std::mutex snapshotMutex_;
+    std::queue<GeologicalSnapshot> pendingSnapshots_;
+    std::atomic<bool> simulationRunning_;
+    std::atomic<bool> simulationPaused_;
+    std::atomic<float> currentProgress_;
+    
     struct ProcessTimeScales {
         float tectonicTimeStep;    // e.g., 1000 years per step
         float erosionTimeStep;     // e.g., 100 years per step  
@@ -54,13 +63,25 @@ class InterleaveGeologicalSimulator {
         float volcanicTimeStep;    // e.g., 5000 years per step
     };
     
-    void stepSimulation() {
-        // All processes run every step with appropriate time scaling
-        simulateTectonicProcesses(scales.tectonicTimeStep);
-        simulateErosionProcesses(scales.erosionTimeStep);
-        simulateWaterSystems(scales.waterTimeStep);
-        simulateDetailProcesses(scales.detailTimeStep);
-        simulateVolcanicActivity(scales.volcanicTimeStep);
+    void runBackgroundSimulation() {
+        while (simulationRunning_) {
+            if (!simulationPaused_) {
+                // All processes run every step with appropriate time scaling
+                simulateTectonicProcesses(scales.tectonicTimeStep);
+                simulateErosionProcesses(scales.erosionTimeStep);
+                simulateWaterSystems(scales.waterTimeStep);
+                simulateDetailProcesses(scales.detailTimeStep);
+                simulateVolcanicActivity(scales.volcanicTimeStep);
+                
+                // Create snapshot and queue for UI thread
+                auto snapshot = createSnapshotWithWaterData();
+                {
+                    std::lock_guard<std::mutex> lock(snapshotMutex_);
+                    pendingSnapshots_.push(snapshot);
+                }
+            }
+            std::this_thread::sleep_for(std::chrono::milliseconds(50));
+        }
     }
 };
 ```
@@ -78,15 +99,37 @@ class InterleaveGeologicalSimulator {
 **Technical Test**: ✅ All processes run every step, no phase transitions
 **Build Status**: ✅ Successfully compiles and links
 
-### **4.1.2: Update Snapshot System for Water Visualization** ⏳ PENDING
+### **4.1.2: Background Thread Architecture + Water Visualization** ⏳ PENDING
+
+**CRITICAL UI RESPONSIVENESS ISSUE**: Current simulation blocks UI thread, causing freezing and unresponsive interface. This step implements comprehensive solution.
+
+**Phase A: Background Thread Infrastructure**
+- [ ] Move geological simulation to background thread using `std::thread`
+- [ ] Implement thread-safe snapshot buffering with `std::mutex` and `std::queue`
+- [ ] Add atomic progress tracking with `std::atomic<float>` for smooth updates
+- [ ] Create thread-safe pause/resume controls for immediate UI response
+- [ ] Add proper simulation thread lifecycle management (start/stop/join)
+
+**Phase B: Water Data Integration**  
 - [ ] Modify `GeologicalSnapshotManager` to include water data fields
 - [ ] Add `surfaceWaterDepth_`, `precipitationField_`, `groundwaterTable_` to snapshots
-- [ ] Update `createSnapshot()` to pass water system data
-- [ ] Modify `WorldMapRenderer` to visualize water features
+- [ ] Update `createSnapshot()` to pass water system data from background thread
+- [ ] Implement thread-safe water data transfer to UI thread
+
+**Phase C: Real-Time UI Updates**
+- [ ] Implement periodic UI updates (every 100ms) from background thread data
+- [ ] Add smooth progress bar updates without blocking UI
+- [ ] Create immediate pause/resume response (no waiting for simulation steps)
+- [ ] Add real-time parameter adjustment during simulation
+
+**Phase D: Water Visualization**
+- [ ] Modify `WorldMapRenderer` to visualize water features from snapshot data
 - [ ] Add water depth color coding (light blue for shallow, dark blue for deep)
 - [ ] Implement river and lake visualization in world preview
+- [ ] Add precipitation and groundwater table visualization modes
 
-**Visual Test**: Water bodies visible in world generation preview
+**Technical Test**: UI remains responsive during simulation, water visible in preview
+**User Experience Test**: Can pause/resume instantly, adjust parameters in real-time
 
 ### **4.1.3: Implement Debug Parameter UI System** ⏳ PENDING
 - [ ] Create `GeologicalDebugUI` class for parameter controls
