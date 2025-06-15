@@ -62,8 +62,14 @@ void FractalContinentGenerator::generateContinentalPlates(float worldSizeKm) {
     
     std::cout << "[FractalContinentGenerator] Generating " << numContinents << " continental plates" << std::endl;
     
+    // DEBUGGING: Clear existing plates
+    continentalPlates_.clear();
+    std::cout << "[FractalContinentGenerator] DEBUG: Cleared existing plates, size now: " << continentalPlates_.size() << std::endl;
+    
     // Generate continental seeds using Mitchell's best-candidate algorithm
     auto continentalSeeds = generateContinentalSeeds(worldSizeKm, numContinents);
+    
+    std::cout << "[FractalContinentGenerator] DEBUG: Generated " << continentalSeeds.size() << " continental seeds" << std::endl;
     
     // Create continental plates with organic size variation
     for (int i = 0; i < numContinents; ++i) {
@@ -116,7 +122,14 @@ void FractalContinentGenerator::generateContinentalPlates(float worldSizeKm) {
         plate.tectonicActivity = baseTectonicActivity * (0.7f + 0.6f * sizeFactor);
         
         continentalPlates_.push_back(plate);
+        
+        std::cout << "[FractalContinentGenerator] DEBUG: Created plate " << i << " at (" 
+                  << plate.center.x/1000.0f << "km, " << plate.center.y/1000.0f 
+                  << "km), radius=" << plate.radius/1000.0f << "km, elevation=" 
+                  << plate.elevation << "m. Total plates: " << continentalPlates_.size() << std::endl;
     }
+    
+    std::cout << "[FractalContinentGenerator] DEBUG: Final continental plates count: " << continentalPlates_.size() << std::endl;
 }
 
 std::vector<glm::vec2> FractalContinentGenerator::generateContinentalSeeds(float worldSizeKm, int numContinents) {
@@ -254,8 +267,8 @@ void FractalContinentGenerator::generateCoastlines(ContinuousField<float>& eleva
     
     std::cout << "[FractalContinentGenerator] Generating organic coastlines using fractal domains..." << std::endl;
     
-    // Clear any existing continent data and generate completely organic continents
-    continentalPlates_.clear();
+    // NOTE: DO NOT clear continentalPlates_ here - they were created by generateContinentalPlates()
+    // and are needed for the final count reporting
     
     for (int z = 0; z < height; ++z) {
         for (int x = 0; x < width; ++x) {

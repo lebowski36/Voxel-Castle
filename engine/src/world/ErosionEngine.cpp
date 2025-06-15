@@ -274,10 +274,15 @@ void ErosionEngine::validateAndClampElevation(ErosionFields& fields, int x, int 
     
     float elevation = fields.elevationField->getSample(x, z);
     
-    // Check for extreme values that indicate a bug
-    if (std::abs(elevation) > 10000.0f) {
+    // Check for extreme values that indicate a bug - but limit spam  
+    static int errorCount = 0;
+    if (std::abs(elevation) > 10000.0f && errorCount < 5) {
         std::cout << "[ELEVATION_BUG] " << processName << " created extreme elevation: " 
                   << elevation << "m at (" << x << "," << z << ") - CLAMPING to bounds" << std::endl;
+        errorCount++;
+        if (errorCount == 5) {
+            std::cout << "[ELEVATION_BUG] Further erosion elevation clamping messages suppressed to reduce spam" << std::endl;
+        }
     }
     
     // Clamp to realistic geological bounds

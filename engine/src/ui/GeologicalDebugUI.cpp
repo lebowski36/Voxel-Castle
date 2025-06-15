@@ -1,5 +1,5 @@
 #include "ui/GeologicalDebugUI.h"
-#include "rendering/Renderer.h"
+#include "ui/UIRenderer.h"
 #include "ui/UILogger.h"
 #include <sstream>
 #include <iomanip>

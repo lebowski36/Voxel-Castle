@@ -1500,36 +1500,46 @@ void WorldSimulationUI::generationWorker() {
             return;
         }
         
-        addLogEntry("Starting step-based geological simulation...", 0);
+        addLogEntry("Starting background geological simulation...", 0);
         
-        // Run the simulation step by step with small time slices
-        while (isRunning_ && !worldGenerator_->isGeologicalSimulationComplete()) {
+        // Start the background simulation thread (new approach for UI responsiveness)
+        auto geologicalSimulator = worldGenerator_->getGeologicalSimulator();
+        if (geologicalSimulator) {
+            geologicalSimulator->startBackgroundSimulation();
+            addLogEntry("Background geological simulation started", 0);
+        } else {
+            addLogEntry("ERROR: Could not start background simulation", 0);
+            isRunning_ = false;
+            return;
+        }
+        
+        // Monitor the background simulation progress
+        while (isRunning_ && geologicalSimulator && geologicalSimulator->isBackgroundSimulationRunning()) {
             // Handle pause/resume
             if (isPaused_) {
-                worldGenerator_->pauseGeologicalSimulation();
+                // Note: Background simulation has its own pause/resume handling
                 std::this_thread::sleep_for(std::chrono::milliseconds(100));
                 continue;
-            } else {
-                worldGenerator_->resumeGeologicalSimulation();
             }
             
             if (!isRunning_) break;
             
-            // Execute one simulation step
-            bool success = worldGenerator_->stepGeologicalSimulation();
-            
-            if (!success) {
-                addLogEntry("ERROR: Geological simulation step failed", stats_.simulationYears);
-                isRunning_ = false;
-                break;
+            // Check for new snapshots from background simulation
+            auto latestSnapshot = geologicalSimulator->getLatestSnapshot();
+            if (latestSnapshot) {
+                // Process new snapshot data if needed
+                float progress = geologicalSimulator->getBackgroundProgress();
+                currentProgress_ = progress;
+                phaseProgress_ = progress;
             }
             
-            // Small delay to keep UI responsive (10ms per step)
-            std::this_thread::sleep_for(std::chrono::milliseconds(10));
+            // Small delay for UI responsiveness (100ms monitoring interval)
+            std::this_thread::sleep_for(std::chrono::milliseconds(100));
         }
         
-        if (isRunning_ && worldGenerator_->isGeologicalSimulationComplete()) {
-            addLogEntry("Geological simulation completed successfully!", stats_.simulationYears);
+        // Check final status of background simulation
+        if (isRunning_ && geologicalSimulator && !geologicalSimulator->isBackgroundSimulationRunning()) {
+            addLogEntry("Background geological simulation completed successfully!", stats_.simulationYears);
             
             // Finalize the simulation
             currentPhase_ = GenerationPhase::COMPLETE;
@@ -1543,8 +1553,11 @@ void WorldSimulationUI::generationWorker() {
             completeSimulation();
         } else if (!isRunning_) {
             addLogEntry("Geological simulation cancelled by user", stats_.simulationYears);
+            if (geologicalSimulator) {
+                geologicalSimulator->stopBackgroundSimulation();
+            }
         } else {
-            addLogEntry("ERROR: Geological simulation failed", stats_.simulationYears);
+            addLogEntry("ERROR: Background geological simulation failed", stats_.simulationYears);
             isRunning_ = false;
         }
         

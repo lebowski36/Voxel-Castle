@@ -3,6 +3,7 @@
 #include "world/world_seed.h"
 #include <sstream>
 #include <iomanip>
+#include <iostream>
 
 namespace VoxelEngine {
 namespace UI {

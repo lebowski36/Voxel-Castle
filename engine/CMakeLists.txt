@@ -81,7 +81,7 @@ add_library(VoxelEngine STATIC
     src/ui/WorldSimulationUI.cpp # World generation simulation UI
     src/ui/WorldMapRenderer.cpp # World map visualization for simulation UI
     src/ui/BlockVisualizationPanel.cpp # Block visualization debug panel
-    src/ui/GeologicalDebugUI.cpp # Geological simulation debug UI panel
+    # src/ui/GeologicalDebugUI.cpp # Geological simulation debug UI panel - TEMPORARILY DISABLED for testing
     src/ui/SeedDebugPanel.cpp # Seed debug UI panel
     # Input system sources
     src/input/MouseCaptureManager.cpp # Mouse capture management

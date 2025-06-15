@@ -165,16 +165,26 @@ void TectonicEngine::simulateIsostasyAdjustment(TectonicFields& fields, float ti
     int width = fields.crustalThickness->getWidth();
     int height = fields.crustalThickness->getHeight();
     
+    // Scale down the time step to prevent runaway calculations
+    float safeTimeStep = std::min(timeStepMyears, 100.0f); // Cap at 100 years to prevent instability
+    
     for (int z = 0; z < height; ++z) {
         for (int x = 0; x < width; ++x) {
             float crustalThickness = fields.crustalThickness->getSample(x, z);
-            float targetThickness = 35000.0f; // Standard continental crust thickness
+            float targetThickness = 35000.0f; // Standard continental crust thickness (35km)
             
             // Calculate isostatic adjustment based on thickness difference
             float thicknessDiff = crustalThickness - targetThickness;
-            float adjustment = thicknessDiff * 0.0001f * timeStepMyears; // Small adjustment per time step
             
-            applyIsostasyAdjustment(fields, x, z, adjustment, timeStepMyears);
+            // Much smaller scaling factor to prevent exponential growth
+            // Using proper geological isostatic response rate (~1mm/year per km of load)
+            float adjustmentRate = thicknessDiff * 0.000001f; // 1 meter per 1000 years per km difference
+            float adjustment = adjustmentRate * safeTimeStep;
+            
+            // Clamp adjustment to prevent runaway calculations
+            adjustment = std::max(-10.0f, std::min(10.0f, adjustment));
+            
+            applyIsostasyAdjustment(fields, x, z, adjustment, safeTimeStep);
             
             validateAndClampElevation(fields, x, z, "IsostasyAdjustment");
         }
@@ -226,10 +236,15 @@ void TectonicEngine::validateAndClampElevation(TectonicFields& fields, int x, in
     
     float elevation = fields.elevationField->getSample(x, z);
     
-    // Check for extreme values that indicate a bug
-    if (std::abs(elevation) > 10000.0f) {
+    // Check for extreme values that indicate a bug - but limit spam
+    static int errorCount = 0;
+    if (std::abs(elevation) > 10000.0f && errorCount < 10) {
         std::cout << "[ELEVATION_BUG] " << processName << " created extreme elevation: " 
                   << elevation << "m at (" << x << "," << z << ") - CLAMPING to bounds" << std::endl;
+        errorCount++;
+        if (errorCount == 10) {
+            std::cout << "[ELEVATION_BUG] Further elevation clamping messages suppressed to reduce spam" << std::endl;
+        }
     }
     
     // Clamp to realistic geological bounds

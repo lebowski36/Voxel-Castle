@@ -144,6 +144,14 @@ public:
     }
 
     /**
+     * @brief Get the geological simulator instance (non-const version for UI operations)
+     * @return Pointer to GeologicalSimulator, nullptr if not initialized
+     */
+    GeologicalSimulator* getGeologicalSimulator() { 
+        return geologicalSimulator_.get(); 
+    }
+
+    /**
      * @brief Check if geological realism is enabled
      */
     bool isGeologicalRealismEnabled() const { return useGeologicalRealism_; }

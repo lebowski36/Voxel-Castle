@@ -117,15 +117,6 @@ private:
     
     // Get debug info for a position
     std::string getSeedDebugInfo(const glm::vec3& pos, VoxelCastle::World::FeatureType feature = VoxelCastle::World::FeatureType::TERRAIN);
-
-    // Seed testing state
-    bool isTestingSeed_{false};
-    
-    // Visualization feature
-    VoxelCastle::World::FeatureType visualizationFeature_;
-    
-    // Comparison seed
-    std::string comparisonSeed_;
 };
 
 } // namespace UI
