@@ -59,12 +59,31 @@ void ErosionEngine::simulatePhysicalErosion(ErosionFields& fields, float timeSte
             float slope = calculateSlope(*fields.elevationField, x, z);
             float hardness = fields.rockHardness->getSample(x, z);
             
-            // Physical erosion is stronger on steep slopes and softer rocks
-            float erosionIntensity = (slope * 0.1f) / (hardness * 0.1f) * timeStepKyears;
+            // REALISTIC GEOLOGICAL EROSION RATES
+            // Physical erosion: 0.001-0.1 mm/year = 0.001-0.1 m/kyear for most conditions
+            // Only extreme conditions (waterfalls, glaciers) can erode faster
             
-            applyPhysicalErosion(fields, x, z, erosionIntensity, timeStepKyears);
-            
-            validateAndClampElevation(fields, x, z, "PhysicalErosion");
+            if (slope > 0.001f && hardness > 0.01f) {
+                // Base erosion rate: 0.01 m/kyear (10mm per 1000 years) - realistic for moderate slopes
+                float baseErosionRate = 0.01f;
+                
+                // Slope effect: gentle scaling, not exponential
+                float slopeMultiplier = 1.0f + std::min(slope * 5.0f, 4.0f); // Max 5x for very steep slopes
+                
+                // Hardness resistance: prevent division by tiny numbers
+                float hardnessResistance = std::max(hardness, 0.1f);
+                
+                // Calculate realistic erosion
+                float erosionRate = (baseErosionRate * slopeMultiplier) / hardnessResistance;
+                float erosionIntensity = erosionRate * (timeStepKyears / 1000.0f); // Scale properly for timestep
+                
+                // Geological reality check: even in extreme conditions, erosion is limited
+                erosionIntensity = std::min(erosionIntensity, 0.5f); // Maximum 0.5m per step regardless of timestep
+                
+                applyPhysicalErosion(fields, x, z, erosionIntensity, timeStepKyears);
+                
+                validateAndClampElevation(fields, x, z, "PhysicalErosion");
+            }
         }
     }
 }
@@ -84,8 +103,23 @@ void ErosionEngine::simulateWaterDrivenErosion(ErosionFields& fields, float time
                 float slope = calculateSlope(*fields.elevationField, x, z);
                 float velocity = calculateWaterFlowVelocity(waterDepth, slope);
                 
-                // Water erosion power is proportional to velocity squared
-                float erosionPower = velocity * velocity * waterFlow * timeStepKyears * 0.01f;
+                // REALISTIC WATER EROSION RATES
+                // River erosion: 0.1-10 mm/year = 0.1-10 m/kyear in active channels
+                // Most rivers: 1-5 m/kyear maximum
+                
+                // Base water erosion rate: much higher than physical but still realistic
+                float baseWaterErosionRate = 2.0f; // 2 m/kyear for active water flow
+                
+                // Scale by water power (velocity^2 * flow)
+                float waterPower = velocity * velocity * std::min(waterFlow, 10.0f); // Limit flow effect
+                float flowMultiplier = 1.0f + std::min(waterPower * 0.5f, 3.0f); // Max 4x for strong flow
+                
+                // Calculate realistic water erosion
+                float erosionRate = baseWaterErosionRate * flowMultiplier;
+                float erosionPower = erosionRate * (timeStepKyears / 1000.0f);
+                
+                // Geological limit: even the most powerful rivers are limited
+                erosionPower = std::min(erosionPower, 1.0f); // Max 1m per step
                 
                 applyWaterErosion(fields, x, z, erosionPower, timeStepKyears);
                 
@@ -128,6 +162,10 @@ void ErosionEngine::simulateSedimentDeposition(ErosionFields& fields, float time
                 // Deposit sediment where water flow is low
                 float waterFlow = fields.waterFlow ? fields.waterFlow->getSample(x, z) : 0.0f;
                 float depositionRate = sediment * (1.0f - std::min(1.0f, waterFlow)) * timeStepKyears * 0.1f;
+                
+                // CRITICAL: Clamp sediment deposition to prevent geological impossibilities
+                // Maximum realistic deposition: ~20m per thousand years in extreme conditions
+                depositionRate = std::min(depositionRate, 20.0f * timeStepKyears);
                 
                 depositSediment(fields, x, z, depositionRate, timeStepKyears);
                 
@@ -172,7 +210,24 @@ void ErosionEngine::simulateGlacialCarving(ErosionFields& fields, float timeStep
             float elevation = fields.elevationField->getSample(x, z);
             
             if (elevation > 800.0f) { // Above treeline
-                float glacialIntensity = (elevation - 800.0f) * 0.001f * timeStepKyears;
+                // REALISTIC GLACIAL EROSION RATES
+                // Glacial erosion: 1-100 mm/year = 1-100 m/kyear (much faster than other erosion)
+                // But glaciers are rare and episodic
+                
+                float elevationAboveTreeline = elevation - 800.0f;
+                
+                // Base glacial erosion rate: 5 m/kyear (realistic for active glaciation)
+                float baseGlacialRate = 5.0f;
+                
+                // Scale gently with elevation (not linearly - would be extreme)
+                float elevationFactor = 1.0f + std::min(elevationAboveTreeline / 1000.0f, 2.0f); // Max 3x at 2800m+
+                
+                // Calculate realistic glacial intensity
+                float glacialRate = baseGlacialRate * elevationFactor;
+                float glacialIntensity = glacialRate * (timeStepKyears / 1000.0f);
+                
+                // Geological limit: even the most active glaciers have limits
+                glacialIntensity = std::min(glacialIntensity, 2.0f); // Max 2m per step
                 applyGlacialErosion(fields, x, z, glacialIntensity, timeStepKyears);
                 
                 validateAndClampElevation(fields, x, z, "GlacialCarving");
@@ -360,7 +415,20 @@ void ErosionEngine::depositSediment(ErosionFields& fields, int x, int z, float a
 
 void ErosionEngine::carveRiverChannel(ErosionFields& fields, int x, int z, float flow, float timeStep) {
     float currentElevation = fields.elevationField->getSample(x, z);
-    float carving = flow * 0.05f * timeStep; // Scale carving amount
+    
+    // REALISTIC RIVER CARVING RATES
+    // Active rivers: 0.1-10 m/kyear carving rate
+    // Large rivers in soft rock: up to 20 m/kyear in extreme cases
+    
+    float baseRiverCarvingRate = 3.0f; // 3 m/kyear for moderate flow
+    float flowEffect = std::min(flow * 0.5f, 5.0f); // Flow increases carving, but limited
+    
+    float carvingRate = baseRiverCarvingRate * (1.0f + flowEffect);
+    float carving = carvingRate * (timeStep / 1000.0f); // Scale for timestep
+    
+    // Geological limit: even the most powerful rivers are constrained
+    carving = std::min(carving, 0.3f); // Max 0.3m per step
+    
     fields.elevationField->setSample(x, z, currentElevation - carving);
     
     // Increase sediment load from carving
@@ -372,7 +440,15 @@ void ErosionEngine::carveRiverChannel(ErosionFields& fields, int x, int z, float
 
 void ErosionEngine::applyGlacialErosion(ErosionFields& fields, int x, int z, float intensity, float timeStep) {
     float currentElevation = fields.elevationField->getSample(x, z);
-    float erosion = intensity * 2.0f; // Glacial erosion is powerful
+    
+    // REALISTIC GLACIAL EROSION APPLICATION
+    // The intensity has already been calculated with realistic rates
+    // Just apply it directly without additional scaling
+    float erosion = intensity; // Use calculated realistic intensity
+    
+    // Final safety check: geological maximum
+    erosion = std::min(erosion, 1.0f); // Absolute max 1m per step
+    
     fields.elevationField->setSample(x, z, currentElevation - erosion);
 }
 

@@ -257,6 +257,18 @@ void TectonicEngine::validateAndClampElevation(TectonicFields& fields, int x, in
 
 // Private helper methods
 void TectonicEngine::applyMantleConvectionCell(TectonicFields& fields, int x, int z, float intensity, float timeStep) {
+    // DEBUG: Track elevation changes for the first few cells in first few steps
+    static int debugCellCount = 0;
+    static int debugStepCount = 0;
+    bool shouldDebug = (debugStepCount < 3) && (debugCellCount < 20) && (x % 50 == 0) && (z % 50 == 0);
+    
+    if (shouldDebug) {
+        float beforeElevation = fields.elevationField->getSample(x, z);
+        std::cout << "[MANTLE_DEBUG] Step " << debugStepCount << " Cell(" << x << "," << z 
+                  << ") Before: " << beforeElevation << "m, Intensity: " << intensity 
+                  << ", TimeStep: " << timeStep << std::endl;
+    }
+    
     // Update mantle stress with equilibrium limits
     float currentStress = fields.mantleStress->getSample(x, z);
     float maxMantleStress = 20.0f; // Realistic maximum mantle stress
@@ -274,6 +286,17 @@ void TectonicEngine::applyMantleConvectionCell(TectonicFields& fields, int x, in
     float elevationChange = intensity * 0.1f; // Reduced scale - 0.1m per unit intensity
     float currentElevation = fields.elevationField->getSample(x, z);
     fields.elevationField->setSample(x, z, currentElevation + elevationChange);
+    
+    if (shouldDebug) {
+        float afterElevation = fields.elevationField->getSample(x, z);
+        std::cout << "[MANTLE_DEBUG] After: " << afterElevation << "m, Change: " 
+                  << elevationChange << "m" << std::endl;
+        debugCellCount++;
+        if (debugCellCount >= 20) {
+            debugStepCount++;
+            debugCellCount = 0;
+        }
+    }
     
     // Update crustal thickness if available (with limits)
     if (fields.crustalThickness) {
@@ -364,18 +387,28 @@ void TectonicEngine::applyIsostasyAdjustment(TectonicFields& fields, int x, int 
 }
 
 float TectonicEngine::generateFractalNoise(float x, float z, float scale1, float scale2, float scale3) const {
-    float noise1 = VoxelEngine::Util::smoothValueNoise(x * scale1, seed_, z * scale1) * 0.5f;
-    float noise2 = VoxelEngine::Util::smoothValueNoise(x * scale2, seed_ + 1000, z * scale2) * 0.3f;
-    float noise3 = VoxelEngine::Util::smoothValueNoise(x * scale3, seed_ + 2000, z * scale3) * 0.2f;
+    // Convert the large seed to smaller, stable seed values for noise layers
+    int seed1 = static_cast<int>(seed_ & 0xFFFF);           // Bottom 16 bits
+    int seed2 = static_cast<int>((seed_ >> 16) & 0xFFFF);   // Next 16 bits
+    int seed3 = static_cast<int>((seed_ >> 32) & 0xFFFF);   // Next 16 bits
+    
+    float noise1 = VoxelEngine::Util::smoothValueNoise(x * scale1, 0.0f, z * scale1 + seed1) * 0.5f;
+    float noise2 = VoxelEngine::Util::smoothValueNoise(x * scale2, 0.0f, z * scale2 + seed2) * 0.3f;
+    float noise3 = VoxelEngine::Util::smoothValueNoise(x * scale3, 0.0f, z * scale3 + seed3) * 0.2f;
     
     return noise1 + noise2 + noise3;
 }
 
 float TectonicEngine::generateDomainWarpedNoise(float x, float z, float scale, float warpIntensity) const {
-    float warpX = VoxelEngine::Util::smoothValueNoise(x * scale * 2.0f, 1000 + seed_, z * scale * 2.0f) * warpIntensity;
-    float warpZ = VoxelEngine::Util::smoothValueNoise(x * scale * 2.0f, 2000 + seed_, z * scale * 2.0f) * warpIntensity;
+    // Convert the large seed to smaller, stable seed values
+    int seed1 = static_cast<int>((seed_ + 1000) & 0xFFFF);
+    int seed2 = static_cast<int>((seed_ + 2000) & 0xFFFF);
+    int seed3 = static_cast<int>((seed_ + 3000) & 0xFFFF);
     
-    return VoxelEngine::Util::smoothValueNoise(x + warpX, seed_ + 3000, z + warpZ);
+    float warpX = VoxelEngine::Util::smoothValueNoise(x * scale * 2.0f, 0.0f, z * scale * 2.0f + seed1) * warpIntensity;
+    float warpZ = VoxelEngine::Util::smoothValueNoise(x * scale * 2.0f, 0.0f, z * scale * 2.0f + seed2) * warpIntensity;
+    
+    return VoxelEngine::Util::smoothValueNoise(x + warpX, 0.0f, z + warpZ + seed3);
 }
 
 }}

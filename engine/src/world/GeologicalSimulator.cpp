@@ -18,9 +18,14 @@ GeologicalSimulator::GeologicalSimulator(int worldSizeKm, const GeologicalConfig
       hasResumedSincePause_(false),
       currentStep_(0), totalSteps_(0), phaseStep_(0), totalPhaseSteps_(0), phaseTimeStep_(0.0f) {
     
-    // Initialize interleaved process time scales
+    // Initialize interleaved process time scales for geological balance
+    // Tectonic processes are slow but powerful - create major terrain features
     processTimeScales_.tectonicTimeStep = 1000.0f;  // 1000 years per step
-    processTimeScales_.erosionTimeStep = 100.0f;    // 100 years per step
+    
+    // Erosion processes are fast but should be weaker - modify existing terrain
+    // Reduced from 100 to 30 to balance against tectonic uplift
+    processTimeScales_.erosionTimeStep = 30.0f;     // 30 years per step
+    
     processTimeScales_.waterTimeStep = 10.0f;       // 10 years per step
     processTimeScales_.detailTimeStep = 1.0f;       // 1 year per step
     processTimeScales_.volcanicTimeStep = 5000.0f;  // 5000 years per step
