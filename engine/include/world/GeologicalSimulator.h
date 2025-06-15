@@ -4,10 +4,19 @@
 #include "world/GeologicalTypes.h"
 #include "world/FractalContinentGenerator.h"
 #include "world/GeologicalSnapshot.h"
+#include "world/BackgroundSimulationEngine.h"
+#include "world/WaterSystemSimulator.h"
+#include "world/TectonicEngine.h"
+#include "world/ErosionEngine.h"
 #include <memory>
 #include <functional>
 #include <chrono>
 #include <random>  // For std::mt19937
+#include <thread>  // For background thread support
+#include <mutex>   // For thread-safe snapshot access
+#include <atomic>  // For atomic progress tracking
+#include <queue>   // For snapshot buffering
+#include <vector>  // For process queue
 
 namespace VoxelCastle {
 namespace World {
@@ -95,6 +104,17 @@ private:
     std::chrono::steady_clock::time_point lastSnapshotTime_;
     static constexpr float SNAPSHOT_INTERVAL_SECONDS = 2.0f;  // Create snapshot every 2 seconds
     
+    // Phase A: Background Thread Infrastructure for UI Responsiveness
+    std::unique_ptr<BackgroundSimulationEngine> backgroundEngine_;  // Background simulation engine
+    std::unique_ptr<WaterSystemSimulator> waterSystem_;            // Water system simulator
+    std::unique_ptr<TectonicEngine> tectonicEngine_;               // Tectonic processes engine
+    std::unique_ptr<ErosionEngine> erosionEngine_;                 // Erosion and weathering engine
+    
+    // Background execution control
+    bool useBackgroundExecution_{false};                          // Enable/disable background mode
+    void createBackgroundSnapshot();                       // Create snapshot for UI consumption
+    std::shared_ptr<GeologicalSnapshot> consumeLatestSnapshot(); // Get latest snapshot from background thread
+    
 public:
     /**
      * @brief Constructor
@@ -106,7 +126,17 @@ public:
     /**
      * @brief Destructor
      */
-    ~GeologicalSimulator() = default;
+    ~GeologicalSimulator();
+    
+    // Phase A: Background Thread Control Methods
+    void startBackgroundSimulation();                    // Start simulation in background thread
+    void stopBackgroundSimulation();                     // Stop background simulation and join thread
+    bool isBackgroundSimulationRunning() const;          // Check if background simulation is active
+    void enableBackgroundExecution(bool enable = true);  // Enable/disable background mode
+    
+    // Thread-safe snapshot access for UI
+    std::shared_ptr<GeologicalSnapshot> getLatestSnapshot(); // Get latest snapshot for UI rendering
+    float getBackgroundProgress() const;                 // Get current progress (thread-safe)
     
     /**
      * @brief Initialize the simulator with a seed
@@ -127,6 +157,25 @@ public:
     void pauseSimulation();                         // Pause/resume simulation
     void resumeSimulation();
     bool isSimulationPaused() const;
+    
+    // === Background Execution Methods (Step 4.1.2) ===
+    
+    /**
+     * @brief Enable background simulation for responsive UI
+     * @param enable True to enable background mode, false for foreground
+     */
+    void setBackgroundExecution(bool enable);
+    
+    /**
+     * @brief Get the next snapshot from background simulation
+     * @return Shared pointer to snapshot, or nullptr if none available
+     */
+    std::shared_ptr<GeologicalSnapshot> getNextBackgroundSnapshot();
+    
+    /**
+     * @brief Check if background snapshots are available
+     */
+    bool hasBackgroundSnapshots() const;
     
     /**
      * @brief Run individual simulation phases
