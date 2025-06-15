@@ -157,6 +157,7 @@ private:
     void createElevationLegend();  // NEW: Elevation legend UI component
     void createProgressPanels();
     void createGenerationLog();
+    void refreshGenerationLog();    // NEW: Refresh log when content changes
     void createActionButtons();
     void createWorldSummaryUI();
     
@@ -233,6 +234,9 @@ private:
     std::shared_ptr<VoxelEngine::UI::UIButton> prevSnapshotButton_;
     std::shared_ptr<VoxelEngine::UI::UIButton> nextSnapshotButton_;
     std::shared_ptr<VoxelEngine::UI::UIButton> snapshotInfoButton_;
+    
+    // Generation log UI control
+    std::shared_ptr<VoxelEngine::UI::UIButton> logPanel_;
     
     // World map area coordinates (set by createWorldPreview)
     float worldMapX_, worldMapY_, worldMapWidth_, worldMapHeight_;

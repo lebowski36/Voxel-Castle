@@ -80,6 +80,42 @@ void GeologicalSimulator::initialize(uint64_t seed) {
     );
 }
 
+// CRITICAL: Helper function to enforce elevation bounds throughout simulation
+void GeologicalSimulator::clampElevationSafe(int x, int z, const std::string& processName) {
+    if (!elevationField_) return;
+    
+    float elevation = elevationField_->getSample(x, z);
+    if (elevation < -1800.0f || elevation > 1200.0f) {
+        std::cout << "[ELEVATION SAFETY] " << processName << " at (" << x << "," << z 
+                  << ") exceeded bounds: " << elevation << "m - clamping" << std::endl;
+        elevation = std::max(-1800.0f, std::min(1200.0f, elevation));
+        elevationField_->setSample(x, z, elevation);
+    }
+}
+
+// =============================================================================
+// Elevation Safety System - Prevent Extreme Values
+// =============================================================================
+
+void GeologicalSimulator::validateAndClampElevation(int x, int z, const std::string& processName) {
+    float elevation = elevationField_->getSample(x, z);
+    
+    // Check for extreme values that indicate a bug
+    if (std::abs(elevation) > 10000.0f) {
+        std::cout << "[ELEVATION_BUG] " << processName << " created extreme elevation: " 
+                  << elevation << "m at (" << x << "," << z << ") - CLAMPING to bounds" << std::endl;
+    }
+    
+    // Clamp to realistic geological bounds used elsewhere in the code
+    float clampedElevation = std::max(-1800.0f, std::min(1200.0f, elevation));
+    
+    if (elevation != clampedElevation) {
+        elevationField_->setSample(x, z, clampedElevation);
+    }
+}
+
+// =============================================================================
+
 void GeologicalSimulator::initializeFields() {
     // Field resolution based on quality preset
     int resolution;
@@ -540,9 +576,19 @@ void GeologicalSimulator::simulateMountainBuilding(float timeStep) {
                 // Determine new rock type based on pressure and temperature
                 float currentElevation = elevationField_->getSample(x, z);
                 
-                // Clamp elevation to realistic mountain/ocean range
-                currentElevation = std::max(-1800.0f, std::min(1200.0f, currentElevation)); // Lower max elevation
+                // CRITICAL: Clamp elevation to realistic mountain/ocean range after every modification
+                currentElevation = std::max(-1800.0f, std::min(1200.0f, currentElevation));
                 elevationField_->setSample(x, z, currentElevation);
+                
+                // Validate elevation with enhanced debugging
+                validateAndClampElevation(x, z, "Mountain Building");
+                
+                // Additional safety check - verify clamping worked
+                float verifyElevation = elevationField_->getSample(x, z);
+                if (verifyElevation < -1800.0f || verifyElevation > 1200.0f) {
+                    std::cout << "[ELEVATION BUG] Failed to clamp at (" << x << "," << z << ") - Value: " << verifyElevation << "m" << std::endl;
+                    elevationField_->setSample(x, z, std::max(-1800.0f, std::min(1200.0f, verifyElevation)));
+                }
                 
                 // Update rock types based on realistic elevation thresholds
                 if (currentElevation > 800.0f && modulated_stress > 3.0f) {
@@ -611,6 +657,11 @@ void GeologicalSimulator::simulateVolcanicActivity(float timeStep) {
             // Clamp to realistic elevation bounds
             newElevation = std::max(-1800.0f, std::min(1200.0f, newElevation)); // Lower max for realistic mountains
             elevationField_->setSample(x, z, newElevation);
+            
+            // Validate volcanic elevation changes
+            if (idx % 500 == 0) { // Sample validation to avoid performance impact
+                validateAndClampElevation(x, z, "Volcanic Activity");
+            }
             
             // Set volcanic rock type for strong volcanic areas
             if (adjustedIntensity > 0.6f) {
@@ -715,6 +766,11 @@ void GeologicalSimulator::simulatePhysicalErosion(float timeStep) {
             
             elevationField_->addToSample(x, z, -erosion);
             waterFlow_->addToSample(x, z, flowIncrease);
+            
+            // Validate elevation after erosion
+            if (idx % 1000 == 0) { // Only validate some samples to avoid performance impact
+                validateAndClampElevation(x, z, "Physical Erosion");
+            }
         }
     });
 }

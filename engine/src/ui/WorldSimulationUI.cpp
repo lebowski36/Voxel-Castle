@@ -644,22 +644,45 @@ void WorldSimulationUI::createGenerationLog() {
     summaryY += 30.0f;
     
     auto logPanel = std::make_shared<VoxelEngine::UI::UIButton>(renderer_);
+    logPanel_ = logPanel; // Store reference for dynamic updates
+    
+    // Call refresh function to set the initial content
+    refreshGenerationLog();
+    
+    logPanel_->setPosition(summaryX, summaryY);
+    logPanel_->setSize(summaryWidth, logHeight);
+    logPanel_->setBackgroundColor({0.1f, 0.1f, 0.1f, 0.6f});
+    logPanel_->setTextColor({0.9f, 0.9f, 0.9f, 1.0f}); // Better text contrast
+    addChild(logPanel_);
+    
+    // Note: currentY_ is not advanced here since log is positioned beside preview, not below
+}
+
+void WorldSimulationUI::refreshGenerationLog() {
+    if (!logPanel_) return; // Panel not created yet
+    
+    // Get current panel size for dynamic wrapping calculation
+    auto panelSize = logPanel_->getSize();
+    float summaryWidth = panelSize.x;
+    
     std::string logText = "";
-    size_t entriesToShow = std::min(static_cast<size_t>(4), generationLog_.size()); // Show fewer entries to fit better
+    size_t entriesToShow = std::min(static_cast<size_t>(4), generationLog_.size());
+    
     if (entriesToShow > 0) {
         for (size_t i = generationLog_.size() - entriesToShow; i < generationLog_.size(); ++i) {
             // Format log entries with proper line breaks for vertical stacking
             std::string yearText = "Year " + std::to_string(generationLog_[i].simulationYear);
             std::string message = generationLog_[i].message;
             
-            // Calculate max line length based on panel width (approximate characters per pixel)
-            const size_t maxLineLength = static_cast<size_t>(summaryWidth / 12.0f); // ~12 pixels per character
-            const size_t minLineLength = std::max(static_cast<size_t>(20), maxLineLength / 3); // Minimum line length
+            // More accurate character width estimation - use actual font metrics if available
+            // For now, use a more conservative estimate based on typical UI font
+            const size_t maxLineLength = static_cast<size_t>(summaryWidth / 7.0f); // ~7 pixels per character (conservative)
+            const size_t minLineLength = std::max(static_cast<size_t>(20), maxLineLength / 3); // Minimum ~1/3 of max
             
             // Add year header
             logText += yearText + ":\n";
             
-            // Wrap message text properly into multiple lines
+            // Smart text wrapping that handles dynamic content
             std::string remainingText = message;
             while (!remainingText.empty()) {
                 if (remainingText.length() <= maxLineLength) {
@@ -667,41 +690,60 @@ void WorldSimulationUI::createGenerationLog() {
                     logText += "  " + remainingText + "\n";
                     break;
                 } else {
-                    // Find good breaking point within maxLineLength
-                    size_t breakPos = remainingText.find_last_of(' ', maxLineLength);
+                    // Find optimal breaking point
+                    size_t breakPos = maxLineLength;
                     
-                    // If no space found or break position is too early, break at maxLineLength
-                    if (breakPos == std::string::npos || breakPos < minLineLength) {
-                        breakPos = maxLineLength;
+                    // Priority 1: Break at space within reasonable range
+                    size_t spacePos = remainingText.find_last_of(' ', maxLineLength);
+                    if (spacePos != std::string::npos && spacePos >= minLineLength) {
+                        breakPos = spacePos;
+                    } else {
+                        // Priority 2: Break at punctuation
+                        size_t punctPos = remainingText.find_last_of(",.;:!?-)", maxLineLength);
+                        if (punctPos != std::string::npos && punctPos >= minLineLength) {
+                            breakPos = punctPos + 1; // Include punctuation in line
+                        } else {
+                            // Priority 3: Break at parentheses or brackets
+                            size_t parenPos = remainingText.find_last_of("([{", maxLineLength);
+                            if (parenPos != std::string::npos && parenPos >= minLineLength) {
+                                breakPos = parenPos;
+                            } else {
+                                // Last resort: Force break at maxLineLength (with hyphen for long words)
+                                breakPos = maxLineLength;
+                                if (breakPos < remainingText.length() && remainingText[breakPos] != ' ') {
+                                    // Add hyphen for word break
+                                    logText += "  " + remainingText.substr(0, breakPos) + "-\n";
+                                } else {
+                                    logText += "  " + remainingText.substr(0, breakPos) + "\n";
+                                }
+                                remainingText = remainingText.substr(breakPos);
+                                continue;
+                            }
+                        }
                     }
                     
                     // Add this line with indentation
                     logText += "  " + remainingText.substr(0, breakPos) + "\n";
                     
-                    // Prepare remaining text (skip space if we broke at a space)
+                    // Prepare remaining text (skip whitespace/punctuation at break point)
                     size_t nextStart = breakPos;
-                    if (breakPos < remainingText.length() && remainingText[breakPos] == ' ') {
-                        nextStart = breakPos + 1;
+                    while (nextStart < remainingText.length() && 
+                           (remainingText[nextStart] == ' ' || remainingText[nextStart] == '\t')) {
+                        nextStart++;
                     }
                     remainingText = remainingText.substr(nextStart);
                 }
             }
             
-            // Add spacing between entries for better readability
+            // Add spacing between entries
             logText += "\n";
         }
     } else {
         logText = "Simulation starting...\nInitializing systems...\n";
     }
     
-    logPanel->setText(logText);
-    logPanel->setPosition(summaryX, summaryY);
-    logPanel->setSize(summaryWidth, logHeight);
-    logPanel->setBackgroundColor({0.1f, 0.1f, 0.1f, 0.6f});
-    logPanel->setTextColor({0.9f, 0.9f, 0.9f, 1.0f}); // Better text contrast
-    addChild(logPanel);
-    
-    // Note: currentY_ is not advanced here since log is positioned beside preview, not below
+    // Update the panel text content
+    logPanel_->setText(logText);
 }
 
 void WorldSimulationUI::createWorldSummaryUI() {
@@ -1249,6 +1291,9 @@ void WorldSimulationUI::addLogEntry(const std::string& message, int year) {
     if (generationLog_.size() > 50) {
         generationLog_.pop_front();
     }
+    
+    // Refresh the log display with new content
+    refreshGenerationLog();
 }
 
 // Geological phase update callback

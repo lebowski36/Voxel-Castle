@@ -203,6 +203,11 @@ private:
     void initializeFields();
     
     /**
+     * @brief CRITICAL: Safety function to enforce elevation bounds
+     */
+    void clampElevationSafe(int x, int z, const std::string& processName = "Unknown");
+    
+    /**
      * @brief Tectonic simulation methods
      */
     void simulateMantleConvection(float timeStep);
@@ -294,6 +299,7 @@ private:
     float calculateResistance(float x, float z) const;
     RockType determineRockType(float elevation, float stress, float temperature) const;
     float getRockHardness(RockType rockType) const;
+    void validateAndClampElevation(int x, int z, const std::string& processName);
     
     /**
      * @brief Random number generation
