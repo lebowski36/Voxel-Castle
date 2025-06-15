@@ -29,6 +29,10 @@ void FractalContinentGenerator::GenerateContinentalFoundation(
     // Step 1: Generate continental plates using Voronoi-based distribution
     generateContinentalPlates(worldSizeKm, config);
     
+    // Log continental plate statistics immediately after creation (before coastlines clear them)
+    std::cout << "[FractalContinentGenerator] Created " << continentalPlates_.size() 
+              << " continental plates" << std::endl;
+    
     // Step 2: Generate ocean basins between continents
     generateOceanBasins(worldSizeKm);
     
@@ -66,8 +70,12 @@ void FractalContinentGenerator::generateContinentalPlates(float worldSizeKm, con
     // Generate continental seeds using Mitchell's best-candidate algorithm
     auto continentalSeeds = generateContinentalSeeds(worldSizeKm, numContinents);
     
+    std::cout << "[DEBUG] Generated " << continentalSeeds.size() << " continental seeds for " << numContinents << " requested continents" << std::endl;
+    
     // Create continental plates with organic size variation
-    for (int i = 0; i < numContinents; ++i) {
+    std::cout << "[DEBUG] Creating continental plates from " << continentalSeeds.size() << " seeds" << std::endl;
+    for (int i = 0; i < continentalSeeds.size(); ++i) {
+        std::cout << "[DEBUG] Creating continental plate " << i << " at (" << continentalSeeds[i].x << ", " << continentalSeeds[i].y << ")" << std::endl;
         ContinentalPlate plate;
         plate.center = continentalSeeds[i];
         plate.plateId = i;
@@ -119,7 +127,9 @@ void FractalContinentGenerator::generateContinentalPlates(float worldSizeKm, con
         plate.tectonicActivity = baseTectonicActivity * (0.7f + 0.6f * sizeFactor);
         
         continentalPlates_.push_back(plate);
+        std::cout << "[DEBUG] Added continental plate " << i << " to continentalPlates_. Total plates: " << continentalPlates_.size() << std::endl;
     }
+    std::cout << "[DEBUG] Final continentalPlates_ size: " << continentalPlates_.size() << std::endl;
 }
 
 std::vector<glm::vec2> FractalContinentGenerator::generateContinentalSeeds(float worldSizeKm, int numContinents) {
@@ -223,6 +233,9 @@ std::vector<glm::vec2> FractalContinentGenerator::generateContinentalSeeds(float
         }
     }
     
+    std::cout << "[DEBUG] Continental seed generation complete. Placed " << continentsPlaced << " out of " << numContinents << " requested continents" << std::endl;
+    std::cout << "[DEBUG] Final seeds vector size: " << seeds.size() << std::endl;
+    
     return seeds;
 }
 
@@ -257,8 +270,9 @@ void FractalContinentGenerator::generateCoastlines(ContinuousField<float>& eleva
     
     std::cout << "[FractalContinentGenerator] Generating organic coastlines using fractal domains..." << std::endl;
     
-    // Clear any existing continent data and generate completely organic continents
-    continentalPlates_.clear();
+    // Use existing continental plates as seeds for fractal generation (DO NOT CLEAR THEM)
+    std::cout << "[FractalContinentGenerator] Using " << continentalPlates_.size() 
+              << " continental plates as fractal generation seeds" << std::endl;
     
     for (int z = 0; z < height; ++z) {
         for (int x = 0; x < width; ++x) {
@@ -737,11 +751,39 @@ float FractalContinentGenerator::generateOrganicContinentalElevation(const glm::
     // Normalize position to 0-1 range for consistent noise sampling
     glm::vec2 normalizedPos = worldPos / worldSizeMeters;
     
+    // CRITICAL FIX: Calculate influence from continental plate seeds
+    float continentalInfluence = 0.0f;
+    float nearestPlateDistance = std::numeric_limits<float>::max();
+    
+    if (!continentalPlates_.empty()) {
+        for (const auto& plate : continentalPlates_) {
+            float distance = glm::length(worldPos - plate.center);
+            float influence = std::max(0.0f, 1.0f - (distance / (plate.radius * 1.5f))); // Influence extends 1.5x plate radius
+            continentalInfluence = std::max(continentalInfluence, influence);
+            nearestPlateDistance = std::min(nearestPlateDistance, distance);
+        }
+    } else {
+        // Fallback if no plates exist - should not happen with proper design
+        continentalInfluence = 0.0f;
+    }
+    
     // Multiple fractal domain layers for HIGHLY organic continental structure
     
     // 1. Continental mass distribution - large scale features with MUCH more variation
     float continentalScale = 0.6f;  // Smaller scale = more variation
     float continentalBase = fractionalBrownianMotion(normalizedPos.x * continentalScale, normalizedPos.y * continentalScale, 6, 0.9f);
+    
+    // Debug first few samples
+    static int debugCount = 0;
+    static int totalSamples = 0;
+    totalSamples++;
+    
+    if (debugCount < 5) {
+        std::cout << "[DEBUG] Sample " << debugCount << " - Pos: (" << worldPos.x << "," << worldPos.y 
+                  << ") Normalized: (" << normalizedPos.x << "," << normalizedPos.y 
+                  << ") ContinentalBase: " << continentalBase << std::endl;
+        debugCount++;
+    }
     
     // 2. AGGRESSIVE domain warping for highly irregular shapes
     float warpStrength = 0.7f; // Increased from 0.3f for much more distortion
@@ -789,9 +831,21 @@ float FractalContinentGenerator::generateOrganicContinentalElevation(const glm::
                          (ridged1 * 0.35f + ridged2 * 0.25f + ridged3 * 0.15f) + 
                          (detail * 0.15f) + (islandChains * 0.1f);
     
-    // More aggressive sea level threshold for more irregular coastlines
-    float seaLevel = 0.0f;
-    float landThreshold = 0.05f; // Lower threshold = more irregular coastlines
+    // CRITICAL FIX: Use continental plate influence to determine land vs ocean
+    // Areas near continental plates have much lower land threshold (easier to be land)
+    // Areas far from plates have higher threshold (more likely to be ocean)
+    float baseLandThreshold = 0.05f;
+    float maxLandThreshold = 0.15f; // Far from continents needs higher noise to be land (reduced from 0.4f)
+    float landThreshold = baseLandThreshold + (1.0f - continentalInfluence) * (maxLandThreshold - baseLandThreshold);
+    
+    // Add continental influence directly to noise (makes areas near plates more likely to be land)
+    combinedNoise += continentalInfluence * 0.3f;
+    
+    // Debug combined noise and threshold comparison (only for samples we already debugged)
+    if (debugCount <= 5 && totalSamples <= 5) {
+        std::cout << "[DEBUG] Sample " << (totalSamples-1) << " - CombinedNoise: " << combinedNoise 
+                  << " LandThreshold: " << landThreshold << " IsLand: " << (combinedNoise > landThreshold) << std::endl;
+    }
     
     if (combinedNoise > landThreshold) {
         // Above sea level - continental landmass with more dramatic elevation
