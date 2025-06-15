@@ -1695,10 +1695,6 @@ void WorldSimulationUI::renderSimpleDebugInfo() {
     if (!worldGenerator_) return;
     
     // Simple debug overlay showing basic world generation info
-    glm::vec2 absolutePos = getAbsolutePosition();
-    float debugX = absolutePos.x + 10;
-    float debugY = absolutePos.y + 10;
-    
     // For now, just render basic simulation status
     std::string debugText = "Debug Info: World Generation in Progress";
     if (isSimulationComplete()) {

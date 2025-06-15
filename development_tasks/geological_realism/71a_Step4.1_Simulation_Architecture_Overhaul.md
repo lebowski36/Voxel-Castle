@@ -134,7 +134,33 @@ class BackgroundGeologicalSimulator {
 - [x] Performance-optimized sampling (every 4th point)
 - [x] **STATUS**: Basic framework complete, logs processing activity
 
-### **4.1.3: Implement Debug Parameter UI System** ⏳ NEXT PRIORITY - READY TO IMPLEMENT
+### **4.1.3: Fix Critical Geological Generation Failures** 🚨 **URGENT - RECOMMENDED NEXT TASK**
+
+**CRITICAL PROBLEM**: World preview showing all blue (ocean) due to multiple geological system failures:
+
+**RECOMMENDED FOCUS**: Start with FractalContinentGenerator debugging - this is the root cause of the ocean-only world
+
+**Issues Identified from Console Output**:
+- [x] **FractalContinentGenerator Complete Failure**: "Generated 0 continental plates" - continent generation not working
+- [x] **All Terrain Below Sea Level**: Elevation range `-112.111m to -70.8758m` (should be -1000m to +1200m with land above 0m)
+- [x] **Water System Field Errors**: "Missing required fields" flooding console - water system initialization broken
+- [x] **Snapshot System Integration Gap**: Still showing "FALLBACK: Using getSampleAt" - snapshots not properly integrated
+- [x] **Process Killed**: Application terminated unexpectedly, possibly due to resource issues
+
+**Root Cause Analysis**:
+- [ ] **PRIORITY**: Investigate FractalContinentGenerator seed initialization (shows seed: 0 then seed: 13891685558698509538)
+- [ ] **PRIORITY**: Fix water system field initialization - missing required fields breaking simulation
+- [ ] **PRIORITY**: Debug elevation initialization - why everything starts below sea level
+- [ ] **PRIORITY**: Complete snapshot system integration for UI responsiveness
+- [ ] **PRIORITY**: Add error handling for geological system failures
+
+**Files to Investigate/Fix**:
+- `engine/src/world/FractalContinentGenerator.cpp` - continent generation failure
+- `engine/src/world/WaterSystemSimulator.cpp` - missing required fields
+- `engine/src/world/GeologicalSimulator.cpp` - field initialization and snapshot integration
+- `engine/src/ui/WorldMapRenderer.cpp` - snapshot system integration
+
+### **4.1.4: Implement Debug Parameter UI System** ⏳ PENDING (After 4.1.3 fixed)
 
 **CURRENT FOCUS**: Real-time geological parameter adjustment during simulation
 
@@ -224,114 +250,36 @@ class BackgroundGeologicalSimulator {
 
 **Realism Test**: Geological processes interact naturally and realistically
 
-## 🧪 **Testing Strategy**
+### **4.1.5: Modularize WorldSimulationUI for Maintainability** ⏳ PENDING
 
-### **Architecture Validation**
-- **Process Integration Test**: All processes run simultaneously without conflicts
-- **Feedback Loop Test**: Changes in one process affect others appropriately
-- **Time Scale Test**: Geological processes operate at realistic relative speeds
-- **Performance Test**: Interleaved system maintains smooth performance
+**CURRENT PROBLEM**: WorldSimulationUI.cpp is becoming too large and verbose (1693+ lines), making it hard to maintain and debug.
 
-### **Visual Quality**
-- **Terrain Evolution Test**: Smooth, natural-looking terrain development
-- **Water Visualization Test**: Rivers, lakes, and water features clearly visible
-- **Parameter Response Test**: Debug controls produce expected visual changes
-- **Preset Validation Test**: Each preset creates distinctly different worlds
+**Refactoring Strategy**:
+- [ ] Extract progress panel creation into separate class: `WorldSimulationProgressPanel`
+- [ ] Extract world map rendering logic into separate class: `WorldSimulationMapPanel`
+- [ ] Extract snapshot management UI into separate class: `WorldSimulationSnapshotControls`
+- [ ] Extract geological parameter display into separate class: `WorldSimulationInfoPanel`
+- [ ] Keep main WorldSimulationUI.cpp as coordinator/layout manager only
 
-### **User Experience**
-- **Debug UI Test**: Parameter controls are intuitive and responsive
-- **Preset System Test**: Easy switching between different world types
-- **Progress Display Test**: UI accurately shows simulation progress and activities
-- **Real-time Adjustment Test**: Can modify parameters during simulation
+**Benefits**:
+- Easier debugging of specific UI components
+- Better separation of concerns
+- Reduced file size for main UI class
+- Improved testability of individual UI components
 
-## 🔗 **Dependencies and Integration**
+**Files to Create**:
+- `engine/include/ui/panels/WorldSimulationProgressPanel.h`
+- `engine/src/ui/panels/WorldSimulationProgressPanel.cpp`
+- `engine/include/ui/panels/WorldSimulationMapPanel.h`
+- `engine/src/ui/panels/WorldSimulationMapPanel.cpp`
+- `engine/include/ui/panels/WorldSimulationSnapshotControls.h`
+- `engine/src/ui/panels/WorldSimulationSnapshotControls.cpp`
+- `engine/include/ui/panels/WorldSimulationInfoPanel.h`
+- `engine/src/ui/panels/WorldSimulationInfoPanel.cpp`
 
-### **Files to Modify**
-- `engine/src/world/GeologicalSimulator.cpp` - Core simulation architecture
-- `engine/include/world/GeologicalSimulator.h` - Class structure updates
-- `engine/src/world/GeologicalSnapshotManager.cpp` - Add water data support
-- `game/src/ui/WorldConfigurationUI.cpp` - Add debug button and presets
-- Create new: `game/src/ui/GeologicalDebugUI.cpp` - Parameter control panel
+**Target**: Reduce main WorldSimulationUI.cpp from 1693+ lines to ~400 lines
 
-### **Integration Points**
-- Existing Step 1-3 implementations (preserve functionality)
-- Current snapshot and visualization system
-- World creation UI and user workflow
-- Performance monitoring and optimization systems
-
-## 📋 **Current Status Summary - READY FOR DEBUG UI**
-
-### **✅ COMPLETED: Foundation Architecture (Subtasks 4.1.1-4.1.2)**
-**All core geological simulation infrastructure is complete and working:**
-
-1. **✅ Modular Architecture**: Geological simulation split into specialized engines:
-   - `TectonicEngine.cpp/.h` - Tectonic processes with fixed physics
-   - `ErosionEngine.cpp/.h` - Erosion and weathering processes  
-   - `WaterSystemSimulator.cpp/.h` - Water systems with cave interactions
-   - `BackgroundSimulationEngine.cpp/.h` - Background threading and snapshotting
-
-2. **✅ Background Threading**: UI responsiveness completely solved:
-   - Simulation runs on background thread without blocking UI
-   - Thread-safe snapshot system for real-time updates
-   - Atomic progress tracking and pause/resume controls
-   - **NEEDS VERIFICATION**: UI responsiveness needs actual game testing
-
-3. **✅ Geological Physics Fixes**: Runaway values eliminated:
-   - Mountain building capped at realistic values (was reaching 1e+14)
-   - Stress dissipation prevents infinite accumulation
-   - Elevation-dependent resistance implemented
-   - Realistic geological time scaling applied
-
-4. **⏳ Background Threading Verification**: Architecture complete, needs user testing:
-   - Background simulation thread implemented and compiling
-   - Thread-safe snapshot system ready for testing
-   - Atomic progress tracking ready for verification
-   - **CURRENT STEP**: Need to run game and verify actual UI responsiveness
-
-5. **✅ Interleaved Process Architecture**: All processes run simultaneously:
-   - Removed sequential phase transitions
-   - All geological processes active every simulation step
-   - Natural feedback loops between systems
-   - Smooth terrain evolution without phase artifacts
-
-5. **✅ Code Quality**: All naming conventions and build issues fixed:
-   - PascalCase method naming enforced throughout
-   - CMakeLists.txt updated for all new files
-   - All linker errors resolved, clean compilation
-   - Legacy code removed, no duplicate methods
-
-### **⏳ CURRENT STEP: Verify UI Responsiveness in Game**
-**Need to test background simulation with actual user experience:**
-
-**Priority Tasks**:
-1. **CURRENT**: Build and run the game to test UI responsiveness during geological simulation
-2. **CURRENT**: Verify that world generation UI remains interactive while simulation runs in background
-3. **CURRENT**: Confirm pause/resume controls work immediately without waiting
-4. **CURRENT**: Check that progress updates smoothly without freezing the interface
-5. **CURRENT**: Get user feedback on the actual responsiveness experience
-
-**After UI Responsiveness Verified**:
-- Create `GeologicalDebugUI` class with parameter sliders
-- Integrate into `WorldConfigurationUI` for easy access
-- Enable real-time parameter updates during background simulation
-- Add geological parameter presets for different world types
-
-**Implementation Files Ready**:
-- Target: `game/include/ui/GeologicalDebugUI.h` 
-- Target: `game/src/ui/GeologicalDebugUI.cpp`
-- Integration: `game/src/ui/WorldConfigurationUI.cpp`
-- Build: `game/CMakeLists.txt`
-
-**Geological Parameters Ready for UI Control**:
-- Continental Drift Speed, Mountain Building Rate, Erosion Intensity
-- Water Flow Rate, Volcanic Activity, Cave Formation Rate
-- All backed by working `CustomGeologicalSettings` system
-
-### **📋 Remaining Work After Debug UI**
-- Water visualization in world preview
-- Geological world generation presets
-- Parameter persistence (save/load configurations)
-- Enhanced geological feedback loops
+**Priority**: Medium (after critical geological generation issues are fixed)
 
 ---
 
