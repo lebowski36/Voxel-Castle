@@ -44,17 +44,38 @@ struct GeologicalConstants {
     static constexpr float CONTINENTAL_SHELF_DEPTH = -200.0f; // meters
     
     // ===========================================
-    // GEOLOGICAL TIME SCALING
+    // GEOLOGICAL TIME SCALING & PROCESS RATES
     // ===========================================
     
-    /** Standard geological timestep in years (1 million years) */
-    static constexpr float GEOLOGICAL_TIMESTEP_YEARS = 1000000.0f;
+    /** Base simulation timestep in years (what GeologicalSimulator uses) */
+    static constexpr float BASE_TIMESTEP_YEARS = 1000.0f; // 1000 years per step
     
-    /** Conversion factor: thousand years to years */
-    static constexpr float KYEARS_TO_YEARS = 1000.0f;
+    /** Process time scaling factors (multiplied with base timestep) */
+    struct ProcessTimeScales {
+        static constexpr float TECTONIC = 1000.0f;  // 1000 * 1000 = 1 million years per tectonic step
+        static constexpr float EROSION = 100.0f;    // 100 * 1000 = 100,000 years per erosion step  
+        static constexpr float WATER = 10.0f;       // 10 * 1000 = 10,000 years per water step
+        static constexpr float DETAIL = 1.0f;       // 1 * 1000 = 1,000 years per detail step
+        static constexpr float VOLCANIC = 5000.0f;  // 5000 * 1000 = 5 million years per volcanic step
+    };
     
-    /** Conversion factor: million years to years */
-    static constexpr float MYEARS_TO_YEARS = 1000000.0f;
+    /** Conversion factors for time calculations */
+    static constexpr float KYEARS_TO_YEARS = 1000.0f;      // Thousand years to years
+    static constexpr float MYEARS_TO_YEARS = 1000000.0f;   // Million years to years
+    
+    /** Get effective timestep for a geological process in years */
+    static float GetProcessTimestepYears(const char* processType) {
+        if (strcmp(processType, "tectonic") == 0) return BASE_TIMESTEP_YEARS * ProcessTimeScales::TECTONIC;
+        if (strcmp(processType, "erosion") == 0) return BASE_TIMESTEP_YEARS * ProcessTimeScales::EROSION;
+        if (strcmp(processType, "water") == 0) return BASE_TIMESTEP_YEARS * ProcessTimeScales::WATER;
+        if (strcmp(processType, "volcanic") == 0) return BASE_TIMESTEP_YEARS * ProcessTimeScales::VOLCANIC;
+        return BASE_TIMESTEP_YEARS * ProcessTimeScales::DETAIL; // Default
+    }
+    
+    /** Get timestep in million years (for erosion calculations that expect MyYear scaling) */
+    static float GetProcessTimestepMyears(const char* processType) {
+        return GetProcessTimestepYears(processType) / MYEARS_TO_YEARS;
+    }
     
     // ===========================================
     // EARTH-LIKE PROCESS RATES
@@ -119,10 +140,10 @@ struct GeologicalConstants {
      * @brief Convert geological timestep to appropriate scale for process
      * @param timestepYears Timestep in years
      * @param processType Type of geological process for scaling
-     * @return Scaled timestep for the specific process
+     * @return Scaled timestep for the specific process in million years
      */
     static float ScaleTimestepForProcess(float timestepYears, const char* processType) {
-        // All processes use million-year scaling for this simulation
+        // Convert years to million years for process calculations
         return timestepYears / MYEARS_TO_YEARS;
     }
     

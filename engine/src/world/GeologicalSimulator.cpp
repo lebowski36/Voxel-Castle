@@ -18,17 +18,8 @@ GeologicalSimulator::GeologicalSimulator(int worldSizeKm, const GeologicalConfig
       hasResumedSincePause_(false),
       currentStep_(0), totalSteps_(0), phaseStep_(0), totalPhaseSteps_(0), phaseTimeStep_(0.0f) {
     
-    // Initialize interleaved process time scales for geological balance
-    // Tectonic processes are slow but powerful - create major terrain features
-    processTimeScales_.tectonicTimeStep = 1000.0f;  // 1000 years per step
-    
-    // Erosion processes are fast but should be weaker - modify existing terrain
-    // Reduced from 100 to 30 to balance against tectonic uplift
-    processTimeScales_.erosionTimeStep = 30.0f;     // 30 years per step
-    
-    processTimeScales_.waterTimeStep = 10.0f;       // 10 years per step
-    processTimeScales_.detailTimeStep = 1.0f;       // 1 year per step
-    processTimeScales_.volcanicTimeStep = 5000.0f;  // 5000 years per step
+    // Time scales are now centralized in geological_constants.h
+    // ProcessTimeScales::TECTONIC, EROSION, WATER, DETAIL, VOLCANIC
     
     // Initialize modular engines
     backgroundEngine_ = std::make_unique<BackgroundSimulationEngine>(this);
@@ -262,7 +253,7 @@ bool GeologicalSimulator::stepSimulation() {
     
     // === TECTONIC PROCESSES ===
     // Run at their own time scale (usually slower)
-    tectonicEngine_->simulateMantleConvection(tectonicFields, baseTimeStep * processTimeScales_.tectonicTimeStep);
+    tectonicEngine_->simulateMantleConvection(tectonicFields, baseTimeStep * GeologicalConstants::ProcessTimeScales::TECTONIC);
     
     if (shouldDebugStep) {
         auto [minElev, maxElev] = getElevationRange();
@@ -270,7 +261,7 @@ bool GeologicalSimulator::stepSimulation() {
                   << minElev << "m to " << maxElev << "m" << std::endl;
     }
     
-    tectonicEngine_->simulatePlateMovement(tectonicFields, baseTimeStep * processTimeScales_.tectonicTimeStep);
+    tectonicEngine_->simulatePlateMovement(tectonicFields, baseTimeStep * GeologicalConstants::ProcessTimeScales::TECTONIC);
     
     if (shouldDebugStep) {
         auto [minElev, maxElev] = getElevationRange();
@@ -278,7 +269,7 @@ bool GeologicalSimulator::stepSimulation() {
                   << minElev << "m to " << maxElev << "m" << std::endl;
     }
     
-    tectonicEngine_->simulateMountainBuilding(tectonicFields, baseTimeStep * processTimeScales_.tectonicTimeStep);
+    tectonicEngine_->simulateMountainBuilding(tectonicFields, baseTimeStep * GeologicalConstants::ProcessTimeScales::TECTONIC);
     
     if (shouldDebugStep) {
         auto [minElev, maxElev] = getElevationRange();
@@ -288,7 +279,7 @@ bool GeologicalSimulator::stepSimulation() {
     
     // === VOLCANIC PROCESSES ===
     // Run at their own time scale (episodic, can be intense)
-    tectonicEngine_->simulateVolcanicActivity(tectonicFields, baseTimeStep * processTimeScales_.volcanicTimeStep);
+    tectonicEngine_->simulateVolcanicActivity(tectonicFields, baseTimeStep * GeologicalConstants::ProcessTimeScales::VOLCANIC);
     
     if (shouldDebugStep) {
         auto [minElev, maxElev] = getElevationRange();
@@ -298,7 +289,7 @@ bool GeologicalSimulator::stepSimulation() {
     
     // === EROSION PROCESSES ===
     // Run at their own time scale (typically faster than tectonics)
-    erosionEngine_->simulateChemicalWeathering(erosionFields, baseTimeStep * processTimeScales_.erosionTimeStep);
+    erosionEngine_->simulateChemicalWeathering(erosionFields, baseTimeStep * GeologicalConstants::ProcessTimeScales::EROSION);
     
     if (shouldDebugStep) {
         auto [minElev, maxElev] = getElevationRange();
@@ -306,7 +297,7 @@ bool GeologicalSimulator::stepSimulation() {
                   << minElev << "m to " << maxElev << "m" << std::endl;
     }
     
-    erosionEngine_->simulatePhysicalErosion(erosionFields, baseTimeStep * processTimeScales_.erosionTimeStep);
+    erosionEngine_->simulatePhysicalErosion(erosionFields, baseTimeStep * GeologicalConstants::ProcessTimeScales::EROSION);
     
     if (shouldDebugStep) {
         auto [minElev, maxElev] = getElevationRange();
@@ -314,7 +305,7 @@ bool GeologicalSimulator::stepSimulation() {
                   << minElev << "m to " << maxElev << "m" << std::endl;
     }
     
-    erosionEngine_->simulateWaterDrivenErosion(erosionFields, baseTimeStep * processTimeScales_.erosionTimeStep);
+    erosionEngine_->simulateWaterDrivenErosion(erosionFields, baseTimeStep * GeologicalConstants::ProcessTimeScales::EROSION);
     
     if (shouldDebugStep) {
         auto [minElev, maxElev] = getElevationRange();
@@ -322,7 +313,7 @@ bool GeologicalSimulator::stepSimulation() {
                   << minElev << "m to " << maxElev << "m" << std::endl;
     }
     
-    erosionEngine_->simulateSedimentTransport(erosionFields, baseTimeStep * processTimeScales_.erosionTimeStep);
+    erosionEngine_->simulateSedimentTransport(erosionFields, baseTimeStep * GeologicalConstants::ProcessTimeScales::EROSION);
     
     if (shouldDebugStep) {
         auto [minElev, maxElev] = getElevationRange();
@@ -330,7 +321,7 @@ bool GeologicalSimulator::stepSimulation() {
                   << minElev << "m to " << maxElev << "m" << std::endl;
     }
     
-    erosionEngine_->simulateErosionUpliftBalance(erosionFields, baseTimeStep * processTimeScales_.erosionTimeStep);
+    erosionEngine_->simulateErosionUpliftBalance(erosionFields, baseTimeStep * GeologicalConstants::ProcessTimeScales::EROSION);
     
     if (shouldDebugStep) {
         auto [minElev, maxElev] = getElevationRange();
@@ -353,46 +344,46 @@ bool GeologicalSimulator::stepSimulation() {
 
     // Glacial processes (occasional but intense)
     if (currentStep_ % 5 == 0) {
-        erosionEngine_->simulateGlacialCarving(erosionFields, baseTimeStep * processTimeScales_.erosionTimeStep * 5.0f);
+        erosionEngine_->simulateGlacialCarving(erosionFields, baseTimeStep * GeologicalConstants::ProcessTimeScales::EROSION * 5.0f);
     }
     
     // === WATER PROCESSES ===
     // Run at their own time scale (typically fast)
-    waterSystem_->SimulatePrecipitationPatterns(baseTimeStep * processTimeScales_.waterTimeStep);
-    waterSystem_->SimulateSurfaceWaterAccumulation(baseTimeStep * processTimeScales_.waterTimeStep);
-    waterSystem_->SimulateRiverFormation(baseTimeStep * processTimeScales_.waterTimeStep);
-    erosionEngine_->simulateRiverSystems(erosionFields, baseTimeStep * processTimeScales_.waterTimeStep);
+    waterSystem_->SimulatePrecipitationPatterns(baseTimeStep * GeologicalConstants::ProcessTimeScales::WATER);
+    waterSystem_->SimulateSurfaceWaterAccumulation(baseTimeStep * GeologicalConstants::ProcessTimeScales::WATER);
+    waterSystem_->SimulateRiverFormation(baseTimeStep * GeologicalConstants::ProcessTimeScales::WATER);
+    erosionEngine_->simulateRiverSystems(erosionFields, baseTimeStep * GeologicalConstants::ProcessTimeScales::WATER);
     
     // Groundwater systems
-    waterSystem_->SimulateGroundwaterTable(baseTimeStep * processTimeScales_.waterTimeStep);
-    waterSystem_->SimulateAquiferRecharge(baseTimeStep * processTimeScales_.waterTimeStep);
-    waterSystem_->SimulateGroundwaterFlow(baseTimeStep * processTimeScales_.waterTimeStep);
-    waterSystem_->SimulateSpringFormation(baseTimeStep * processTimeScales_.waterTimeStep);
+    waterSystem_->SimulateGroundwaterTable(baseTimeStep * GeologicalConstants::ProcessTimeScales::WATER);
+    waterSystem_->SimulateAquiferRecharge(baseTimeStep * GeologicalConstants::ProcessTimeScales::WATER);
+    waterSystem_->SimulateGroundwaterFlow(baseTimeStep * GeologicalConstants::ProcessTimeScales::WATER);
+    waterSystem_->SimulateSpringFormation(baseTimeStep * GeologicalConstants::ProcessTimeScales::WATER);
     
     // Less frequent water processes
     if (currentStep_ % 3 == 0) {
-        waterSystem_->SimulateFloodPlains(baseTimeStep * processTimeScales_.waterTimeStep * 3.0f);
-        waterSystem_->SimulateLakeFormation(baseTimeStep * processTimeScales_.waterTimeStep * 3.0f);
+        waterSystem_->SimulateFloodPlains(baseTimeStep * GeologicalConstants::ProcessTimeScales::WATER * 3.0f);
+        waterSystem_->SimulateLakeFormation(baseTimeStep * GeologicalConstants::ProcessTimeScales::WATER * 3.0f);
     }
     
     if (currentStep_ % 2 == 0) {
-        waterSystem_->SimulateWetlandFormation(baseTimeStep * processTimeScales_.waterTimeStep * 2.0f);
+        waterSystem_->SimulateWetlandFormation(baseTimeStep * GeologicalConstants::ProcessTimeScales::WATER * 2.0f);
     }
     
     // === CAVE SYSTEMS ===
     if (config_.custom.enableCaveSystems) {
-        waterSystem_->SimulateCaveWaterInteractions(baseTimeStep * processTimeScales_.waterTimeStep);
+        waterSystem_->SimulateCaveWaterInteractions(baseTimeStep * GeologicalConstants::ProcessTimeScales::WATER);
         // TODO: Implement specific cave methods when needed
         // simulateCaveNetworkGrowth, simulateUndergroundRivers, etc.
     }
     
     // === DETAIL PROCESSES ===
-    erosionEngine_->simulateMicroWeathering(erosionFields, baseTimeStep * processTimeScales_.detailTimeStep);
-    erosionEngine_->simulateSedimentDeposition(erosionFields, baseTimeStep * processTimeScales_.detailTimeStep);
+    erosionEngine_->simulateMicroWeathering(erosionFields, baseTimeStep * GeologicalConstants::ProcessTimeScales::DETAIL);
+    erosionEngine_->simulateSedimentDeposition(erosionFields, baseTimeStep * GeologicalConstants::ProcessTimeScales::DETAIL);
     
     // === ISOSTATIC ADJUSTMENT ===
     if (currentStep_ % 10 == 0) {
-        tectonicEngine_->simulateIsostasyAdjustment(tectonicFields, baseTimeStep * processTimeScales_.tectonicTimeStep * 10.0f);
+        tectonicEngine_->simulateIsostasyAdjustment(tectonicFields, baseTimeStep * GeologicalConstants::ProcessTimeScales::TECTONIC * 10.0f);
     }
     
     // === STEP TRACKING ===

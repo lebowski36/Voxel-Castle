@@ -8,6 +8,7 @@
 #include "world/WaterSystemSimulator.h"
 #include "world/TectonicEngine.h"
 #include "world/ErosionEngine.h"
+#include "world/geological_constants.h"  // Centralized geological constants
 #include <memory>
 #include <functional>
 #include <chrono>
@@ -91,14 +92,9 @@ private:
     int totalPhaseSteps_;
     float phaseTimeStep_;
     
-    // Step 4.1: Interleaved Process Time Scaling
-    struct ProcessTimeScales {
-        float tectonicTimeStep;    // 1000 years per step
-        float erosionTimeStep;     // 100 years per step  
-        float waterTimeStep;       // 10 years per step
-        float detailTimeStep;      // 1 year per step
-        float volcanicTimeStep;    // 5000 years per step
-    } processTimeScales_;
+    // Step 4.1: Interleaved Process Time Scaling - Use centralized constants
+    // Note: Time scales are now defined in geological_constants.h
+    // ProcessTimeScales::TECTONIC, EROSION, WATER, DETAIL, VOLCANIC
     
     // Timing for responsive updates
     std::chrono::steady_clock::time_point lastSnapshotTime_;
