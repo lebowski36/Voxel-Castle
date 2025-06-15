@@ -40,6 +40,12 @@ struct CustomGeologicalSettings {
     bool enableGlacialFeatures = false;
     float timeScaleMultiplier = 1.0f;
     int simulationDetailLevel = 1000;
+    
+    // Continental and Ocean Parameters (from World Configuration UI)
+    int numContinents = 4;           // Number of continents (3-7)
+    float maxContinentSize = 8.0f;   // Maximum continent size as % of world (6-12%)
+    float minOceanCoverage = 65.0f;  // Minimum ocean coverage as % of world (60-80%)
+    bool forceOceanGeneration = true; // Ensure oceans are always visible
 };
 
 /**

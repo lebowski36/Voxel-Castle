@@ -20,13 +20,14 @@ void FractalContinentGenerator::GenerateContinentalFoundation(
     ContinuousField<float>& elevationField,
     ContinuousField<RockType>& rockTypes,
     ContinuousField<float>& mantleStress,
-    float worldSizeKm) {
+    float worldSizeKm,
+    const GeologicalConfig& config) {
     
     std::cout << "[FractalContinentGenerator] Generating continental foundation for " 
               << worldSizeKm << "km world" << std::endl;
     
     // Step 1: Generate continental plates using Voronoi-based distribution
-    generateContinentalPlates(worldSizeKm);
+    generateContinentalPlates(worldSizeKm, config);
     
     // Step 2: Generate ocean basins between continents
     generateOceanBasins(worldSizeKm);
@@ -52,24 +53,18 @@ void FractalContinentGenerator::GenerateContinentalFoundation(
               << mountainRidges_.size() << " mountain ridges" << std::endl;
 }
 
-void FractalContinentGenerator::generateContinentalPlates(float worldSizeKm) {
+void FractalContinentGenerator::generateContinentalPlates(float worldSizeKm, const GeologicalConfig& config) {
     std::mt19937 rng(seed_);
     std::uniform_real_distribution<float> dist(0.0f, 1.0f);
     
-    // Determine number of continents based on world size (3-7 for 256km world)
-    int numContinents = 3 + (seed_ % 5); // 3-7 continents
+    // Use configuration-specified number of continents instead of random
+    int numContinents = config.custom.numContinents;
     float worldSizeMeters = worldSizeKm * 1000.0f;
     
-    std::cout << "[FractalContinentGenerator] Generating " << numContinents << " continental plates" << std::endl;
-    
-    // DEBUGGING: Clear existing plates
-    continentalPlates_.clear();
-    std::cout << "[FractalContinentGenerator] DEBUG: Cleared existing plates, size now: " << continentalPlates_.size() << std::endl;
+    std::cout << "[FractalContinentGenerator] Generating " << numContinents << " continental plates (config-specified)" << std::endl;
     
     // Generate continental seeds using Mitchell's best-candidate algorithm
     auto continentalSeeds = generateContinentalSeeds(worldSizeKm, numContinents);
-    
-    std::cout << "[FractalContinentGenerator] DEBUG: Generated " << continentalSeeds.size() << " continental seeds" << std::endl;
     
     // Create continental plates with organic size variation
     for (int i = 0; i < numContinents; ++i) {
@@ -81,17 +76,19 @@ void FractalContinentGenerator::generateContinentalPlates(float worldSizeKm) {
         float sizeNoise = fractionalBrownianMotion(plate.center.x * 0.0001f, plate.center.y * 0.0001f, 3, 0.7f);
         float normalizedSizeNoise = (sizeNoise + 1.0f) * 0.5f; // Normalize to 0-1
         
-        // Create diverse continent sizes: some large landmasses, some smaller islands
+        // Create diverse continent sizes using configuration-specified max size
+        // Use the maxContinentSize from config as the upper bound
+        float maxSizePercent = config.custom.maxContinentSize / 100.0f; // Convert % to decimal
         float sizeVariation;
         if (normalizedSizeNoise > 0.7f) {
-            // Large continents (20-45% of world size)
-            sizeVariation = 0.20f + (0.25f * dist(rng));
+            // Large continents (70-100% of max allowed size)
+            sizeVariation = maxSizePercent * (0.7f + (0.3f * dist(rng)));
         } else if (normalizedSizeNoise > 0.4f) {
-            // Medium continents (10-25% of world size)
-            sizeVariation = 0.10f + (0.15f * dist(rng));
+            // Medium continents (40-70% of max allowed size)
+            sizeVariation = maxSizePercent * (0.4f + (0.3f * dist(rng)));
         } else {
-            // Small continents/large islands (3-12% of world size)
-            sizeVariation = 0.03f + (0.09f * dist(rng));
+            // Small continents/large islands (20-40% of max allowed size)
+            sizeVariation = maxSizePercent * (0.2f + (0.2f * dist(rng)));
         }
         
         plate.radius = worldSizeMeters * sizeVariation * 0.5f; // Convert to radius
@@ -122,14 +119,7 @@ void FractalContinentGenerator::generateContinentalPlates(float worldSizeKm) {
         plate.tectonicActivity = baseTectonicActivity * (0.7f + 0.6f * sizeFactor);
         
         continentalPlates_.push_back(plate);
-        
-        std::cout << "[FractalContinentGenerator] DEBUG: Created plate " << i << " at (" 
-                  << plate.center.x/1000.0f << "km, " << plate.center.y/1000.0f 
-                  << "km), radius=" << plate.radius/1000.0f << "km, elevation=" 
-                  << plate.elevation << "m. Total plates: " << continentalPlates_.size() << std::endl;
     }
-    
-    std::cout << "[FractalContinentGenerator] DEBUG: Final continental plates count: " << continentalPlates_.size() << std::endl;
 }
 
 std::vector<glm::vec2> FractalContinentGenerator::generateContinentalSeeds(float worldSizeKm, int numContinents) {
@@ -267,8 +257,8 @@ void FractalContinentGenerator::generateCoastlines(ContinuousField<float>& eleva
     
     std::cout << "[FractalContinentGenerator] Generating organic coastlines using fractal domains..." << std::endl;
     
-    // NOTE: DO NOT clear continentalPlates_ here - they were created by generateContinentalPlates()
-    // and are needed for the final count reporting
+    // Clear any existing continent data and generate completely organic continents
+    continentalPlates_.clear();
     
     for (int z = 0; z < height; ++z) {
         for (int x = 0; x < width; ++x) {

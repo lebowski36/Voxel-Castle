@@ -30,6 +30,12 @@ public:
         uint32_t customSeed = 0;        // 0=Random seed
         bool enableCivilizations = true;
         VoxelCastle::World::GeologicalPreset geologicalQuality = VoxelCastle::World::GeologicalPreset::BALANCED; // Geological simulation quality
+        
+        // Continental and Ocean Parameters (Debug Controls)
+        int numContinents = 4;          // 3-7 continents
+        float maxContinentSize = 8.0f;  // Maximum continent size as % of world (6-12%)
+        float minOceanCoverage = 65.0f; // Minimum ocean coverage as % of world (60-80%)
+        bool forceOceanGeneration = true; // Ensure oceans are always visible
     };
 
     // Configuration completion callback

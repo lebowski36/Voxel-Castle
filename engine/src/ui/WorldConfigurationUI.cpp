@@ -29,6 +29,12 @@ WorldConfigurationUI::WorldConfigurationUI(VoxelEngine::UI::UIRenderer* renderer
     config_.customSeed = 0; // Random
     config_.geologicalQuality = VoxelCastle::World::GeologicalPreset::BALANCED; // Default to Balanced quality
     
+    // Initialize new continental and ocean parameters
+    config_.numContinents = 4;          // Default 4 continents
+    config_.maxContinentSize = 8.0f;    // Default 8% max continent size
+    config_.minOceanCoverage = 65.0f;   // Default 65% ocean coverage
+    config_.forceOceanGeneration = true; // Default ocean generation enabled
+    
     // Initialize world name buffer
     strncpy(worldNameBuffer_, config_.worldName.c_str(), sizeof(worldNameBuffer_) - 1);
     worldNameBuffer_[sizeof(worldNameBuffer_) - 1] = '\0';
@@ -618,6 +624,179 @@ void WorldConfigurationUI::createParameterControls() {
     });
     addChild(seedEditButton);
     
+    paramY += rowSpacing + ELEMENT_SPACING;
+    
+    // === CONTINENTAL & OCEAN DEBUG PARAMETERS ===
+    // Add section header
+    auto continentalLabel = std::make_shared<VoxelEngine::UI::UIButton>(renderer_);
+    continentalLabel->setText("=== Continental Settings (Debug) ===");
+    continentalLabel->setPosition(PANEL_MARGIN, paramY);
+    continentalLabel->autoSizeToText(8.0f);
+    continentalLabel->setBackgroundColor({0.2f, 0.4f, 0.2f, 0.6f});
+    addChild(continentalLabel);
+    paramY += rowSpacing;
+    
+    // Number of Continents Parameter
+    auto numContinentsLabel = std::make_shared<VoxelEngine::UI::UIButton>(renderer_);
+    numContinentsLabel->setText("Number of Continents:");
+    numContinentsLabel->setPosition(PANEL_MARGIN, paramY);
+    numContinentsLabel->autoSizeToText(8.0f);
+    numContinentsLabel->setBackgroundColor({0.1f, 0.1f, 0.1f, 0.6f});
+    addChild(numContinentsLabel);
+    
+    auto numContinentsValueLabel = std::make_shared<VoxelEngine::UI::UIButton>(renderer_);
+    numContinentsValueLabel->setText(std::to_string(config_.numContinents));
+    numContinentsValueLabel->setPosition(valueColumnX, paramY);
+    numContinentsValueLabel->autoSizeToText(8.0f);
+    numContinentsValueLabel->setBackgroundColor({0.2f, 0.2f, 0.2f, 0.6f});
+    addChild(numContinentsValueLabel);
+    
+    auto numContinentsDecButton = std::make_shared<VoxelEngine::UI::UIButton>(renderer_);
+    numContinentsDecButton->setText("<");
+    numContinentsDecButton->setPosition(buttonColumnX, paramY);
+    numContinentsDecButton->setSize(TEXT_HEIGHT, TEXT_HEIGHT);
+    numContinentsDecButton->setBackgroundColor({0.4f, 0.2f, 0.2f, 0.8f});
+    numContinentsDecButton->setOnClick([this, numContinentsValueLabel]() {
+        if (config_.numContinents > 3) {
+            config_.numContinents--;
+            numContinentsValueLabel->setText(std::to_string(config_.numContinents));
+            onParameterChanged();
+        }
+    });
+    addChild(numContinentsDecButton);
+    
+    auto numContinentsIncButton = std::make_shared<VoxelEngine::UI::UIButton>(renderer_);
+    numContinentsIncButton->setText(">");
+    numContinentsIncButton->setPosition(buttonColumnX + TEXT_HEIGHT + 5, paramY);
+    numContinentsIncButton->setSize(TEXT_HEIGHT, TEXT_HEIGHT);
+    numContinentsIncButton->setBackgroundColor({0.2f, 0.4f, 0.2f, 0.8f});
+    numContinentsIncButton->setOnClick([this, numContinentsValueLabel]() {
+        if (config_.numContinents < 7) {
+            config_.numContinents++;
+            numContinentsValueLabel->setText(std::to_string(config_.numContinents));
+            onParameterChanged();
+        }
+    });
+    addChild(numContinentsIncButton);
+    paramY += rowSpacing;
+    
+    // Max Continent Size Parameter
+    auto maxContinentSizeLabel = std::make_shared<VoxelEngine::UI::UIButton>(renderer_);
+    maxContinentSizeLabel->setText("Max Continent Size:");
+    maxContinentSizeLabel->setPosition(PANEL_MARGIN, paramY);
+    maxContinentSizeLabel->autoSizeToText(8.0f);
+    maxContinentSizeLabel->setBackgroundColor({0.1f, 0.1f, 0.1f, 0.6f});
+    addChild(maxContinentSizeLabel);
+    
+    auto maxContinentSizeValueLabel = std::make_shared<VoxelEngine::UI::UIButton>(renderer_);
+    maxContinentSizeValueLabel->setText(std::to_string(static_cast<int>(config_.maxContinentSize)) + "% of world");
+    maxContinentSizeValueLabel->setPosition(valueColumnX, paramY);
+    maxContinentSizeValueLabel->autoSizeToText(8.0f);
+    maxContinentSizeValueLabel->setBackgroundColor({0.2f, 0.2f, 0.2f, 0.6f});
+    addChild(maxContinentSizeValueLabel);
+    
+    auto maxContinentSizeDecButton = std::make_shared<VoxelEngine::UI::UIButton>(renderer_);
+    maxContinentSizeDecButton->setText("<");
+    maxContinentSizeDecButton->setPosition(buttonColumnX, paramY);
+    maxContinentSizeDecButton->setSize(TEXT_HEIGHT, TEXT_HEIGHT);
+    maxContinentSizeDecButton->setBackgroundColor({0.4f, 0.2f, 0.2f, 0.8f});
+    maxContinentSizeDecButton->setOnClick([this, maxContinentSizeValueLabel]() {
+        if (config_.maxContinentSize > 6.0f) {
+            config_.maxContinentSize -= 1.0f;
+            maxContinentSizeValueLabel->setText(std::to_string(static_cast<int>(config_.maxContinentSize)) + "% of world");
+            onParameterChanged();
+        }
+    });
+    addChild(maxContinentSizeDecButton);
+    
+    auto maxContinentSizeIncButton = std::make_shared<VoxelEngine::UI::UIButton>(renderer_);
+    maxContinentSizeIncButton->setText(">");
+    maxContinentSizeIncButton->setPosition(buttonColumnX + TEXT_HEIGHT + 5, paramY);
+    maxContinentSizeIncButton->setSize(TEXT_HEIGHT, TEXT_HEIGHT);
+    maxContinentSizeIncButton->setBackgroundColor({0.2f, 0.4f, 0.2f, 0.8f});
+    maxContinentSizeIncButton->setOnClick([this, maxContinentSizeValueLabel]() {
+        if (config_.maxContinentSize < 12.0f) {
+            config_.maxContinentSize += 1.0f;
+            maxContinentSizeValueLabel->setText(std::to_string(static_cast<int>(config_.maxContinentSize)) + "% of world");
+            onParameterChanged();
+        }
+    });
+    addChild(maxContinentSizeIncButton);
+    paramY += rowSpacing;
+    
+    // Min Ocean Coverage Parameter
+    auto minOceanCoverageLabel = std::make_shared<VoxelEngine::UI::UIButton>(renderer_);
+    minOceanCoverageLabel->setText("Min Ocean Coverage:");
+    minOceanCoverageLabel->setPosition(PANEL_MARGIN, paramY);
+    minOceanCoverageLabel->autoSizeToText(8.0f);
+    minOceanCoverageLabel->setBackgroundColor({0.1f, 0.1f, 0.1f, 0.6f});
+    addChild(minOceanCoverageLabel);
+    
+    auto minOceanCoverageValueLabel = std::make_shared<VoxelEngine::UI::UIButton>(renderer_);
+    minOceanCoverageValueLabel->setText(std::to_string(static_cast<int>(config_.minOceanCoverage)) + "% of world");
+    minOceanCoverageValueLabel->setPosition(valueColumnX, paramY);
+    minOceanCoverageValueLabel->autoSizeToText(8.0f);
+    minOceanCoverageValueLabel->setBackgroundColor({0.2f, 0.2f, 0.2f, 0.6f});
+    addChild(minOceanCoverageValueLabel);
+    
+    auto minOceanCoverageDecButton = std::make_shared<VoxelEngine::UI::UIButton>(renderer_);
+    minOceanCoverageDecButton->setText("<");
+    minOceanCoverageDecButton->setPosition(buttonColumnX, paramY);
+    minOceanCoverageDecButton->setSize(TEXT_HEIGHT, TEXT_HEIGHT);
+    minOceanCoverageDecButton->setBackgroundColor({0.4f, 0.2f, 0.2f, 0.8f});
+    minOceanCoverageDecButton->setOnClick([this, minOceanCoverageValueLabel]() {
+        if (config_.minOceanCoverage > 60.0f) {
+            config_.minOceanCoverage -= 5.0f;
+            minOceanCoverageValueLabel->setText(std::to_string(static_cast<int>(config_.minOceanCoverage)) + "% of world");
+            onParameterChanged();
+        }
+    });
+    addChild(minOceanCoverageDecButton);
+    
+    auto minOceanCoverageIncButton = std::make_shared<VoxelEngine::UI::UIButton>(renderer_);
+    minOceanCoverageIncButton->setText(">");
+    minOceanCoverageIncButton->setPosition(buttonColumnX + TEXT_HEIGHT + 5, paramY);
+    minOceanCoverageIncButton->setSize(TEXT_HEIGHT, TEXT_HEIGHT);
+    minOceanCoverageIncButton->setBackgroundColor({0.2f, 0.4f, 0.2f, 0.8f});
+    minOceanCoverageIncButton->setOnClick([this, minOceanCoverageValueLabel]() {
+        if (config_.minOceanCoverage < 80.0f) {
+            config_.minOceanCoverage += 5.0f;
+            minOceanCoverageValueLabel->setText(std::to_string(static_cast<int>(config_.minOceanCoverage)) + "% of world");
+            onParameterChanged();
+        }
+    });
+    addChild(minOceanCoverageIncButton);
+    paramY += rowSpacing;
+    
+    // Force Ocean Generation Toggle
+    auto forceOceanLabel = std::make_shared<VoxelEngine::UI::UIButton>(renderer_);
+    forceOceanLabel->setText("Force Ocean Generation:");
+    forceOceanLabel->setPosition(PANEL_MARGIN, paramY);
+    forceOceanLabel->autoSizeToText(8.0f);
+    forceOceanLabel->setBackgroundColor({0.1f, 0.1f, 0.1f, 0.6f});
+    addChild(forceOceanLabel);
+    
+    auto forceOceanValueLabel = std::make_shared<VoxelEngine::UI::UIButton>(renderer_);
+    forceOceanValueLabel->setText(config_.forceOceanGeneration ? "ENABLED" : "DISABLED");
+    forceOceanValueLabel->setPosition(valueColumnX, paramY);
+    forceOceanValueLabel->autoSizeToText(8.0f);
+    forceOceanValueLabel->setBackgroundColor(config_.forceOceanGeneration ? 
+        glm::vec4{0.2f, 0.4f, 0.2f, 0.6f} : glm::vec4{0.4f, 0.2f, 0.2f, 0.6f});
+    addChild(forceOceanValueLabel);
+    
+    auto forceOceanToggleButton = std::make_shared<VoxelEngine::UI::UIButton>(renderer_);
+    forceOceanToggleButton->setText("TOGGLE");
+    forceOceanToggleButton->setPosition(buttonColumnX, paramY);
+    forceOceanToggleButton->setSize(TEXT_HEIGHT * 2 + 5, TEXT_HEIGHT);
+    forceOceanToggleButton->setBackgroundColor({0.3f, 0.3f, 0.6f, 0.8f});
+    forceOceanToggleButton->setOnClick([this, forceOceanValueLabel]() {
+        config_.forceOceanGeneration = !config_.forceOceanGeneration;
+        forceOceanValueLabel->setText(config_.forceOceanGeneration ? "ENABLED" : "DISABLED");
+        forceOceanValueLabel->setBackgroundColor(config_.forceOceanGeneration ? 
+            glm::vec4{0.2f, 0.4f, 0.2f, 0.6f} : glm::vec4{0.4f, 0.2f, 0.2f, 0.6f});
+        onParameterChanged();
+    });
+    addChild(forceOceanToggleButton);
     paramY += rowSpacing + ELEMENT_SPACING;
     
     currentY_ = paramY;

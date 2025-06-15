@@ -9,6 +9,7 @@
 #include <glm/glm.hpp>
 #include "world/geological_data.h"
 #include "world/ContinuousField.h"
+#include "world/GeologicalTypes.h"
 
 namespace VoxelCastle {
 namespace World {
@@ -71,7 +72,8 @@ public:
         ContinuousField<float>& elevationField,
         ContinuousField<RockType>& rockTypes,
         ContinuousField<float>& mantleStress,
-        float worldSizeKm
+        float worldSizeKm,
+        const struct GeologicalConfig& config
     );
     
     /**
@@ -102,7 +104,7 @@ private:
     std::vector<MountainRidge> mountainRidges_;
     
     // Internal generation methods
-    void generateContinentalPlates(float worldSizeKm);
+    void generateContinentalPlates(float worldSizeKm, const GeologicalConfig& config);
     void generateOceanBasins(float worldSizeKm);
     void generateCoastlines(ContinuousField<float>& elevationField, float worldSizeKm);
     void generateRiverTemplates(float worldSizeKm);

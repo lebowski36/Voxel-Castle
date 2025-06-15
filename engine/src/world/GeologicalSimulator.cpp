@@ -18,9 +18,9 @@ GeologicalSimulator::GeologicalSimulator(int worldSizeKm, const GeologicalConfig
       hasResumedSincePause_(false),
       currentStep_(0), totalSteps_(0), phaseStep_(0), totalPhaseSteps_(0), phaseTimeStep_(0.0f) {
     
-    // Initialize interleaved process time scales (REDUCED erosion for continental preservation)
+    // Initialize interleaved process time scales
     processTimeScales_.tectonicTimeStep = 1000.0f;  // 1000 years per step
-    processTimeScales_.erosionTimeStep = 10.0f;     // REDUCED: 10 years per step (was 100)
+    processTimeScales_.erosionTimeStep = 100.0f;    // 100 years per step
     processTimeScales_.waterTimeStep = 10.0f;       // 10 years per step
     processTimeScales_.detailTimeStep = 1.0f;       // 1 year per step
     processTimeScales_.volcanicTimeStep = 5000.0f;  // 5000 years per step
@@ -165,7 +165,8 @@ void GeologicalSimulator::initializeFields() {
         *elevationField_,
         *rockTypes_,
         *mantleStress_,
-        worldSizeKm_
+        worldSizeKm_,
+        config_
     );
     
     // Calculate rock hardness based on rock types

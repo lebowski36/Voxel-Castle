@@ -61,6 +61,12 @@ public:
         uint32_t customSeed = 0;        
         bool enableCivilizations = true;
         VoxelCastle::World::GeologicalPreset geologicalQuality = VoxelCastle::World::GeologicalPreset::BALANCED;
+        
+        // Continental and Ocean Parameters (Debug Controls)
+        int numContinents = 4;          // 3-7 continents
+        float maxContinentSize = 8.0f;  // Maximum continent size as % of world (6-12%)
+        float minOceanCoverage = 65.0f; // Minimum ocean coverage as % of world (60-80%)
+        bool forceOceanGeneration = true; // Ensure oceans are always visible
     };
 
     // Generation log entry (from original)
@@ -196,6 +202,9 @@ private:
     // Geological simulation callbacks
     void onGeologicalPhaseUpdate(const VoxelCastle::World::PhaseInfo& phaseInfo);
     
+    // Simple debug rendering
+    void renderSimpleDebugInfo();
+    
     // Helper methods
     std::string getPhaseDisplayName(GenerationPhase phase);
     std::string getVisualizationModeDisplayName(VisualizationMode mode);
@@ -230,6 +239,9 @@ private:
     
     // World map visualization
     std::unique_ptr<VoxelEngine::UI::WorldMapRenderer> worldMapRenderer_;
+    
+    // Simple debug controls
+    bool showDebugInfo_ = false;
     
     // Snapshot navigation UI controls
     std::shared_ptr<VoxelEngine::UI::UIButton> prevSnapshotButton_;

@@ -62,6 +62,11 @@ void WorldSimulationUI::render() {
     if (worldMapRenderer_ && isRunning_) {
         renderWorldMap();
     }
+    
+    // Simple debug info overlay (if enabled)
+    if (showDebugInfo_ && worldGenerator_) {
+        renderSimpleDebugInfo();
+    }
 }
 
 bool WorldSimulationUI::handleInput(float mouseX, float mouseY, bool clicked) {
@@ -290,6 +295,20 @@ void WorldSimulationUI::createVisualizationControls() {
         }
     });
     addChild(zoomInButton);
+    
+    currentY_ += VERTICAL_SPACING;
+    
+    // Add debug UI toggle button
+    auto debugToggleButton = std::make_shared<VoxelEngine::UI::UIButton>(renderer_);
+    debugToggleButton->setText("Debug Controls");
+    debugToggleButton->setPosition(zoomButtonX, currentY_);
+    debugToggleButton->autoSizeToText(6.0f);
+    debugToggleButton->setBackgroundColor({0.3f, 0.6f, 0.3f, 0.6f});
+    debugToggleButton->setOnClick([this]() { 
+        showDebugInfo_ = !showDebugInfo_;
+        addLogEntry(showDebugInfo_ ? "Debug info enabled" : "Debug info disabled", 0);
+    });
+    addChild(debugToggleButton);
     
     currentY_ += VERTICAL_SPACING;
     
@@ -832,6 +851,19 @@ void WorldSimulationUI::startSimulation(const WorldConfig& config, const std::st
         VoxelCastle::World::GeologicalConfig geoConfig;
         geoConfig.preset = config.geologicalQuality; // Use user-selected quality preset
         
+        // Apply custom continental parameters from UI
+        geoConfig.custom.numContinents = config.numContinents;
+        geoConfig.custom.maxContinentSize = config.maxContinentSize;
+        geoConfig.custom.minOceanCoverage = config.minOceanCoverage;
+        geoConfig.custom.forceOceanGeneration = config.forceOceanGeneration;
+        
+        // Log the continental configuration being applied
+        addLogEntry("Continental Configuration:", 3);
+        addLogEntry("  Number of Continents: " + std::to_string(config.numContinents), 3);
+        addLogEntry("  Max Continent Size: " + std::to_string(static_cast<int>(config.maxContinentSize)) + "% of world", 3);
+        addLogEntry("  Min Ocean Coverage: " + std::to_string(static_cast<int>(config.minOceanCoverage)) + "% of world", 3);
+        addLogEntry("  Force Ocean Generation: " + std::string(config.forceOceanGeneration ? "ENABLED" : "DISABLED"), 3);
+        
         // Set up progress callback for geological simulation
         auto progressCallback = [this](const VoxelCastle::World::PhaseInfo& phaseInfo) {
             this->onGeologicalPhaseUpdate(phaseInfo);
@@ -839,6 +871,9 @@ void WorldSimulationUI::startSimulation(const WorldConfig& config, const std::st
         
         worldGenerator_->initializeGeologicalSimulation(worldSizeKm, geoConfig, progressCallback);
         addLogEntry("Geological simulation initialized", 3);
+        
+        // Log continental coverage fix
+        addLogEntry("Applied continental coverage fix for better ocean visibility", 3);
         
         // Create WorldPersistenceManager
         worldPersistence_ = std::make_shared<VoxelCastle::World::WorldPersistenceManager>();
@@ -1500,46 +1535,36 @@ void WorldSimulationUI::generationWorker() {
             return;
         }
         
-        addLogEntry("Starting background geological simulation...", 0);
+        addLogEntry("Starting step-based geological simulation...", 0);
         
-        // Start the background simulation thread (new approach for UI responsiveness)
-        auto geologicalSimulator = worldGenerator_->getGeologicalSimulator();
-        if (geologicalSimulator) {
-            geologicalSimulator->startBackgroundSimulation();
-            addLogEntry("Background geological simulation started", 0);
-        } else {
-            addLogEntry("ERROR: Could not start background simulation", 0);
-            isRunning_ = false;
-            return;
-        }
-        
-        // Monitor the background simulation progress
-        while (isRunning_ && geologicalSimulator && geologicalSimulator->isBackgroundSimulationRunning()) {
+        // Run the simulation step by step with small time slices
+        while (isRunning_ && !worldGenerator_->isGeologicalSimulationComplete()) {
             // Handle pause/resume
             if (isPaused_) {
-                // Note: Background simulation has its own pause/resume handling
+                worldGenerator_->pauseGeologicalSimulation();
                 std::this_thread::sleep_for(std::chrono::milliseconds(100));
                 continue;
+            } else {
+                worldGenerator_->resumeGeologicalSimulation();
             }
             
             if (!isRunning_) break;
             
-            // Check for new snapshots from background simulation
-            auto latestSnapshot = geologicalSimulator->getLatestSnapshot();
-            if (latestSnapshot) {
-                // Process new snapshot data if needed
-                float progress = geologicalSimulator->getBackgroundProgress();
-                currentProgress_ = progress;
-                phaseProgress_ = progress;
+            // Execute one simulation step
+            bool success = worldGenerator_->stepGeologicalSimulation();
+            
+            if (!success) {
+                addLogEntry("ERROR: Geological simulation step failed", stats_.simulationYears);
+                isRunning_ = false;
+                break;
             }
             
-            // Small delay for UI responsiveness (100ms monitoring interval)
-            std::this_thread::sleep_for(std::chrono::milliseconds(100));
+            // Small delay to keep UI responsive (10ms per step)
+            std::this_thread::sleep_for(std::chrono::milliseconds(10));
         }
         
-        // Check final status of background simulation
-        if (isRunning_ && geologicalSimulator && !geologicalSimulator->isBackgroundSimulationRunning()) {
-            addLogEntry("Background geological simulation completed successfully!", stats_.simulationYears);
+        if (isRunning_ && worldGenerator_->isGeologicalSimulationComplete()) {
+            addLogEntry("Geological simulation completed successfully!", stats_.simulationYears);
             
             // Finalize the simulation
             currentPhase_ = GenerationPhase::COMPLETE;
@@ -1553,11 +1578,8 @@ void WorldSimulationUI::generationWorker() {
             completeSimulation();
         } else if (!isRunning_) {
             addLogEntry("Geological simulation cancelled by user", stats_.simulationYears);
-            if (geologicalSimulator) {
-                geologicalSimulator->stopBackgroundSimulation();
-            }
         } else {
-            addLogEntry("ERROR: Background geological simulation failed", stats_.simulationYears);
+            addLogEntry("ERROR: Geological simulation failed", stats_.simulationYears);
             isRunning_ = false;
         }
         
@@ -1629,6 +1651,8 @@ void WorldSimulationUI::createElevationLegend() {
     legendTitle->setBackgroundColor({0.2f, 0.2f, 0.2f, 0.8f});
     addChild(legendTitle);
     
+
+    
     // Create elevation bands with colors and labels
     std::vector<std::pair<std::string, glm::vec4>> elevationBands = {
         {"2000m+ Mountains", {1.0f, 1.0f, 1.0f, 1.0f}},          // White
@@ -1665,4 +1689,23 @@ void WorldSimulationUI::createElevationLegend() {
     
     std::cout << "[WorldSimulationUI] Created elevation legend at (" << legendX << "," << legendY 
               << ") size " << legendWidth << "x" << legendHeight << std::endl;
+}
+
+void WorldSimulationUI::renderSimpleDebugInfo() {
+    if (!worldGenerator_) return;
+    
+    // Simple debug overlay showing basic world generation info
+    glm::vec2 absolutePos = getAbsolutePosition();
+    float debugX = absolutePos.x + 10;
+    float debugY = absolutePos.y + 10;
+    
+    // For now, just render basic simulation status
+    std::string debugText = "Debug Info: World Generation in Progress";
+    if (isSimulationComplete()) {
+        debugText = "Debug Info: World Generation Complete";
+    }
+    
+    // Render debug text (using simplified rendering - the actual implementation 
+    // would depend on the specific text rendering system)
+    // This is a minimal implementation to fix the missing function
 }
