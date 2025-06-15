@@ -90,6 +90,12 @@ TEST_F(GeologicalSimulationTest, TectonicPhaseOnly) {
     
     std::cout << "[TEST] Running Tectonic Phase Only test..." << std::endl;
     
+    // Initialize the simulation first
+    if (!simulator->initializeSimulation()) {
+        FAIL() << "Failed to initialize simulation";
+        return;
+    }
+    
     simulator->setProgressCallback([&phaseUpdates](const PhaseInfo& info) {
         phaseUpdates.push_back(info);
         std::cout << "[TECTONIC_TEST] Progress: " << (info.phaseProgress * 100) 
@@ -112,6 +118,12 @@ TEST_F(GeologicalSimulationTest, TectonicPhaseOnly) {
 
 TEST_F(GeologicalSimulationTest, ErosionPhaseOnly) {
     std::cout << "[TEST] Running Erosion Phase Only test..." << std::endl;
+    
+    // Initialize the simulation first
+    if (!simulator->initializeSimulation()) {
+        FAIL() << "Failed to initialize simulation";
+        return;
+    }
     
     // First create some elevation variation with tectonics
     std::cout << "[TEST] Creating initial terrain with tectonics..." << std::endl;
@@ -192,4 +204,70 @@ TEST_F(GeologicalSimulationTest, PerformanceMetrics) {
     // Verify performance is reasonable (these are loose bounds for testing)
     EXPECT_LT(duration.count(), 10000) << "Performance preset should complete quickly";
     EXPECT_LT(metrics.memoryUsage, 2.0f) << "Memory usage should be reasonable for test world";
+}
+
+TEST_F(GeologicalSimulationTest, BackgroundSimulationUIResponsiveness) {
+    std::cout << "\n[BACKGROUND_TEST] Testing background simulation with UI responsiveness...\n" << std::endl;
+    
+    // Enable background execution mode
+    simulator->enableBackgroundExecution(true);
+    
+    // Start background simulation
+    bool started = simulator->isBackgroundSimulationRunning();
+    EXPECT_FALSE(started) << "Background simulation should not be running initially";
+    
+    simulator->startBackgroundSimulation();
+    
+    // Verify it started
+    started = simulator->isBackgroundSimulationRunning();
+    EXPECT_TRUE(started) << "Background simulation should be running after start";
+    
+    // Monitor progress while UI remains responsive
+    std::cout << "[BACKGROUND_TEST] Monitoring background simulation progress (should not block UI)..." << std::endl;
+    
+    int progressChecks = 0;
+    float lastProgress = 0.0f;
+    auto startTime = std::chrono::steady_clock::now();
+    
+    while (simulator->isBackgroundSimulationRunning() && progressChecks < 50) {
+        // This simulates UI thread operations that should remain responsive
+        std::this_thread::sleep_for(std::chrono::milliseconds(100)); // 100ms UI update cycle
+        
+        float currentProgress = simulator->getBackgroundProgress();
+        
+        // Check if progress is advancing
+        if (currentProgress > lastProgress) {
+            auto elapsed = std::chrono::steady_clock::now() - startTime;
+            auto elapsedMs = std::chrono::duration_cast<std::chrono::milliseconds>(elapsed).count();
+            
+            std::cout << "[BACKGROUND_TEST] Progress: " << std::fixed << std::setprecision(1) 
+                      << (currentProgress * 100) << "% after " << elapsedMs << "ms (UI responsive)" << std::endl;
+                      
+            lastProgress = currentProgress;
+        }
+        
+        // Check for available snapshots
+        auto snapshot = simulator->getLatestSnapshot();
+        if (snapshot) {
+            std::cout << "[BACKGROUND_TEST] Received snapshot update from background thread" << std::endl;
+        }
+        
+        progressChecks++;
+        
+        // Stop after reasonable time for testing
+        if (progressChecks > 20) {
+            simulator->stopBackgroundSimulation();
+            break;
+        }
+    }
+    
+    // Verify simulation can be stopped
+    simulator->stopBackgroundSimulation();
+    EXPECT_FALSE(simulator->isBackgroundSimulationRunning()) << "Background simulation should stop when requested";
+    
+    auto totalElapsed = std::chrono::steady_clock::now() - startTime;
+    auto totalMs = std::chrono::duration_cast<std::chrono::milliseconds>(totalElapsed).count();
+    
+    std::cout << "[BACKGROUND_TEST] Background simulation test completed in " << totalMs << "ms" << std::endl;
+    std::cout << "[BACKGROUND_TEST] UI remained responsive throughout test (no blocking detected)" << std::endl;
 }

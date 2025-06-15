@@ -21,6 +21,9 @@ TectonicEngine::TectonicEngine(float worldSizeKm, const GeologicalConfig& config
 void TectonicEngine::simulateMantleConvection(TectonicFields& fields, float timeStepMyears) {
     if (!fields.mantleStress || !fields.elevationField) return;
 
+    // Realistic geological scaling - mantle convection operates on much longer timescales
+    float mantleTimeScale = std::min(1.0f, timeStepMyears / 10000.0f); // Normalize to 10,000 year cycles
+    
     // Process all points in parallel for efficiency
     std::vector<int> indices(fields.mantleStress->getHeight() * fields.mantleStress->getWidth());
     std::iota(indices.begin(), indices.end(), 0);
@@ -38,8 +41,8 @@ void TectonicEngine::simulateMantleConvection(TectonicFields& fields, float time
         // Apply domain warping for more organic patterns
         float warpedConvection = generateDomainWarpedNoise(worldX, worldZ, 0.0001f, 2000.0f);
         
-        // Combine patterns for realistic mantle flow
-        float finalIntensity = (convectionIntensity * 0.7f + warpedConvection * 0.3f) * timeStepMyears * 0.1f;
+        // Combine patterns for realistic mantle flow with proper geological scaling
+        float finalIntensity = (convectionIntensity * 0.7f + warpedConvection * 0.3f) * mantleTimeScale * 0.01f;
         
         applyMantleConvectionCell(fields, x, z, finalIntensity, timeStepMyears);
         
@@ -84,9 +87,44 @@ void TectonicEngine::simulateMountainBuilding(TectonicFields& fields, float time
         for (int x = 0; x < width; ++x) {
             float crustStress = fields.crustStress->getSample(x, z);
             
-            // Mountain building occurs where crust stress is high
+            // Apply stress dissipation - stress naturally decays over time
+            float stressDissipation = crustStress * 0.001f * timeStepMyears; // 0.1% per thousand years
+            crustStress = std::max(0.0f, crustStress - stressDissipation);
+            
+            // Apply realistic physical limits to prevent runaway values
+            float maxRealisticStress = 100.0f; // Maximum realistic crustal stress (MPa equivalent)
+            crustStress = std::min(crustStress, maxRealisticStress);
+            
+            // Update the stress field with dissipated/limited values
+            fields.crustStress->setSample(x, z, crustStress);
+            
+            // DEBUG: Log extreme stress values
+            if (crustStress > 25.0f) {
+                std::cout << "[STRESS_DEBUG] High crustStress: " << crustStress 
+                          << " at (" << x << "," << z << ") after dissipation" << std::endl;
+            }
+            
+            // Mountain building occurs where crust stress is high, with elevation-dependent resistance
             if (crustStress > 1.5f) {
-                float compressionForce = (crustStress - 1.5f) * timeStepMyears * 0.8f;
+                float currentElevation = fields.elevationField->getSample(x, z);
+                
+                // Higher elevations resist further uplift (isostatic equilibrium effect)
+                float elevationResistance = 1.0f + (currentElevation / 1000.0f) * 0.5f; // Resistance increases with height
+                
+                // Realistic compression force calculation with physical limits
+                float compressionForce = (crustStress - 1.5f) / elevationResistance * timeStepMyears * 0.001f; // Much smaller scaling
+                
+                // Apply maximum realistic uplift rate (a few mm per year in extreme cases)
+                float maxUpliftPerStep = 0.01f * timeStepMyears; // 10mm per thousand years maximum
+                compressionForce = std::min(compressionForce, maxUpliftPerStep);
+                
+                // DEBUG: Log compression force calculation for high values
+                if (compressionForce > 1.0f) {
+                    std::cout << "[COMPRESSION_DEBUG] High compressionForce: " << compressionForce 
+                              << " = (" << crustStress << " - 1.5) / " << elevationResistance 
+                              << " * " << timeStepMyears << " * 0.001 at (" << x << "," << z << ")" << std::endl;
+                }
+                
                 applyMountainBuilding(fields, x, z, compressionForce, timeStepMyears);
                 
                 validateAndClampElevation(fields, x, z, "MountainBuilding");
@@ -204,35 +242,74 @@ void TectonicEngine::validateAndClampElevation(TectonicFields& fields, int x, in
 
 // Private helper methods
 void TectonicEngine::applyMantleConvectionCell(TectonicFields& fields, int x, int z, float intensity, float timeStep) {
-    // Update mantle stress
+    // Update mantle stress with equilibrium limits
     float currentStress = fields.mantleStress->getSample(x, z);
-    fields.mantleStress->setSample(x, z, currentStress + intensity);
+    float maxMantleStress = 20.0f; // Realistic maximum mantle stress
     
-    // Apply elevation change based on convection
-    float elevationChange = intensity * 10.0f; // Scale to meters
+    // Apply stress change but approach equilibrium rather than accumulate infinitely
+    float stressTarget = currentStress + intensity;
+    float equilibriumFactor = 0.95f; // 95% approach to target each step
+    float newStress = currentStress + (stressTarget - currentStress) * equilibriumFactor;
+    
+    // Apply hard limits to prevent runaway values
+    newStress = std::max(-maxMantleStress, std::min(newStress, maxMantleStress));
+    fields.mantleStress->setSample(x, z, newStress);
+    
+    // Apply elevation change based on convection (much smaller scale)
+    float elevationChange = intensity * 0.1f; // Reduced scale - 0.1m per unit intensity
     float currentElevation = fields.elevationField->getSample(x, z);
     fields.elevationField->setSample(x, z, currentElevation + elevationChange);
     
-    // Update crustal thickness if available
+    // Update crustal thickness if available (with limits)
     if (fields.crustalThickness) {
-        float thicknessChange = intensity * 100.0f; // Scale to thickness change
+        float thicknessChange = intensity * 1.0f; // Much smaller thickness change
         float currentThickness = fields.crustalThickness->getSample(x, z);
-        fields.crustalThickness->setSample(x, z, currentThickness + thicknessChange);
+        float newThickness = currentThickness + thicknessChange;
+        
+        // Apply realistic crustal thickness limits (20-80km)
+        newThickness = std::max(20000.0f, std::min(newThickness, 80000.0f));
+        fields.crustalThickness->setSample(x, z, newThickness);
     }
 }
 
 void TectonicEngine::applyPlateMotion(TectonicFields& fields, int x, int z, float motionX, float motionZ, float timeStep) {
-    // Apply lateral stress from plate motion
+    // Apply lateral stress from plate motion with realistic limits
     float currentCrustStress = fields.crustStress->getSample(x, z);
-    float stressIncrease = std::sqrt(motionX * motionX + motionZ * motionZ) * 0.5f;
-    fields.crustStress->setSample(x, z, currentCrustStress + stressIncrease);
+    float stressIncrease = std::sqrt(motionX * motionX + motionZ * motionZ) * 0.01f; // Much smaller factor
+    
+    // Apply equilibrium approach rather than infinite accumulation
+    float maxCrustStress = 50.0f; // Realistic maximum crustal stress
+    float newStress = std::min(currentCrustStress + stressIncrease, maxCrustStress);
+    
+    // Apply stress dissipation (crustal stress naturally decays)
+    float dissipationRate = 0.001f * timeStep; // 0.1% per thousand years
+    newStress = std::max(0.0f, newStress - newStress * dissipationRate);
+    
+    fields.crustStress->setSample(x, z, newStress);
 }
 
 void TectonicEngine::applyMountainBuilding(TectonicFields& fields, int x, int z, float compressionForce, float timeStep) {
     // Apply uplift from mountain building
     float currentElevation = fields.elevationField->getSample(x, z);
-    float uplift = compressionForce * 50.0f; // Scale to meters
-    fields.elevationField->setSample(x, z, currentElevation + uplift);
+    
+    // DEBUG: Log extreme compression forces
+    if (compressionForce > 100.0f) {
+        std::cout << "[MOUNTAIN_DEBUG] Extreme compressionForce: " << compressionForce 
+                  << " at (" << x << "," << z << ") - current elevation: " << currentElevation << "m" << std::endl;
+    }
+    
+    // Apply uplift with physical limits to prevent runaway values
+    float maxUpliftPerStep = 10.0f; // Maximum 10m uplift per timestep
+    float uplift = std::min(compressionForce * 50.0f, maxUpliftPerStep);
+    
+    float newElevation = currentElevation + uplift;
+    fields.elevationField->setSample(x, z, newElevation);
+    
+    // DEBUG: Log if we applied significant uplift
+    if (uplift > 5.0f) {
+        std::cout << "[MOUNTAIN_DEBUG] Applied " << uplift << "m uplift at (" << x << "," << z 
+                  << ") - elevation: " << currentElevation << "m -> " << newElevation << "m" << std::endl;
+    }
     
     // Update rock type to metamorphic under high stress
     if (compressionForce > 2.0f && fields.rockTypes) {

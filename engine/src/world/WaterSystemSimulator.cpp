@@ -240,7 +240,53 @@ void WaterSystemSimulator::SimulateWetlandFormation(float timeStep) {
 
 void WaterSystemSimulator::SimulateCaveWaterInteractions(float timeStep) {
     // Implement cave-water system interactions
-    // This would require integration with cave system data
+    // This is a basic implementation that will be expanded when cave networks are fully implemented
+    
+    if (!elevationField_ || !groundwaterTable_) {
+        std::cout << "[WaterSystemSimulator] SimulateCaveWaterInteractions: Missing required fields" << std::endl;
+        return;
+    }
+    
+    int width = elevationField_->getWidth();
+    int height = elevationField_->getHeight();
+    int caveInteractions = 0;
+    
+    // Process cave-water interactions where limestone is present and groundwater is shallow
+    for (int z = 0; z < height; z += 4) { // Sample every 4th point for performance
+        for (int x = 0; x < width; x += 4) {
+            float groundwaterDepth = groundwaterTable_->getSample(x, z);
+            float elevation = elevationField_->getSample(x, z);
+            
+            // Cave formation likely where:
+            // 1. Groundwater is shallow (< 50m below surface)
+            // 2. There's sufficient water flow for dissolution
+            if (groundwaterDepth < 50.0f && rockTypes_) {
+                RockType rockType = rockTypes_->getSample(x, z);
+                
+                // Enhanced cave formation in limestone and similar rocks
+                if (rockType == RockType::SEDIMENTARY_LIMESTONE || 
+                    rockType == RockType::SEDIMENTARY_SANDSTONE) {
+                    
+                    // Simulate basic cave water flow effects
+                    float caveFlowRate = std::min(1.0f, (50.0f - groundwaterDepth) / 50.0f);
+                    caveFlowRate *= timeStep * 0.1f; // Scale by timestep
+                    
+                    // Slightly increase groundwater flow in cave areas
+                    if (waterFlow_) {
+                        float currentFlow = waterFlow_->getSample(x, z);
+                        waterFlow_->setSample(x, z, currentFlow + caveFlowRate);
+                    }
+                    
+                    caveInteractions++;
+                }
+            }
+        }
+    }
+    
+    if (caveInteractions > 0) {
+        std::cout << "[WaterSystemSimulator] Processed " << caveInteractions 
+                  << " cave-water interactions this timestep" << std::endl;
+    }
 }
 
 // Private helper methods
