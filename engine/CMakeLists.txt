@@ -34,6 +34,7 @@ add_library(VoxelEngine STATIC
     src/world/tectonic_simulator.cpp # Tectonic simulation system
     src/world/ContinuousField.cpp # Continuous field mathematics for geological simulation
     src/world/GeologicalSimulator.cpp # Advanced geological simulation system
+    src/world/geological_constants.cpp # Global geological constants and utilities
     src/world/FractalContinentGenerator.cpp # Fractal continental generation system
     src/world/GeologicalSnapshot.cpp # Geological snapshot system for UI visualization
     # Step 4.1: Modular simulation architecture components

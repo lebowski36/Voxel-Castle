@@ -1,9 +1,14 @@
 #pragma once
 #include <cstring>
 #include <iostream>
+#include <atomic>
 
 namespace VoxelCastle {
 namespace World {
+
+// Global warning counters for spam protection
+extern std::atomic<int> extreme_elevation_warning_count;
+extern std::atomic<bool> elevation_warnings_exceeded;
 
 /**
  * @brief Global geological constants and bounds for realistic Earth-like simulation
@@ -141,12 +146,19 @@ struct GeologicalConstants {
 /** Clamp elevation to geological bounds - use in all geological systems */
 #define CLAMP_GEOLOGICAL_ELEVATION(elev) GeologicalConstants::ClampElevation(elev)
 
-/** Check if elevation needs geological bounds warning */
+/** Check if elevation needs geological bounds warning with spam protection */
 #define WARN_EXTREME_ELEVATION(elev, system, x, z) \
-    if (!GeologicalConstants::IsElevationRealistic(elev)) { \
-        std::cout << "[ELEVATION_WARNING] " << system << " created extreme elevation: " \
-                  << elev << "m at (" << x << "," << z << ") - outside expected range" << std::endl; \
-    }
+    do { \
+        if (!GeologicalConstants::IsElevationRealistic(elev)) { \
+            int current_count = extreme_elevation_warning_count.fetch_add(1); \
+            if (current_count < 15) { \
+                std::cout << "[ELEVATION_WARNING] " << system << " created extreme elevation: " \
+                          << elev << "m at (" << x << "," << z << ") - outside expected range" << std::endl; \
+            } else if (current_count == 15 && !elevation_warnings_exceeded.exchange(true)) { \
+                std::cout << "[ELEVATION_WARNING] Maximum warnings reached (15). Further elevation warnings suppressed to prevent spam." << std::endl; \
+            } \
+        } \
+    } while(0)
 
 /** Scale rate for million-year timesteps */
 #define SCALE_FOR_MYEARS(rate) ((rate) / GeologicalConstants::MYEARS_TO_YEARS)

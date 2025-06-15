@@ -395,7 +395,11 @@ void ErosionEngine::validateAndClampElevation(ErosionFields& fields, int x, int 
 void ErosionEngine::applyChemicalWeathering(ErosionFields& fields, int x, int z, float intensity, float timeStep) {
     float currentElevation = fields.elevationField->getSample(x, z);
     float erosion = intensity * 0.5f; // Scale erosion amount
-    fields.elevationField->setSample(x, z, currentElevation - erosion);
+    float newElevation = currentElevation - erosion;
+    
+    // CRITICAL: Clamp immediately to prevent geological impossibilities
+    newElevation = CLAMP_GEOLOGICAL_ELEVATION(newElevation);
+    fields.elevationField->setSample(x, z, newElevation);
     
     // Add to sediment load if available
     if (fields.sedimentLoad) {
@@ -438,16 +442,29 @@ void ErosionEngine::transportSediment(ErosionFields& fields, int x, int z, float
         float excess = currentSediment - capacity;
         fields.sedimentLoad->setSample(x, z, capacity);
         
-        // Add to elevation
+        // CRITICAL FIX: Clamp excessive deposition to prevent geological impossibilities
+        // Realistic deposition rate: ~1-5m per thousand years maximum
+        float maxDeposition = 5.0f * (timeStep / 1000.0f);
+        float deposition = std::min(excess * 0.1f, maxDeposition);
+        
+        // Add to elevation with proper bounds checking
         float currentElevation = fields.elevationField->getSample(x, z);
-        fields.elevationField->setSample(x, z, currentElevation + excess * 0.1f);
+        float newElevation = currentElevation + deposition;
+        newElevation = CLAMP_GEOLOGICAL_ELEVATION(newElevation);
+        fields.elevationField->setSample(x, z, newElevation);
+        
+        validateAndClampElevation(fields, x, z, "SedimentTransport");
     }
 }
 
 void ErosionEngine::depositSediment(ErosionFields& fields, int x, int z, float amount, float timeStep) {
     // Add sediment to elevation
     float currentElevation = fields.elevationField->getSample(x, z);
-    fields.elevationField->setSample(x, z, currentElevation + amount);
+    float newElevation = currentElevation + amount;
+    
+    // CRITICAL: Clamp immediately to prevent geological impossibilities
+    newElevation = CLAMP_GEOLOGICAL_ELEVATION(newElevation);
+    fields.elevationField->setSample(x, z, newElevation);
     
     // Reduce sediment load
     if (fields.sedimentLoad) {
