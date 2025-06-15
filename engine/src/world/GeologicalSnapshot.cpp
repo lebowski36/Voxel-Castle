@@ -19,6 +19,13 @@ GeologicalSnapshot::GeologicalSnapshot(int width, int height, float spacing,
     elevationData = std::make_unique<ContinuousField<float>>(width, height, spacing);
     rockTypeData = std::make_unique<ContinuousField<RockType>>(width, height, spacing);
     mantleStressData = std::make_unique<ContinuousField<float>>(width, height, spacing);
+    
+    // ===== Step 4.1.2: Initialize Water System Fields =====
+    surfaceWaterDepth = std::make_unique<ContinuousField<float>>(width, height, spacing);
+    precipitationField = std::make_unique<ContinuousField<float>>(width, height, spacing);
+    groundwaterTable = std::make_unique<ContinuousField<float>>(width, height, spacing);
+    waterFlowField = std::make_unique<ContinuousField<float>>(width, height, spacing);
+    sedimentLoadField = std::make_unique<ContinuousField<float>>(width, height, spacing);
 }
 
 float GeologicalSnapshot::GetElevationAt(float worldX, float worldZ) const {
@@ -34,6 +41,32 @@ RockType GeologicalSnapshot::GetRockTypeAt(float worldX, float worldZ) const {
 float GeologicalSnapshot::GetMantleStressAt(float worldX, float worldZ) const {
     if (!mantleStressData) return 0.0f;
     return mantleStressData->sampleAt(worldX, worldZ);
+}
+
+// ===== Step 4.1.2: Water System Access Methods =====
+float GeologicalSnapshot::GetSurfaceWaterAt(float worldX, float worldZ) const {
+    if (!surfaceWaterDepth) return 0.0f;
+    return surfaceWaterDepth->sampleAt(worldX, worldZ);
+}
+
+float GeologicalSnapshot::GetPrecipitationAt(float worldX, float worldZ) const {
+    if (!precipitationField) return 0.0f;
+    return precipitationField->sampleAt(worldX, worldZ);
+}
+
+float GeologicalSnapshot::GetGroundwaterAt(float worldX, float worldZ) const {
+    if (!groundwaterTable) return 0.0f;
+    return groundwaterTable->sampleAt(worldX, worldZ);
+}
+
+float GeologicalSnapshot::GetWaterFlowAt(float worldX, float worldZ) const {
+    if (!waterFlowField) return 0.0f;
+    return waterFlowField->sampleAt(worldX, worldZ);
+}
+
+float GeologicalSnapshot::GetSedimentLoadAt(float worldX, float worldZ) const {
+    if (!sedimentLoadField) return 0.0f;
+    return sedimentLoadField->sampleAt(worldX, worldZ);
 }
 
 GeologicalSnapshotManager::GeologicalSnapshotManager(float worldSizeKm, int simulationWidth, 
@@ -55,6 +88,12 @@ GeologicalSnapshotManager::GeologicalSnapshotManager(float worldSizeKm, int simu
 void GeologicalSnapshotManager::AddSnapshot(const ContinuousField<float>& elevationField,
                                            const ContinuousField<RockType>& rockTypeField, 
                                            const ContinuousField<float>& mantleStressField,
+                                           // ===== Step 4.1.2: Water System Fields =====
+                                           const ContinuousField<float>& surfaceWaterField,
+                                           const ContinuousField<float>& precipitationField,
+                                           const ContinuousField<float>& groundwaterField,
+                                           const ContinuousField<float>& waterFlowField,
+                                           const ContinuousField<float>& sedimentLoadField,
                                            float simulationTime,
                                            const std::string& phaseDescription,
                                            int stepNumber,
@@ -76,9 +115,23 @@ void GeologicalSnapshotManager::AddSnapshot(const ContinuousField<float>& elevat
             RockType rockType = rockTypeField.getSample(x, z);
             float mantleStress = mantleStressField.getSample(x, z);
             
+            // ===== Step 4.1.2: Copy Water System Data =====
+            float surfaceWater = surfaceWaterField.getSample(x, z);
+            float precipitation = precipitationField.getSample(x, z);
+            float groundwater = groundwaterField.getSample(x, z);
+            float waterFlow = waterFlowField.getSample(x, z);
+            float sedimentLoad = sedimentLoadField.getSample(x, z);
+            
             snapshot->elevationData->setSample(x, z, elevation);
             snapshot->rockTypeData->setSample(x, z, rockType);
             snapshot->mantleStressData->setSample(x, z, mantleStress);
+            
+            // Set water system data
+            snapshot->surfaceWaterDepth->setSample(x, z, surfaceWater);
+            snapshot->precipitationField->setSample(x, z, precipitation);
+            snapshot->groundwaterTable->setSample(x, z, groundwater);
+            snapshot->waterFlowField->setSample(x, z, waterFlow);
+            snapshot->sedimentLoadField->setSample(x, z, sedimentLoad);
         }
     }
     

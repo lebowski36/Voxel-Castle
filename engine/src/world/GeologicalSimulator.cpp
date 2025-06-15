@@ -17,13 +17,19 @@ GeologicalSimulator::GeologicalSimulator(int worldSizeKm, const GeologicalConfig
     : config_(config), worldSizeKm_(static_cast<float>(worldSizeKm)), seed_(0), currentPhase_(GeologicalPhase::TECTONICS),
       currentPhaseProgress_(0.0f), continentGenerator_(0),
       simulationInitialized_(false), simulationComplete_(false), simulationPaused_(false),
-      hasResumedSincePause_(false), // <<< ADDED INITIALIZATION
+      hasResumedSincePause_(false),
       currentStep_(0), totalSteps_(0), phaseStep_(0), totalPhaseSteps_(0), phaseTimeStep_(0.0f) {
+    
+    // Initialize interleaved process time scales
+    processTimeScales_.tectonicTimeStep = 1000.0f;  // 1000 years per step
+    processTimeScales_.erosionTimeStep = 100.0f;    // 100 years per step
+    processTimeScales_.waterTimeStep = 10.0f;       // 10 years per step
+    processTimeScales_.detailTimeStep = 1.0f;       // 1 year per step
+    processTimeScales_.volcanicTimeStep = 5000.0f;  // 5000 years per step
     
     std::cout << "[GeologicalSimulator] Initialized for " << worldSizeKm_ << "km world with " 
               << (config.preset == GeologicalPreset::BALANCED ? "BALANCED" : "OTHER") << " quality" << std::endl;
 
-    // lastSnapshotTime_ initialization was missing, assuming it's intended to be initialized here or in initialize()
     lastSnapshotTime_ = std::chrono::steady_clock::now(); 
 }
 
@@ -385,11 +391,17 @@ void GeologicalSimulator::createSnapshot(const std::string& phaseDescription, fl
     
     snapshotManager_->SetGenerating(true);
     
-    // Create snapshot from current geological state
+    // ===== Step 4.1.2: Create snapshot with water system data =====
     snapshotManager_->AddSnapshot(
         *elevationField_,
         *rockTypes_,
         *mantleStress_,
+        // Water system fields for visualization
+        surfaceWaterDepth_ ? *surfaceWaterDepth_ : *elevationField_, // Fallback to elevation if null
+        precipitationField_ ? *precipitationField_ : *elevationField_,
+        groundwaterTable_ ? *groundwaterTable_ : *elevationField_,
+        waterFlow_ ? *waterFlow_ : *elevationField_,
+        sedimentLoad_ ? *sedimentLoad_ : *elevationField_,
         simulationTimeMyears,
         phaseDescription,
         static_cast<int>(snapshotManager_->GetSnapshotCount()),
@@ -926,24 +938,16 @@ void GeologicalSimulator::simulateCaveGeneration(float timeStep) {
     // This would be expanded in the HybridDetailGenerator for actual cave geometry
 }
 
-void GeologicalSimulator::updateProgress(float phaseProgress, const std::string& processName) {
-    currentPhaseProgress_ = phaseProgress;
+void GeologicalSimulator::updateProgress(float overallProgress, const std::string& processName) {
+    // ===== Step 4.1: Updated for Interleaved Architecture =====
+    // No longer phase-based, but process-based with overall progress
     
-    // Calculate total progress across all phases
-    float totalProgress = 0.0f;
-    switch (currentPhase_) {
-        case GeologicalPhase::TECTONICS:
-            totalProgress = phaseProgress * 0.3f; // 30% of total time
-            break;
-        case GeologicalPhase::MOUNTAIN_BUILDING:
-            totalProgress = 0.3f + (phaseProgress * 0.2f); // 30% + mountain building progress
-            break;
-        case GeologicalPhase::EROSION:
-            totalProgress = 0.5f + (phaseProgress * 0.3f); // 50% + current erosion progress
-            break;
-        case GeologicalPhase::DETAIL:
-            totalProgress = 0.8f + (phaseProgress * 0.2f); // 80% + current detail progress
-            break;
+    // Calculate total progress based on current step
+    float totalProgress = static_cast<float>(currentStep_) / static_cast<float>(totalSteps_);
+    
+    // Override with provided progress if it's more accurate
+    if (overallProgress >= 0.0f && overallProgress <= 1.0f) {
+        totalProgress = overallProgress;
     }
     
     // Calculate time remaining
@@ -953,11 +957,11 @@ void GeologicalSimulator::updateProgress(float phaseProgress, const std::string&
     
     if (progressCallback_) {
         PhaseInfo info;
-        info.currentPhase = currentPhase_;
-        info.phaseProgress = phaseProgress;
+        info.currentPhase = GeologicalPhase::TECTONICS; // Placeholder - all processes active
+        info.phaseProgress = totalProgress; // Same as total in interleaved mode
         info.totalProgress = totalProgress;
-        info.currentProcess = processName;
-        info.timeRemaining = timeRemaining;
+        info.currentProcess = processName.empty() ? "Interleaved Geological Processes" : processName;
+        info.timeRemaining = static_cast<int>(timeRemaining);
         info.metrics = metrics_;
         
         progressCallback_(info);
@@ -1045,33 +1049,34 @@ bool GeologicalSimulator::initializeSimulation() {
         return true; // Already initialized
     }
     
-    std::cout << "[GeologicalSimulator] Initializing step-based simulation..." << std::endl;
+    std::cout << "[GeologicalSimulator] Initializing interleaved process simulation..." << std::endl;
     
     // Reset simulation state
     currentStep_ = 0;
-    currentPhase_ = GeologicalPhase::TECTONICS;
+    currentPhase_ = GeologicalPhase::TECTONICS; // Keep for UI compatibility, but not used for control flow
     currentPhaseProgress_ = 0.0f;
     simulationComplete_ = false;
     simulationPaused_ = false;
     
     // Calculate total steps based on quality preset
-    int tectonicSteps = std::max(30, config_.getSimulationSteps() / 3);
-    int erosionSteps = std::max(30, config_.getSimulationSteps() / 3);
-    int detailSteps = std::max(10, config_.getSimulationSteps() / 3);
-    totalSteps_ = tectonicSteps + erosionSteps + detailSteps;
+    totalSteps_ = std::max(100, config_.getSimulationSteps()); // Minimum 100 steps for smooth progression
     
-    // Initialize first phase (tectonics)
+    // No more phase-based initialization - all processes run every step
     phaseStep_ = 0;
-    totalPhaseSteps_ = tectonicSteps;
-    phaseTimeStep_ = 100.0f / tectonicSteps; // 100 million years divided by steps
+    totalPhaseSteps_ = totalSteps_; // For UI progress calculation
     
     // Create initial snapshot
-    createSnapshot("Simulation initialized", 0.0f);
+    createSnapshot("Interleaved simulation initialized", 0.0f);
     
     simulationInitialized_ = true;
     lastSnapshotTime_ = std::chrono::steady_clock::now();
     
-    std::cout << "[GeologicalSimulator] Step-based simulation initialized (" << totalSteps_ << " total steps)" << std::endl;
+    std::cout << "[GeologicalSimulator] Interleaved simulation initialized (" << totalSteps_ << " total steps)" << std::endl;
+    std::cout << "[GeologicalSimulator] Process time scales - Tectonic: " << processTimeScales_.tectonicTimeStep 
+              << "yr, Erosion: " << processTimeScales_.erosionTimeStep 
+              << "yr, Water: " << processTimeScales_.waterTimeStep 
+              << "yr, Detail: " << processTimeScales_.detailTimeStep 
+              << "yr, Volcanic: " << processTimeScales_.volcanicTimeStep << "yr" << std::endl;
     return true;
 }
 
@@ -1080,165 +1085,110 @@ bool GeologicalSimulator::stepSimulation() {
         return false; // Can't step if not initialized, complete, or paused
     }
     
-    // Execute one simulation step based on current phase
-    switch (currentPhase_) {
-        case GeologicalPhase::TECTONICS: {
-            // Execute one step of tectonic simulation
-            simulateMantleConvection(phaseTimeStep_);
-            simulatePlateMovement(phaseTimeStep_);
-            simulateMountainBuilding(phaseTimeStep_);
-            
-            // Occasionally simulate volcanic activity
-            if (phaseStep_ % 4 == 0) {
-                simulateVolcanicActivity(phaseTimeStep_ * 4);
-            }
-            
-            phaseStep_++;
-            currentStep_++;
-            
-            // Check if tectonic phase is complete
-            if (phaseStep_ >= totalPhaseSteps_) {
-                std::cout << "[GeologicalSimulator] Tectonic phase complete" << std::endl;
-                createSnapshot("Tectonic evolution complete", 100.0f);
-                
-                // Move to mountain building phase
-                currentPhase_ = GeologicalPhase::MOUNTAIN_BUILDING;
-                phaseStep_ = 0;
-                totalPhaseSteps_ = std::max(20, config_.getSimulationSteps() / 4);
-                phaseTimeStep_ = 20000.0f / totalPhaseSteps_; // 20 thousand years divided by steps
-            }
-            break;
-        }
+    // ===== Step 4.1: NEW INTERLEAVED ARCHITECTURE =====
+    // All geological processes run every step with appropriate time scaling
+    // This provides maximum realism and immediate feedback loops
+    
+    // Calculate base time step (represents geological time per simulation step)
+    float baseTimeStep = 1000.0f; // 1000 years per step (adjustable)
+    
+    // === TECTONIC PROCESSES ===
+    // Run at their own time scale (usually slower)
+    simulateMantleConvection(baseTimeStep * processTimeScales_.tectonicTimeStep);
+    simulatePlateMovement(baseTimeStep * processTimeScales_.tectonicTimeStep);
+    simulateMountainBuilding(baseTimeStep * processTimeScales_.tectonicTimeStep);
+    
+    // === VOLCANIC PROCESSES ===
+    // Run at their own time scale (episodic, can be intense)
+    simulateVolcanicActivity(baseTimeStep * processTimeScales_.volcanicTimeStep);
+    
+    // === EROSION PROCESSES ===
+    // Run at their own time scale (typically faster than tectonics)
+    simulateChemicalWeathering(baseTimeStep * processTimeScales_.erosionTimeStep);
+    simulatePhysicalErosion(baseTimeStep * processTimeScales_.erosionTimeStep);
+    simulateWaterDrivenErosion(baseTimeStep * processTimeScales_.erosionTimeStep);
+    simulateSedimentTransport(baseTimeStep * processTimeScales_.erosionTimeStep);
+    simulateErosionUpliftBalance(baseTimeStep * processTimeScales_.erosionTimeStep);
+    
+    // Glacial processes (occasional but intense)
+    if (currentStep_ % 5 == 0) { // Every 5th step
+        simulateGlacialCarving(baseTimeStep * processTimeScales_.erosionTimeStep * 5.0f);
+    }
+    
+    // === WATER PROCESSES ===
+    // Run at their own time scale (typically fast)
+    simulatePrecipitationPatterns(baseTimeStep * processTimeScales_.waterTimeStep);
+    simulateSurfaceWaterAccumulation(baseTimeStep * processTimeScales_.waterTimeStep);
+    simulateRiverFormation(baseTimeStep * processTimeScales_.waterTimeStep);
+    simulateRiverSystems(baseTimeStep * processTimeScales_.waterTimeStep);
+    
+    // Groundwater systems
+    simulateGroundwaterTable(baseTimeStep * processTimeScales_.waterTimeStep);
+    simulateAquiferRecharge(baseTimeStep * processTimeScales_.waterTimeStep);
+    simulateGroundwaterFlow(baseTimeStep * processTimeScales_.waterTimeStep);
+    simulateSpringFormation(baseTimeStep * processTimeScales_.waterTimeStep);
+    
+    // Less frequent water processes
+    if (currentStep_ % 3 == 0) { // Every 3rd step
+        simulateFloodPlains(baseTimeStep * processTimeScales_.waterTimeStep * 3.0f);
+        simulateLakeFormation(baseTimeStep * processTimeScales_.waterTimeStep * 3.0f);
+    }
+    
+    if (currentStep_ % 2 == 0) { // Every 2nd step
+        simulateWetlandFormation(baseTimeStep * processTimeScales_.waterTimeStep * 2.0f);
+    }
+    
+    // === CAVE SYSTEMS ===
+    // Run when enabled, at water time scale
+    if (config_.custom.enableCaveSystems) {
+        simulateCaveNetworkGrowth(baseTimeStep * processTimeScales_.waterTimeStep);
+        simulateUndergroundRivers(baseTimeStep * processTimeScales_.waterTimeStep);
         
-        case GeologicalPhase::MOUNTAIN_BUILDING: {
-            // Execute one step of mountain building simulation
-            simulateMountainBuilding(phaseTimeStep_ * 2.0f); // More intensive mountain building
-            simulateVolcanicActivity(phaseTimeStep_);         // Active volcanism during mountain building
-            
-            // Occasionally simulate mantle convection effects
-            if (phaseStep_ % 3 == 0) {
-                simulateMantleConvection(phaseTimeStep_ * 0.5f);
-            }
-            
-            phaseStep_++;
-            currentStep_++;
-            
-            // Check if mountain building phase is complete
-            if (phaseStep_ >= totalPhaseSteps_) {
-                std::cout << "[GeologicalSimulator] Mountain building phase complete" << std::endl;
-                createSnapshot("Mountain building complete", 100.0f);
-                
-                // Move to erosion phase
-                currentPhase_ = GeologicalPhase::EROSION;
-                phaseStep_ = 0;
-                totalPhaseSteps_ = std::max(30, config_.getSimulationSteps() / 3);
-                phaseTimeStep_ = 10000.0f / totalPhaseSteps_; // 10 thousand years divided by steps
-            }
-            break;
-        }
-        
-        case GeologicalPhase::EROSION: {
-            // Execute one step of comprehensive water and erosion simulation
-            
-            // Step 3: Water & Cave System Framework
-            simulatePrecipitationPatterns(phaseTimeStep_);
-            simulateSurfaceWaterAccumulation(phaseTimeStep_);
-            simulateRiverFormation(phaseTimeStep_);
-            
-            if (phaseStep_ % 3 == 0) { // Every 3rd step
-                simulateFloodPlains(phaseTimeStep_ * 3.0f);
-                simulateLakeFormation(phaseTimeStep_ * 3.0f);
-            }
-            
-            // Groundwater systems
-            simulateGroundwaterTable(phaseTimeStep_);
-            simulateAquiferRecharge(phaseTimeStep_);
-            simulateGroundwaterFlow(phaseTimeStep_);
-            simulateSpringFormation(phaseTimeStep_);
-            
-            if (phaseStep_ % 2 == 0) { // Every 2nd step
-                simulateWetlandFormation(phaseTimeStep_ * 2.0f);
-            }
-            
-            // Cave systems
-            if (config_.custom.enableCaveSystems) {
-                simulateCaveNetworkGrowth(phaseTimeStep_);
-                simulateUndergroundRivers(phaseTimeStep_);
-                
-                if (phaseStep_ % 4 == 0) { // Every 4th step
-                    simulateKarstWeathering(phaseTimeStep_ * 4.0f);
-                    simulateCaveCollapse(phaseTimeStep_ * 4.0f);
-                }
-            }
-            
-            // Integrated erosion systems
-            simulateSedimentTransport(phaseTimeStep_);
-            simulateWaterDrivenErosion(phaseTimeStep_);
-            simulateErosionUpliftBalance(phaseTimeStep_);
-            
-            // Legacy systems (reduced intensity)
-            simulateChemicalWeathering(phaseTimeStep_ * 0.3f);
-            simulatePhysicalErosion(phaseTimeStep_ * 0.3f);
-            simulateRiverSystems(phaseTimeStep_ * 0.2f);
-            
-            // Occasionally simulate glacial activity
-            if (phaseStep_ % 8 == 0) {
-                simulateGlacialCarving(phaseTimeStep_ * 8);
-            }
-            
-            phaseStep_++;
-            currentStep_++;
-            
-            // Check if erosion phase is complete
-            if (phaseStep_ >= totalPhaseSteps_) {
-                std::cout << "[GeologicalSimulator] Erosion phase complete" << std::endl;
-                createSnapshot("Comprehensive water systems & erosion balance complete", 100.0f);
-                
-                // Move to detail phase
-                currentPhase_ = GeologicalPhase::DETAIL;
-                phaseStep_ = 0;
-                totalPhaseSteps_ = std::max(10, config_.getSimulationSteps() / 3);
-                phaseTimeStep_ = 1000.0f / totalPhaseSteps_; // 1 thousand years divided by steps
-            }
-            break;
-        }
-        
-        case GeologicalPhase::DETAIL: {
-            // Execute one step of detail simulation
-            simulateChemicalWeathering(phaseTimeStep_ * 0.1f); // Slower weathering
-            simulatePhysicalErosion(phaseTimeStep_ * 0.1f);    // Slower erosion
-            simulateRiverSystems(phaseTimeStep_);              // Continue river evolution
-            
-            phaseStep_++;
-            currentStep_++;
-            
-            // Check if detail phase is complete
-            if (phaseStep_ >= totalPhaseSteps_) {
-                std::cout << "[GeologicalSimulator] Detail phase complete" << std::endl;
-                createSnapshot("Geological simulation complete", 100.0f);
-                simulationComplete_ = true;
-            }
-            break;
+        if (currentStep_ % 4 == 0) { // Every 4th step
+            simulateKarstWeathering(baseTimeStep * processTimeScales_.waterTimeStep * 4.0f);
+            simulateCaveCollapse(baseTimeStep * processTimeScales_.waterTimeStep * 4.0f);
         }
     }
     
-    // Update phase progress
-    currentPhaseProgress_ = static_cast<float>(phaseStep_) / static_cast<float>(totalPhaseSteps_);
+    // === DETAIL PROCESSES ===
+    // Run at their own time scale (typically finest detail)
+    simulateMicroWeathering(baseTimeStep * processTimeScales_.detailTimeStep);
+    simulateSedimentDeposition(baseTimeStep * processTimeScales_.detailTimeStep);
+    simulateJointFormation(baseTimeStep * processTimeScales_.detailTimeStep);
+    simulateCaveGeneration(baseTimeStep * processTimeScales_.detailTimeStep);
+    
+    // === STEP TRACKING ===
+    currentStep_++;
+    
+    // Check if simulation is complete
+    if (currentStep_ >= totalSteps_) {
+        std::cout << "[GeologicalSimulator] Interleaved simulation complete after " 
+                  << currentStep_ << " steps" << std::endl;
+        createSnapshot("Interleaved geological simulation complete", 100.0f);
+        simulationComplete_ = true;
+    }
+    
+    // Calculate overall progress
+    float totalProgress = static_cast<float>(currentStep_) / static_cast<float>(totalSteps_);
     
     // Create periodic snapshots for UI preview
     auto now = std::chrono::steady_clock::now();
     float timeSinceLastSnapshot = std::chrono::duration<float>(now - lastSnapshotTime_).count();
     if (timeSinceLastSnapshot >= SNAPSHOT_INTERVAL_SECONDS) {
-        std::string description = getPhaseDisplayName() + " (" + 
-                                std::to_string(static_cast<int>(currentPhaseProgress_ * 100)) + "%)";
-        createSnapshot(description, currentPhaseProgress_ * 100.0f);
+        std::string description = "Interleaved Simulation (" + 
+                                std::to_string(static_cast<int>(totalProgress * 100)) + "%)";
+        createSnapshot(description, totalProgress * 100.0f);
         lastSnapshotTime_ = now;
     }
     
     // Call progress callback if set
     if (progressCallback_) {
-        PhaseInfo info = getProgressInfo();
-        info.totalProgress = static_cast<float>(currentStep_) / static_cast<float>(totalSteps_);
+        PhaseInfo info;
+        info.currentPhase = GeologicalPhase::TECTONICS; // Placeholder - all processes run
+        info.phaseProgress = totalProgress;
+        info.totalProgress = totalProgress;
+        info.currentProcess = "Interleaved Geological Processes";
+        info.timeRemaining = static_cast<int>((totalSteps_ - currentStep_) * 0.1f); // Estimated
         progressCallback_(info);
     }
     

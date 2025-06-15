@@ -82,6 +82,15 @@ private:
     int totalPhaseSteps_;
     float phaseTimeStep_;
     
+    // Step 4.1: Interleaved Process Time Scaling
+    struct ProcessTimeScales {
+        float tectonicTimeStep;    // 1000 years per step
+        float erosionTimeStep;     // 100 years per step  
+        float waterTimeStep;       // 10 years per step
+        float detailTimeStep;      // 1 year per step
+        float volcanicTimeStep;    // 5000 years per step
+    } processTimeScales_;
+    
     // Timing for responsive updates
     std::chrono::steady_clock::time_point lastSnapshotTime_;
     static constexpr float SNAPSHOT_INTERVAL_SECONDS = 2.0f;  // Create snapshot every 2 seconds

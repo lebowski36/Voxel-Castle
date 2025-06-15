@@ -22,9 +22,16 @@ struct GeologicalSnapshot {
     std::unique_ptr<ContinuousField<RockType>> rockTypeData;
     std::unique_ptr<ContinuousField<float>> mantleStressData;
     
+    // ===== Step 4.1.2: Water System Data for Visualization =====
+    std::unique_ptr<ContinuousField<float>> surfaceWaterDepth;      // Surface water (rivers/lakes)
+    std::unique_ptr<ContinuousField<float>> precipitationField;     // Precipitation intensity
+    std::unique_ptr<ContinuousField<float>> groundwaterTable;       // Groundwater table depth
+    std::unique_ptr<ContinuousField<float>> waterFlowField;         // Water flow patterns
+    std::unique_ptr<ContinuousField<float>> sedimentLoadField;      // Sediment transport
+    
     // Simulation metadata
     float simulationTime;           // Geological time in millions of years
-    std::string phaseDescription;   // "Continental Drift", "Mountain Building", etc.
+    std::string phaseDescription;   // "Interleaved Simulation", "Continental Drift", etc.
     int stepNumber;                 // Which step in the simulation sequence
     float completionPercentage;     // 0.0 to 1.0
     
@@ -57,6 +64,32 @@ struct GeologicalSnapshot {
      * @brief Get mantle stress at world coordinates (safe sampling)
      */
     float GetMantleStressAt(float worldX, float worldZ) const;
+    
+    // ===== Step 4.1.2: Water System Access Methods =====
+    /**
+     * @brief Get surface water depth at world coordinates (safe sampling)
+     */
+    float GetSurfaceWaterAt(float worldX, float worldZ) const;
+    
+    /**
+     * @brief Get precipitation intensity at world coordinates (safe sampling)
+     */
+    float GetPrecipitationAt(float worldX, float worldZ) const;
+    
+    /**
+     * @brief Get groundwater table depth at world coordinates (safe sampling)
+     */
+    float GetGroundwaterAt(float worldX, float worldZ) const;
+    
+    /**
+     * @brief Get water flow intensity at world coordinates (safe sampling)
+     */
+    float GetWaterFlowAt(float worldX, float worldZ) const;
+    
+    /**
+     * @brief Get sediment load at world coordinates (safe sampling)
+     */
+    float GetSedimentLoadAt(float worldX, float worldZ) const;
 };
 
 /**
@@ -89,6 +122,12 @@ public:
     void AddSnapshot(const ContinuousField<float>& elevationField,
                     const ContinuousField<RockType>& rockTypeField, 
                     const ContinuousField<float>& mantleStressField,
+                    // ===== Step 4.1.2: Water System Fields =====
+                    const ContinuousField<float>& surfaceWaterField,
+                    const ContinuousField<float>& precipitationField,
+                    const ContinuousField<float>& groundwaterField,
+                    const ContinuousField<float>& waterFlowField,
+                    const ContinuousField<float>& sedimentLoadField,
                     float simulationTime,
                     const std::string& phaseDescription,
                     int stepNumber,
