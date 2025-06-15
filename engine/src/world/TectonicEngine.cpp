@@ -1,4 +1,5 @@
 #include "world/TectonicEngine.h"
+#include "world/geological_constants.h"
 #include "util/noise.h"
 #include "world/geological_data.h"
 #include <iostream>
@@ -41,12 +42,16 @@ void TectonicEngine::simulateMantleConvection(TectonicFields& fields, float time
         // Apply domain warping for more organic patterns
         float warpedConvection = generateDomainWarpedNoise(worldX, worldZ, 0.0001f, 2000.0f);
         
-        // Combine patterns for realistic mantle flow with proper geological scaling
-        float finalIntensity = (convectionIntensity * 0.7f + warpedConvection * 0.3f) * mantleTimeScale * 0.01f;
+        // Add spatial tectonic variation: simulate convergent/divergent zones
+        float tectonicZone = std::sin(worldX * 0.0005f) + std::cos(worldZ * 0.0005f); // -2 to +2
+        float zoneMultiplier = 1.0f + tectonicZone * 0.3f; // 0.7 to 1.3, moderate effect
         
+        // EARTH-LIKE SCALING: For 1M year timesteps, mantle convection should produce 1-10m total change
+        // Real mantle convection: ~0.001-0.01m/year = 1-10m per 1000 years = 1000-10000m per million years
+        // But this is BASE rate - most areas should be much smaller
+        float earthLikeIntensity = (convectionIntensity * 0.7f + warpedConvection * 0.3f) * mantleTimeScale;
+        float finalIntensity = earthLikeIntensity * 0.002f * zoneMultiplier; // 0.002 = realistic scaling for 1M year steps
         applyMantleConvectionCell(fields, x, z, finalIntensity, timeStepMyears);
-        
-        // Validate elevation after modification
         validateAndClampElevation(fields, x, z, "MantleConvection");
     });
     
@@ -102,31 +107,23 @@ void TectonicEngine::simulateMountainBuilding(TectonicFields& fields, float time
             if (crustStress > 25.0f) {
                 std::cout << "[STRESS_DEBUG] High crustStress: " << crustStress 
                           << " at (" << x << "," << z << ") after dissipation" << std::endl;
-            }
-            
-            // Mountain building occurs where crust stress is high, with elevation-dependent resistance
-            if (crustStress > 1.5f) {
-                float currentElevation = fields.elevationField->getSample(x, z);
-                
-                // Higher elevations resist further uplift (isostatic equilibrium effect)
-                float elevationResistance = 1.0f + (currentElevation / 1000.0f) * 0.5f; // Resistance increases with height
-                
-                // Realistic compression force calculation with physical limits
-                float compressionForce = (crustStress - 1.5f) / elevationResistance * timeStepMyears * 0.001f; // Much smaller scaling
-                
-                // Apply maximum realistic uplift rate (a few mm per year in extreme cases)
-                float maxUpliftPerStep = 0.01f * timeStepMyears; // 10mm per thousand years maximum
-                compressionForce = std::min(compressionForce, maxUpliftPerStep);
-                
-                // DEBUG: Log compression force calculation for high values
+            }                // EARTH-LIKE MOUNTAIN BUILDING: Real rates are 1-10mm/year = 1-10m per 1000 years
+                // For 1M year timesteps: 1000-10000m per million years, but most areas much less
+                // Lower threshold but use realistic scaling for Earth-like mountain building
+                if (crustStress > 0.5f) {
+                    float currentElevation = fields.elevationField->getSample(x, z);
+                    float elevationResistance = 1.0f + (currentElevation / 1000.0f) * 0.5f; // More resistance at height
+                    
+                    // REALISTIC SCALING: 1-5m per million years for typical mountain building
+                    float compressionForce = (crustStress - 0.5f) / elevationResistance * timeStepMyears * 0.000005f; // Earth-like rate
+                    float maxUpliftPerStep = SCALE_FOR_MYEARS(GeologicalConstants::TYPICAL_TECTONIC_UPLIFT_RATE); // Use global constant
+                    compressionForce = std::min(compressionForce, maxUpliftPerStep);
                 if (compressionForce > 1.0f) {
                     std::cout << "[COMPRESSION_DEBUG] High compressionForce: " << compressionForce 
-                              << " = (" << crustStress << " - 1.5) / " << elevationResistance 
-                              << " * " << timeStepMyears << " * 0.001 at (" << x << "," << z << ")" << std::endl;
+                              << " = (" << crustStress << " - 0.5) / " << elevationResistance 
+                              << " * " << timeStepMyears << " * 0.02 at (" << x << "," << z << ")" << std::endl;
                 }
-                
                 applyMountainBuilding(fields, x, z, compressionForce, timeStepMyears);
-                
                 validateAndClampElevation(fields, x, z, "MountainBuilding");
             }
         }
@@ -144,9 +141,11 @@ void TectonicEngine::simulateVolcanicActivity(TectonicFields& fields, float time
         for (int x = 0; x < width; ++x) {
             float mantleStress = fields.mantleStress->getSample(x, z);
             
-            // Volcanic activity occurs where mantle stress is very high
+            // EARTH-LIKE VOLCANIC ACTIVITY: Real rates vary widely but average ~0.1-1m per 1000 years
+            // For 1M year timesteps: 100-1000m per million years during active periods
             if (mantleStress > 3.0f) {
-                float intensity = (mantleStress - 3.0f) * timeStepMyears * 0.2f;
+                // Realistic volcanic scaling for 1M year timesteps
+                float intensity = (mantleStress - 3.0f) * timeStepMyears * 0.0001f; // Much more conservative scaling
                 createVolcanicActivity(fields, x, z, intensity, timeStepMyears);
                 activeVolcanoes++;
                 
@@ -247,8 +246,9 @@ void TectonicEngine::validateAndClampElevation(TectonicFields& fields, int x, in
         }
     }
     
-    // Clamp to realistic geological bounds
-    float clampedElevation = std::max(-1800.0f, std::min(1200.0f, elevation));
+    // FIXED: Apply realistic geological elevation bounds: -2048m to +2048m (world height limits)
+    // Expected terrain range: -1800m to +1800m with ±2048m as absolute physical limits
+    float clampedElevation = std::max(-2048.0f, std::min(2048.0f, elevation));
     
     if (elevation != clampedElevation) {
         fields.elevationField->setSample(x, z, clampedElevation);
@@ -271,7 +271,7 @@ void TectonicEngine::applyMantleConvectionCell(TectonicFields& fields, int x, in
     
     // Update mantle stress with equilibrium limits
     float currentStress = fields.mantleStress->getSample(x, z);
-    float maxMantleStress = 20.0f; // Realistic maximum mantle stress
+    float maxMantleStress = GeologicalConstants::MAX_MANTLE_STRESS; // Use global geological constant
     
     // Apply stress change but approach equilibrium rather than accumulate infinitely
     float stressTarget = currentStress + intensity;
@@ -305,7 +305,7 @@ void TectonicEngine::applyMantleConvectionCell(TectonicFields& fields, int x, in
         float newThickness = currentThickness + thicknessChange;
         
         // Apply realistic crustal thickness limits (20-80km)
-        newThickness = std::max(20000.0f, std::min(newThickness, 80000.0f));
+        newThickness = std::max(20000.0f, std::min(newThickness, GeologicalConstants::MAX_CRUSTAL_THICKNESS));
         fields.crustalThickness->setSample(x, z, newThickness);
     }
 }
@@ -316,7 +316,7 @@ void TectonicEngine::applyPlateMotion(TectonicFields& fields, int x, int z, floa
     float stressIncrease = std::sqrt(motionX * motionX + motionZ * motionZ) * 0.01f; // Much smaller factor
     
     // Apply equilibrium approach rather than infinite accumulation
-    float maxCrustStress = 50.0f; // Realistic maximum crustal stress
+    float maxCrustStress = GeologicalConstants::MAX_CRUSTAL_STRESS; // Use global geological constant
     float newStress = std::min(currentCrustStress + stressIncrease, maxCrustStress);
     
     // Apply stress dissipation (crustal stress naturally decays)
@@ -336,12 +336,16 @@ void TectonicEngine::applyMountainBuilding(TectonicFields& fields, int x, int z,
                   << " at (" << x << "," << z << ") - current elevation: " << currentElevation << "m" << std::endl;
     }
     
-    // Apply uplift with physical limits to prevent runaway values
-    float maxUpliftPerStep = 10.0f; // Maximum 10m uplift per timestep
-    float uplift = std::min(compressionForce * 50.0f, maxUpliftPerStep);
+    // Apply uplift with realistic Earth-like limits using global constants
+    // Real mountain building: 1-10mm/year = 1000-10000m per million years max
+    // But most areas see much less - maybe 10-100m per million years typically
+    float maxUpliftPerStep = SCALE_FOR_MYEARS(GeologicalConstants::TYPICAL_TECTONIC_UPLIFT_RATE * 0.002f); // Conservative for stable simulation
+    float uplift = std::min(compressionForce * 1.0f, maxUpliftPerStep); // Remove excessive 50x multiplier
     
-    float newElevation = currentElevation + uplift;
-    fields.elevationField->setSample(x, z, newElevation);
+    float newElevation = CLAMP_GEOLOGICAL_ELEVATION(currentElevation + uplift);        fields.elevationField->setSample(x, z, newElevation);
+        
+        // Check for extreme elevations and warn
+        WARN_EXTREME_ELEVATION(newElevation, "MountainBuilding", x, z);
     
     // DEBUG: Log if we applied significant uplift
     if (uplift > 5.0f) {
@@ -361,9 +365,12 @@ void TectonicEngine::applyMountainBuilding(TectonicFields& fields, int x, int z,
 }
 
 void TectonicEngine::createVolcanicActivity(TectonicFields& fields, int x, int z, float intensity, float timeStep) {
-    // Create volcanic elevation
+    // Create volcanic elevation with realistic scaling
     float currentElevation = fields.elevationField->getSample(x, z);
-    float volcanicUplift = intensity * 80.0f; // Scale to meters
+    
+    // Much more conservative volcanic uplift - 1-10m max per event
+    float volcanicUplift = std::min(intensity * 0.01f, 10.0f); // Clamp to max 10m uplift
+    
     fields.elevationField->setSample(x, z, currentElevation + volcanicUplift);
     
     // Set rock type to igneous

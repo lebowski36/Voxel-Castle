@@ -1,4 +1,5 @@
 #include "world/ErosionEngine.h"
+#include "world/geological_constants.h"
 #include "util/noise.h"
 #include "world/geological_data.h"
 #include <iostream>
@@ -36,8 +37,10 @@ void ErosionEngine::simulateChemicalWeathering(ErosionFields& fields, float time
         RockType rockType = fields.rockTypes->getSample(x, z);
         float elevation = fields.elevationField->getSample(x, z);
         
+        // EARTH-LIKE CHEMICAL WEATHERING for 1M year timesteps  
+        // Chemical weathering: 0.01-0.1mm/year = 10-100m per million years
         // Calculate weathering intensity based on climate and rock type
-        float weatheringIntensity = calculateErosionRate(rockType, precipitation, 0.0f) * timeStepKyears * 0.1f;
+        float weatheringIntensity = calculateErosionRate(rockType, precipitation, 0.0f) * timeStepKyears * 10.0f; // 100x increase for million-year steps
         
         // Apply chemical weathering - reduces elevation slightly
         applyChemicalWeathering(fields, x, z, weatheringIntensity, timeStepKyears);
@@ -59,13 +62,13 @@ void ErosionEngine::simulatePhysicalErosion(ErosionFields& fields, float timeSte
             float slope = calculateSlope(*fields.elevationField, x, z);
             float hardness = fields.rockHardness->getSample(x, z);
             
-            // REALISTIC GEOLOGICAL EROSION RATES
-            // Physical erosion: 0.001-0.1 mm/year = 0.001-0.1 m/kyear for most conditions
-            // Only extreme conditions (waterfalls, glaciers) can erode faster
+            // EARTH-LIKE PHYSICAL EROSION RATES
+            // For 1M year timesteps: Physical erosion 0.1-1mm/year = 100-1000m per million years
+            // Most areas much less: 10-100m per million years typical
             
             if (slope > 0.001f && hardness > 0.01f) {
-                // Base erosion rate: 0.01 m/kyear (10mm per 1000 years) - realistic for moderate slopes
-                float baseErosionRate = 0.01f;
+                // REALISTIC BASE RATE: 50m per million years (0.05mm/year average)
+                float baseErosionRate = 50.0f; // Scaled for 1M year timesteps
                 
                 // Slope effect: gentle scaling, not exponential
                 float slopeMultiplier = 1.0f + std::min(slope * 5.0f, 4.0f); // Max 5x for very steep slopes
@@ -73,9 +76,9 @@ void ErosionEngine::simulatePhysicalErosion(ErosionFields& fields, float timeSte
                 // Hardness resistance: prevent division by tiny numbers
                 float hardnessResistance = std::max(hardness, 0.1f);
                 
-                // Calculate realistic erosion
+                // Calculate realistic erosion for 1M year timesteps
                 float erosionRate = (baseErosionRate * slopeMultiplier) / hardnessResistance;
-                float erosionIntensity = erosionRate * (timeStepKyears / 1000.0f); // Scale properly for timestep
+                float erosionIntensity = erosionRate * (timeStepKyears / 1000000.0f); // Correct scaling for million-year steps
                 
                 // Geological reality check: even in extreme conditions, erosion is limited
                 erosionIntensity = std::min(erosionIntensity, 0.5f); // Maximum 0.5m per step regardless of timestep
@@ -103,23 +106,23 @@ void ErosionEngine::simulateWaterDrivenErosion(ErosionFields& fields, float time
                 float slope = calculateSlope(*fields.elevationField, x, z);
                 float velocity = calculateWaterFlowVelocity(waterDepth, slope);
                 
-                // REALISTIC WATER EROSION RATES
-                // River erosion: 0.1-10 mm/year = 0.1-10 m/kyear in active channels
-                // Most rivers: 1-5 m/kyear maximum
+                // EARTH-LIKE WATER EROSION for 1M year timesteps
+                // River erosion: 1-10mm/year = 1000-10000m per million years in active channels
+                // Most rivers: 100-1000m per million years typical
                 
-                // Base water erosion rate: much higher than physical but still realistic
-                float baseWaterErosionRate = 2.0f; // 2 m/kyear for active water flow
+                // Base water erosion rate: scaled for million-year timesteps  
+                float baseWaterErosionRate = 500.0f; // 500m per million years for active water flow
                 
                 // Scale by water power (velocity^2 * flow)
                 float waterPower = velocity * velocity * std::min(waterFlow, 10.0f); // Limit flow effect
                 float flowMultiplier = 1.0f + std::min(waterPower * 0.5f, 3.0f); // Max 4x for strong flow
                 
-                // Calculate realistic water erosion
+                // Calculate realistic water erosion for 1M year timesteps
                 float erosionRate = baseWaterErosionRate * flowMultiplier;
-                float erosionPower = erosionRate * (timeStepKyears / 1000.0f);
+                float erosionPower = erosionRate * (timeStepKyears / 1000000.0f); // Correct million-year scaling
                 
-                // Geological limit: even the most powerful rivers are limited
-                erosionPower = std::min(erosionPower, 1.0f); // Max 1m per step
+                // Geological limit: even the most powerful rivers are limited over million year periods
+                erosionPower = std::min(erosionPower, 200.0f); // Max 200m per million-year step
                 
                 applyWaterErosion(fields, x, z, erosionPower, timeStepKyears);
                 
@@ -210,24 +213,24 @@ void ErosionEngine::simulateGlacialCarving(ErosionFields& fields, float timeStep
             float elevation = fields.elevationField->getSample(x, z);
             
             if (elevation > 800.0f) { // Above treeline
-                // REALISTIC GLACIAL EROSION RATES
-                // Glacial erosion: 1-100 mm/year = 1-100 m/kyear (much faster than other erosion)
-                // But glaciers are rare and episodic
+                // EARTH-LIKE GLACIAL EROSION for 1M year timesteps
+                // Glacial erosion: 1-100mm/year = 1000-100000m per million years (much faster than other erosion)
+                // But glaciers are rare and episodic - average over long periods much less
                 
                 float elevationAboveTreeline = elevation - 800.0f;
                 
-                // Base glacial erosion rate: 5 m/kyear (realistic for active glaciation)
-                float baseGlacialRate = 5.0f;
+                // Base glacial erosion rate: 5000m per million years (realistic for active glaciation)
+                float baseGlacialRate = 5000.0f;
                 
                 // Scale gently with elevation (not linearly - would be extreme)
                 float elevationFactor = 1.0f + std::min(elevationAboveTreeline / 1000.0f, 2.0f); // Max 3x at 2800m+
                 
-                // Calculate realistic glacial intensity
+                // Calculate realistic glacial intensity for 1M year timesteps
                 float glacialRate = baseGlacialRate * elevationFactor;
-                float glacialIntensity = glacialRate * (timeStepKyears / 1000.0f);
+                float glacialIntensity = glacialRate * (timeStepKyears / 1000000.0f); // Correct million-year scaling
                 
-                // Geological limit: even the most active glaciers have limits
-                glacialIntensity = std::min(glacialIntensity, 2.0f); // Max 2m per step
+                // Geological limit: even the most active glaciers have limits over million-year periods
+                glacialIntensity = std::min(glacialIntensity, 1000.0f); // Max 1000m per million-year step
                 applyGlacialErosion(fields, x, z, glacialIntensity, timeStepKyears);
                 
                 validateAndClampElevation(fields, x, z, "GlacialCarving");
@@ -264,18 +267,56 @@ void ErosionEngine::simulateErosionUpliftBalance(ErosionFields& fields, float ti
     int width = fields.elevationField->getWidth();
     int height = fields.elevationField->getHeight();
     
+    // DEBUG: Sample a few cells to see what's happening
+    static int debugCount = 0;
+    bool shouldDebug = debugCount < 3;
+    
+    float minElev = std::numeric_limits<float>::max();
+    float maxElev = std::numeric_limits<float>::lowest();
+    float minErosionRate = std::numeric_limits<float>::max();
+    float maxErosionRate = std::numeric_limits<float>::lowest();
+    
     for (int z = 0; z < height; ++z) {
         for (int x = 0; x < width; ++x) {
             float erosionRate = fields.erosionRateField->getSample(x, z);
             float elevation = fields.elevationField->getSample(x, z);
             
-            // Balance erosion with tectonic uplift
-            float upliftRate = 0.01f; // Background uplift rate
-            float netChange = (upliftRate - erosionRate) * timeStepKyears;
+            minErosionRate = std::min(minErosionRate, erosionRate);
+            maxErosionRate = std::max(maxErosionRate, erosionRate);
             
-            fields.elevationField->setSample(x, z, elevation + netChange);
+            // DISABLE erosion-uplift balance entirely to prevent it from overwhelming other processes
+            // This process is supposed to balance erosion and uplift over geological time scales,
+            // but it's currently causing catastrophic elevation drops
+            // Instead, let individual tectonic and erosion processes handle their own balance
             
-            validateAndClampElevation(fields, x, z, "ErosionUpliftBalance");
+            // Apply minimal isostatic adjustment only
+            float isostaticAdjustment = 0.0f;
+            if (elevation < -1000.0f) {
+                // Slight uplift for very deep areas (isostatic rebound)
+                isostaticAdjustment = 0.1f * timeStepKyears * 0.001f; // 0.1mm/1000years
+            } else if (elevation > 500.0f) {
+                // Slight subsidence for very high areas (isostatic subsidence)
+                isostaticAdjustment = -0.05f * timeStepKyears * 0.001f; // 0.05mm/1000years
+            }
+            
+            float newElevation = elevation + isostaticAdjustment;
+            
+            // Only clamp extreme outliers, preserve the main elevation distribution
+            if (newElevation < -3000.0f) newElevation = -3000.0f;
+            if (newElevation > 3000.0f) newElevation = 3000.0f;
+            
+            fields.elevationField->setSample(x, z, newElevation);
+            minElev = std::min(minElev, newElevation);
+            maxElev = std::max(maxElev, newElevation);
+        }
+    }
+    if (shouldDebug) {
+        std::cout << "[EROSION_UPLIFT_DEBUG] TimeStep: " << timeStepKyears << " kyears" << std::endl;
+        std::cout << "[EROSION_UPLIFT_DEBUG] Erosion rate range: " << minErosionRate << " to " << maxErosionRate << std::endl;
+        std::cout << "[EROSION_UPLIFT_DEBUG] Elevation range after ErosionUpliftBalance: " << minElev << "m to " << maxElev << "m" << std::endl;
+        debugCount++;
+        if (debugCount == 3) {
+            std::cout << "[EROSION_UPLIFT_DEBUG] Debug output complete - further messages suppressed" << std::endl;
         }
     }
 }
@@ -340,11 +381,13 @@ void ErosionEngine::validateAndClampElevation(ErosionFields& fields, int x, int 
         }
     }
     
-    // Clamp to realistic geological bounds
-    float clampedElevation = std::max(-1800.0f, std::min(1200.0f, elevation));
+    // FIXED: Apply realistic geological elevation bounds using global constants
+    // Expected terrain range: -1800m to +1800m with ±2048m as absolute physical limits
+    float clampedElevation = CLAMP_GEOLOGICAL_ELEVATION(elevation);
     
     if (elevation != clampedElevation) {
         fields.elevationField->setSample(x, z, clampedElevation);
+        WARN_EXTREME_ELEVATION(elevation, "ErosionClamping", x, z);
     }
 }
 

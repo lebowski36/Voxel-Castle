@@ -17,11 +17,13 @@ This section tracks the progress of the new geological simulation system.
 - **Step 3: Water & Cave System Framework** - IMPLEMENTED (Visual verification pending - water not appearing in preview)
   - For advanced/optional features beyond core Step 3, see: [Advanced Hydrological and Geomorphological Features](/home/system-x1/Projects/Voxel Castle/development_tasks/geological_realism/Advanced_Hydrological_Geomorphological_Features.md)
 - **Step 4: Physics-Based Geological Engine** - PENDING
-- **Step 4.1: Simulation Architecture Overhaul** - ACTIVE (🚨 **CRITICAL ISSUE** - World preview all blue due to geological generation failures)
+- **Step 4.1: Simulation Architecture Overhaul** - ACTIVE (🚨 **CRITICAL ISSUES** - Multiple geological system failures)
   - See: [71a_Step4.1_Simulation_Architecture_Overhaul.md](/home/system-x1/Projects/Voxel Castle/development_tasks/geological_realism/71a_Step4.1_Simulation_Architecture_Overhaul.md)
-  - **URGENT PRIORITY**: Fix FractalContinentGenerator failure (0 continents generated)
-  - **URGENT PRIORITY**: Fix water system "Missing required fields" errors
-  - **URGENT PRIORITY**: Fix elevation initialization (all terrain below sea level)
+  - **URGENT PRIORITIES**: 
+    - Fix elevation bounds (wrong 1200m limit causing uniform pink terrain)
+    - Complete snapshot system integration (UI still using fallback mode) 
+    - Fix erosion catastrophe and sediment deposition bug (18,515m mountains!)
+    - Fix water system "Missing required fields" errors
 - **Step 5: Climate & Biome Simulation** - PENDING
 - **Step 6: Erosion & Weathering Refinement** - PENDING
 - **Step 7: Resource & Feature Distribution** - PENDING

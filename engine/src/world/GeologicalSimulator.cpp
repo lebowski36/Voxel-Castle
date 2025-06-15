@@ -162,7 +162,7 @@ void GeologicalSimulator::initializeFields() {
     crustalThickness_->fill(35000.0f);      // 35km baseline crustal thickness
     mantleTemperature_->fill(1300.0f);      // 1300°C mantle temperature
     isostasyAdjustment_->fill(0.0f);        // No isostatic adjustment initially
-    erosionRateField_->fill(0.1f);          // Baseline erosion rate
+    erosionRateField_->fill(0.001f);        // Very low baseline erosion rate (1mm/1000years)
     
     // Generate fractal continental foundation
     std::cout << "[GeologicalSimulator] Generating fractal continental foundation..." << std::endl;
@@ -207,6 +207,32 @@ bool GeologicalSimulator::stepSimulation() {
         return false;
     }
     
+    // ===== DEBUG: Track elevation changes by process =====
+    static int debugStepCount = 0;
+    bool shouldDebugStep = (debugStepCount < 5); // Debug first 5 steps
+    
+    auto getElevationRange = [this]() -> std::pair<float, float> {
+        float minElev = std::numeric_limits<float>::max();
+        float maxElev = std::numeric_limits<float>::lowest();
+        int width = elevationField_->getWidth();
+        int height = elevationField_->getHeight();
+        
+        for (int z = 0; z < height; ++z) {
+            for (int x = 0; x < width; ++x) {
+                float elev = elevationField_->getSample(x, z);
+                minElev = std::min(minElev, elev);
+                maxElev = std::max(maxElev, elev);
+            }
+        }
+        return {minElev, maxElev};
+    };
+    
+    if (shouldDebugStep) {
+        auto [minElev, maxElev] = getElevationRange();
+        std::cout << "[ELEVATION_TRACK] Step " << debugStepCount << " START: " 
+                  << minElev << "m to " << maxElev << "m (range: " << (maxElev - minElev) << "m)" << std::endl;
+    }
+    
     // ===== Step 4.1: NEW MODULAR INTERLEAVED ARCHITECTURE =====
     // All geological processes run every step using modular engines
     
@@ -237,21 +263,94 @@ bool GeologicalSimulator::stepSimulation() {
     // === TECTONIC PROCESSES ===
     // Run at their own time scale (usually slower)
     tectonicEngine_->simulateMantleConvection(tectonicFields, baseTimeStep * processTimeScales_.tectonicTimeStep);
+    
+    if (shouldDebugStep) {
+        auto [minElev, maxElev] = getElevationRange();
+        std::cout << "[ELEVATION_TRACK] After MantleConvection: " 
+                  << minElev << "m to " << maxElev << "m" << std::endl;
+    }
+    
     tectonicEngine_->simulatePlateMovement(tectonicFields, baseTimeStep * processTimeScales_.tectonicTimeStep);
+    
+    if (shouldDebugStep) {
+        auto [minElev, maxElev] = getElevationRange();
+        std::cout << "[ELEVATION_TRACK] After PlateMovement: " 
+                  << minElev << "m to " << maxElev << "m" << std::endl;
+    }
+    
     tectonicEngine_->simulateMountainBuilding(tectonicFields, baseTimeStep * processTimeScales_.tectonicTimeStep);
+    
+    if (shouldDebugStep) {
+        auto [minElev, maxElev] = getElevationRange();
+        std::cout << "[ELEVATION_TRACK] After MountainBuilding: " 
+                  << minElev << "m to " << maxElev << "m" << std::endl;
+    }
     
     // === VOLCANIC PROCESSES ===
     // Run at their own time scale (episodic, can be intense)
     tectonicEngine_->simulateVolcanicActivity(tectonicFields, baseTimeStep * processTimeScales_.volcanicTimeStep);
     
+    if (shouldDebugStep) {
+        auto [minElev, maxElev] = getElevationRange();
+        std::cout << "[ELEVATION_TRACK] After VolcanicActivity: " 
+                  << minElev << "m to " << maxElev << "m" << std::endl;
+    }
+    
     // === EROSION PROCESSES ===
     // Run at their own time scale (typically faster than tectonics)
     erosionEngine_->simulateChemicalWeathering(erosionFields, baseTimeStep * processTimeScales_.erosionTimeStep);
+    
+    if (shouldDebugStep) {
+        auto [minElev, maxElev] = getElevationRange();
+        std::cout << "[ELEVATION_TRACK] After ChemicalWeathering: " 
+                  << minElev << "m to " << maxElev << "m" << std::endl;
+    }
+    
     erosionEngine_->simulatePhysicalErosion(erosionFields, baseTimeStep * processTimeScales_.erosionTimeStep);
+    
+    if (shouldDebugStep) {
+        auto [minElev, maxElev] = getElevationRange();
+        std::cout << "[ELEVATION_TRACK] After PhysicalErosion: " 
+                  << minElev << "m to " << maxElev << "m" << std::endl;
+    }
+    
     erosionEngine_->simulateWaterDrivenErosion(erosionFields, baseTimeStep * processTimeScales_.erosionTimeStep);
+    
+    if (shouldDebugStep) {
+        auto [minElev, maxElev] = getElevationRange();
+        std::cout << "[ELEVATION_TRACK] After WaterDrivenErosion: " 
+                  << minElev << "m to " << maxElev << "m" << std::endl;
+    }
+    
     erosionEngine_->simulateSedimentTransport(erosionFields, baseTimeStep * processTimeScales_.erosionTimeStep);
+    
+    if (shouldDebugStep) {
+        auto [minElev, maxElev] = getElevationRange();
+        std::cout << "[ELEVATION_TRACK] After SedimentTransport: " 
+                  << minElev << "m to " << maxElev << "m" << std::endl;
+    }
+    
     erosionEngine_->simulateErosionUpliftBalance(erosionFields, baseTimeStep * processTimeScales_.erosionTimeStep);
     
+    if (shouldDebugStep) {
+        auto [minElev, maxElev] = getElevationRange();
+        std::cout << "[ELEVATION_TRACK] After ErosionUpliftBalance: " 
+                  << minElev << "m to " << maxElev << "m" << std::endl;
+        
+        // Check spatial distribution - sample different areas to see if we get realistic variation
+        int width = elevationField_->getWidth();
+        int height = elevationField_->getHeight();
+        
+        std::cout << "[SPATIAL_VARIATION] Step " << debugStepCount << " elevation samples:" << std::endl;
+        std::cout << "  NW corner: " << elevationField_->getSample(width/4, height/4) << "m" << std::endl;
+        std::cout << "  NE corner: " << elevationField_->getSample(3*width/4, height/4) << "m" << std::endl;
+        std::cout << "  Center: " << elevationField_->getSample(width/2, height/2) << "m" << std::endl;
+        std::cout << "  SW corner: " << elevationField_->getSample(width/4, 3*height/4) << "m" << std::endl;
+        std::cout << "  SE corner: " << elevationField_->getSample(3*width/4, 3*height/4) << "m" << std::endl;
+        
+        debugStepCount++;
+    }
+
     // Glacial processes (occasional but intense)
     if (currentStep_ % 5 == 0) {
         erosionEngine_->simulateGlacialCarving(erosionFields, baseTimeStep * processTimeScales_.erosionTimeStep * 5.0f);
@@ -331,6 +430,7 @@ bool GeologicalSimulator::stepSimulation() {
         progressCallback_(phaseInfo);
     }
     
+    debugStepCount++;
     return !simulationComplete_;
 }
 

@@ -134,31 +134,59 @@ class BackgroundGeologicalSimulator {
 - [x] Performance-optimized sampling (every 4th point)
 - [x] **STATUS**: Basic framework complete, logs processing activity
 
-### **4.1.3: Fix Critical Geological Generation Failures** 🚨 **URGENT - RECOMMENDED NEXT TASK**
+### **4.1.3: URGENT - Complete Snapshot System Integration and Fix Geological Bounds** 🚨 **ACTIVE NEXT TASK**
 
-**CRITICAL PROBLEM**: World preview showing all blue (ocean) due to multiple geological system failures:
+**CRITICAL ISSUES DISCOVERED FROM TESTING**:
+- **WRONG ELEVATION BOUNDS**: Current system clamps to 1200m instead of proper ±2048m range, causing uniform pink terrain
+- **SNAPSHOT FALLBACK**: UI still using `getSampleAt` fallback instead of proper snapshots - "FALLBACK: Using getSampleAt (no snapshots yet)"
+- **EROSION CATASTROPHE**: Chemical weathering destroying terrain (-1800m), sediment creating impossible mountains (18,515m)
+- **HALF-MAP PREVIEW BUG**: Map shows partial data initially, then updates - indicates snapshot integration incomplete
+- **WATER SYSTEM ERRORS**: "Missing required fields" flooding console, breaking water system integration
 
-**RECOMMENDED FOCUS**: Start with FractalContinentGenerator debugging - this is the root cause of the ocean-only world
+**Phase A: Fix Geological Bounds** ✅ **COMPLETED**
+- [x] **CRITICAL**: Created global geological constants system (`geological_constants.h`)
+- [x] **CRITICAL**: Centralized all elevation bounds: ±2048m absolute limits, ±1800m expected range
+- [x] **CRITICAL**: Updated TectonicEngine to use global constants with `CLAMP_GEOLOGICAL_ELEVATION()` macro
+- [x] **CRITICAL**: Updated ErosionEngine to use global constants and proper bounds checking
+- [x] **CRITICAL**: Added `WARN_EXTREME_ELEVATION()` macro for debugging extreme elevations
+- [x] **CRITICAL**: Centralized all geological physics constants (stress limits, process rates, etc.)
+- [x] **BUILD STATUS**: ✅ Successfully compiles with new global constants system
 
-**Issues Identified from Console Output**:
-- [x] **FractalContinentGenerator Complete Failure**: "Generated 0 continental plates" - continent generation not working
-- [x] **All Terrain Below Sea Level**: Elevation range `-112.111m to -70.8758m` (should be -1000m to +1200m with land above 0m)
-- [x] **Water System Field Errors**: "Missing required fields" flooding console - water system initialization broken
-- [x] **Snapshot System Integration Gap**: Still showing "FALLBACK: Using getSampleAt" - snapshots not properly integrated
-- [x] **Process Killed**: Application terminated unexpectedly, possibly due to resource issues
+**Phase B: Complete Snapshot Integration** ⏳ **NEXT PRIORITY**
+- [ ] **CRITICAL**: Fix `WorldMapRenderer` to use snapshots instead of `getSampleAt` fallback
+- [ ] Complete snapshot data integration in `WorldMapRenderer::generateElevationData()`
+- [ ] Fix "half-map preview" issue - ensure full snapshot data available immediately
+- [ ] Add proper snapshot availability checking before rendering
+- [ ] Ensure smooth transitions between snapshots without visual artifacts
 
-**Root Cause Analysis**:
-- [ ] **PRIORITY**: Investigate FractalContinentGenerator seed initialization (shows seed: 0 then seed: 13891685558698509538)
-- [ ] **PRIORITY**: Fix water system field initialization - missing required fields breaking simulation
-- [ ] **PRIORITY**: Debug elevation initialization - why everything starts below sea level
-- [ ] **PRIORITY**: Complete snapshot system integration for UI responsiveness
-- [ ] **PRIORITY**: Add error handling for geological system failures
+**Phase C: Fix Water System Field Initialization** ⏳ **HIGH PRIORITY**
+- [ ] **CRITICAL**: Fix "Missing required fields" in `WaterSystemSimulator`
+- [ ] Complete water field initialization in `GeologicalSimulator::initializeFields()`
+- [ ] Ensure all required water fields are created and properly linked
+- [ ] Add error handling for missing field scenarios
+- [ ] Verify water data properly included in snapshots
 
-**Files to Investigate/Fix**:
-- `engine/src/world/FractalContinentGenerator.cpp` - continent generation failure
-- `engine/src/world/WaterSystemSimulator.cpp` - missing required fields
-- `engine/src/world/GeologicalSimulator.cpp` - field initialization and snapshot integration
-- `engine/src/ui/WorldMapRenderer.cpp` - snapshot system integration
+**Phase D: Add Real-time Geological Parameter Controls** ⏳ **PENDING**
+- [ ] Create `GeologicalDebugUI` class for real-time parameter adjustment
+- [ ] Add geological parameter sliders to world creation UI
+- [ ] Implement pause/resume/step controls for geological simulation  
+- [ ] Add parameter presets for different world types (Continental, Volcanic, etc.)
+- [ ] Enable real-time tuning of erosion rates, tectonic activity, volcanic intensity
+
+**Files to Modify**:
+- `engine/src/world/GeologicalSimulator.cpp` - Fix bounds and field initialization
+- `engine/src/world/TectonicEngine.cpp` - Update elevation bounds
+- `engine/src/world/ErosionEngine.cpp` - Fix erosion bounds and sediment bug
+- `engine/src/ui/WorldMapRenderer.cpp` - Complete snapshot integration
+- `engine/src/world/WaterSystemSimulator.cpp` - Fix missing field errors
+- `game/src/ui/WorldConfigurationUI.cpp` - Add geological parameter controls
+
+**Expected Results**:
+- ✅ Terrain displays proper elevation range (-1800m to +1800m) with realistic colors
+- ✅ UI fully responsive during geological simulation with real-time updates
+- ✅ No more "FALLBACK" messages - proper snapshot-based rendering
+- ✅ Water systems working without "Missing required fields" errors
+- ✅ Real-time parameter adjustment for geological tuning
 
 ### **4.1.4: Implement Debug Parameter UI System** ⏳ PENDING (After 4.1.3 fixed)
 
