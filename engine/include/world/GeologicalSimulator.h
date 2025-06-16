@@ -58,6 +58,9 @@ private:
     std::unique_ptr<ContinuousField<float>> isostasyAdjustment_;     // Isostatic adjustment forces
     std::unique_ptr<ContinuousField<float>> erosionRateField_;       // Spatially varying erosion rates
     
+    // Step 4.1: Rifting System - New fields
+    std::unique_ptr<ContinuousField<float>> riftingStress_;          // Rifting stress field for divergent boundaries
+    
     // Configuration
     GeologicalConfig config_;
     float worldSizeKm_;  // World size in kilometers

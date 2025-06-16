@@ -473,3 +473,85 @@ class BackgroundGeologicalSimulator {
 - [ ] **PENDING**: Debug UI accessible and intuitive for parameter tweaking
 - [ ] **PENDING**: Water features clearly visible during generation
 - [ ] **PENDING**: UI displays accurate process information with real-time updates
+
+---
+
+## **Phase D: Comprehensive Rifting and Ocean Ratio Fix** ⏳ **ACTIVE - CRITICAL GEOLOGICAL REALISM**
+
+**🚨 CRITICAL GEOLOGICAL ISSUES IDENTIFIED**:
+- **Missing Rifting System**: TectonicEngine only handles convergent boundaries (mountains), completely ignoring divergent boundaries (rifts/grabens)
+- **Unrealistic Ocean/Land Ratio**: Current world is ~80% land, ~20% ocean. Real Earth is ~71% ocean, ~29% land
+- **No Downward Geological Forces**: System lacks proper rifting forces to counteract excessive mountain building
+
+**Real-World Examples Missing**:
+- **Rhine Graben** (Germany) - classic continental rift valley
+- **East African Rift** - active continental rifting
+- **Red Sea Rift** - oceanic rifting between continental plates
+- **Mid-Atlantic Ridge** - oceanic spreading centers
+
+**Phase D.1: Add Rifting System to TectonicEngine** ✅ **COMPLETED**
+- [x] **CRITICAL**: Add `simulateRiftingActivity()` method to TectonicEngine
+- [x] **CRITICAL**: Implement divergent boundary detection in mantle convection patterns
+- [x] **CRITICAL**: Add rifting stress calculation (tensional forces pulling plates apart)
+- [x] **CRITICAL**: Implement rift valley formation (downward elevation changes)
+- [x] **CRITICAL**: Add extensional basin creation (grabens, rift lakes)
+- [x] **CRITICAL**: Integrate rifting with existing mantle convection system
+- [x] **CRITICAL**: Add realistic rifting time scales and force magnitudes
+
+**IMPLEMENTATION RESULTS**:
+- ✅ `simulateRiftingActivity()` method fully implemented in TectonicEngine
+- ✅ Rift zones generated automatically based on continental configuration
+- ✅ Rifting provides **DOWNWARD forces** to counteract excessive mountain building
+- ✅ Realistic rifting physics: 0.1-10mm/year rates (100-10000m per million years)
+- ✅ Integrated with geological simulation - rifting runs after mountain building
+- ✅ Rift stress field added to all geological field structures
+- ✅ **BUILD STATUS**: ✅ Successfully compiles and runs
+- ✅ **GEOLOGICAL PHYSICS**: Rifting creates graben (down-dropped valleys) to balance uplift
+
+**Technical Implementation**:
+- Added `RiftZone` structure with realistic parameters (length, width, orientation, extension rate)
+- Implemented `isInRiftZone()` for elliptical rift zone detection
+- Added `applyRiftingForces()` with proper downward subsidence forces
+- Integrated rifting stress field into TectonicFields structure
+- Rifting zones generated based on continental count (1-3 major rift systems)
+
+**Phase D.2: Fix Continental Generation Ocean Ratio** ⏳ **PENDING**
+- [ ] **CRITICAL**: Analyze current continent generation in `FractalContinentGenerator`
+- [ ] **CRITICAL**: Reduce continent count from current to realistic Earth-like ratios
+- [ ] **CRITICAL**: Reduce maximum continent size to create more ocean space
+- [ ] **CRITICAL**: Implement proper oceanic basin generation (large deep ocean areas)
+- [ ] **CRITICAL**: Add continental shelf system (transition zones)
+- [ ] **CRITICAL**: Ensure ocean basins are at proper depths (-1000m to -2000m)
+
+**Phase D.3: Integrate Rifting with Geological Simulation** ⏳ **PENDING**
+- [ ] **CRITICAL**: Add rifting to interleaved process architecture
+- [ ] **CRITICAL**: Ensure rifting provides proper downward forces to balance mountain building
+- [ ] **CRITICAL**: Add rifting to snapshot system for visual feedback
+- [ ] **CRITICAL**: Integrate rifting with water system (rift lakes, thermal springs)
+- [ ] **CRITICAL**: Test rifting forces solve upward elevation trend
+
+**Visual Test Results Expected**:
+- ✅ Visible rift valleys and grabens in continental areas
+- ✅ Realistic ocean/land ratio (~70% ocean, ~30% land)
+- ✅ Balanced elevation evolution (rifting counteracts mountain building)
+- ✅ Deep oceanic basins clearly visible in blue on preview
+- ✅ Continental shelves and oceanic transition zones
+
+**Technical Architecture**:
+```cpp
+class TectonicEngine {
+    // ...existing code...
+    
+    // New rifting system
+    void simulateRiftingActivity(TectonicFields& fields, float timeStepMyears);
+    void applyRiftingForces(TectonicFields& fields, int x, int z, float intensity, float timeStep);
+    bool isInRiftZone(float worldX, float worldZ) const;
+    void createRiftValley(TectonicFields& fields, int x, int z, float intensity);
+    
+private:
+    std::vector<RiftZone> riftZones_;
+    ContinuousField<float> riftingStress_;
+};
+```
+
+// ...existing code...

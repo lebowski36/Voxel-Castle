@@ -243,7 +243,11 @@ void WaterSystemSimulator::SimulateCaveWaterInteractions(float timeStep) {
     // This is a basic implementation that will be expanded when cave networks are fully implemented
     
     if (!elevationField_ || !groundwaterTable_) {
-        std::cout << "[WaterSystemSimulator] SimulateCaveWaterInteractions: Missing required fields" << std::endl;
+        // Don't spam the logs - only show this warning once per 10 calls
+        static int warningCount = 0;
+        if (warningCount++ < 3) {
+            std::cout << "[WaterSystemSimulator] SimulateCaveWaterInteractions: Missing required fields (water system not yet initialized)" << std::endl;
+        }
         return;
     }
     

@@ -134,6 +134,9 @@ void GeologicalSimulator::initializeFields() {
     isostasyAdjustment_ = std::make_unique<ContinuousField<float>>(resolution, resolution, spacing);
     erosionRateField_ = std::make_unique<ContinuousField<float>>(resolution, resolution, spacing);
     
+    // Step 4.1: Rifting System - Create rifting stress field
+    riftingStress_ = std::make_unique<ContinuousField<float>>(resolution, resolution, spacing);
+    
     // Initialize with base values
     mantleStress_->fill(0.0f);
     crustStress_->fill(0.0f);
@@ -154,6 +157,8 @@ void GeologicalSimulator::initializeFields() {
     mantleTemperature_->fill(1300.0f);      // 1300°C mantle temperature
     isostasyAdjustment_->fill(0.0f);        // No isostatic adjustment initially
     erosionRateField_->fill(0.001f);        // Very low baseline erosion rate (1mm/1000years)
+    
+    riftingStress_->fill(0.0f);             // No rifting stress initially (will be generated dynamically)
     
     // Generate fractal continental foundation
     std::cout << "[GeologicalSimulator] Generating fractal continental foundation..." << std::endl;
@@ -240,6 +245,7 @@ bool GeologicalSimulator::stepSimulation() {
     tectonicFields.isostasyAdjustment = isostasyAdjustment_.get();
     tectonicFields.rockTypes = rockTypes_.get();
     tectonicFields.rockHardness = rockHardness_.get();
+    tectonicFields.riftingStress = riftingStress_.get();
     
     ErosionEngine::ErosionFields erosionFields;
     erosionFields.elevationField = elevationField_.get();
@@ -274,6 +280,14 @@ bool GeologicalSimulator::stepSimulation() {
     if (shouldDebugStep) {
         auto [minElev, maxElev] = getElevationRange();
         std::cout << "[ELEVATION_TRACK] After MountainBuilding: " 
+                  << minElev << "m to " << maxElev << "m" << std::endl;
+    }
+    
+    tectonicEngine_->simulateRiftingActivity(tectonicFields, baseTimeStep * GeologicalConstants::ProcessTimeScales::TECTONIC);
+    
+    if (shouldDebugStep) {
+        auto [minElev, maxElev] = getElevationRange();
+        std::cout << "[ELEVATION_TRACK] After RiftingActivity: " 
                   << minElev << "m to " << maxElev << "m" << std::endl;
     }
     

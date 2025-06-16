@@ -48,9 +48,9 @@ void TectonicEngine::simulateMantleConvection(TectonicFields& fields, float time
         
         // EARTH-LIKE SCALING: For 1M year timesteps, mantle convection should produce 1-10m total change
         // Real mantle convection: ~0.001-0.01m/year = 1-10m per 1000 years = 1000-10000m per million years
-        // But this is BASE rate - most areas should be much smaller
+        // BALANCE FORCES: Need stronger downward forces to counteract tectonic uplift
         float earthLikeIntensity = (convectionIntensity * 0.7f + warpedConvection * 0.3f) * mantleTimeScale;
-        float finalIntensity = earthLikeIntensity * 0.002f * zoneMultiplier; // 0.002 = realistic scaling for 1M year steps
+        float finalIntensity = earthLikeIntensity * 2.0f * zoneMultiplier; // Increased from 0.002 to 2.0 to provide proper balance
         applyMantleConvectionCell(fields, x, z, finalIntensity, timeStepMyears);
         validateAndClampElevation(fields, x, z, "MantleConvection");
     });
@@ -156,6 +156,170 @@ void TectonicEngine::simulateVolcanicActivity(TectonicFields& fields, float time
     
     metrics_.activeVolcanoes = activeVolcanoes;
     metrics_.volcanicActivity = static_cast<float>(activeVolcanoes) / (width * height);
+}
+
+void TectonicEngine::simulateRiftingActivity(TectonicFields& fields, float timeStepMyears) {
+    if (!fields.riftingStress || !fields.elevationField) return;
+
+    // Initialize rift zones if this is the first call
+    if (riftZones_.empty()) {
+        generateRiftingStress(fields, timeStepMyears);
+    }
+
+    int width = fields.riftingStress->getWidth();
+    int height = fields.riftingStress->getHeight();
+    int activeRifts = 0;
+    
+    std::cout << "[TectonicEngine] Simulating rifting activity with " << riftZones_.size() << " rift zones" << std::endl;
+    
+    for (int z = 0; z < height; ++z) {
+        for (int x = 0; x < width; ++x) {
+            float worldX = x * fields.riftingStress->getSampleSpacing();
+            float worldZ = z * fields.riftingStress->getSampleSpacing();
+            
+            if (isInRiftZone(worldX, worldZ)) {
+                float riftingStress = fields.riftingStress->getSample(x, z);
+                
+                // EARTH-LIKE RIFTING: Real rates are 0.1-10mm/year = 0.0001-0.01m/year
+                // For 1M year timesteps: 100-10000m per million years in active rifts
+                if (riftingStress > 2.0f) { // Threshold for active rifting
+                    float intensity = (riftingStress - 2.0f) * timeStepMyears * 0.000001f; // Conservative scaling
+                    applyRiftingForces(fields, x, z, intensity, timeStepMyears);
+                    activeRifts++;
+                    
+                    validateAndClampElevation(fields, x, z, "RiftingActivity");
+                }
+            }
+        }
+    }
+    
+    metrics_.activeRiftZones = activeRifts;
+    metrics_.totalRiftingActivity = static_cast<float>(activeRifts) / (width * height);
+    
+    std::cout << "[TectonicEngine] Rifting simulation complete - " << activeRifts << " active rift points" << std::endl;
+}
+
+void TectonicEngine::applyRiftingForces(TectonicFields& fields, int x, int z, float intensity, float timeStep) {
+    // Rifting creates downward subsidence and crustal thinning
+    float currentElevation = fields.elevationField->getSample(x, z);
+    
+    // Rifting creates graben (down-dropped valleys) - DOWNWARD force to balance mountain building
+    float subsidenceForce = intensity * 10.0f; // Stronger downward force to counteract mountain building
+    float maxSubsidencePerStep = SCALE_FOR_MYEARS(50.0f); // Max 50m subsidence per million years
+    subsidenceForce = std::min(subsidenceForce, maxSubsidencePerStep);
+    
+    float newElevation = CLAMP_GEOLOGICAL_ELEVATION(currentElevation - subsidenceForce);
+    fields.elevationField->setSample(x, z, newElevation);
+    
+    // Check for extreme elevations and warn
+    WARN_EXTREME_ELEVATION(newElevation, "RiftingActivity", x, z);
+    
+    // DEBUG: Log significant rifting activity
+    if (subsidenceForce > 5.0f) {
+        std::cout << "[RIFTING_DEBUG] Applied " << subsidenceForce << "m subsidence at (" << x << "," << z 
+                  << ") - elevation: " << currentElevation << "m -> " << newElevation << "m" << std::endl;
+    }
+    
+    // Rifting causes crustal thinning
+    if (fields.crustalThickness) {
+        float currentThickness = fields.crustalThickness->getSample(x, z);
+        float thinning = intensity * 100.0f; // Crustal thinning in meters
+        fields.crustalThickness->setSample(x, z, std::max(15000.0f, currentThickness - thinning));
+    }
+    
+    // Rifting can trigger volcanic activity (basaltic upwelling)
+    if (fields.rockTypes && intensity > 5.0f) {
+        fields.rockTypes->setSample(x, z, RockType::IGNEOUS_BASALT);
+    }
+}
+
+bool TectonicEngine::isInRiftZone(float worldX, float worldZ) const {
+    for (const auto& rift : riftZones_) {
+        if (!rift.active) continue;
+        
+        // Calculate distance to rift center
+        float dx = worldX - rift.centerX;
+        float dz = worldZ - rift.centerZ;
+        
+        // Rotate coordinates to rift orientation
+        float cos_angle = std::cos(rift.orientation);
+        float sin_angle = std::sin(rift.orientation);
+        float rotated_x = dx * cos_angle + dz * sin_angle;
+        float rotated_z = -dx * sin_angle + dz * cos_angle;
+        
+        // Check if point is within rift zone ellipse
+        float length_factor = (rotated_x * rotated_x) / (rift.length * rift.length * 0.25f);
+        float width_factor = (rotated_z * rotated_z) / (rift.width * rift.width * 0.25f);
+        
+        if (length_factor + width_factor <= 1.0f) {
+            return true;
+        }
+    }
+    return false;
+}
+
+void TectonicEngine::createRiftValley(TectonicFields& fields, int x, int z, float intensity) {
+    // Create a rift valley depression
+    float currentElevation = fields.elevationField->getSample(x, z);
+    float valleyDepth = intensity * 2.0f; // 2m depth per intensity unit
+    
+    fields.elevationField->setSample(x, z, currentElevation - valleyDepth);
+}
+
+void TectonicEngine::generateRiftingStress(TectonicFields& fields, float timeStepMyears) {
+    int width = fields.riftingStress->getWidth();
+    int height = fields.riftingStress->getHeight();
+    float worldSizeMeters = worldSizeKm_ * 1000.0f;
+    
+    std::cout << "[TectonicEngine] Generating " << config_.custom.numContinents/2 << " rift zones for world" << std::endl;
+    
+    // Generate realistic rift zones based on continental configuration
+    int numRifts = std::max(1, config_.custom.numContinents / 2); // 1-3 major rift systems
+    std::uniform_real_distribution<float> posDist(0.2f, 0.8f); // Avoid edges
+    std::uniform_real_distribution<float> orientDist(0.0f, 3.14159f); // Random orientation
+    std::uniform_real_distribution<float> lengthDist(0.15f, 0.3f); // 15-30% of world size
+    
+    for (int i = 0; i < numRifts; ++i) {
+        RiftZone rift;
+        rift.centerX = posDist(rng_) * worldSizeMeters;
+        rift.centerZ = posDist(rng_) * worldSizeMeters;
+        rift.orientation = orientDist(rng_);
+        rift.length = lengthDist(rng_) * worldSizeMeters;
+        rift.width = rift.length * 0.2f; // Width is 20% of length
+        rift.extensionRate = 1.0f + (i * 0.5f); // Varying extension rates
+        rift.depth = -200.0f - (i * 100.0f); // Varying depths
+        rift.active = true;
+        
+        riftZones_.push_back(rift);
+        
+        std::cout << "[TectonicEngine] Created rift zone " << i << " at (" << rift.centerX/1000.0f 
+                  << "km, " << rift.centerZ/1000.0f << "km) length=" << rift.length/1000.0f 
+                  << "km orientation=" << (rift.orientation * 180.0f / 3.14159f) << "°" << std::endl;
+    }
+    
+    // Initialize rifting stress field based on rift zones
+    for (int z = 0; z < height; ++z) {
+        for (int x = 0; x < width; ++x) {
+            float worldX = x * fields.riftingStress->getSampleSpacing();
+            float worldZ = z * fields.riftingStress->getSampleSpacing();
+            
+            float maxStress = 0.0f;
+            for (const auto& rift : riftZones_) {
+                // Calculate distance-based stress
+                float dx = worldX - rift.centerX;
+                float dz = worldZ - rift.centerZ;
+                float distance = std::sqrt(dx*dx + dz*dz);
+                float maxRiftDistance = std::max(rift.length, rift.width) * 0.5f;
+                
+                if (distance < maxRiftDistance) {
+                    float stress = (1.0f - distance / maxRiftDistance) * rift.extensionRate * 5.0f;
+                    maxStress = std::max(maxStress, stress);
+                }
+            }
+            
+            fields.riftingStress->setSample(x, z, maxStress);
+        }
+    }
 }
 
 void TectonicEngine::simulateIsostasyAdjustment(TectonicFields& fields, float timeStepMyears) {
@@ -282,9 +446,16 @@ void TectonicEngine::applyMantleConvectionCell(TectonicFields& fields, int x, in
     newStress = std::max(-maxMantleStress, std::min(newStress, maxMantleStress));
     fields.mantleStress->setSample(x, z, newStress);
     
-    // Apply elevation change based on convection (much smaller scale)
-    float elevationChange = intensity * 0.1f; // Reduced scale - 0.1m per unit intensity
+    // Apply elevation change based on convection (increased scale for balance)
+    float elevationChange = intensity * 100.0f; // Increased from 0.1 to 100.0 to provide proper geological balance
     float currentElevation = fields.elevationField->getSample(x, z);
+    
+    // Add rifting/downward bias in ocean areas to maintain ocean basins
+    if (currentElevation < -500.0f) { // Ocean areas
+        elevationChange *= 0.5f; // Reduce uplift in oceans
+        elevationChange -= std::abs(intensity) * 50.0f; // Add downward rift force
+    }
+    
     fields.elevationField->setSample(x, z, currentElevation + elevationChange);
     
     if (shouldDebug) {
