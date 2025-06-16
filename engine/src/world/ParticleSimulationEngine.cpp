@@ -88,10 +88,11 @@ void ParticleSimulationEngine::InitializeParticles(int continentCount, float oce
 }
 
 void ParticleSimulationEngine::CreateContinentalParticles(int continentIndex, glm::vec2 center, float radius) {
-    // Use fractal distribution for realistic continental shapes
+    // Use fractal coastline generation for realistic continental shapes
     std::uniform_real_distribution<float> angleDist(0.0f, 2.0f * M_PI);
     std::uniform_real_distribution<float> radiusDist(0.0f, 1.0f);
     std::uniform_real_distribution<float> densityDist(0.7f, 1.0f);
+    std::uniform_real_distribution<float> fractalDist(-1.0f, 1.0f);
     
     // Calculate particle density based on continent size
     float continentArea = M_PI * radius * radius;
@@ -101,18 +102,54 @@ void ParticleSimulationEngine::CreateContinentalParticles(int continentIndex, gl
     for (int i = 0; i < particleCount; ++i) {
         TectonicParticle particle;
         
-        // Generate position with fractal distribution (creates realistic continental shapes)
+        // Generate position using fractal coastline algorithm
         float angle = angleDist(rng_);
-        float r = std::sqrt(radiusDist(rng_)) * radius * densityDist(rng_);
+        
+        // Create fractal coastline variation using multiple octaves of noise
+        float fractalRadius = radius;
+        
+        // Apply fractal variation to radius (creates irregular coastlines)
+        // First octave: Large-scale continental shape variation
+        float noise1 = std::sin(angle * 3.0f + continentIndex * 2.0f) * 0.3f;
+        
+        // Second octave: Medium-scale coastal features (bays, peninsulas)
+        float noise2 = std::sin(angle * 8.0f + continentIndex * 3.14f) * 0.15f;
+        
+        // Third octave: Small-scale coastal detail
+        float noise3 = std::sin(angle * 20.0f + continentIndex * 1.57f) * 0.08f;
+        
+        // Combine fractal noise to create realistic coastline variation
+        float coastlineVariation = noise1 + noise2 + noise3;
+        fractalRadius *= (1.0f + coastlineVariation);
+        
+        // Add some randomness for organic shapes
+        float r = std::sqrt(radiusDist(rng_)) * fractalRadius * densityDist(rng_);
+        
+        // Additional fractal variation for interior continent structure
+        float interiorNoise = std::sin(angle * 12.0f + continentIndex) * 0.1f;
+        r *= (1.0f + interiorNoise);
         
         particle.position = center + glm::vec2(std::cos(angle) * r, std::sin(angle) * r);
         
         // Ensure particle is within world bounds
         particle.position = ClampToWorldBounds(particle.position);
         
-        // Initialize continental properties
+        // Initialize continental properties with height variation based on distance from center
         InitializeParticleProperties(particle, true);
-        particle.elevation = CONTINENT_ELEVATION + radiusDist(rng_) * 300.0f; // 500-800m elevation
+        
+        // Create realistic elevation profile: higher in center, lower at edges
+        float distanceFromCenter = glm::length(particle.position - center) / fractalRadius;
+        float elevationMultiplier = 1.0f - distanceFromCenter * 0.6f; // Gradual decrease to coast
+        
+        // Add fractal elevation variation for mountain ranges and valleys
+        float elevationNoise = std::sin(angle * 6.0f + continentIndex * 2.5f) * 0.3f + 
+                              std::sin(angle * 15.0f + continentIndex * 1.8f) * 0.15f;
+        
+        particle.elevation = CONTINENT_ELEVATION + 
+                           elevationMultiplier * (300.0f + elevationNoise * 200.0f); // 500-1000m with variation
+        
+        // Ensure minimum continental elevation
+        particle.elevation = std::max(particle.elevation, 50.0f); // At least 50m above sea level
         
         particles_.push_back(particle);
     }
@@ -176,8 +213,11 @@ void ParticleSimulationEngine::InitializeParticleProperties(TectonicParticle& pa
 }
 
 void ParticleSimulationEngine::UpdateParticlePhysics(float timeStepYears) {
-    std::cout << "[ParticleSimulationEngine] UpdateParticlePhysics called with timeStep: " 
-              << timeStepYears << " years, " << particles_.size() << " particles" << std::endl;
+    // Only log every 10 steps to reduce spam
+    if (static_cast<int>(timeStepYears) % 10000 == 0) {
+        std::cout << "[ParticleSimulationEngine] UpdateParticlePhysics called with timeStep: " 
+                  << timeStepYears << " years, " << particles_.size() << " particles" << std::endl;
+    }
     
     if (particles_.empty()) {
         return;

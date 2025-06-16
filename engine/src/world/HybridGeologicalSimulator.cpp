@@ -56,7 +56,9 @@ void HybridGeologicalSimulator::Initialize(int continentCount, float oceanRatio)
               << particleEngine_->GetParticleCount() << " particles created." << std::endl;
     
     // Create initial snapshot for immediate UI display
+    std::cout << "[HybridGeologicalSimulator] Creating initial snapshot (this may take a moment)..." << std::endl;
     CreateSnapshot("Initial State", 0, 0.0f);
+    std::cout << "[HybridGeologicalSimulator] Initial snapshot created successfully" << std::endl;
 }
 
 bool HybridGeologicalSimulator::InitializeSimulation() {
@@ -77,8 +79,11 @@ void HybridGeologicalSimulator::RunSimulationStep(float timeStepYears) {
     // Use provided time step or default
     float actualTimeStep = (timeStepYears > 0.0f) ? timeStepYears : DEFAULT_TIME_STEP;
     
-    std::cout << "[HybridGeologicalSimulator] Running simulation step: " 
-              << actualTimeStep << " years (current: " << currentTime_ << ")" << std::endl;
+    // Only log every 10 steps to reduce spam
+    if (static_cast<int>(currentTime_) % 10000 == 0) {
+        std::cout << "[HybridGeologicalSimulator] Running simulation step: " 
+                  << actualTimeStep << " years (current: " << currentTime_ << ")" << std::endl;
+    }
     
     // Update particle physics
     particleEngine_->UpdateParticlePhysics(actualTimeStep);

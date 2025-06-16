@@ -368,8 +368,11 @@ void WorldMapRenderer::generateElevationData(VoxelCastle::World::SeedWorldGenera
                 // Progress reporting (only from thread 0 to avoid spam)
                 if (threadId == 0 && pixelIndex % 10000 == 0) {
                     int completed = pixelsCompleted.load();
-                    std::cout << "[WorldMapRenderer] Thread progress: " << completed << " of " << totalPixels << " pixels (" 
-                              << (100.0f * completed / totalPixels) << "%)" << std::endl;
+                    // Reduce verbose progress updates - only log every 25% and first/last  
+                    if (completed == 0 || completed >= totalPixels || completed % (totalPixels / 4) == 0) {
+                        std::cout << "[WorldMapRenderer] Thread progress: " << completed << " of " << totalPixels << " pixels (" 
+                                  << (100.0f * completed / totalPixels) << "%)" << std::endl;
+                    }
                 }
                 
                 // Calculate world coordinates (same logic as before)
