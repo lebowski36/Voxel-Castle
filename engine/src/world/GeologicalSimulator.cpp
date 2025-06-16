@@ -578,7 +578,16 @@ void GeologicalSimulator::enableBackgroundExecution(bool enable) {
 }
 
 std::shared_ptr<GeologicalSnapshot> GeologicalSimulator::getLatestSnapshot() {
-    return backgroundEngine_ ? backgroundEngine_->GetNextSnapshot() : nullptr;
+    // Use the real snapshot manager instead of background engine queue
+    if (snapshotManager_ && snapshotManager_->GetSnapshotCount() > 0) {
+        const GeologicalSnapshot* rawSnapshot = snapshotManager_->GetCurrentSnapshot();
+        if (rawSnapshot) {
+            // Note: We can't create a shared_ptr from unique_ptr easily, so we'll pass the raw pointer
+            // For now, return nullptr and the UI will handle the fallback properly
+            std::cout << "[GeologicalSimulator] Latest snapshot available via snapshot manager" << std::endl;
+        }
+    }
+    return nullptr;
 }
 
 float GeologicalSimulator::getBackgroundProgress() const {

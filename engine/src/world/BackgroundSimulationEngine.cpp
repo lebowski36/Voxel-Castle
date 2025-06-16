@@ -188,33 +188,17 @@ bool BackgroundSimulationEngine::ShouldYieldToUI() const {
 
 void BackgroundSimulationEngine::CreateAndQueueSnapshot() {
     try {
-        // Create snapshot with current simulation state
-        // Note: This requires the simulator to have a thread-safe snapshot creation method
-        
-        // For now, we'll create a simple snapshot
-        // In the full implementation, this would call simulator_->createSnapshotForBackground()
-        
-        // Get progress info from simulator
+        // Create snapshot with current simulation state from the real simulator
         PhaseInfo progressInfo = simulator_->getProgressInfo();
         
         std::string description = "Background Simulation (" + 
                                 std::to_string(static_cast<int>(progressInfo.totalProgress * 100)) + "%)";
         
-        // Create snapshot with geological data - use actual simulation dimensions
-        // Get real simulation dimensions from the simulator
-        auto simInfo = simulator_->getSimulationInfo();
+        // Use the simulator's createSnapshot method to copy real geological data
+        simulator_->createSnapshot(description, progressInfo.totalProgress);
         
-        auto snapshot = std::make_shared<GeologicalSnapshot>(
-            simInfo.width, simInfo.height, simInfo.spacing,  // Use actual simulation dimensions
-            0.0f,  // simTime (will be filled by snapshot with actual data)
-            description,  // phase description
-            0,  // step number (will be filled by snapshot)
-            progressInfo.totalProgress  // completion (0.0 to 1.0)
-        );
-        
-        if (snapshot) {
-            AddSnapshot(snapshot);
-        }
+        std::cout << "[BackgroundSimulationEngine] Created snapshot with real geological data: " 
+                  << description << std::endl;
         
     } catch (const std::exception& e) {
         std::cerr << "[BackgroundSimulationEngine] Failed to create snapshot: " 
