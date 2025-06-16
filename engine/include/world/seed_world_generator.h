@@ -138,8 +138,16 @@ public:
      * @return Pointer to HybridGeologicalSimulator, nullptr if not initialized
      */
     const HybridGeologicalSimulator* getGeologicalSimulator() const { 
-        std::cout << "[SeedWorldGenerator] getGeologicalSimulator() called - useGeologicalRealism_: " << useGeologicalRealism_ 
-                  << ", geologicalSimulator_ exists: " << (geologicalSimulator_ ? "YES" : "NO") << std::endl;
+        // Limit extremely spammy getGeologicalSimulator logging
+        static int getGeoLogCount = 0;
+        if (getGeoLogCount < 3) {
+            std::cout << "[SeedWorldGenerator] getGeologicalSimulator() called - useGeologicalRealism_: " << useGeologicalRealism_ 
+                      << ", geologicalSimulator_ exists: " << (geologicalSimulator_ ? "YES" : "NO") << std::endl;
+            getGeoLogCount++;
+            if (getGeoLogCount == 3) {
+                std::cout << "[SeedWorldGenerator] Further getGeologicalSimulator() logs suppressed (called frequently)" << std::endl;
+            }
+        }
         return geologicalSimulator_.get(); 
     }
 

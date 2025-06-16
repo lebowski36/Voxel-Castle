@@ -390,8 +390,16 @@ void WorldSimulationUI::createWorldPreview() {
     // The summary area starts at: worldMapX_ + worldMapWidth_ + ELEMENT_SPACING
     // Available summary width: panelWidth - worldMapWidth_ - ELEMENT_SPACING
     
-    std::cout << "[WorldSimulationUI] Square preview created: " << mapSize << "x" << mapSize 
-              << " at (" << worldMapX_ << "," << worldMapY_ << ")" << std::endl;
+    // Limit preview creation logging to reduce spam
+    static int previewLogCount = 0;
+    if (previewLogCount < 2) {
+        std::cout << "[WorldSimulationUI] Square preview created: " << mapSize << "x" << mapSize 
+                  << " at (" << worldMapX_ << "," << worldMapY_ << ")" << std::endl;
+        previewLogCount++;
+        if (previewLogCount == 2) {
+            std::cout << "[WorldSimulationUI] Further preview creation logs suppressed" << std::endl;
+        }
+    }
     
     currentY_ += mapSize + ELEMENT_SPACING;
     
@@ -599,9 +607,17 @@ void WorldSimulationUI::createProgressPanels() {
     float summaryY = worldMapY_; // Start at same height as preview
     float progressHeight = 80.0f;
     
-    std::cout << "[WorldSimulationUI] Creating progress panels after legend - "
-              << "Summary area: " << summaryWidth << "w x " << progressHeight << "h "
-              << "at (" << summaryX << "," << summaryY << ") [constrained from " << availableSummaryWidth << "w]" << std::endl;
+    // Limit progress panel creation logging to reduce spam
+    static int progressLogCount = 0;
+    if (progressLogCount < 2) {
+        std::cout << "[WorldSimulationUI] Creating progress panels after legend - "
+                  << "Summary area: " << summaryWidth << "w x " << progressHeight << "h "
+                  << "at (" << summaryX << "," << summaryY << ") [constrained from " << availableSummaryWidth << "w]" << std::endl;
+        progressLogCount++;
+        if (progressLogCount == 2) {
+            std::cout << "[WorldSimulationUI] Further progress panel logs suppressed" << std::endl;
+        }
+    }
     
     // Current phase progress (positioned after legend)
     auto progressLabel = std::make_shared<VoxelEngine::UI::UIButton>(renderer_);
@@ -663,9 +679,17 @@ void WorldSimulationUI::createGenerationLog() {
     // Position log below the progress panels in the summary area
     float summaryY = worldMapY_ + 140.0f; // After progress panels (30 + 80 + 30 spacing)
     
-    std::cout << "[WorldSimulationUI] Creating generation log after legend - "
-              << "Log area: " << summaryWidth << "w x " << logHeight << "h "
-              << "at (" << summaryX << "," << summaryY << ") [using full available width]" << std::endl;
+    // Limit generation log creation logging to reduce spam
+    static int genLogCount = 0;
+    if (genLogCount < 2) {
+        std::cout << "[WorldSimulationUI] Creating generation log after legend - "
+                  << "Log area: " << summaryWidth << "w x " << logHeight << "h "
+                  << "at (" << summaryX << "," << summaryY << ") [using full available width]" << std::endl;
+        genLogCount++;
+        if (genLogCount == 2) {
+            std::cout << "[WorldSimulationUI] Further generation log logs suppressed" << std::endl;
+        }
+    }
     
     // Generation log panel label
     auto logLabel = std::make_shared<VoxelEngine::UI::UIButton>(renderer_);
@@ -1710,8 +1734,16 @@ void WorldSimulationUI::createElevationLegend() {
         currentBandY += bandHeight;
     }
     
-    std::cout << "[WorldSimulationUI] Created elevation legend at (" << legendX << "," << legendY 
-              << ") size " << legendWidth << "x" << legendHeight << std::endl;
+    // Limit UI creation logging to reduce spam
+    static int uiLogCount = 0;
+    if (uiLogCount < 2) {
+        std::cout << "[WorldSimulationUI] Created elevation legend at (" << legendX << "," << legendY 
+                  << ") size " << legendWidth << "x" << legendHeight << std::endl;
+        uiLogCount++;
+        if (uiLogCount == 2) {
+            std::cout << "[WorldSimulationUI] Further UI creation logs suppressed" << std::endl;
+        }
+    }
 }
 
 void WorldSimulationUI::renderSimpleDebugInfo() {

@@ -91,47 +91,109 @@ void ParticleSimulationEngine::CreateContinentalParticles(int continentIndex, gl
     // Use fractal coastline generation for realistic continental shapes
     std::uniform_real_distribution<float> angleDist(0.0f, 2.0f * M_PI);
     std::uniform_real_distribution<float> radiusDist(0.0f, 1.0f);
-    std::uniform_real_distribution<float> densityDist(0.7f, 1.0f);
+    std::uniform_real_distribution<float> densityDist(0.8f, 1.0f); // Increased density for more cohesive landmasses
     std::uniform_real_distribution<float> fractalDist(-1.0f, 1.0f);
     
-    // Calculate particle density based on continent size
+    // Calculate particle density - INCREASED for larger, more cohesive continents
     float continentArea = M_PI * radius * radius;
-    int particleCount = static_cast<int>(continentArea / (PARTICLE_INTERACTION_RADIUS * PARTICLE_INTERACTION_RADIUS * 0.5f));
-    particleCount = std::max(50, std::min(500, particleCount)); // Reasonable bounds
+    int particleCount = static_cast<int>(continentArea / (PARTICLE_INTERACTION_RADIUS * PARTICLE_INTERACTION_RADIUS * 0.3f)); // More particles per area
+    particleCount = std::max(200, std::min(800, particleCount)); // Increased minimum for larger landmasses
     
-    for (int i = 0; i < particleCount; ++i) {
+    // Create main continental core (80% of particles concentrated in center)
+    int coreParticles = static_cast<int>(particleCount * 0.8f);
+    int peripheryParticles = particleCount - coreParticles;
+    
+    // Generate seed-based continental shape parameters
+    std::uniform_real_distribution<float> shapeDist(0.0f, 1.0f);
+    std::uniform_real_distribution<float> elongationDist(0.6f, 2.5f); // How stretched the continent is
+    std::uniform_real_distribution<float> orientationDist(0.0f, 2.0f * M_PI); // Continental orientation
+    
+    // Seed-based shape characteristics for this continent
+    uint32_t continentSeed = seed_ + continentIndex * 12345;
+    std::mt19937 shapeRng(continentSeed);
+    
+    float shapeRandomness = shapeDist(shapeRng);
+    float elongationFactor = elongationDist(shapeRng); // 1.0 = circular, >1.0 = elongated
+    float continentOrientation = orientationDist(shapeRng); // Main axis orientation
+    
+    // Determine continental shape type based on seed
+    enum class ContinentalShape { CIRCULAR, OVAL, ELONGATED, CRESCENT };
+    ContinentalShape shapeType;
+    
+    if (shapeRandomness < 0.3f) {
+        shapeType = ContinentalShape::CIRCULAR;
+        elongationFactor = 0.8f + shapeDist(shapeRng) * 0.4f; // 0.8-1.2
+    } else if (shapeRandomness < 0.6f) {
+        shapeType = ContinentalShape::OVAL;
+        elongationFactor = 1.2f + shapeDist(shapeRng) * 0.8f; // 1.2-2.0
+    } else if (shapeRandomness < 0.85f) {
+        shapeType = ContinentalShape::ELONGATED;
+        elongationFactor = 1.8f + shapeDist(shapeRng) * 0.7f; // 1.8-2.5
+    } else {
+        shapeType = ContinentalShape::CRESCENT;
+        elongationFactor = 1.4f + shapeDist(shapeRng) * 0.6f; // 1.4-2.0
+    }
+
+    // Core continental particles (main landmass)
+    for (int i = 0; i < coreParticles; ++i) {
         TectonicParticle particle;
         
-        // Generate position using fractal coastline algorithm
+        // Generate position using fractal coastline algorithm - concentrated in center
         float angle = angleDist(rng_);
         
         // Create fractal coastline variation using multiple octaves of noise
-        float fractalRadius = radius;
+        float fractalRadius = radius * 0.7f; // Smaller radius for core landmass
         
         // Apply fractal variation to radius (creates irregular coastlines)
-        // First octave: Large-scale continental shape variation
-        float noise1 = std::sin(angle * 3.0f + continentIndex * 2.0f) * 0.3f;
-        
-        // Second octave: Medium-scale coastal features (bays, peninsulas)
-        float noise2 = std::sin(angle * 8.0f + continentIndex * 3.14f) * 0.15f;
-        
-        // Third octave: Small-scale coastal detail
-        float noise3 = std::sin(angle * 20.0f + continentIndex * 1.57f) * 0.08f;
+        // Reduced variation for more cohesive landmasses
+        float noise1 = std::sin(angle * 2.0f + continentIndex * 2.0f) * 0.2f; // Reduced from 0.3f
+        float noise2 = std::sin(angle * 6.0f + continentIndex * 3.14f) * 0.1f; // Reduced from 0.15f
+        float noise3 = std::sin(angle * 15.0f + continentIndex * 1.57f) * 0.05f; // Reduced from 0.08f
         
         // Combine fractal noise to create realistic coastline variation
         float coastlineVariation = noise1 + noise2 + noise3;
         fractalRadius *= (1.0f + coastlineVariation);
         
-        // Add some randomness for organic shapes
-        float r = std::sqrt(radiusDist(rng_)) * fractalRadius * densityDist(rng_);
+        // More concentrated distribution for main landmass
+        float r = std::pow(radiusDist(rng_), 0.5f) * fractalRadius * densityDist(rng_); // Square root for more center concentration
         
-        // Additional fractal variation for interior continent structure
-        float interiorNoise = std::sin(angle * 12.0f + continentIndex) * 0.1f;
-        r *= (1.0f + interiorNoise);
+        // Apply continental shape transformation
+        glm::vec2 basePosition = glm::vec2(std::cos(angle) * r, std::sin(angle) * r);
         
-        particle.position = center + glm::vec2(std::cos(angle) * r, std::sin(angle) * r);
+        // Transform based on continental shape type
+        switch (shapeType) {
+            case ContinentalShape::CIRCULAR:
+                // Keep roughly circular with minor variation
+                basePosition.y *= (0.9f + shapeDist(shapeRng) * 0.2f);
+                break;
+                
+            case ContinentalShape::OVAL:
+                // Elongated in one direction
+                basePosition.x *= elongationFactor;
+                break;
+                
+            case ContinentalShape::ELONGATED:
+                // Very stretched continent (like Chile or Norway)
+                basePosition.x *= elongationFactor;
+                basePosition.y *= 0.8f;
+                break;
+                
+            case ContinentalShape::CRESCENT:
+                // Crescent or arc shape (like Italy or Japan)
+                float crescentFactor = std::sin(angle * 1.5f + continentOrientation) * 0.3f + 1.0f;
+                basePosition.x *= elongationFactor * crescentFactor;
+                break;
+        }
         
-        // Ensure particle is within world bounds
+        // Rotate the entire continent based on orientation
+        float cosOrient = std::cos(continentOrientation);
+        float sinOrient = std::sin(continentOrientation);
+        glm::vec2 rotatedPosition(
+            basePosition.x * cosOrient - basePosition.y * sinOrient,
+            basePosition.x * sinOrient + basePosition.y * cosOrient
+        );
+        
+        particle.position = center + rotatedPosition;
         particle.position = ClampToWorldBounds(particle.position);
         
         // Initialize continental properties with height variation based on distance from center
@@ -139,16 +201,47 @@ void ParticleSimulationEngine::CreateContinentalParticles(int continentIndex, gl
         
         // Create realistic elevation profile: higher in center, lower at edges
         float distanceFromCenter = glm::length(particle.position - center) / fractalRadius;
-        float elevationMultiplier = 1.0f - distanceFromCenter * 0.6f; // Gradual decrease to coast
+        float elevationMultiplier = 1.2f - distanceFromCenter * 0.4f; // Higher base elevation
         
         // Add fractal elevation variation for mountain ranges and valleys
-        float elevationNoise = std::sin(angle * 6.0f + continentIndex * 2.5f) * 0.3f + 
-                              std::sin(angle * 15.0f + continentIndex * 1.8f) * 0.15f;
+        float elevationNoise = std::sin(angle * 4.0f + continentIndex * 2.5f) * 0.2f + 
+                              std::sin(angle * 10.0f + continentIndex * 1.8f) * 0.1f;
         
         particle.elevation = CONTINENT_ELEVATION + 
-                           elevationMultiplier * (300.0f + elevationNoise * 200.0f); // 500-1000m with variation
+                           elevationMultiplier * (400.0f + elevationNoise * 300.0f); // Higher elevation range
         
-        // Ensure minimum continental elevation
+        // Ensure solid continental elevation
+        particle.elevation = std::max(particle.elevation, 200.0f); // Minimum 200m above sea level
+        
+        particles_.push_back(particle);
+    }
+    
+    // Peripheral particles (smaller islands and coastal features)
+    for (int i = 0; i < peripheryParticles; ++i) {
+        TectonicParticle particle;
+        
+        float angle = angleDist(rng_);
+        
+        // Larger radius variation for peripheral islands
+        float peripheralRadius = radius * (0.8f + radiusDist(rng_) * 0.4f); // 0.8-1.2x radius
+        
+        // More dramatic fractal variation for interesting island shapes
+        float noise1 = std::sin(angle * 3.0f + continentIndex * 2.0f) * 0.4f;
+        float noise2 = std::sin(angle * 8.0f + continentIndex * 3.14f) * 0.2f;
+        float noise3 = std::sin(angle * 20.0f + continentIndex * 1.57f) * 0.1f;
+        
+        float coastlineVariation = noise1 + noise2 + noise3;
+        peripheralRadius *= (1.0f + coastlineVariation);
+        
+        float r = (0.7f + radiusDist(rng_) * 0.3f) * peripheralRadius; // Outer ring
+        
+        particle.position = center + glm::vec2(std::cos(angle) * r, std::sin(angle) * r);
+        particle.position = ClampToWorldBounds(particle.position);
+        
+        InitializeParticleProperties(particle, true);
+        
+        // Lower elevation for islands
+        particle.elevation = CONTINENT_ELEVATION * 0.6f + radiusDist(rng_) * 200.0f; // 300-500m elevation
         particle.elevation = std::max(particle.elevation, 50.0f); // At least 50m above sea level
         
         particles_.push_back(particle);
@@ -213,10 +306,15 @@ void ParticleSimulationEngine::InitializeParticleProperties(TectonicParticle& pa
 }
 
 void ParticleSimulationEngine::UpdateParticlePhysics(float timeStepYears) {
-    // Only log every 10 steps to reduce spam
-    if (static_cast<int>(timeStepYears) % 10000 == 0) {
+    // Only log first 5 calls to reduce spam (was 10)
+    static int logCount = 0;
+    if (logCount < 5) {
         std::cout << "[ParticleSimulationEngine] UpdateParticlePhysics called with timeStep: " 
                   << timeStepYears << " years, " << particles_.size() << " particles" << std::endl;
+        logCount++;
+    } else if (logCount == 5) {
+        std::cout << "[ParticleSimulationEngine] Further physics updates will not be logged (spam reduction)" << std::endl;
+        logCount++; // Prevent this message from repeating
     }
     
     if (particles_.empty()) {

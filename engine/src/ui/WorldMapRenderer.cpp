@@ -116,8 +116,16 @@ void WorldMapRenderer::generateWorldMap(VoxelCastle::World::SeedWorldGenerator* 
     bool shouldUpdateNow = needsRegeneration || shouldUpdate(changeMagnitude, timeSinceLastUpdate);
     
     if (!shouldUpdateNow) {
-        std::cout << "[WorldMapRenderer] Adaptive update - change magnitude " << changeMagnitude 
-                  << " below threshold, time since update " << timeSinceLastUpdate << "s" << std::endl;
+        // Limit adaptive update below-threshold logging to reduce spam
+        static int belowThresholdLogCount = 0;
+        if (belowThresholdLogCount < 3) {
+            std::cout << "[WorldMapRenderer] Adaptive update - change magnitude " << changeMagnitude 
+                      << " below threshold, time since update " << timeSinceLastUpdate << "s" << std::endl;
+            belowThresholdLogCount++;
+            if (belowThresholdLogCount == 3) {
+                std::cout << "[WorldMapRenderer] Further below-threshold adaptive update logs suppressed" << std::endl;
+            }
+        }
         return;
     }
     
@@ -129,8 +137,16 @@ void WorldMapRenderer::generateWorldMap(VoxelCastle::World::SeedWorldGenerator* 
     lastUpdateTime_ = std::chrono::duration<float>(currentTime - std::chrono::steady_clock::time_point{}).count();
     accumulatedChange_ = 0.0f; // Reset accumulated change
     
-    std::cout << "[WorldMapRenderer] Adaptive update triggered - change magnitude: " << changeMagnitude 
-              << ", time since last: " << timeSinceLastUpdate << "s" << std::endl;
+    // Limit adaptive update triggered logging to reduce spam
+    static int triggeredLogCount = 0;
+    if (triggeredLogCount < 5) {
+        std::cout << "[WorldMapRenderer] Adaptive update triggered - change magnitude: " << changeMagnitude 
+                  << ", time since last: " << timeSinceLastUpdate << "s" << std::endl;
+        triggeredLogCount++;
+        if (triggeredLogCount == 5) {
+            std::cout << "[WorldMapRenderer] Further adaptive update triggered logs suppressed" << std::endl;
+        }
+    }
     lastPhase = phase;
     lastMode = mode;
     lastSeed = worldSeed;
@@ -368,10 +384,12 @@ void WorldMapRenderer::generateElevationData(VoxelCastle::World::SeedWorldGenera
                 // Progress reporting (only from thread 0 to avoid spam)
                 if (threadId == 0 && pixelIndex % 10000 == 0) {
                     int completed = pixelsCompleted.load();
-                    // Reduce verbose progress updates - only log every 25% and first/last  
-                    if (completed == 0 || completed >= totalPixels || completed % (totalPixels / 4) == 0) {
+                    // Limit progress logging to reduce spam
+                    static int progressLogCount = 0;
+                    if (progressLogCount < 3 && (completed == 0 || completed >= totalPixels || completed % (totalPixels / 4) == 0)) {
                         std::cout << "[WorldMapRenderer] Thread progress: " << completed << " of " << totalPixels << " pixels (" 
                                   << (100.0f * completed / totalPixels) << "%)" << std::endl;
+                        if (completed >= totalPixels) progressLogCount++;
                     }
                 }
                 
@@ -416,7 +434,16 @@ void WorldMapRenderer::generateElevationData(VoxelCastle::World::SeedWorldGenera
     
     auto endTime = std::chrono::high_resolution_clock::now();
     auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(endTime - startTime);
-    std::cout << "[WorldMapRenderer] Pixel generation completed in " << duration.count() << "ms" << std::endl;
+    
+    // Limit pixel generation completion logs to reduce spam
+    static int completionLogCount = 0;
+    if (completionLogCount < 5) {
+        std::cout << "[WorldMapRenderer] Pixel generation completed in " << duration.count() << "ms" << std::endl;
+        completionLogCount++;
+        if (completionLogCount == 5) {
+            std::cout << "[WorldMapRenderer] Further pixel generation logs suppressed to reduce spam" << std::endl;
+        }
+    }
     
     // Find height range for debugging
     float minHeight = elevationData_[0];
@@ -427,7 +454,15 @@ void WorldMapRenderer::generateElevationData(VoxelCastle::World::SeedWorldGenera
         maxHeight = std::max(maxHeight, elevationData_[i]);
     }
     
-    std::cout << "[WorldMapRenderer] Elevation range: " << minHeight << "m to " << maxHeight << "m" << std::endl;
+    // Limit elevation range logging to reduce spam
+    static int elevationLogCount = 0;
+    if (elevationLogCount < 3) {
+        std::cout << "[WorldMapRenderer] Elevation range: " << minHeight << "m to " << maxHeight << "m" << std::endl;
+        elevationLogCount++;
+        if (elevationLogCount == 3) {
+            std::cout << "[WorldMapRenderer] Further elevation range logs suppressed" << std::endl;
+        }
+    }
 }
 
 // CRITICAL FIX: Seed-based terrain generation for immediate preview variation

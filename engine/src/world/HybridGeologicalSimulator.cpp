@@ -80,9 +80,11 @@ void HybridGeologicalSimulator::RunSimulationStep(float timeStepYears) {
     float actualTimeStep = (timeStepYears > 0.0f) ? timeStepYears : DEFAULT_TIME_STEP;
     
     // Only log every 10 steps to reduce spam
-    if (static_cast<int>(currentTime_) % 10000 == 0) {
+    static int logCount = 0;
+    if (logCount < 10) {
         std::cout << "[HybridGeologicalSimulator] Running simulation step: " 
                   << actualTimeStep << " years (current: " << currentTime_ << ")" << std::endl;
+        logCount++;
     }
     
     // Update particle physics
