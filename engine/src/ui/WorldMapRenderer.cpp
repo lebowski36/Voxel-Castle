@@ -326,25 +326,20 @@ void WorldMapRenderer::generateElevationData(VoxelCastle::World::SeedWorldGenera
     // Fallback to tectonic simulator if geological simulation is not available
     const VoxelCastle::TectonicSimulator* tectonicSim = generator->getTectonicSimulator();
     
-    std::cout << "[WorldMapRenderer] === 3.0 World Generation System Integration ===" << std::endl;
-    std::cout << "[WorldMapRenderer] Geological simulator: " << (geologicalSim ? "Available (PRIMARY)" : "Not available") << std::endl;
-    std::cout << "[WorldMapRenderer] Tectonic simulator: " << (tectonicSim ? "Available (FALLBACK)" : "Not available") << std::endl;
-    if (tectonicSim) {
-        std::cout << "[WorldMapRenderer] Tectonic simulation complete: " << (tectonicSim->IsSimulationComplete() ? "Yes" : "No") << std::endl;
-        std::cout << "[WorldMapRenderer] Number of plates: " << tectonicSim->GetPlates().size() << std::endl;
-    }
-    
     // Prioritize geological simulator (3.0 World Gen) over legacy tectonic system
     bool usingNewSystem = geologicalSim != nullptr;
-    std::cout << "[WorldMapRenderer] Using " << (usingNewSystem ? "3.0 World Generation System (Fractal Continental)" : "Legacy Tectonic System") << std::endl;
     
-    std::cout << "[WorldMapRenderer] About to start pixel loop - resolution: " << resolution_ << "x" << resolution_ << std::endl;
+    static bool systemLogged = false;
+    if (!systemLogged) {
+        std::cout << "[WorldMapRenderer] Using " << (usingNewSystem ? "3.0 World Generation System" : "Legacy Tectonic System") << std::endl;
+        std::cout << "[WorldMapRenderer] Resolution: " << resolution_ << "x" << resolution_ << " pixels" << std::endl;
+        systemLogged = true;
+    }
+    
     int totalPixels = resolution_ * resolution_;
-    std::cout << "[WorldMapRenderer] Total pixels to generate: " << totalPixels << std::endl;
     
     // Use multithreading for performance
     const int numThreads = std::thread::hardware_concurrency();
-    std::cout << "[WorldMapRenderer] Using " << numThreads << " threads for pixel generation" << std::endl;
     
     std::atomic<int> pixelsCompleted(0);
     auto startTime = std::chrono::high_resolution_clock::now();

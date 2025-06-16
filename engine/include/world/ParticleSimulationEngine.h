@@ -162,7 +162,8 @@ private:
     static constexpr float PARTICLE_INTERACTION_RADIUS = 5000.0f;  // 5km default influence
     static constexpr float MIN_CRUSTAL_THICKNESS = 5000.0f;   // 5km minimum crust
     static constexpr float MAX_CRUSTAL_THICKNESS = 70000.0f;  // 70km maximum crust
-    static constexpr float OCEAN_ELEVATION = -2000.0f;       // Deep ocean baseline
+    static constexpr float OCEAN_ELEVATION = -100.0f;        // Reasonable ocean depth
+    static constexpr float CONTINENTAL_ELEVATION = 200.0f;   // Continental baseline
     static constexpr float CONTINENT_ELEVATION = 500.0f;     // Continental baseline
     
     // Particle initialization helpers

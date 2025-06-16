@@ -289,7 +289,17 @@ void ParticleSimulationEngine::ProcessParticleCollisions(TectonicParticle& parti
 }
 
 ParticleSimulationEngine::GeologicalData ParticleSimulationEngine::SampleAt(float worldX, float worldZ) const {
+    static int debugCallCount = 0;
+    debugCallCount++;
+    
     auto nearbyParticles = FindNearbyParticles(worldX, worldZ, PARTICLE_INTERACTION_RADIUS * 2.0f);
+    
+    if (debugCallCount <= 5) {
+        std::cout << "[ParticleSimulationEngine] DEBUG " << debugCallCount 
+                  << " - SampleAt(" << worldX << "," << worldZ << ")" << std::endl;
+        std::cout << "  Found " << nearbyParticles.size() << " nearby particles within radius " 
+                  << (PARTICLE_INTERACTION_RADIUS * 2.0f) << "m" << std::endl;
+    }
     
     if (nearbyParticles.empty()) {
         // Return default oceanic values if no particles nearby
@@ -297,6 +307,11 @@ ParticleSimulationEngine::GeologicalData ParticleSimulationEngine::SampleAt(floa
         data.elevation = OCEAN_ELEVATION;
         data.rockType = RockType::IGNEOUS_BASALT;
         data.crustalThickness = 5000.0f;
+        
+        if (debugCallCount <= 5) {
+            std::cout << "  No particles found - returning OCEAN_ELEVATION: " << OCEAN_ELEVATION << "m" << std::endl;
+        }
+        
         return data;
     }
     
@@ -313,6 +328,12 @@ ParticleSimulationEngine::GeologicalData ParticleSimulationEngine::SampleAt(floa
         [](const TectonicParticle& p) { return p.temperature; });
     
     result.rockType = InterpolateRockType(worldX, worldZ, nearbyParticles);
+    
+    if (debugCallCount <= 5) {
+        std::cout << "  Interpolated elevation: " << result.elevation << "m" << std::endl;
+        std::cout << "  Interpolated stress: " << result.stress << std::endl;
+        std::cout << "  Interpolated crustalThickness: " << result.crustalThickness << "m" << std::endl;
+    }
     
     // Calculate average velocity
     float vx = InterpolateFloat(worldX, worldZ, nearbyParticles,

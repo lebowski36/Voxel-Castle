@@ -233,9 +233,21 @@ GeologicalSample HybridGeologicalSimulator::GetSampleAt(float worldX, float worl
 }
 
 float HybridGeologicalSimulator::CombineParticleAndFractalData(float worldX, float worldZ, float resolution) {
+    static int debugCallCount = 0;
+    debugCallCount++;
+    
     // Get base geological data from particle simulation
     auto particleData = particleEngine_->SampleAt(worldX, worldZ);
     float baseElevation = particleData.elevation;
+    
+    // Debug first few calls to understand the data flow
+    if (debugCallCount <= 5) {
+        std::cout << "[HybridGeologicalSimulator] DEBUG " << debugCallCount 
+                  << " - Sampling at (" << worldX << "," << worldZ << ")" << std::endl;
+        std::cout << "  particleData.elevation: " << particleData.elevation << "m" << std::endl;
+        std::cout << "  particleData.crustalThickness: " << particleData.crustalThickness << "m" << std::endl;
+        std::cout << "  particleData.stress: " << particleData.stress << std::endl;
+    }
     
     // Build geological context for fractal generation
     GeologicalContext context = BuildGeologicalContext(particleData, worldX, worldZ);
@@ -250,6 +262,14 @@ float HybridGeologicalSimulator::CombineParticleAndFractalData(float worldX, flo
     
     // Apply detail balance
     float finalElevation = baseElevation + (detailComponent * fractalWeight_);
+    
+    if (debugCallCount <= 5) {
+        std::cout << "  baseElevation: " << baseElevation << "m" << std::endl;
+        std::cout << "  fractalDetail: " << fractalDetail << "m" << std::endl;
+        std::cout << "  detailComponent: " << detailComponent << "m" << std::endl;
+        std::cout << "  fractalWeight: " << fractalWeight_ << std::endl;
+        std::cout << "  finalElevation: " << finalElevation << "m" << std::endl;
+    }
     
     return finalElevation;
 }
@@ -469,6 +489,10 @@ void HybridGeologicalSimulator::CreateSnapshot(const std::string& phaseDescripti
     ContinuousField<float> sedimentLoadField(width, height, spacing);
     
     // Populate the fields by sampling the hybrid system
+    float minElevation = 9999.0f;
+    float maxElevation = -9999.0f;
+    int sampleCount = 0;
+    
     for (int z = 0; z < height; ++z) {
         for (int x = 0; x < width; ++x) {
             // Convert grid coordinates to world coordinates
@@ -478,6 +502,18 @@ void HybridGeologicalSimulator::CreateSnapshot(const std::string& phaseDescripti
             // Sample elevation from hybrid system
             float elevation = CombineParticleAndFractalData(worldX, worldZ);
             elevationField.setSample(x, z, elevation);
+            
+            // Track elevation range
+            minElevation = std::min(minElevation, elevation);
+            maxElevation = std::max(maxElevation, elevation);
+            sampleCount++;
+            
+            // Debug first few samples
+            if (sampleCount <= 10) {
+                std::cout << "[CreateSnapshot] Sample " << sampleCount 
+                          << " at grid(" << x << "," << z << ") world(" << worldX << "," << worldZ 
+                          << ") elevation: " << elevation << "m" << std::endl;
+            }
             
             // For now, use simple rock type assignment based on elevation
             RockType rockType = RockType::IGNEOUS_GRANITE; // Default continental
@@ -513,7 +549,9 @@ void HybridGeologicalSimulator::CreateSnapshot(const std::string& phaseDescripti
         currentTime_, phaseDescription, stepNumber, completionPercentage
     );
     
-    std::cout << "[HybridGeologicalSimulator] Snapshot created successfully" << std::endl;
+    std::cout << "[CreateSnapshot] Snapshot created successfully" << std::endl;
+    std::cout << "[CreateSnapshot] Elevation range in snapshot: " << minElevation 
+              << "m to " << maxElevation << "m (from " << sampleCount << " samples)" << std::endl;
 }
 
 } // namespace World
