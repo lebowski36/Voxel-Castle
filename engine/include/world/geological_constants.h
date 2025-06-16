@@ -52,11 +52,11 @@ struct GeologicalConstants {
     
     /** Process time scaling factors (multiplied with base timestep) */
     struct ProcessTimeScales {
-        static constexpr float TECTONIC = 1000.0f;  // 1000 * 1000 = 1 million years per tectonic step
-        static constexpr float EROSION = 100.0f;    // 100 * 1000 = 100,000 years per erosion step  
-        static constexpr float WATER = 10.0f;       // 10 * 1000 = 10,000 years per water step
+        static constexpr float TECTONIC = 100.0f;   // 100 * 1000 = 100,000 years per tectonic step
+        static constexpr float EROSION = 200.0f;    // 200 * 1000 = 200,000 years per erosion step (STRONGER than tectonics!)  
+        static constexpr float WATER = 50.0f;       // 50 * 1000 = 50,000 years per water step
         static constexpr float DETAIL = 1.0f;       // 1 * 1000 = 1,000 years per detail step
-        static constexpr float VOLCANIC = 5000.0f;  // 5000 * 1000 = 5 million years per volcanic step
+        static constexpr float VOLCANIC = 1000.0f;  // 1000 * 1000 = 1 million years per volcanic step (rare events)
     };
     
     /** Conversion factors for time calculations */
