@@ -299,7 +299,7 @@ void WorldMapRenderer::render(UIRenderer* renderer, int x, int y, int width, int
 }
 
 void WorldMapRenderer::generateElevationData(VoxelCastle::World::SeedWorldGenerator* generator, unsigned int seed) {
-    std::cout << "[WorldMapRenderer] Generating elevation data with seed: " << seed << std::endl;
+    std::cout << "[WorldMapRenderer] *** STARTING generateElevationData with seed: " << seed << std::endl;
     
     // CRITICAL FIX: Ensure the generator uses the correct seed for terrain variation
     // This was causing the "same lake" issue - base terrain wasn't using the seed
@@ -308,7 +308,7 @@ void WorldMapRenderer::generateElevationData(VoxelCastle::World::SeedWorldGenera
         // The seed should already be set in the generator, but let's ensure it's consistent
     }
     
-    std::cout << "[WorldMapRenderer] Generating elevation data..." << std::endl;
+    std::cout << "[WorldMapRenderer] About to sample world area..." << std::endl;
     
     // Use the actual world size passed in - this represents the entire world being generated
     // The world size should be stored from the generateWorldMap call
@@ -318,10 +318,14 @@ void WorldMapRenderer::generateElevationData(VoxelCastle::World::SeedWorldGenera
     std::cout << "[WorldMapRenderer] World size in meters: " << worldSize << "m x " << worldSize << "m" << std::endl;
     
     // Get geological simulator for new 3.0 World Generation System
+    std::cout << "[WorldMapRenderer] About to get geological simulator..." << std::endl;
     const auto* geologicalSim = generator->getGeologicalSimulator();
+    std::cout << "[WorldMapRenderer] Got geological simulator: " << (geologicalSim ? "SUCCESS" : "NULL") << std::endl;
     
     // Fallback to tectonic simulator if geological simulation is not available
+    std::cout << "[WorldMapRenderer] About to get tectonic simulator..." << std::endl;
     const VoxelCastle::TectonicSimulator* tectonicSim = generator->getTectonicSimulator();
+    std::cout << "[WorldMapRenderer] Got tectonic simulator: " << (tectonicSim ? "SUCCESS" : "NULL") << std::endl;
     
     std::cout << "[WorldMapRenderer] === 3.0 World Generation System Integration ===" << std::endl;
     std::cout << "[WorldMapRenderer] Geological simulator: " << (geologicalSim ? "Available (PRIMARY)" : "Not available") << std::endl;
@@ -335,8 +339,15 @@ void WorldMapRenderer::generateElevationData(VoxelCastle::World::SeedWorldGenera
     bool usingNewSystem = geologicalSim != nullptr;
     std::cout << "[WorldMapRenderer] Using " << (usingNewSystem ? "3.0 World Generation System (Fractal Continental)" : "Legacy Tectonic System") << std::endl;
     
+    std::cout << "[WorldMapRenderer] About to start pixel loop - resolution: " << resolution_ << "x" << resolution_ << std::endl;
+    int pixelCount = 0;
+    
     for (int y = 0; y < resolution_; y++) {
         for (int x = 0; x < resolution_; x++) {
+            pixelCount++;
+            if (pixelCount == 1 || pixelCount % 10000 == 0) {
+                std::cout << "[WorldMapRenderer] Processing pixel " << pixelCount << " of " << (resolution_ * resolution_) << std::endl;
+            }
             // Apply zoom and pan to determine world coordinates
             // Calculate the world area being viewed based on zoom level
             float viewAreaSize = worldSize / zoomLevel_;  // Size of area being viewed
@@ -358,14 +369,29 @@ void WorldMapRenderer::generateElevationData(VoxelCastle::World::SeedWorldGenera
             worldZ = std::max(0.0f, std::min(worldZ, worldSize - 1.0f));
             
             // Start with base terrain height
+            if (pixelCount <= 5) {
+                std::cout << "[WorldMapRenderer] Getting terrain height at (" << (int)worldX << "," << (int)worldZ << ")" << std::endl;
+            }
             int heightVoxels = generator->getTerrainHeightAt((int)worldX, (int)worldZ);
             float baseHeight = heightVoxels * 0.25f; // Convert voxels to meters (25cm per voxel)
+            if (pixelCount <= 5) {
+                std::cout << "[WorldMapRenderer] Got base height: " << baseHeight << "m" << std::endl;
+            }
             
             // PRIMARY: Use new 3.0 World Generation System (Snapshot-Based Responsive UI)
             float finalHeight = baseHeight;
             if (geologicalSim) {
+                if (pixelCount <= 3) {
+                    std::cout << "[WorldMapRenderer] Using geological simulator for pixel " << pixelCount << std::endl;
+                }
                 // Use snapshot system for responsive UI - no heavy geological computation on UI thread
                 const auto* snapshotManager = geologicalSim->getSnapshotManager();
+                if (pixelCount <= 3) {
+                    std::cout << "[WorldMapRenderer] Got snapshot manager: " << (snapshotManager ? "SUCCESS" : "NULL") << std::endl;
+                    if (snapshotManager) {
+                        std::cout << "[WorldMapRenderer] Snapshot count: " << snapshotManager->GetSnapshotCount() << std::endl;
+                    }
+                }
                 if (snapshotManager && snapshotManager->GetSnapshotCount() > 0) {
                     const auto* currentSnapshot = snapshotManager->GetCurrentSnapshot();
                     if (currentSnapshot) {
@@ -397,12 +423,18 @@ void WorldMapRenderer::generateElevationData(VoxelCastle::World::SeedWorldGenera
                 } else {
                     // CRITICAL FIX: Generate seed-based fractal terrain immediately instead of using "base terrain"
                     // This ensures the preview shows different worlds for different seeds from the start
-                    if (x < 3 && y < 3) {
-                        std::cout << "[WorldMapRenderer] Generating seed-based fractal terrain (seed: " << seed << ")" << std::endl;
+                    if (pixelCount <= 5) {  // Only log for first 5 pixels to reduce spam
+                        std::cout << "[WorldMapRenderer] No snapshots available - generating seed-based fractal terrain (seed: " << seed << ")" << std::endl;
                     }
                     
                     // Use fractal generation with the provided seed for immediate variation
+                    if (pixelCount <= 3) {
+                        std::cout << "[WorldMapRenderer] About to call generateSeedBasedTerrain..." << std::endl;
+                    }
                     finalHeight = generateSeedBasedTerrain(worldX, worldZ, seed);
+                    if (pixelCount <= 3) {
+                        std::cout << "[WorldMapRenderer] generateSeedBasedTerrain returned: " << finalHeight << std::endl;
+                    }
                 }
                 
                 // Clamp elevation to expanded World Gen 3.0 range (±2048m as per spec)
@@ -464,6 +496,12 @@ void WorldMapRenderer::generateElevationData(VoxelCastle::World::SeedWorldGenera
 
 // CRITICAL FIX: Seed-based terrain generation for immediate preview variation
 float WorldMapRenderer::generateSeedBasedTerrain(float worldX, float worldZ, unsigned int seed) {
+    static int callCount = 0;
+    callCount++;
+    if (callCount <= 5) {
+        std::cout << "[WorldMapRenderer] generateSeedBasedTerrain called " << callCount << " times - worldPos(" << worldX << "," << worldZ << ") seed:" << seed << std::endl;
+    }
+    
     // Use fractal noise with the provided seed to generate varied terrain immediately
     // This ensures different seeds produce visibly different worlds from the start
     
