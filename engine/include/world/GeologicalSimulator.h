@@ -130,6 +130,11 @@ public:
     bool isBackgroundSimulationRunning() const;          // Check if background simulation is active
     void enableBackgroundExecution(bool enable = true);  // Enable/disable background mode
     
+    // Background simulation controls
+    void pauseBackgroundSimulation();                    // Pause background simulation
+    void resumeBackgroundSimulation();                   // Resume background simulation
+    bool isBackgroundSimulationPaused() const;          // Check if background simulation is paused
+    
     // Thread-safe snapshot access for UI
     std::shared_ptr<GeologicalSnapshot> getLatestSnapshot(); // Get latest snapshot for UI rendering
     float getBackgroundProgress() const;                 // Get current progress (thread-safe)

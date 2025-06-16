@@ -739,5 +739,21 @@ std::unique_ptr<ContinuousField<GeologicalSample>> GeologicalSimulator::exportGe
     return nullptr;
 }
 
+void GeologicalSimulator::pauseBackgroundSimulation() {
+    if (backgroundEngine_) {
+        backgroundEngine_->SetPaused(true);
+    }
+}
+
+void GeologicalSimulator::resumeBackgroundSimulation() {
+    if (backgroundEngine_) {
+        backgroundEngine_->SetPaused(false);
+    }
+}
+
+bool GeologicalSimulator::isBackgroundSimulationPaused() const {
+    return backgroundEngine_ ? backgroundEngine_->IsPaused() : false;
+}
+
 } // namespace World
 } // namespace VoxelCastle

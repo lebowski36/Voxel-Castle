@@ -3,6 +3,7 @@
 #include "ui/elements/UITextPanel.h"
 #include "ui/WorldMapRenderer.h"
 #include "world/seed_world_generator.h"
+#include "world/GeologicalSimulator.h"
 #include "world/world_seed.h"
 #include "world/world_parameters.h"
 #include "world/world_persistence_manager.h"
@@ -1528,40 +1529,63 @@ void WorldSimulationUI::generationWorker() {
         addLogEntry("Initializing geological simulation system...", 0);
         currentPhase_ = GenerationPhase::TECTONICS;
         
-        // Initialize the step-based geological simulation
+        // Initialize the geological simulation
         if (!worldGenerator_->initializeStepBasedGeologicalSimulation()) {
             addLogEntry("ERROR: Failed to initialize geological simulation", 0);
             isRunning_ = false;
             return;
         }
         
-        addLogEntry("Starting step-based geological simulation...", 0);
+        // Get the geological simulator for background execution
+        const auto* geologicalSimulator = worldGenerator_->getGeologicalSimulator();
+        if (!geologicalSimulator) {
+            addLogEntry("ERROR: Could not access geological simulator", 0);
+            isRunning_ = false;
+            return;
+        }
         
-        // Run the simulation step by step with small time slices
-        while (isRunning_ && !worldGenerator_->isGeologicalSimulationComplete()) {
-            // Handle pause/resume
+        // Cast away const for background simulation control (safe as we own the simulator)
+        auto* mutableGeologicalSimulator = const_cast<VoxelCastle::World::GeologicalSimulator*>(geologicalSimulator);
+        
+        addLogEntry("Starting background geological simulation...", 0);
+        
+        // Start background simulation instead of blocking loop
+        mutableGeologicalSimulator->startBackgroundSimulation();
+        
+        // Poll for snapshots and progress updates (non-blocking)
+        while (isRunning_ && mutableGeologicalSimulator->isBackgroundSimulationRunning()) {
+            // Handle pause/resume immediately
             if (isPaused_) {
-                worldGenerator_->pauseGeologicalSimulation();
-                std::this_thread::sleep_for(std::chrono::milliseconds(100));
-                continue;
+                mutableGeologicalSimulator->pauseBackgroundSimulation();
             } else {
-                worldGenerator_->resumeGeologicalSimulation();
+                mutableGeologicalSimulator->resumeBackgroundSimulation();
             }
             
             if (!isRunning_) break;
             
-            // Execute one simulation step
-            bool success = worldGenerator_->stepGeologicalSimulation();
+            // Get latest snapshot for UI updates (non-blocking)
+            auto snapshot = mutableGeologicalSimulator->getLatestSnapshot();
+            if (snapshot) {
+                // Update progress from snapshot
+                float progress = mutableGeologicalSimulator->getBackgroundProgress();
+                currentProgress_ = progress;
+                phaseProgress_ = progress;
+                
+                // Update UI with snapshot data if needed
+                // This will be handled by the UI update cycle
+            }
             
-            if (!success) {
-                addLogEntry("ERROR: Geological simulation step failed", stats_.simulationYears);
-                isRunning_ = false;
+            // Check if simulation is complete
+            if (worldGenerator_->isGeologicalSimulationComplete()) {
                 break;
             }
             
-            // Small delay to keep UI responsive (10ms per step)
-            std::this_thread::sleep_for(std::chrono::milliseconds(10));
+            // Short sleep to avoid busy waiting (UI stays responsive)
+            std::this_thread::sleep_for(std::chrono::milliseconds(100));
         }
+        
+        // Stop background simulation
+        mutableGeologicalSimulator->stopBackgroundSimulation();
         
         if (isRunning_ && worldGenerator_->isGeologicalSimulationComplete()) {
             addLogEntry("Geological simulation completed successfully!", stats_.simulationYears);
