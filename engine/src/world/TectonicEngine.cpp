@@ -141,11 +141,13 @@ void TectonicEngine::simulateVolcanicActivity(TectonicFields& fields, float time
         for (int x = 0; x < width; ++x) {
             float mantleStress = fields.mantleStress->getSample(x, z);
             
-            // EARTH-LIKE VOLCANIC ACTIVITY: Real rates vary widely but average ~0.1-1m per 1000 years
-            // For 1M year timesteps: 100-1000m per million years during active periods
+            // CRITICAL FIX: Correct time unit conversion for volcanic activity
+            // EARTH-LIKE VOLCANIC ACTIVITY: Real rates vary widely but average ~0.1-1m per 1000 years  
+            // timeStepMyears is actually in YEARS, not million years (naming is misleading)
             if (mantleStress > 3.0f) {
-                // Realistic volcanic scaling for 1M year timesteps
-                float intensity = (mantleStress - 3.0f) * timeStepMyears * 0.0001f; // Much more conservative scaling
+                // Convert to million years: timeStepMyears / 1,000,000
+                float timeStepActualMyears = timeStepMyears / 1000000.0f; // Convert years to million years
+                float intensity = (mantleStress - 3.0f) * timeStepActualMyears * 100.0f; // Realistic scaling
                 createVolcanicActivity(fields, x, z, intensity, timeStepMyears);
                 activeVolcanoes++;
                 
@@ -183,11 +185,12 @@ void TectonicEngine::simulateRiftingActivity(TectonicFields& fields, float timeS
                 // EARTH-LIKE RIFTING: Real rates are 0.1-10mm/year = 0.0001-0.01m/year
                 // For 1M year timesteps: 100-10000m per million years in active rifts
                 if (riftingStress > 2.0f) { // Threshold for active rifting
-                    // FIXED: Realistic rifting intensity calculation
+                    // CRITICAL FIX: Correct time unit conversion for rifting
                     // Real rifting rates: 0.1-10mm/year = 0.0001-0.01m/year
-                    // For 1M year timesteps: 100-10000m per million years in active rifts
-                    // Use reasonable scaling to achieve 100-1000m subsidence in active zones
-                    float intensity = (riftingStress - 2.0f) * timeStepMyears * 0.01f; // 100,000x stronger than before
+                    // timeStepMyears is actually in YEARS, not million years (naming is misleading)
+                    // Convert to million years: timeStepMyears / 1,000,000
+                    float timeStepActualMyears = timeStepMyears / 1000000.0f; // Convert years to million years
+                    float intensity = (riftingStress - 2.0f) * timeStepActualMyears * 1000.0f; // Realistic scaling
                     
                     std::cout << "[RIFTING_CALC] At (" << x << "," << z << ") - riftingStress: " 
                               << riftingStress << ", timeStep: " << timeStepMyears 

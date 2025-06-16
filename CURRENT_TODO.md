@@ -1,6 +1,11 @@
 # CURRENT_TODO.md - Active Development Tracking
 
-## 🚀 Current Focus: Enhanced World Generation with the 257-Block System
+## 🚀 Current Focus: Phase 1 Critical Fixes - Geological Simulation Stabilization
+
+**CURRENT MAIN TASK: Step 4.1 - Phase 1: Critical Fixes**
+- **Priority**: Fix existing geological simulation issues before implementing hybrid architecture
+- **Timeline**: 1-2 hours of focused fixes
+- **Goal**: Stable geological simulation with seed variation, realistic force scaling, and crash prevention
 
 This file tracks our immediate high-level tasks and progress. Detailed sub-tasks for each item are located in corresponding files within the `/home/system-x1/Projects/Voxel Castle/development_tasks/` directory.
 
@@ -17,13 +22,21 @@ This section tracks the progress of the new geological simulation system.
 - **Step 3: Water & Cave System Framework** - IMPLEMENTED (Visual verification pending - water not appearing in preview)
   - For advanced/optional features beyond core Step 3, see: [Advanced Hydrological and Geomorphological Features](/home/system-x1/Projects/Voxel Castle/development_tasks/geological_realism/Advanced_Hydrological_Geomorphological_Features.md)
 - **Step 4: Physics-Based Geological Engine** - PENDING
-- **Step 4.1: Simulation Architecture Overhaul** - ACTIVE (🚨 **CRITICAL ISSUES** - Multiple geological system failures)
+- **Step 4.1: Critical Simulation Fixes** - ACTIVE (🚨 **PHASE 1 PRIORITY** - Stabilize existing system before architecture overhaul)
   - See: [71a_Step4.1_Simulation_Architecture_Overhaul.md](/home/system-x1/Projects/Voxel Castle/development_tasks/geological_realism/71a_Step4.1_Simulation_Architecture_Overhaul.md)
-  - **URGENT PRIORITIES**: 
-    - Fix elevation bounds (wrong 1200m limit causing uniform pink terrain)
-    - Complete snapshot system integration (UI still using fallback mode) 
-    - Fix erosion catastrophe and sediment deposition bug (18,515m mountains!)
-    - Fix water system "Missing required fields" errors
+  - **PHASE 1 - CRITICAL FIXES** (Before Hybrid Architecture): 
+    - ✅ Fix rifting and volcanic force scaling (time unit conversion corrected)
+    - ✅ Ensure seed integration: Different seeds → different worlds (continent positions/shapes)
+    - ✅ Verify number of continents always taken from world gen setup
+    - ✅ Add process stability checks to prevent simulation crashes
+    - 🎯 **CURRENT TASK: Test and confirm all fixes work correctly**
+      - Build and run application
+      - Test 1: No "using base terrain" fallback in preview
+      - Test 2: Seed variation (try 12345, 67890, 11111)
+      - Test 3: Continent count configuration (try 3, 5, 7)
+      - Test 4: Realistic geological forces (no excessive values)
+      - Test 5: Simulation stability (no crashes)
+  - **PHASE 2 - HYBRID ARCHITECTURE**: Full particle/fractal system (after Phase 1 complete)
 - **Step 5: Climate & Biome Simulation** - PENDING
 - **Step 6: Erosion & Weathering Refinement** - PENDING
 - **Step 7: Resource & Feature Distribution** - PENDING

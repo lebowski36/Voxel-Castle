@@ -1,21 +1,55 @@
-# Step 4.1: Simulation Architecture Overhaul - Hybrid Approach (Option C)
+# Step 4.1: Critical Simulation Fixes & Hybrid Architecture Overhaul
 *Created: 2025-06-15*
-*Updated: 2025-06-15 - Transitioned to Hybrid Architecture*
-*Status: ACTIVE - Implementing Hybrid System*
+*Updated: 2025-06-15 - Transitioned to Phase 1: Critical Fixes*
+*Status: ACTIVE - Phase 1: Critical Fixes Before Architecture Overhaul*
 
-## 🎯 **Goal: Hybrid Geological Simulation Architecture**
+## 🚨 **PHASE 1: CRITICAL FIXES (Current Priority)**
 
-Transform the current grid-based geological simulation into a hybrid system combining:
-1. **Particle-Based Continuous Simulation** for realistic geological physics
-2. **Fractal Detail Overlay** for visualization and voxel world generation
-3. **Multi-Resolution Bridging** from coarse simulation to 25cm voxel precision
+**Goal**: Stabilize the existing geological simulation system before implementing the hybrid architecture.
 
-**Current Resolution Gap**: 
-- **Simulation**: 256-2048 grid (spacing = worldSizeKm×1000/resolution, e.g., 2000m for 1024km/512 grid)
-- **Voxel World**: 25cm precision
-- **Scale Difference**: ~8000x between simulation and final rendering
+### **Phase 1 Tasks - Critical Fixes**
 
-## 📐 **Resolution Analysis and Scale Bridging**
+#### **1. Seed Integration & World Variation** 🔄
+- **Issue**: Simulation may always produce the same world regardless of seed
+- **Status**: INVESTIGATING - Seed passed through but continent positions/shapes may not vary
+- **Tasks**:
+  - [x] Audit seed usage in FractalContinentGenerator and GeologicalSimulator
+  - [ ] Verify continent positions and shapes vary with different seeds  
+  - [ ] Test with multiple seeds to confirm different worlds generated
+  - [ ] Ensure number of continents always taken from world gen setup
+
+#### **2. Force Scaling & Realism** ✅ 
+- **Issue**: Rifting and volcanic activity causing extreme unrealistic values (60m+ per step)
+- **Status**: FIXED - Time unit conversion and intensity formulas corrected
+- **Completed**:
+  - [x] Fixed rifting force scaling in TectonicEngine.cpp
+  - [x] Fixed volcanic activity scaling in TectonicEngine.cpp
+  - [x] Corrected time unit conversion (years to million years)
+- **Still Needed**:
+  - [ ] Test to verify realistic values in practice
+  - [ ] Monitor for any remaining unrealistic spikes
+
+#### **3. Process Stability & Crash Prevention** 🔄
+- **Issue**: Simulation may crash due to runaway values or numerical instability
+- **Status**: PENDING - Need to add validation and clamping
+- **Tasks**:
+  - [ ] Add elevation clamping to prevent extreme values
+  - [ ] Add stability checks for rifting and volcanic processes
+  - [ ] Add validation for continental drift calculations
+  - [ ] Test simulation stability over multiple steps
+
+#### **4. Build System & Debug UI** 🔄
+- **Issue**: GeologicalDebugUI.cpp commented out in CMakeLists.txt
+- **Status**: CONFIRMED - Debug UI disabled, using simple controls instead
+- **Decision**: Keep current simple debug approach for Phase 1
+
+---
+
+## 🎯 **PHASE 2: HYBRID GEOLOGICAL SIMULATION ARCHITECTURE** (After Phase 1)
+
+**Goal**: Transform to hybrid system combining particle-based continuous simulation with fractal detail overlay.
+
+### **Hybrid Architecture Overview**
 
 ### **Current Simulation Resolution**
 
