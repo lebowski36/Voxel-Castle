@@ -19,7 +19,7 @@ ErosionEngine::ErosionEngine(float worldSizeKm, const GeologicalConfig& config, 
     std::cout << "[ErosionEngine] Initialized for " << worldSizeKm_ << "km world" << std::endl;
 }
 
-void ErosionEngine::simulateChemicalWeathering(ErosionFields& fields, float timeStepKyears) {
+void ErosionEngine::simulateChemicalWeathering(ErosionFields& fields, float timeStepYears) {
     if (!fields.elevationField || !fields.precipitationField || !fields.rockTypes) return;
 
     int width = fields.elevationField->getWidth();
@@ -37,13 +37,15 @@ void ErosionEngine::simulateChemicalWeathering(ErosionFields& fields, float time
         RockType rockType = fields.rockTypes->getSample(x, z);
         float elevation = fields.elevationField->getSample(x, z);
         
-        // EARTH-LIKE CHEMICAL WEATHERING for 1M year timesteps  
+        // EARTH-LIKE CHEMICAL WEATHERING - FIXED CRITICAL BUG
         // Chemical weathering: 0.01-0.1mm/year = 10-100m per million years
-        // Calculate weathering intensity based on climate and rock type
-        float weatheringIntensity = calculateErosionRate(rockType, precipitation, 0.0f) * timeStepKyears * 10.0f; // 100x increase for million-year steps
+        // timeStepYears is in years (e.g., 100,000 years for erosion process)
+        // Convert properly to million years: 100,000 years = 0.1 million years
+        float timeStepMyears = timeStepYears / 1000000.0f; // Convert years to millions of years
+        float weatheringIntensity = calculateErosionRate(rockType, precipitation, 0.0f) * timeStepMyears;
         
         // Apply chemical weathering - reduces elevation slightly
-        applyChemicalWeathering(fields, x, z, weatheringIntensity, timeStepKyears);
+        applyChemicalWeathering(fields, x, z, weatheringIntensity, timeStepYears);
         
         validateAndClampElevation(fields, x, z, "ChemicalWeathering");
     });
@@ -51,7 +53,7 @@ void ErosionEngine::simulateChemicalWeathering(ErosionFields& fields, float time
     updateMetrics(fields);
 }
 
-void ErosionEngine::simulatePhysicalErosion(ErosionFields& fields, float timeStepKyears) {
+void ErosionEngine::simulatePhysicalErosion(ErosionFields& fields, float timeStepYears) {
     if (!fields.elevationField || !fields.rockHardness) return;
 
     int width = fields.elevationField->getWidth();
@@ -76,14 +78,16 @@ void ErosionEngine::simulatePhysicalErosion(ErosionFields& fields, float timeSte
                 // Hardness resistance: prevent division by tiny numbers
                 float hardnessResistance = std::max(hardness, 0.1f);
                 
-                // Calculate realistic erosion for 1M year timesteps
+                // Calculate realistic erosion - FIXED CRITICAL BUG
+                // timeStepYears is in years (e.g., 100,000 years), convert to million years for proper scaling
+                float timeStepMyears = timeStepYears / 1000000.0f; // Convert years to millions of years
                 float erosionRate = (baseErosionRate * slopeMultiplier) / hardnessResistance;
-                float erosionIntensity = erosionRate * (timeStepKyears / 1000000.0f); // Correct scaling for million-year steps
+                float erosionIntensity = erosionRate * timeStepMyears; // Proper scaling for geological time
                 
                 // Geological reality check: even in extreme conditions, erosion is limited
                 erosionIntensity = std::min(erosionIntensity, 0.5f); // Maximum 0.5m per step regardless of timestep
                 
-                applyPhysicalErosion(fields, x, z, erosionIntensity, timeStepKyears);
+                applyPhysicalErosion(fields, x, z, erosionIntensity, timeStepYears);
                 
                 validateAndClampElevation(fields, x, z, "PhysicalErosion");
             }
@@ -91,7 +95,7 @@ void ErosionEngine::simulatePhysicalErosion(ErosionFields& fields, float timeSte
     }
 }
 
-void ErosionEngine::simulateWaterDrivenErosion(ErosionFields& fields, float timeStepKyears) {
+void ErosionEngine::simulateWaterDrivenErosion(ErosionFields& fields, float timeStepYears) {
     if (!fields.elevationField || !fields.waterFlow || !fields.surfaceWaterDepth) return;
 
     int width = fields.elevationField->getWidth();
@@ -117,14 +121,14 @@ void ErosionEngine::simulateWaterDrivenErosion(ErosionFields& fields, float time
                 float waterPower = velocity * velocity * std::min(waterFlow, 10.0f); // Limit flow effect
                 float flowMultiplier = 1.0f + std::min(waterPower * 0.5f, 3.0f); // Max 4x for strong flow
                 
-                // Calculate realistic water erosion for 1M year timesteps
+                // Calculate realistic water erosion - FIXED CRITICAL BUG
                 float erosionRate = baseWaterErosionRate * flowMultiplier;
-                float erosionPower = erosionRate * (timeStepKyears / 1000000.0f); // Correct million-year scaling
+                float erosionPower = erosionRate * (timeStepYears / 1000000.0f); // Convert years to million years
                 
                 // Geological limit: even the most powerful rivers are limited over million year periods
                 erosionPower = std::min(erosionPower, 200.0f); // Max 200m per million-year step
                 
-                applyWaterErosion(fields, x, z, erosionPower, timeStepKyears);
+                applyWaterErosion(fields, x, z, erosionPower, timeStepYears);
                 
                 validateAndClampElevation(fields, x, z, "WaterDrivenErosion");
             }

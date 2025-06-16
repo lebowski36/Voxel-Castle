@@ -39,9 +39,9 @@ public:
     ~ErosionEngine() = default;
 
     // Main simulation methods
-    void simulateChemicalWeathering(ErosionFields& fields, float timeStepKyears);
-    void simulatePhysicalErosion(ErosionFields& fields, float timeStepKyears);
-    void simulateWaterDrivenErosion(ErosionFields& fields, float timeStepKyears);
+    void simulateChemicalWeathering(ErosionFields& fields, float timeStepYears);
+    void simulatePhysicalErosion(ErosionFields& fields, float timeStepYears);
+    void simulateWaterDrivenErosion(ErosionFields& fields, float timeStepYears);
     void simulateSedimentTransport(ErosionFields& fields, float timeStepKyears);
     void simulateSedimentDeposition(ErosionFields& fields, float timeStepKyears);
     void simulateRiverSystems(ErosionFields& fields, float timeStepKyears);
