@@ -38,10 +38,15 @@ void ParticleSimulationEngine::InitializeParticles(int continentCount, float oce
     std::cout << "[ParticleSimulationEngine] Initializing " << continentCount 
               << " continents with " << (oceanRatio * 100.0f) << "% ocean ratio" << std::endl;
     
-    // Calculate continental parameters
+    // Calculate continental parameters - IMPROVED for larger, more cohesive continents
     float continentalArea = worldSizeM_ * worldSizeM_ * (1.0f - oceanRatio);
     float avgContinentArea = continentalArea / continentCount;
-    float avgContinentRadius = std::sqrt(avgContinentArea / M_PI) * 0.8f; // Slightly smaller for spacing
+    
+    // IMPROVEMENT 1: Larger continental radius (removed 0.8f reduction factor)
+    float avgContinentRadius = std::sqrt(avgContinentArea / M_PI) * 1.1f; // Actually larger than calculated area
+    
+    // IMPROVEMENT 2: Allow closer continental placement for larger landmasses
+    float minContinentDistance = avgContinentRadius * 1.2f; // Reduced from 1.5f to 1.2f
     
     // Generate continental positions using Poisson disk sampling for realistic distribution
     std::vector<glm::vec2> continentCenters;
@@ -59,7 +64,7 @@ void ParticleSimulationEngine::InitializeParticles(int continentCount, float oce
             validPosition = true;
             for (const auto& existing : continentCenters) {
                 float distance = CalculateDistance(center, existing);
-                if (distance < avgContinentRadius * 1.5f) {
+                if (distance < minContinentDistance) {
                     validPosition = false;
                     break;
                 }
@@ -94,13 +99,17 @@ void ParticleSimulationEngine::CreateContinentalParticles(int continentIndex, gl
     std::uniform_real_distribution<float> densityDist(0.8f, 1.0f); // Increased density for more cohesive landmasses
     std::uniform_real_distribution<float> fractalDist(-1.0f, 1.0f);
     
-    // Calculate particle density - INCREASED for larger, more cohesive continents
+    // Calculate particle density - IMPROVED for larger, more cohesive continents
     float continentArea = M_PI * radius * radius;
-    int particleCount = static_cast<int>(continentArea / (PARTICLE_INTERACTION_RADIUS * PARTICLE_INTERACTION_RADIUS * 0.3f)); // More particles per area
-    particleCount = std::max(200, std::min(800, particleCount)); // Increased minimum for larger landmasses
     
-    // Create main continental core (80% of particles concentrated in center)
-    int coreParticles = static_cast<int>(particleCount * 0.8f);
+    // IMPROVEMENT 3: Higher particle density for more solid, cohesive landmasses
+    int particleCount = static_cast<int>(continentArea / (PARTICLE_INTERACTION_RADIUS * PARTICLE_INTERACTION_RADIUS * 0.2f)); // Increased density (was 0.3f)
+    
+    // IMPROVEMENT 4: Higher minimum particle count for substantial landmasses
+    particleCount = std::max(300, std::min(1200, particleCount)); // Increased from 200-800 to 300-1200
+    
+    // IMPROVEMENT 5: More concentrated core for cohesive landmasses, less scattered periphery
+    int coreParticles = static_cast<int>(particleCount * 0.85f); // Increased from 80% to 85%
     int peripheryParticles = particleCount - coreParticles;
     
     // Generate seed-based continental shape parameters
@@ -216,14 +225,14 @@ void ParticleSimulationEngine::CreateContinentalParticles(int continentIndex, gl
         particles_.push_back(particle);
     }
     
-    // Peripheral particles (smaller islands and coastal features)
+    // IMPROVEMENT 6: Reduce scattered islands - periphery particles closer to main continent
     for (int i = 0; i < peripheryParticles; ++i) {
         TectonicParticle particle;
         
         float angle = angleDist(rng_);
         
-        // Larger radius variation for peripheral islands
-        float peripheralRadius = radius * (0.8f + radiusDist(rng_) * 0.4f); // 0.8-1.2x radius
+        // IMPROVEMENT: Smaller radius variation to keep islands closer to main continent
+        float peripheralRadius = radius * (0.85f + radiusDist(rng_) * 0.25f); // Reduced from 0.8-1.2x to 0.85-1.1x radius
         
         // More dramatic fractal variation for interesting island shapes
         float noise1 = std::sin(angle * 3.0f + continentIndex * 2.0f) * 0.4f;
@@ -233,16 +242,17 @@ void ParticleSimulationEngine::CreateContinentalParticles(int continentIndex, gl
         float coastlineVariation = noise1 + noise2 + noise3;
         peripheralRadius *= (1.0f + coastlineVariation);
         
-        float r = (0.7f + radiusDist(rng_) * 0.3f) * peripheralRadius; // Outer ring
+        // IMPROVEMENT: Keep peripheral particles closer to core continent
+        float r = (0.75f + radiusDist(rng_) * 0.2f) * peripheralRadius; // Changed from 0.7-1.0x to 0.75-0.95x
         
         particle.position = center + glm::vec2(std::cos(angle) * r, std::sin(angle) * r);
         particle.position = ClampToWorldBounds(particle.position);
         
         InitializeParticleProperties(particle, true);
         
-        // Lower elevation for islands
-        particle.elevation = CONTINENT_ELEVATION * 0.6f + radiusDist(rng_) * 200.0f; // 300-500m elevation
-        particle.elevation = std::max(particle.elevation, 50.0f); // At least 50m above sea level
+        // IMPROVEMENT: Higher elevation for peripheral particles to reduce tiny islands
+        particle.elevation = CONTINENT_ELEVATION * 0.7f + radiusDist(rng_) * 250.0f; // Increased from 0.6f and 200.0f
+        particle.elevation = std::max(particle.elevation, 80.0f); // Increased minimum from 50m to 80m above sea level
         
         particles_.push_back(particle);
     }
