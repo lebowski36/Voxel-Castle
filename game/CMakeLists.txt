@@ -56,14 +56,4 @@ target_include_directories(VoxelFortressGame PRIVATE
 #    $<INSTALL_INTERFACE:include>
 # )
 
-# Add game tests
-# if(BUILD_TESTING)
-#   add_executable(GameTests
-#       tests/main_test.cpp
-#       # ... other test files
-#   )
-#   target_link_libraries(GameTests PRIVATE VoxelFortressGame VoxelEngine gtest gtest_main) # Example
-#   add_test(NAME GameTests COMMAND GameTests)
-# endif()
-
 message(STATUS "Configuring VoxelFortressGame executable...")

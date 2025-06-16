@@ -43,9 +43,6 @@ add_library(VoxelEngine STATIC
     src/world/BackgroundSimulationEngine.cpp # Background thread simulation engine
     src/world/WaterSystemSimulator.cpp # Water system simulation engine
     src/world/quadtree.cpp      # Added Quadtree source
-    # src/world/test_quadtree.cpp # Removed Quadtree test source
-    src/world/test_voxel_system.cpp # Added Voxel System test source
-    src/world/test_mesh_generation.cpp # Added Mesh Generation test source
     src/rendering/mesh_builder.cpp # Added MeshBuilder source
     src/rendering/meshing/two_phase_greedy_meshing_algorithm.cpp # Two-phase greedy meshing algorithm
     src/rendering/mesh_job_system.cpp # Added MeshJobSystem source

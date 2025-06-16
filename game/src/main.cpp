@@ -29,7 +29,6 @@
 #include "world/world_manager.h" // Defines VoxelCastle::World::WorldManager
 #include "world/voxel_types.h" // Defines VoxelEngine::World::VoxelType
 #include "world/voxel.h"       // Defines VoxelEngine::World::Voxel
-#include "world/test_voxel_system.h" // Added for Voxel System tests
 
 // Mesh Generation
 #include "rendering/mesh_builder.h" // For VoxelEngine::Rendering::MeshBuilder
