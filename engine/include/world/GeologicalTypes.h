@@ -128,6 +128,16 @@ struct PhaseInfo {
 };
 
 /**
+ * @brief Simulation configuration information for dynamic snapshot sizing
+ */
+struct SimulationInfo {
+    int width = 512;            // Simulation grid width
+    int height = 512;           // Simulation grid height  
+    float spacing = 1000.0f;    // Grid spacing in meters
+    float worldSizeKm = 512.0f; // World size in kilometers
+};
+
+/**
  * @brief Quality preview information for UI
  */
 struct QualityPreview {

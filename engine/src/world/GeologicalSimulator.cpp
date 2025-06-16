@@ -108,6 +108,11 @@ void GeologicalSimulator::initializeFields() {
     
     float spacing = worldSizeKm_ * 1000.0f / resolution; // Convert to meters
     
+    // Store simulation dimensions for snapshot system
+    simulationWidth_ = resolution;
+    simulationHeight_ = resolution;
+    spacing_ = spacing;
+    
     std::cout << "[GeologicalSimulator] Creating fields: " << resolution << "x" << resolution 
               << " with " << spacing << "m spacing" << std::endl;
     
@@ -767,6 +772,15 @@ void GeologicalSimulator::resumeBackgroundSimulation() {
 
 bool GeologicalSimulator::isBackgroundSimulationPaused() const {
     return backgroundEngine_ ? backgroundEngine_->IsPaused() : false;
+}
+
+SimulationInfo GeologicalSimulator::getSimulationInfo() const {
+    SimulationInfo info;
+    info.width = simulationWidth_;
+    info.height = simulationHeight_;
+    info.spacing = spacing_;
+    info.worldSizeKm = worldSizeKm_;
+    return info;
 }
 
 } // namespace World

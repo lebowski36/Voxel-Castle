@@ -66,6 +66,11 @@ private:
     float worldSizeKm_;  // World size in kilometers
     uint64_t seed_;
     
+    // Simulation grid configuration
+    int simulationWidth_;    // Simulation grid width
+    int simulationHeight_;   // Simulation grid height  
+    float spacing_;          // Grid spacing in meters
+    
     // Progress tracking
     std::function<void(const PhaseInfo&)> progressCallback_;
     std::chrono::steady_clock::time_point startTime_;
@@ -207,6 +212,11 @@ public:
      */
     PhaseInfo getProgressInfo() const;
     
+    /**
+     * @brief Get simulation configuration information
+     */
+    SimulationInfo getSimulationInfo() const;
+
     /**
      * @brief Set progress callback for real-time updates
      */

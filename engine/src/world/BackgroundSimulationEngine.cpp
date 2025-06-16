@@ -200,9 +200,12 @@ void BackgroundSimulationEngine::CreateAndQueueSnapshot() {
         std::string description = "Background Simulation (" + 
                                 std::to_string(static_cast<int>(progressInfo.totalProgress * 100)) + "%)";
         
-        // Create snapshot with geological data
+        // Create snapshot with geological data - use actual simulation dimensions
+        // Get real simulation dimensions from the simulator
+        auto simInfo = simulator_->getSimulationInfo();
+        
         auto snapshot = std::make_shared<GeologicalSnapshot>(
-            512, 512, 1000.0f,  // width, height, spacing (512x512 grid, 1km spacing)
+            simInfo.width, simInfo.height, simInfo.spacing,  // Use actual simulation dimensions
             0.0f,  // simTime (will be filled by snapshot with actual data)
             description,  // phase description
             0,  // step number (will be filled by snapshot)

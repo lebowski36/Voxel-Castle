@@ -183,7 +183,16 @@ void TectonicEngine::simulateRiftingActivity(TectonicFields& fields, float timeS
                 // EARTH-LIKE RIFTING: Real rates are 0.1-10mm/year = 0.0001-0.01m/year
                 // For 1M year timesteps: 100-10000m per million years in active rifts
                 if (riftingStress > 2.0f) { // Threshold for active rifting
-                    float intensity = (riftingStress - 2.0f) * timeStepMyears * 0.000001f; // Conservative scaling
+                    // FIXED: Realistic rifting intensity calculation
+                    // Real rifting rates: 0.1-10mm/year = 0.0001-0.01m/year
+                    // For 1M year timesteps: 100-10000m per million years in active rifts
+                    // Use reasonable scaling to achieve 100-1000m subsidence in active zones
+                    float intensity = (riftingStress - 2.0f) * timeStepMyears * 0.01f; // 100,000x stronger than before
+                    
+                    std::cout << "[RIFTING_CALC] At (" << x << "," << z << ") - riftingStress: " 
+                              << riftingStress << ", timeStep: " << timeStepMyears 
+                              << ", calculated intensity: " << intensity << std::endl;
+                    
                     applyRiftingForces(fields, x, z, intensity, timeStepMyears);
                     activeRifts++;
                     
@@ -203,22 +212,39 @@ void TectonicEngine::applyRiftingForces(TectonicFields& fields, int x, int z, fl
     // Rifting creates downward subsidence and crustal thinning
     float currentElevation = fields.elevationField->getSample(x, z);
     
+    // DEBUG: Track what we're doing
+    std::cout << "[RIFTING_DETAILED] At (" << x << "," << z << ") - Current elevation: " 
+              << currentElevation << "m, intensity: " << intensity << std::endl;
+    
     // Rifting creates graben (down-dropped valleys) - DOWNWARD force to balance mountain building
-    float subsidenceForce = intensity * 10.0f; // Stronger downward force to counteract mountain building
-    float maxSubsidencePerStep = SCALE_FOR_MYEARS(50.0f); // Max 50m subsidence per million years
+    // Use reasonable direct scaling - intensity is already in a good range (0-10000)
+    float subsidenceForce = intensity * 0.1f; // Scale intensity to meters: 1000 intensity = 100m subsidence
+    float maxSubsidencePerStep = 200.0f; // Maximum 200m subsidence per step (realistic for rift valleys)
     subsidenceForce = std::min(subsidenceForce, maxSubsidencePerStep);
     
-    float newElevation = CLAMP_GEOLOGICAL_ELEVATION(currentElevation - subsidenceForce);
+    // CRITICAL: Apply downward force (MINUS for subsidence)
+    float newElevation = currentElevation - subsidenceForce;
+    
+    // Only clamp to prevent extreme values, but allow reasonable rifting
+    if (newElevation < GeologicalConstants::MIN_ELEVATION_BOUND) {
+        newElevation = GeologicalConstants::MIN_ELEVATION_BOUND;
+    }
+    // Don't clamp upward - allow rifting to lower ANY elevation
+    
+    std::cout << "[RIFTING_DETAILED] Applying " << subsidenceForce << "m subsidence: " 
+              << currentElevation << "m -> " << newElevation << "m" << std::endl;
+    
     fields.elevationField->setSample(x, z, newElevation);
     
-    // Check for extreme elevations and warn
-    WARN_EXTREME_ELEVATION(newElevation, "RiftingActivity", x, z);
-    
-    // DEBUG: Log significant rifting activity
-    if (subsidenceForce > 5.0f) {
-        std::cout << "[RIFTING_DEBUG] Applied " << subsidenceForce << "m subsidence at (" << x << "," << z 
-                  << ") - elevation: " << currentElevation << "m -> " << newElevation << "m" << std::endl;
+    // Verify the change actually happened
+    float verifyElevation = fields.elevationField->getSample(x, z);
+    if (std::abs(verifyElevation - newElevation) > 0.1f) {
+        std::cout << "[RIFTING_ERROR] Elevation not set correctly! Expected: " << newElevation 
+                  << "m, Got: " << verifyElevation << "m" << std::endl;
     }
+    
+    // Check for extreme elevations and warn (this should warn about the RESULT)
+    WARN_EXTREME_ELEVATION(newElevation, "RiftingActivity", x, z);
     
     // Rifting causes crustal thinning
     if (fields.crustalThickness) {
@@ -227,8 +253,8 @@ void TectonicEngine::applyRiftingForces(TectonicFields& fields, int x, int z, fl
         fields.crustalThickness->setSample(x, z, std::max(15000.0f, currentThickness - thinning));
     }
     
-    // Rifting can trigger volcanic activity (basaltic upwelling)
-    if (fields.rockTypes && intensity > 5.0f) {
+    // Rifting can trigger volcanic activity (basaltic upwelling) - only occasionally
+    if (fields.rockTypes && intensity > 8.0f) { // Higher threshold
         fields.rockTypes->setSample(x, z, RockType::IGNEOUS_BASALT);
     }
 }
@@ -312,7 +338,8 @@ void TectonicEngine::generateRiftingStress(TectonicFields& fields, float timeSte
                 float maxRiftDistance = std::max(rift.length, rift.width) * 0.5f;
                 
                 if (distance < maxRiftDistance) {
-                    float stress = (1.0f - distance / maxRiftDistance) * rift.extensionRate * 5.0f;
+                    // FIXED: More realistic stress distribution - peak stress around 3-4, not 25
+                    float stress = (1.0f - distance / maxRiftDistance) * rift.extensionRate * 2.0f; // Reduced from 5.0f
                     maxStress = std::max(maxStress, stress);
                 }
             }
