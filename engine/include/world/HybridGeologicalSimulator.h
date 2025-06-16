@@ -3,6 +3,7 @@
 #include "world/GeologicalSimulator.h"
 #include "world/ParticleSimulationEngine.h"
 #include "world/FractalDetailEngine.h"
+#include "world/GeologicalSnapshot.h"
 #include "world/GeologicalTypes.h"  // For PhaseInfo and GeologicalSample
 #include <memory>
 #include <functional>
@@ -160,6 +161,9 @@ private:
     std::unique_ptr<ParticleSimulationEngine> particleEngine_;
     std::unique_ptr<FractalDetailEngine> fractalEngine_;
     
+    // Snapshot management for UI integration
+    std::unique_ptr<class GeologicalSnapshotManager> snapshotManager_;
+    
     // Simulation state
     float currentTime_;             // Current simulation time (years)
     float targetTime_;              // Target simulation time (years)
@@ -183,6 +187,14 @@ private:
      * @return Combined elevation value
      */
     float CombineParticleAndFractalData(float worldX, float worldZ, float resolution = 100.0f);
+    
+    /**
+     * @brief Create a snapshot of current simulation state
+     * @param phaseDescription Description of current simulation phase
+     * @param stepNumber Current step number
+     * @param completionPercentage Simulation completion (0.0-1.0)
+     */
+    void CreateSnapshot(const std::string& phaseDescription, int stepNumber, float completionPercentage);
     
     /**
      * @brief Build geological context from particle data

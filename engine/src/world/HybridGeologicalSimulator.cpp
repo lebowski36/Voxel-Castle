@@ -1,7 +1,10 @@
 #include "world/HybridGeologicalSimulator.h"
+#include "world/ContinuousField.h"
+#include "world/geological_data.h"
 #include <algorithm>
 #include <cmath>
 #include <iostream>
+#include <chrono>
 
 namespace VoxelCastle {
 namespace World {
@@ -21,6 +24,14 @@ HybridGeologicalSimulator::HybridGeologicalSimulator(float worldSizeKm, uint64_t
     
     // Create fractal detail engine
     fractalEngine_ = std::make_unique<FractalDetailEngine>(worldSizeKm, seed);
+    
+    // Create snapshot manager for UI integration
+    // Using a reasonable simulation resolution (512x512) for the snapshot system
+    int simulationWidth = 512;
+    int simulationHeight = 512;
+    float spacing = worldSizeKm * 1000.0f / simulationWidth; // spacing in meters
+    snapshotManager_ = std::make_unique<GeologicalSnapshotManager>(
+        worldSizeKm, simulationWidth, simulationHeight, spacing);
     
     std::cout << "[HybridGeologicalSimulator] Hybrid system initialized" << std::endl;
 }
@@ -43,6 +54,9 @@ void HybridGeologicalSimulator::Initialize(int continentCount, float oceanRatio)
     
     std::cout << "[HybridGeologicalSimulator] Initialization complete. "
               << particleEngine_->GetParticleCount() << " particles created." << std::endl;
+    
+    // Create initial snapshot for immediate UI display
+    CreateSnapshot("Initial State", 0, 0.0f);
 }
 
 bool HybridGeologicalSimulator::InitializeSimulation() {
@@ -326,12 +340,11 @@ float HybridGeologicalSimulator::CalculateContinentalProximity(float elevation, 
 
 // Snapshot management and UI compatibility methods
 GeologicalSnapshotManager* HybridGeologicalSimulator::getSnapshotManager() {
-    // For now, return nullptr - we'll implement proper snapshot system later
-    return nullptr;
+    return snapshotManager_.get();
 }
 
 const GeologicalSnapshotManager* HybridGeologicalSimulator::getSnapshotManager() const {
-    return nullptr;
+    return snapshotManager_.get();
 }
 
 GeologicalSample HybridGeologicalSimulator::getSampleAt(float worldX, float worldZ) const {
@@ -427,6 +440,80 @@ const FractalContinentGenerator* HybridGeologicalSimulator::getFractalContinentG
     // For Phase 2A, the hybrid system doesn't use the old FractalContinentGenerator
     // Return nullptr - UI should handle this gracefully
     return nullptr;
+}
+
+void HybridGeologicalSimulator::CreateSnapshot(const std::string& phaseDescription, int stepNumber, float completionPercentage) {
+    if (!snapshotManager_) {
+        std::cout << "[HybridGeologicalSimulator] Warning: Cannot create snapshot - no snapshot manager" << std::endl;
+        return;
+    }
+    
+    std::cout << "[HybridGeologicalSimulator] Creating snapshot: " << phaseDescription << std::endl;
+    
+    // Get snapshot resolution from snapshot manager
+    int width = 512;  // Match what we initialized with
+    int height = 512;
+    float worldSizeMeters = 1024000.0f; // 1024km in meters
+    float spacing = worldSizeMeters / width;
+    
+    // Create ContinuousField objects for snapshot data
+    ContinuousField<float> elevationField(width, height, spacing);
+    ContinuousField<RockType> rockTypeField(width, height, spacing);  
+    ContinuousField<float> mantleStressField(width, height, spacing);
+    
+    // Water system fields (simplified for now)
+    ContinuousField<float> surfaceWaterField(width, height, spacing);
+    ContinuousField<float> precipitationField(width, height, spacing);
+    ContinuousField<float> groundwaterField(width, height, spacing);
+    ContinuousField<float> waterFlowField(width, height, spacing);
+    ContinuousField<float> sedimentLoadField(width, height, spacing);
+    
+    // Populate the fields by sampling the hybrid system
+    for (int z = 0; z < height; ++z) {
+        for (int x = 0; x < width; ++x) {
+            // Convert grid coordinates to world coordinates
+            float worldX = x * spacing;
+            float worldZ = z * spacing;
+            
+            // Sample elevation from hybrid system
+            float elevation = CombineParticleAndFractalData(worldX, worldZ);
+            elevationField.setSample(x, z, elevation);
+            
+            // For now, use simple rock type assignment based on elevation
+            RockType rockType = RockType::IGNEOUS_GRANITE; // Default continental
+            if (elevation < -200.0f) {
+                rockType = RockType::IGNEOUS_BASALT; // Oceanic crust
+            } else if (elevation > 1000.0f) {
+                rockType = RockType::IGNEOUS_GRANITE; // Mountains
+            } else if (elevation > 0.0f) {
+                rockType = RockType::SEDIMENTARY_SANDSTONE; // Continental sediments
+            }
+            rockTypeField.setSample(x, z, rockType);
+            
+            // Simple mantle stress (could be improved later)
+            float mantleStress = std::abs(elevation) * 0.001f; // Simple relationship
+            mantleStressField.setSample(x, z, mantleStress);
+            
+            // Water system data (simplified for Phase 2A)
+            float surfaceWater = std::max(0.0f, -elevation * 0.1f); // Water depth below sea level
+            surfaceWaterField.setSample(x, z, surfaceWater);
+            
+            precipitationField.setSample(x, z, 1000.0f); // Default precipitation
+            groundwaterField.setSample(x, z, std::max(0.0f, 50.0f - elevation * 0.01f));
+            waterFlowField.setSample(x, z, 0.0f); // No flow for now
+            sedimentLoadField.setSample(x, z, 0.0f); // No sediment for now
+        }
+    }
+    
+    // Add the snapshot to the manager
+    snapshotManager_->AddSnapshot(
+        elevationField, rockTypeField, mantleStressField,
+        surfaceWaterField, precipitationField, groundwaterField,
+        waterFlowField, sedimentLoadField,
+        currentTime_, phaseDescription, stepNumber, completionPercentage
+    );
+    
+    std::cout << "[HybridGeologicalSimulator] Snapshot created successfully" << std::endl;
 }
 
 } // namespace World

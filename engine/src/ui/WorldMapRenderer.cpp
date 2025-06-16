@@ -8,6 +8,9 @@
 #include <vector>
 #include <chrono>
 #include <cstring>  // For std::memcpy
+#include <thread>
+#include <atomic>
+#include <future>
 #include <cmath>    // For std::sin, std::cos
 #include <random>   // For std::mt19937 and seed-based terrain generation
 #include <glad/glad.h>
@@ -299,33 +302,29 @@ void WorldMapRenderer::render(UIRenderer* renderer, int x, int y, int width, int
 }
 
 void WorldMapRenderer::generateElevationData(VoxelCastle::World::SeedWorldGenerator* generator, unsigned int seed) {
-    std::cout << "[WorldMapRenderer] *** STARTING generateElevationData with seed: " << seed << std::endl;
-    
-    // CRITICAL FIX: Ensure the generator uses the correct seed for terrain variation
-    // This was causing the "same lake" issue - base terrain wasn't using the seed
-    if (generator->getWorldSeed()->getMasterSeed() != seed) {
-        std::cout << "[WorldMapRenderer] WARNING: Generator seed mismatch - ensuring seed consistency" << std::endl;
-        // The seed should already be set in the generator, but let's ensure it's consistent
+    static bool firstCall = true;
+    if (firstCall) {
+        std::cout << "[WorldMapRenderer] Starting world generation..." << std::endl;
+        firstCall = false;
     }
     
-    std::cout << "[WorldMapRenderer] About to sample world area..." << std::endl;
+    // CRITICAL FIX: Ensure the generator uses the correct seed for terrain variation
+    if (generator->getWorldSeed()->getMasterSeed() != seed) {
+        // Only log this warning once
+        static bool seedWarningShown = false;
+        if (!seedWarningShown) {
+            std::cout << "[WorldMapRenderer] WARNING: Generator seed mismatch - ensuring seed consistency" << std::endl;
+            seedWarningShown = true;
+        }
+    }
     
-    // Use the actual world size passed in - this represents the entire world being generated
-    // The world size should be stored from the generateWorldMap call
     float worldSize = worldSizeKm_ * 1000.0f; // Convert from kilometers to meters
     
-    std::cout << "[WorldMapRenderer] Sampling world area: " << worldSizeKm_ << "km x " << worldSizeKm_ << "km" << std::endl;
-    std::cout << "[WorldMapRenderer] World size in meters: " << worldSize << "m x " << worldSize << "m" << std::endl;
-    
     // Get geological simulator for new 3.0 World Generation System
-    std::cout << "[WorldMapRenderer] About to get geological simulator..." << std::endl;
     const auto* geologicalSim = generator->getGeologicalSimulator();
-    std::cout << "[WorldMapRenderer] Got geological simulator: " << (geologicalSim ? "SUCCESS" : "NULL") << std::endl;
     
     // Fallback to tectonic simulator if geological simulation is not available
-    std::cout << "[WorldMapRenderer] About to get tectonic simulator..." << std::endl;
     const VoxelCastle::TectonicSimulator* tectonicSim = generator->getTectonicSimulator();
-    std::cout << "[WorldMapRenderer] Got tectonic simulator: " << (tectonicSim ? "SUCCESS" : "NULL") << std::endl;
     
     std::cout << "[WorldMapRenderer] === 3.0 World Generation System Integration ===" << std::endl;
     std::cout << "[WorldMapRenderer] Geological simulator: " << (geologicalSim ? "Available (PRIMARY)" : "Not available") << std::endl;
@@ -340,147 +339,86 @@ void WorldMapRenderer::generateElevationData(VoxelCastle::World::SeedWorldGenera
     std::cout << "[WorldMapRenderer] Using " << (usingNewSystem ? "3.0 World Generation System (Fractal Continental)" : "Legacy Tectonic System") << std::endl;
     
     std::cout << "[WorldMapRenderer] About to start pixel loop - resolution: " << resolution_ << "x" << resolution_ << std::endl;
-    int pixelCount = 0;
+    int totalPixels = resolution_ * resolution_;
+    std::cout << "[WorldMapRenderer] Total pixels to generate: " << totalPixels << std::endl;
     
-    for (int y = 0; y < resolution_; y++) {
-        for (int x = 0; x < resolution_; x++) {
-            pixelCount++;
-            if (pixelCount == 1 || pixelCount % 10000 == 0) {
-                std::cout << "[WorldMapRenderer] Processing pixel " << pixelCount << " of " << (resolution_ * resolution_) << std::endl;
-            }
-            // Apply zoom and pan to determine world coordinates
-            // Calculate the world area being viewed based on zoom level
-            float viewAreaSize = worldSize / zoomLevel_;  // Size of area being viewed
-            
-            // Calculate the corner of the viewed area
-            float viewStartX = (centerX_ - 0.5f / zoomLevel_) * worldSize;
-            float viewStartY = (centerY_ - 0.5f / zoomLevel_) * worldSize;
-            
-            // Clamp to world bounds
-            viewStartX = std::max(0.0f, std::min(viewStartX, worldSize - viewAreaSize));
-            viewStartY = std::max(0.0f, std::min(viewStartY, worldSize - viewAreaSize));
-            
-            // Convert screen coordinates to world coordinates within the zoomed view
-            float worldX = viewStartX + (x / (float)resolution_) * viewAreaSize;
-            float worldZ = viewStartY + (y / (float)resolution_) * viewAreaSize;
-            
-            // Ensure coordinates stay within world bounds
-            worldX = std::max(0.0f, std::min(worldX, worldSize - 1.0f));
-            worldZ = std::max(0.0f, std::min(worldZ, worldSize - 1.0f));
-            
-            // Start with base terrain height
-            if (pixelCount <= 5) {
-                std::cout << "[WorldMapRenderer] Getting terrain height at (" << (int)worldX << "," << (int)worldZ << ")" << std::endl;
-            }
-            int heightVoxels = generator->getTerrainHeightAt((int)worldX, (int)worldZ);
-            float baseHeight = heightVoxels * 0.25f; // Convert voxels to meters (25cm per voxel)
-            if (pixelCount <= 5) {
-                std::cout << "[WorldMapRenderer] Got base height: " << baseHeight << "m" << std::endl;
-            }
-            
-            // PRIMARY: Use new 3.0 World Generation System (Snapshot-Based Responsive UI)
-            float finalHeight = baseHeight;
-            if (geologicalSim) {
-                if (pixelCount <= 3) {
-                    std::cout << "[WorldMapRenderer] Using geological simulator for pixel " << pixelCount << std::endl;
+    // Use multithreading for performance
+    const int numThreads = std::thread::hardware_concurrency();
+    std::cout << "[WorldMapRenderer] Using " << numThreads << " threads for pixel generation" << std::endl;
+    
+    std::atomic<int> pixelsCompleted(0);
+    auto startTime = std::chrono::high_resolution_clock::now();
+    
+    // Process pixels in parallel chunks
+    std::vector<std::future<void>> futures;
+    int pixelsPerThread = totalPixels / numThreads;
+    
+    // Capture member variables by value to avoid capture issues
+    float zoomLevel = zoomLevel_;
+    float centerX = centerX_;
+    float centerY = centerY_;
+    
+    for (int threadId = 0; threadId < numThreads; ++threadId) {
+        int startPixel = threadId * pixelsPerThread;
+        int endPixel = (threadId == numThreads - 1) ? totalPixels : (threadId + 1) * pixelsPerThread;
+        
+        futures.push_back(std::async(std::launch::async, [startPixel, endPixel, threadId, totalPixels, 
+                                                         &pixelsCompleted, geologicalSim, generator, seed,
+                                                         worldSize, zoomLevel, centerX, centerY, resolution = resolution_,
+                                                         elevationData = elevationData_]() {
+            for (int pixelIndex = startPixel; pixelIndex < endPixel; ++pixelIndex) {
+                int y = pixelIndex / resolution;
+                int x = pixelIndex % resolution;
+                
+                // Progress reporting (only from thread 0 to avoid spam)
+                if (threadId == 0 && pixelIndex % 10000 == 0) {
+                    int completed = pixelsCompleted.load();
+                    std::cout << "[WorldMapRenderer] Thread progress: " << completed << " of " << totalPixels << " pixels (" 
+                              << (100.0f * completed / totalPixels) << "%)" << std::endl;
                 }
-                // Use snapshot system for responsive UI - no heavy geological computation on UI thread
-                const auto* snapshotManager = geologicalSim->getSnapshotManager();
-                if (pixelCount <= 3) {
-                    std::cout << "[WorldMapRenderer] Got snapshot manager: " << (snapshotManager ? "SUCCESS" : "NULL") << std::endl;
-                    if (snapshotManager) {
-                        std::cout << "[WorldMapRenderer] Snapshot count: " << snapshotManager->GetSnapshotCount() << std::endl;
-                    }
-                }
-                if (snapshotManager && snapshotManager->GetSnapshotCount() > 0) {
-                    const auto* currentSnapshot = snapshotManager->GetCurrentSnapshot();
-                    if (currentSnapshot) {
-                        finalHeight = currentSnapshot->GetElevationAt(worldX, worldZ);
-                        
-                        // Debug: Log snapshot-based geological features for first few pixels
-                        if (x < 3 && y < 3) {
-                            std::cout << "[WorldMapRenderer] Snapshot-based Sample - Pos(" << worldX << "," << worldZ 
-                                      << ") Elevation:" << finalHeight << "m Snapshot:" << snapshotManager->GetCurrentSnapshotIndex()
-                                      << "/" << snapshotManager->GetSnapshotCount() << std::endl;
-                            
-                            // Check for continental vs oceanic features
-                            if (finalHeight > 0) {
-                                std::cout << "[WorldMapRenderer] CONTINENTAL feature detected" << std::endl;
-                            } else if (finalHeight < -200) {
-                                std::cout << "[WorldMapRenderer] DEEP OCEAN basin detected" << std::endl;
-                            } else {
-                                std::cout << "[WorldMapRenderer] COASTAL/SHELF feature detected" << std::endl;
-                            }
+                
+                // Calculate world coordinates (same logic as before)
+                float viewAreaSize = worldSize / zoomLevel;
+                float viewStartX = (centerX - 0.5f / zoomLevel) * worldSize;
+                float viewStartY = (centerY - 0.5f / zoomLevel) * worldSize;
+                viewStartX = std::max(0.0f, std::min(viewStartX, worldSize - viewAreaSize));
+                viewStartY = std::max(0.0f, std::min(viewStartY, worldSize - viewAreaSize));
+                
+                float worldX = viewStartX + (x / (float)resolution) * viewAreaSize;
+                float worldZ = viewStartY + (y / (float)resolution) * viewAreaSize;
+                worldX = std::max(0.0f, std::min(worldX, worldSize - 1.0f));
+                worldZ = std::max(0.0f, std::min(worldZ, worldSize - 1.0f));
+                
+                // Get elevation from geological simulation
+                float finalHeight = 0.0f;
+                if (geologicalSim) {
+                    const auto* snapshotManager = geologicalSim->getSnapshotManager();
+                    if (snapshotManager && snapshotManager->GetSnapshotCount() > 0) {
+                        const auto* currentSnapshot = snapshotManager->GetCurrentSnapshot();
+                        if (currentSnapshot) {
+                            finalHeight = currentSnapshot->GetElevationAt(worldX, worldZ);
                         }
-                    } else {
-                        // Fallback: use legacy getSampleAt if no current snapshot (should be rare)
-                        VoxelCastle::World::GeologicalSample sample = geologicalSim->getSampleAt(worldX, worldZ);
-                        finalHeight = sample.elevation;
-                        if (x < 3 && y < 3) {
-                            std::cout << "[WorldMapRenderer] FALLBACK: Using getSampleAt (no snapshot available)" << std::endl;
-                        }
-                    }
-                } else {
-                    // CRITICAL FIX: Generate seed-based fractal terrain immediately instead of using "base terrain"
-                    // This ensures the preview shows different worlds for different seeds from the start
-                    if (pixelCount <= 5) {  // Only log for first 5 pixels to reduce spam
-                        std::cout << "[WorldMapRenderer] No snapshots available - generating seed-based fractal terrain (seed: " << seed << ")" << std::endl;
-                    }
-                    
-                    // Use fractal generation with the provided seed for immediate variation
-                    if (pixelCount <= 3) {
-                        std::cout << "[WorldMapRenderer] About to call generateSeedBasedTerrain..." << std::endl;
-                    }
-                    finalHeight = generateSeedBasedTerrain(worldX, worldZ, seed);
-                    if (pixelCount <= 3) {
-                        std::cout << "[WorldMapRenderer] generateSeedBasedTerrain returned: " << finalHeight << std::endl;
                     }
                 }
                 
-                // Clamp elevation to expanded World Gen 3.0 range (±2048m as per spec)
+                // Clamp elevation and store result
                 finalHeight = std::clamp(finalHeight, -2048.0f, 2048.0f);
+                elevationData[y * resolution + x] = finalHeight;
                 
-            } else if (tectonicSim && tectonicSim->IsSimulationComplete()) {
-                // FALLBACK: Use legacy tectonic system
-                // Convert coordinates to kilometers for tectonic simulator
-                glm::vec2 worldPosKm(worldX / 1000.0f, worldZ / 1000.0f);
-                
-                // Debug: Check world bounds and sampling pattern
-                float tectonicWorldSize = tectonicSim->GetWorldSize();
-                if (x < 5 && y < 5) {
-                    std::cout << "[WorldMapRenderer] Tectonic world size: " << tectonicWorldSize << " km" << std::endl;
-                    std::cout << "[WorldMapRenderer] Sampling position (" << worldPosKm.x << "," << worldPosKm.y << ") km" << std::endl;
-                    std::cout << "[WorldMapRenderer] World bounds: 0 to " << tectonicWorldSize << " km" << std::endl;
-                    std::cout << "[WorldMapRenderer] Pixel (" << x << "," << y << ") = World (" << worldX << "," << worldZ << ") m" << std::endl;
-                    std::cout << "[WorldMapRenderer] Within bounds: " << (worldPosKm.x >= 0 && worldPosKm.y >= 0 && worldPosKm.x < tectonicWorldSize && worldPosKm.y < tectonicWorldSize) << std::endl;
-                }
-                
-                // Get tectonic elevation modifier (in meters)
-                float tectonicModifier = tectonicSim->GetElevationModifier(worldPosKm);
-                
-                // Apply tectonic effects to terrain
-                finalHeight = baseHeight + tectonicModifier;
-                
-                // Debug: log first few values to see if tectonic data is working
-                if (x < 5 && y < 5) {
-                    std::cout << "[WorldMapRenderer] Pos(" << worldX << "," << worldZ 
-                              << ") Base:" << baseHeight << "m Tectonic:" << tectonicModifier 
-                              << "m Final:" << finalHeight << "m" << std::endl;
-                }
-                
-                // Clamp elevation to geological simulation range (±1800m)
-                finalHeight = std::clamp(finalHeight, -1800.0f, 1800.0f);
-            } else {
-                // Debug: log that we're using base terrain only
-                if (x < 3 && y < 3) {
-                    std::cout << "[WorldMapRenderer] Using base terrain only - Pos(" << worldX << "," << worldZ 
-                              << ") Height:" << baseHeight << "m" << std::endl;
-                }
+                // Update progress counter
+                pixelsCompleted++;
             }
-            
-            elevationData_[y * resolution_ + x] = finalHeight;
-        }
+        }));
     }
+    
+    // Wait for all threads to complete
+    for (auto& future : futures) {
+        future.wait();
+    }
+    
+    auto endTime = std::chrono::high_resolution_clock::now();
+    auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(endTime - startTime);
+    std::cout << "[WorldMapRenderer] Pixel generation completed in " << duration.count() << "ms" << std::endl;
     
     // Find height range for debugging
     float minHeight = elevationData_[0];
