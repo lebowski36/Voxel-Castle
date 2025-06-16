@@ -27,6 +27,9 @@ GeologicalSimulator::GeologicalSimulator(int worldSizeKm, const GeologicalConfig
     tectonicEngine_ = std::make_unique<TectonicEngine>(worldSizeKm_, config, seed_);
     erosionEngine_ = std::make_unique<ErosionEngine>(worldSizeKm_, config, seed_);
     
+    // Phase 2A: Initialize hybrid particle simulation engine
+    particleEngine_ = std::make_unique<ParticleSimulationEngine>(worldSizeKm_, seed_);
+    
     std::cout << "[GeologicalSimulator] Initialized for " << worldSizeKm_ << "km world with modular architecture" << std::endl;
     lastSnapshotTime_ = std::chrono::steady_clock::now(); 
 }
@@ -47,6 +50,9 @@ void GeologicalSimulator::initialize(uint64_t seed) {
     // Re-initialize modular engines with the new seed
     tectonicEngine_ = std::make_unique<TectonicEngine>(worldSizeKm_, config_, seed);
     erosionEngine_ = std::make_unique<ErosionEngine>(worldSizeKm_, config_, seed);
+    
+    // Phase 2A: Re-initialize particle engine with new seed
+    particleEngine_ = std::make_unique<ParticleSimulationEngine>(worldSizeKm_, seed);
     
     std::cout << "[GeologicalSimulator] Initializing with seed: " << seed << std::endl;
     
@@ -204,6 +210,9 @@ bool GeologicalSimulator::initializeSimulation() {
 }
 
 bool GeologicalSimulator::stepSimulation() {
+    std::cout << "[GeologicalSimulator] stepSimulation() called - initialized: " << simulationInitialized_ 
+              << ", complete: " << simulationComplete_ << ", paused: " << simulationPaused_ << std::endl;
+              
     if (!simulationInitialized_ || simulationComplete_ || simulationPaused_) {
         return false;
     }
@@ -293,6 +302,22 @@ bool GeologicalSimulator::stepSimulation() {
     if (shouldDebugStep) {
         auto [minElev, maxElev] = getElevationRange();
         std::cout << "[ELEVATION_TRACK] After RiftingActivity: " 
+                  << minElev << "m to " << maxElev << "m" << std::endl;
+    }
+    
+    // === PHASE 2A: PARTICLE SIMULATION ===
+    // Run particle-based geological simulation in parallel with grid-based system
+    std::cout << "[GeologicalSimulator] About to call particleEngine_->UpdateParticlePhysics..." << std::endl;
+    if (particleEngine_) {
+        particleEngine_->UpdateParticlePhysics(baseTimeStep * GeologicalConstants::ProcessTimeScales::TECTONIC);
+        std::cout << "[GeologicalSimulator] ParticleEngine call completed" << std::endl;
+    } else {
+        std::cout << "[GeologicalSimulator] ERROR: particleEngine_ is null!" << std::endl;
+    }
+    
+    if (shouldDebugStep) {
+        auto [minElev, maxElev] = getElevationRange();
+        std::cout << "[ELEVATION_TRACK] After ParticleSimulation: " 
                   << minElev << "m to " << maxElev << "m" << std::endl;
     }
     

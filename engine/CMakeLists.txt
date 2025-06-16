@@ -42,6 +42,11 @@ add_library(VoxelEngine STATIC
     src/world/ErosionEngine.cpp # Erosion and weathering simulation engine
     src/world/BackgroundSimulationEngine.cpp # Background thread simulation engine
     src/world/WaterSystemSimulator.cpp # Water system simulation engine
+    # Phase 2A: Hybrid geological simulation - particle system foundation
+    src/world/ParticleSimulationEngine.cpp # Particle-based tectonic simulation engine
+    src/world/SpatialHashGrid.cpp # Spatial hash grid for efficient particle neighbor queries
+    src/world/FractalDetailEngine.cpp # Fractal detail overlay system for seamless terrain
+    src/world/HybridGeologicalSimulator.cpp # Hybrid simulator orchestrating particle + fractal systems
     src/world/quadtree.cpp      # Added Quadtree source
     src/rendering/mesh_builder.cpp # Added MeshBuilder source
     src/rendering/meshing/two_phase_greedy_meshing_algorithm.cpp # Two-phase greedy meshing algorithm

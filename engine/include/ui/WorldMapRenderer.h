@@ -7,7 +7,7 @@
 namespace VoxelCastle {
     namespace World {
         class SeedWorldGenerator;
-        class GeologicalSimulator;
+        class HybridGeologicalSimulator;
         struct ContinentalPlate;
         struct OceanBasin;
         struct RiverTemplate;
@@ -172,7 +172,7 @@ public:
     /**
      * @brief Get geological simulator from current generator (for snapshot navigation)
      */
-    const VoxelCastle::World::GeologicalSimulator* getGeologicalSimulator() const;
+    const VoxelCastle::World::HybridGeologicalSimulator* getGeologicalSimulator() const;
 
     /**
      * @brief Track elevation change magnitude for adaptive updates
@@ -239,6 +239,9 @@ private:
     void generateElevationData(VoxelCastle::World::SeedWorldGenerator* generator, unsigned int seed);
     void generateTemperatureData(VoxelCastle::World::SeedWorldGenerator* generator, unsigned int seed);
     void generatePrecipitationData(VoxelCastle::World::SeedWorldGenerator* generator, unsigned int seed);
+    
+    // CRITICAL FIX: Seed-based terrain generation for immediate preview variation
+    float generateSeedBasedTerrain(float worldX, float worldZ, unsigned int seed);
     
     // Phase-specific terrain modification methods for dynamic visualization
     void applyErosionEffects();

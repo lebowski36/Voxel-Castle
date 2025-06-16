@@ -8,6 +8,7 @@
 #include "world/WaterSystemSimulator.h"
 #include "world/TectonicEngine.h"
 #include "world/ErosionEngine.h"
+#include "world/ParticleSimulationEngine.h" // Phase 2A: Hybrid particle system
 #include "world/geological_constants.h"  // Centralized geological constants
 #include <memory>
 #include <functional>
@@ -113,6 +114,9 @@ private:
     std::unique_ptr<WaterSystemSimulator> waterSystem_;            // Water system simulator
     std::unique_ptr<TectonicEngine> tectonicEngine_;               // Tectonic processes engine
     std::unique_ptr<ErosionEngine> erosionEngine_;                 // Erosion and weathering engine
+    
+    // Phase 2A: Hybrid Simulation Architecture - Particle System Foundation
+    std::unique_ptr<ParticleSimulationEngine> particleEngine_;     // Particle-based geological simulation
     
     // Background execution control
     bool useBackgroundExecution_{false};                          // Enable/disable background mode

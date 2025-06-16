@@ -2,7 +2,7 @@
 #include "world/biome/biome_types.h"
 #include "world/biome/biome_registry.h"  // Add BiomeRegistry for biome-aware generation
 #include "world/tectonic_simulator.h"
-#include "world/GeologicalSimulator.h"   // New geological simulation system
+#include "world/HybridGeologicalSimulator.h"   // Hybrid geological simulation system
 #include "util/noise.h"
 #include "world/voxel_types.h"
 #include "world/voxel.h"
@@ -638,14 +638,14 @@ void SeedWorldGenerator::initializeGeologicalSimulation(float worldSizeKm, const
     // The geological simulator will handle converting this to appropriate resolution
     int worldSizeKmInt = static_cast<int>(worldSizeKm);
     
-    // Create geological simulator
-    geologicalSimulator_ = std::make_unique<GeologicalSimulator>(worldSizeKmInt, config);
+    // Create hybrid geological simulator
+    geologicalSimulator_ = std::make_unique<HybridGeologicalSimulator>(worldSizeKmInt, worldSeed_->getMasterSeed());
     
     // Store progress callback
     geologicalProgressCallback_ = progressCallback;
     
-    // Initialize with world seed
-    geologicalSimulator_->initialize(worldSeed_->getMasterSeed());
+    // Initialize with continental configuration
+    geologicalSimulator_->Initialize(4, 0.71f); // 4 continents, 71% ocean
     
     std::cout << "[SeedWorldGenerator] Geological simulation initialized for " << worldSizeKm << "km world" << std::endl;
 }
@@ -659,8 +659,22 @@ bool SeedWorldGenerator::runGeologicalSimulation() {
     std::cout << "[SeedWorldGenerator] Starting geological simulation..." << std::endl;
     
     try {
-        // Run the full three-phase geological simulation
-        geologicalSimulator_->runFullSimulation(geologicalProgressCallback_);
+        // Run simulation steps until complete
+        while (!geologicalSimulator_->IsComplete()) {
+            geologicalSimulator_->RunSimulationStep(1000.0f); // 1000 year steps
+            
+            // Report progress if callback available
+            if (geologicalProgressCallback_) {
+                float progress = geologicalSimulator_->GetProgress();
+                PhaseInfo phaseInfo;
+                phaseInfo.currentPhase = GeologicalPhase::TECTONICS; // Simplified for now
+                phaseInfo.phaseProgress = progress;
+                phaseInfo.totalProgress = progress;
+                phaseInfo.currentProcess = "Hybrid Geological Simulation";
+                phaseInfo.timeRemaining = 0.0f;
+                geologicalProgressCallback_(phaseInfo);
+            }
+        }
         
         std::cout << "[SeedWorldGenerator] Geological simulation completed successfully" << std::endl;
         return true;
@@ -678,7 +692,7 @@ bool SeedWorldGenerator::initializeStepBasedGeologicalSimulation() {
     }
     
     std::cout << "[SeedWorldGenerator] Initializing step-based geological simulation..." << std::endl;
-    return geologicalSimulator_->initializeSimulation();
+    return geologicalSimulator_->InitializeSimulation();
 }
 
 bool SeedWorldGenerator::stepGeologicalSimulation() {
@@ -686,7 +700,7 @@ bool SeedWorldGenerator::stepGeologicalSimulation() {
         return false;
     }
     
-    return geologicalSimulator_->stepSimulation();
+    return geologicalSimulator_->StepSimulation();
 }
 
 bool SeedWorldGenerator::isGeologicalSimulationComplete() const {
@@ -694,18 +708,18 @@ bool SeedWorldGenerator::isGeologicalSimulationComplete() const {
         return true; // Consider complete if not using geological simulation
     }
     
-    return geologicalSimulator_->isSimulationComplete();
+    return geologicalSimulator_->IsSimulationComplete();
 }
 
 void SeedWorldGenerator::pauseGeologicalSimulation() {
     if (useGeologicalRealism_ && geologicalSimulator_) {
-        geologicalSimulator_->pauseSimulation();
+        geologicalSimulator_->PauseSimulation();
     }
 }
 
 void SeedWorldGenerator::resumeGeologicalSimulation() {
     if (useGeologicalRealism_ && geologicalSimulator_) {
-        geologicalSimulator_->resumeSimulation();
+        geologicalSimulator_->ResumeSimulation();
     }
 }
 
@@ -714,7 +728,7 @@ bool SeedWorldGenerator::isGeologicalSimulationPaused() const {
         return false;
     }
     
-    return geologicalSimulator_->isSimulationPaused();
+    return geologicalSimulator_->IsSimulationPaused();
 }
 
 int SeedWorldGenerator::generateTerrainHeightGeological(int globalX, int globalZ) const {
@@ -730,7 +744,7 @@ int SeedWorldGenerator::generateTerrainHeightGeological(int globalX, int globalZ
     float worldZ = globalZ * VOXEL_SIZE_METERS;
     
     // Sample geological data at this position
-    GeologicalSample sample = geologicalSimulator_->getSampleAt(worldX, worldZ);
+    GeologicalSample sample = geologicalSimulator_->GetSampleAt(worldX, worldZ);
     
     // Convert geological elevation (meters) to block height
     int blockHeight = static_cast<int>(sample.elevation / VOXEL_SIZE_METERS);

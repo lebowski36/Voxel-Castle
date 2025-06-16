@@ -5,7 +5,7 @@
 #include "world/chunk_segment.h"
 #include "world/regional_data.h"
 #include "world/tectonic_simulator.h"
-#include "world/GeologicalSimulator.h"  // New geological simulation system
+#include "world/HybridGeologicalSimulator.h"  // Hybrid geological simulation system
 #include "world/biome/biome_types.h"  // For BiomeType enum
 #include "world/biome/biome_data.h"   // For BiomeData struct
 #include <memory>
@@ -135,9 +135,9 @@ public:
 
     /**
      * @brief Get the geological simulator instance
-     * @return Pointer to GeologicalSimulator, nullptr if not initialized
+     * @return Pointer to HybridGeologicalSimulator, nullptr if not initialized
      */
-    const GeologicalSimulator* getGeologicalSimulator() const { 
+    const HybridGeologicalSimulator* getGeologicalSimulator() const { 
         std::cout << "[SeedWorldGenerator] getGeologicalSimulator() called - useGeologicalRealism_: " << useGeologicalRealism_ 
                   << ", geologicalSimulator_ exists: " << (geologicalSimulator_ ? "YES" : "NO") << std::endl;
         return geologicalSimulator_.get(); 
@@ -186,7 +186,7 @@ private:
     std::unique_ptr<RegionalDatabase> regionalDatabase_;
     
     // Geological simulation system (NEW)
-    std::unique_ptr<GeologicalSimulator> geologicalSimulator_;
+    std::unique_ptr<HybridGeologicalSimulator> geologicalSimulator_;
     bool useGeologicalRealism_;
     std::function<void(const PhaseInfo&)> geologicalProgressCallback_;
     

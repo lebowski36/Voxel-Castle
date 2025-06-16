@@ -8,6 +8,8 @@
 #include "world/world_parameters.h"
 #include "world/world_persistence_manager.h"
 #include <iostream>
+#include <thread>
+#include <chrono>
 #include <sstream>
 #include <iomanip>
 #include <thread>
@@ -1372,7 +1374,7 @@ void WorldSimulationUI::onPreviousSnapshot() {
     auto geologicalSim = worldMapRenderer_->getGeologicalSimulator();
     if (!geologicalSim) return;
     
-    auto* snapshotManager = const_cast<VoxelCastle::World::GeologicalSimulator*>(geologicalSim)->getSnapshotManager();
+    auto* snapshotManager = const_cast<VoxelCastle::World::HybridGeologicalSimulator*>(geologicalSim)->getSnapshotManager();
     if (!snapshotManager) return;
     
     if (snapshotManager->PreviousSnapshot()) {
@@ -1388,7 +1390,7 @@ void WorldSimulationUI::onNextSnapshot() {
     auto geologicalSim = worldMapRenderer_->getGeologicalSimulator();
     if (!geologicalSim) return;
     
-    auto* snapshotManager = const_cast<VoxelCastle::World::GeologicalSimulator*>(geologicalSim)->getSnapshotManager();
+    auto* snapshotManager = const_cast<VoxelCastle::World::HybridGeologicalSimulator*>(geologicalSim)->getSnapshotManager();
     if (!snapshotManager) return;
     
     if (snapshotManager->NextSnapshot()) {
@@ -1400,16 +1402,19 @@ void WorldSimulationUI::onNextSnapshot() {
 
 void WorldSimulationUI::updateSnapshotControls() {
     if (!worldMapRenderer_) return;
-    
+
     auto geologicalSim = worldMapRenderer_->getGeologicalSimulator();
     if (!geologicalSim) return;
-    
-    auto* snapshotManager = const_cast<VoxelCastle::World::GeologicalSimulator*>(geologicalSim)->getSnapshotManager();
-    if (!snapshotManager) return;
-    
+
+    auto* snapshotManager = const_cast<VoxelCastle::World::HybridGeologicalSimulator*>(geologicalSim)->getSnapshotManager();
+    if (!snapshotManager) {
+        std::cout << "[WorldSimulationUI] Snapshot system not available in Phase 2A" << std::endl;
+        return;
+    }
+
     size_t currentIndex = snapshotManager->GetCurrentSnapshotIndex();
     size_t totalSnapshots = snapshotManager->GetSnapshotCount();
-    
+
     // Update snapshot info display
     if (snapshotInfoButton_) {
         std::string snapshotInfo = std::to_string(currentIndex + 1) + "/" + std::to_string(totalSnapshots);
@@ -1419,23 +1424,23 @@ void WorldSimulationUI::updateSnapshotControls() {
         }
         snapshotInfoButton_->setText(snapshotInfo);
     }
-    
+
     // Update button states
     if (prevSnapshotButton_) {
         bool canGoPrevious = (currentIndex > 0);
         prevSnapshotButton_->setBackgroundColor(canGoPrevious ? 
             glm::vec4{0.2f, 0.2f, 0.4f, 0.8f} : glm::vec4{0.1f, 0.1f, 0.2f, 0.4f});
     }
-    
+
     if (nextSnapshotButton_) {
         bool canGoNext = (currentIndex < totalSnapshots - 1);
         nextSnapshotButton_->setBackgroundColor(canGoNext ? 
             glm::vec4{0.2f, 0.2f, 0.4f, 0.8f} : glm::vec4{0.1f, 0.1f, 0.2f, 0.4f});
     }
-    
+
     // Fixed variable scope - get phaseDescription within this scope
     std::string phaseDescription = snapshotManager->GetCurrentPhaseDescription();
-    std::cout << "[WorldSimulationUI] Updated snapshot controls: " << (currentIndex + 1) 
+    std::cout << "[WorldSimulationUI] Updated snapshot controls: " << (currentIndex + 1)
               << "/" << totalSnapshots << " - " << phaseDescription << std::endl;
 }
 
@@ -1545,38 +1550,33 @@ void WorldSimulationUI::generationWorker() {
         }
         
         // Cast away const for background simulation control (safe as we own the simulator)
-        auto* mutableGeologicalSimulator = const_cast<VoxelCastle::World::GeologicalSimulator*>(geologicalSimulator);
+        auto* mutableGeologicalSimulator = const_cast<VoxelCastle::World::HybridGeologicalSimulator*>(geologicalSimulator);
         
-        addLogEntry("Starting background geological simulation...", 0);
+        addLogEntry("Starting geological simulation...", 0);
         
-        // Start background simulation instead of blocking loop
-        mutableGeologicalSimulator->startBackgroundSimulation();
-        
-        // Poll for snapshots and progress updates (non-blocking)
-        while (isRunning_ && mutableGeologicalSimulator->isBackgroundSimulationRunning()) {
-            // Handle pause/resume immediately
+        // Run simulation in steps (simplified approach for Phase 2A)
+        while (isRunning_ && !mutableGeologicalSimulator->IsComplete()) {
+            // Handle pause
             if (isPaused_) {
-                mutableGeologicalSimulator->pauseBackgroundSimulation();
-            } else {
-                mutableGeologicalSimulator->resumeBackgroundSimulation();
+                std::this_thread::sleep_for(std::chrono::milliseconds(100));
+                continue;
             }
             
             if (!isRunning_) break;
             
-            // Get latest snapshot for UI updates (non-blocking)
-            auto snapshot = mutableGeologicalSimulator->getLatestSnapshot();
-            if (snapshot) {
-                // Update progress from snapshot
-                float progress = mutableGeologicalSimulator->getBackgroundProgress();
-                currentProgress_ = progress;
-                phaseProgress_ = progress;
-                
-                // Update UI with snapshot data if needed
-                // This will be handled by the UI update cycle
-            }
+            // Run one simulation step
+            mutableGeologicalSimulator->RunSimulationStep(1000.0f); // 1000 year steps
+            
+            // Update progress
+            float progress = mutableGeologicalSimulator->GetProgress();
+            currentProgress_ = progress;
+            phaseProgress_ = progress;
+            
+            // Small delay to prevent UI blocking
+            std::this_thread::sleep_for(std::chrono::milliseconds(50));
             
             // Check if simulation is complete
-            if (worldGenerator_->isGeologicalSimulationComplete()) {
+            if (mutableGeologicalSimulator->IsComplete()) {
                 break;
             }
             
@@ -1584,10 +1584,9 @@ void WorldSimulationUI::generationWorker() {
             std::this_thread::sleep_for(std::chrono::milliseconds(100));
         }
         
-        // Stop background simulation
-        mutableGeologicalSimulator->stopBackgroundSimulation();
+        // Simulation complete or stopped
         
-        if (isRunning_ && worldGenerator_->isGeologicalSimulationComplete()) {
+        if (isRunning_ && mutableGeologicalSimulator->IsComplete()) {
             addLogEntry("Geological simulation completed successfully!", stats_.simulationYears);
             
             // Finalize the simulation
