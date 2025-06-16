@@ -863,9 +863,16 @@ float FractalContinentGenerator::generateOrganicContinentalElevation(const glm::
         
         return baseElevation + mountainHeight + terrainVariation;
     } else {
-        // Below sea level - ocean with more varied depths
+        // Below sea level - ocean with Earth-like depths (using geological constants)
         float oceanDepth = (landThreshold - combinedNoise) / landThreshold; // Normalize ocean depth
-        float baseDepth = -30.0f - (oceanDepth * 500.0f); // Ocean depths from -30m to -530m
+        
+        // EARTH-LIKE OCEAN DEPTHS: Continental shelf to deep ocean basins
+        // Continental shelf: 0m to -200m, Deep ocean: -200m to -2000m
+        float shelfDepth = -200.0f * (oceanDepth * 0.3f); // Shallow continental shelf areas
+        float basinDepth = -200.0f - (oceanDepth * 1800.0f); // Deep ocean basins (-200m to -2000m)
+        
+        // Mix shelf and basin depths based on distance from continents  
+        float baseDepth = (continentalInfluence > 0.3f) ? shelfDepth : basinDepth;
         
         // Add more ocean floor variation
         float oceanVariation = detail * 80.0f * oceanDepth;

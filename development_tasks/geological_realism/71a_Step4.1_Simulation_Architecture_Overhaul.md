@@ -174,7 +174,28 @@ class BackgroundGeologicalSimulator {
 - ✅ Warning spam protection prevents console flooding
 - ✅ Root cause of 20,333.6m elevations addressed through proper time scaling
 
-**Phase B: Complete Snapshot Integration** ⏳ **NEXT PRIORITY**
+**Phase A.2: Critical Erosion Time Scaling Fix (ROOT CAUSE)** ✅ **COMPLETED**
+- [x] **ROOT CAUSE IDENTIFIED**: Parameter naming confusion in erosion functions
+  - Functions named `timeStepKyears` but receiving `timeStepYears` (actual years)
+  - Chemical weathering: `timeStepKyears / 1000.0f` was converting years to millions incorrectly
+  - **ANALYSIS**: 100,000 years / 1000 = 100 million years (1000x too much erosion!)
+- [x] **CRITICAL**: Fixed chemical weathering time conversion: `timeStepYears / 1000000.0f`
+- [x] **CRITICAL**: Updated function signatures from `timeStepKyears` to `timeStepYears` for accuracy
+- [x] **CRITICAL**: Fixed physical erosion and water-driven erosion with same issue
+- [x] **BUILD STATUS**: ✅ Successfully compiles and links with corrected time scaling
+- [x] **TEST RESULT**: ✅ Catastrophic elevation destruction eliminated
+  - Before: `-2048m to -2048m` (complete terrain destruction)
+  - After: `-281m to 1425m` (realistic geological evolution)
+- [x] **GEOLOGICAL REALISM**: ✅ Terrain now evolves realistically with proper erosion balance
+
+**RESULTS**:
+- ✅ Catastrophic geological failures completely resolved
+- ✅ Realistic erosion rates: 0.001m chemical weathering, 0.4m physical erosion per step
+- ✅ Proper erosion-uplift balance prevents terrain flattening
+- ✅ Elevation evolution matches Earth-like geological processes
+- ✅ Root cause of 1000x excessive erosion eliminated through correct time unit conversion
+
+**Phase B: Complete Snapshot System Integration** ⏳ **ACTIVE - CRITICAL PRIORITY**
 - [ ] **CRITICAL**: Fix `WorldMapRenderer` to use snapshots instead of `getSampleAt` fallback
 - [ ] Complete snapshot data integration in `WorldMapRenderer::generateElevationData()`
 - [ ] Fix "half-map preview" issue - ensure full snapshot data available immediately

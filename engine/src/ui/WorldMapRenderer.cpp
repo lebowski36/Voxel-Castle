@@ -387,12 +387,11 @@ void WorldMapRenderer::generateElevationData(VoxelCastle::World::SeedWorldGenera
                         }
                     }
                 } else {
-                    // Fallback: use legacy getSampleAt if no snapshots available yet
-                    VoxelCastle::World::GeologicalSample sample = geologicalSim->getSampleAt(worldX, worldZ);
-                    finalHeight = sample.elevation;
+                    // No snapshots yet - use base terrain only (avoid expensive getSampleAt during initialization)
                     if (x < 3 && y < 3) {
-                        std::cout << "[WorldMapRenderer] FALLBACK: Using getSampleAt (no snapshots yet)" << std::endl;
+                        std::cout << "[WorldMapRenderer] Using base terrain (no snapshots created yet)" << std::endl;
                     }
+                    // finalHeight already set to baseHeight above
                 }
                 
                 // Clamp elevation to expanded World Gen 3.0 range (±2048m as per spec)
