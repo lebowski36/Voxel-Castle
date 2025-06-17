@@ -25,6 +25,11 @@ add_library(VoxelEngine STATIC
     src/world/biome/biome_types.cpp # Biome type definitions and utilities
     src/world/biome/biome_data.cpp # Biome data structures and climate matching
     src/world/biome/biome_registry.cpp # Central biome registry and management
+    
+    # ProceduralTerrain system sources
+    src/world/procedural_terrain/utils/seed_utils.cpp # Seed management and derivation utilities
+    src/world/procedural_terrain/noise/multi_scale_noise.cpp # Multi-scale noise generation system
+    src/world/procedural_terrain/noise/fractal_patterns.cpp # Fractal geological pattern generation
 
 
     src/world/quadtree.cpp      # Added Quadtree source
