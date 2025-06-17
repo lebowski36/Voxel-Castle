@@ -339,6 +339,9 @@ void ParticleSimulationEngine::UpdateParticlePhysics(float timeStepYears) {
         }
     }
     
+    // NEW: Apply tectonic forces BEFORE movement
+    ApplyTectonicForces(timeStepYears);
+    
     // Update particle movement and interactions
     for (auto& particle : particles_) {
         if (!particle.isActive) continue;
@@ -347,8 +350,12 @@ void ParticleSimulationEngine::UpdateParticlePhysics(float timeStepYears) {
         UpdateParticleStress(particle, timeStepYears);
     }
     
-    // Process particle interactions
+    // Apply tectonic forces (convection, collision, separation)
+    ApplyTectonicForces(timeStepYears);
+    
+    // Process particle interactions and tectonic processes
     ProcessParticleInteractions(timeStepYears);
+    ProcessTectonicBoundaries(timeStepYears);
     
     // Cleanup particles that moved outside bounds
     CleanupParticles();
@@ -617,6 +624,202 @@ glm::vec2 ParticleSimulationEngine::ClampToWorldBounds(const glm::vec2& position
         std::max(0.0f, std::min(worldSizeM_, position.x)),
         std::max(0.0f, std::min(worldSizeM_, position.y))
     );
+}
+
+// ==========================================
+// TECTONIC FORCE SYSTEM IMPLEMENTATION
+// ==========================================
+
+void ParticleSimulationEngine::ApplyTectonicForces(float timeStepYears) {
+    static int logCount = 0;
+    if (logCount < 3) {
+        std::cout << "[TectonicForces] Applying tectonic forces for " << particles_.size() << " particles" << std::endl;
+        logCount++;
+    }
+    
+    for (auto& particle : particles_) {
+        if (!particle.isActive) continue;
+        
+        // Calculate mantle convection forces
+        glm::vec2 convectionForce = CalculateConvectionForce(particle, timeStepYears);
+        
+        // Apply force to particle velocity (with realistic scaling)
+        float forceScale = timeStepYears * 0.01f; // Scale force application
+        particle.velocity += convectionForce * forceScale;
+        
+        // Limit velocity to realistic continental drift speeds
+        float speed = glm::length(particle.velocity);
+        if (speed > CONTINENTAL_DRIFT_SPEED * 2.0f) {
+            particle.velocity = glm::normalize(particle.velocity) * CONTINENTAL_DRIFT_SPEED * 2.0f;
+        }
+    }
+}
+
+glm::vec2 ParticleSimulationEngine::CalculateConvectionForce(const TectonicParticle& particle, float timeStepYears) {
+    // Create convection cells using noise-based patterns
+    // This simulates mantle convection driving plate motion
+    
+    float worldNormX = particle.position.x / worldSizeM_;
+    float worldNormZ = particle.position.y / worldSizeM_;
+    
+    // Multiple convection scales for realistic mantle flow
+    float largeCellNoise = std::sin(worldNormX * 2.0f * M_PI) * std::cos(worldNormZ * 2.0f * M_PI);
+    float mediumCellNoise = std::sin(worldNormX * 6.0f * M_PI) * std::cos(worldNormZ * 4.0f * M_PI) * 0.5f;
+    float smallCellNoise = std::sin(worldNormX * 12.0f * M_PI) * std::cos(worldNormZ * 8.0f * M_PI) * 0.25f;
+    
+    // Combine different scales
+    float convectionStrength = largeCellNoise + mediumCellNoise + smallCellNoise;
+    
+    // Calculate force direction based on convection gradient
+    float gradientX = std::cos(worldNormX * 2.0f * M_PI) * std::cos(worldNormZ * 2.0f * M_PI) * 2.0f * M_PI / worldSizeM_;
+    float gradientZ = std::sin(worldNormX * 2.0f * M_PI) * (-std::sin(worldNormZ * 2.0f * M_PI)) * 2.0f * M_PI / worldSizeM_;
+    
+    // Scale force by convection strength and realistic mantle velocity
+    float mantleVelocityScale = 0.1f; // 10cm/year mantle flow
+    glm::vec2 force(gradientX * convectionStrength * mantleVelocityScale,
+                    gradientZ * convectionStrength * mantleVelocityScale);
+    
+    return force;
+}
+
+void ParticleSimulationEngine::ProcessTectonicBoundaries(float timeStepYears) {
+    static int logCount = 0;
+    if (logCount < 3) {
+        std::cout << "[TectonicBoundaries] Processing plate boundaries" << std::endl;
+        logCount++;
+    }
+    
+    // Check all particle pairs for boundary interactions
+    for (size_t i = 0; i < particles_.size(); ++i) {
+        if (!particles_[i].isActive) continue;
+        
+        auto nearbyParticles = FindNearbyParticles(particles_[i].position.x, particles_[i].position.y,
+                                                  particles_[i].influenceRadius * 1.5f);
+        
+        for (size_t j : nearbyParticles) {
+            if (j <= i || !particles_[j].isActive) continue;
+            
+            ProcessPlateBoundary(particles_[i], particles_[j], timeStepYears);
+        }
+    }
+}
+
+void ParticleSimulationEngine::ProcessPlateBoundary(TectonicParticle& particle1, TectonicParticle& particle2, float timeStepYears) {
+    float distance = CalculateDistance(particle1.position, particle2.position);
+    float interactionRadius = (particle1.influenceRadius + particle2.influenceRadius) * 0.5f;
+    
+    if (distance > interactionRadius) return;
+    
+    // Calculate relative motion
+    glm::vec2 relativeVelocity = particle1.velocity - particle2.velocity;
+    glm::vec2 direction = (particle2.position - particle1.position) / distance;
+    
+    // Project relative velocity onto direction vector
+    float relativeSpeed = glm::dot(relativeVelocity, direction);
+    
+    // Determine boundary type based on relative motion
+    if (relativeSpeed < -0.01f) {
+        // Convergent boundary - particles moving toward each other
+        float compressionForce = -relativeSpeed * distance / interactionRadius;
+        ApplyMountainBuilding(particle1, particle2, compressionForce);
+        
+    } else if (relativeSpeed > 0.01f) {
+        // Divergent boundary - particles moving apart
+        float extensionForce = relativeSpeed * distance / interactionRadius;
+        ApplyRiftFormation(particle1, particle2, extensionForce);
+        
+    } else {
+        // Transform boundary - particles sliding past each other
+        // Accumulate shear stress
+        float shearStress = glm::length(relativeVelocity) * 0.1f;
+        particle1.stress += shearStress * timeStepYears;
+        particle2.stress += shearStress * timeStepYears;
+    }
+}
+
+void ParticleSimulationEngine::ApplyMountainBuilding(TectonicParticle& particle1, TectonicParticle& particle2, float compressionForce) {
+    // Only apply mountain building to continental particles
+    if (particle1.elevation < 0.0f && particle2.elevation < 0.0f) return; // Both oceanic
+    
+    static int mountainCount = 0;
+    if (mountainCount < 5) {
+        std::cout << "[MountainBuilding] Creating mountains with compression force: " << compressionForce << std::endl;
+        mountainCount++;
+    }
+    
+    // Calculate elevation increase based on compression
+    float elevationIncrease = compressionForce * 50.0f; // 50m per unit compression force
+    elevationIncrease = std::min(elevationIncrease, 20.0f); // Max 20m per timestep
+    
+    // Apply elevation gain to both particles
+    particle1.elevation += elevationIncrease;
+    particle2.elevation += elevationIncrease;
+    
+    // Clamp to realistic bounds
+    particle1.elevation = std::min(particle1.elevation, 8848.0f); // Mt. Everest height
+    particle2.elevation = std::min(particle2.elevation, 8848.0f);
+    
+    // Increase crustal thickness due to thickening
+    float thickeningRate = compressionForce * 1000.0f; // 1km per unit compression
+    particle1.crustalThickness += thickeningRate;
+    particle2.crustalThickness += thickeningRate;
+    
+    // Clamp crustal thickness
+    particle1.crustalThickness = std::min(particle1.crustalThickness, 70000.0f); // Max 70km crust
+    particle2.crustalThickness = std::min(particle2.crustalThickness, 70000.0f);
+    
+    // Increase stress due to compression
+    particle1.stress += compressionForce * 10.0f;
+    particle2.stress += compressionForce * 10.0f;
+    
+    // Change rock type to metamorphic due to high pressure
+    if (compressionForce > 0.5f) {
+        particle1.rockType = RockType::METAMORPHIC_MARBLE;
+        particle2.rockType = RockType::METAMORPHIC_MARBLE;
+    }
+}
+
+void ParticleSimulationEngine::ApplyRiftFormation(TectonicParticle& particle1, TectonicParticle& particle2, float extensionForce) {
+    static int riftCount = 0;
+    if (riftCount < 5) {
+        std::cout << "[RiftFormation] Creating rift with extension force: " << extensionForce << std::endl;
+        riftCount++;
+    }
+    
+    // Calculate elevation decrease based on extension
+    float elevationDecrease = extensionForce * 30.0f; // 30m per unit extension force
+    elevationDecrease = std::min(elevationDecrease, 15.0f); // Max 15m per timestep
+    
+    // Apply elevation loss to both particles (rift valley formation)
+    particle1.elevation -= elevationDecrease;
+    particle2.elevation -= elevationDecrease;
+    
+    // Prevent excessive depths
+    particle1.elevation = std::max(particle1.elevation, -4000.0f); // Max 4km deep
+    particle2.elevation = std::max(particle2.elevation, -4000.0f);
+    
+    // Thin the crust due to extension
+    float thinningRate = extensionForce * 800.0f; // 800m per unit extension
+    particle1.crustalThickness -= thinningRate;
+    particle2.crustalThickness -= thinningRate;
+    
+    // Maintain minimum crustal thickness
+    particle1.crustalThickness = std::max(particle1.crustalThickness, 5000.0f); // Min 5km crust
+    particle2.crustalThickness = std::max(particle2.crustalThickness, 5000.0f);
+    
+    // Reduce stress due to extension (relief of compression)
+    particle1.stress = std::max(0.0f, particle1.stress - extensionForce * 5.0f);
+    particle2.stress = std::max(0.0f, particle2.stress - extensionForce * 5.0f);
+    
+    // If rift becomes deep enough, create new oceanic crust
+    if (particle1.elevation < -1000.0f) {
+        particle1.rockType = RockType::IGNEOUS_BASALT; // Oceanic basalt
+        particle1.age = 0.0f; // New crust
+    }
+    if (particle2.elevation < -1000.0f) {
+        particle2.rockType = RockType::IGNEOUS_BASALT;
+        particle2.age = 0.0f;
+    }
 }
 
 } // namespace World

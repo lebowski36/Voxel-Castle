@@ -177,6 +177,14 @@ private:
     void UpdateParticleStress(TectonicParticle& particle, float timeStepYears);
     void ProcessParticleCollisions(TectonicParticle& particle1, TectonicParticle& particle2);
     
+    // NEW: Tectonic force system
+    void ApplyTectonicForces(float timeStepYears);
+    void ProcessTectonicBoundaries(float timeStepYears);
+    glm::vec2 CalculateConvectionForce(const TectonicParticle& particle, float timeStepYears);
+    void ProcessPlateBoundary(TectonicParticle& particle1, TectonicParticle& particle2, float timeStepYears);
+    void ApplyMountainBuilding(TectonicParticle& particle1, TectonicParticle& particle2, float compressionForce);
+    void ApplyRiftFormation(TectonicParticle& particle1, TectonicParticle& particle2, float extensionForce);
+    
     // Sampling and interpolation helpers
     std::vector<size_t> FindNearbyParticles(float worldX, float worldZ, float maxRadius = 10000.0f) const;
     float InterpolateFloat(float worldX, float worldZ, const std::vector<size_t>& particleIndices,
