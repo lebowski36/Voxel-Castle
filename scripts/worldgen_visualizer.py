@@ -62,9 +62,15 @@ class WorldVisualizer:
         width = int(width)
         height = int(height)
         
-        # Create coordinate arrays
-        x_coords = np.linspace(x_min, x_min + width / resolution, width, dtype=np.float32)
-        y_coords = np.linspace(y_min, y_min + height / resolution, height, dtype=np.float32)
+        # Calculate actual sampling dimensions based on resolution
+        sample_width = int(width * resolution)
+        sample_height = int(height * resolution)
+        
+        print(f"Sampling {sample_width}x{sample_height} points for {width}x{height} world units...")
+        
+        # Create coordinate arrays with proper sampling
+        x_coords = np.linspace(x_min, x_min + width, sample_width, dtype=np.float32)
+        y_coords = np.linspace(y_min, y_min + height, sample_height, dtype=np.float32)
         xx, yy = np.meshgrid(x_coords, y_coords)
         
         # Flatten arrays for the C++ function
@@ -77,7 +83,7 @@ class WorldVisualizer:
         height_values = worldgen_cpp.generate_terrain_heightmap(x_flat, y_flat, self.seed)
         
         # Reshape the flat array back into a 2D map
-        heightmap = height_values.reshape((height, width))
+        heightmap = height_values.reshape((sample_height, sample_width))
         
         print("Heightmap generation complete.")
         return heightmap
