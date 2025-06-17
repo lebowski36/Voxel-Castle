@@ -128,11 +128,35 @@ ClimateData CalculateClimate(int chunkX, int chunkZ, uint64_t worldSeed) {
 ### **Noise Layer Architecture**
 ```cpp
 enum class TerrainScale {
-    CONTINENTAL,  // 10km+ wavelength - Major mountain ranges
-    REGIONAL,     // 1-5km wavelength - Individual mountains, hills
-    LOCAL,        // 100-500m wavelength - Ridges, valleys, detail
-    MICRO         // 10-50m wavelength - Surface roughness
+    CONTINENTAL,  // 10km+ wavelength - Major landmasses vs ocean basins (±1400m)
+    REGIONAL,     // 1-5km wavelength - Mountain ranges and broad valleys (±500m)
+    LOCAL,        // 100-500m wavelength - Individual hills and valleys (±120m)
+    MICRO         // 10-50m wavelength - Surface roughness and detail (±30m)
 };
+```
+
+### **Multi-Scale Terrain Synthesis**
+```cpp
+// Proper 4-scale terrain generation
+float continental = MultiScaleNoise::GenerateNoise(world_x, world_z, CONTINENTAL, seed) * 1400.0f;
+float regional = MultiScaleNoise::GenerateNoise(world_x, world_z, REGIONAL, seed + 1000) * 500.0f;  
+float local = MultiScaleNoise::GenerateNoise(world_x, world_z, LOCAL, seed + 2000) * 120.0f;
+float micro = MultiScaleNoise::GenerateNoise(world_x, world_z, MICRO, seed + 3000) * 30.0f;
+
+// Apply ocean/land detail scaling
+float base_elevation = continental + regional;
+if (base_elevation < -200.0f) {
+    // Deep ocean - reduce fine detail for smoother ocean floors
+    local *= 0.5f;
+    micro *= 0.5f;
+} else if (base_elevation > 500.0f) {
+    // Mountain regions - enhance detail for dramatic peaks and ridges
+    local *= 1.25f;
+    micro *= 1.25f;
+}
+
+float total_elevation = base_elevation + local + micro;
+// Total range: approximately -2050m to +2050m (fits ±2048m target)
 ```
 
 ### **Fractal Geological Patterns**
@@ -350,10 +374,12 @@ Replacing the complex geological simulation interface:
   - Deterministic climate functions
 
 ### **Task 3: Terrain Generation Engine**
-- [ ] **3.1**: Implement heightmap generation
-  - Multi-scale terrain synthesis
-  - Mountain range and valley systems
-  - Realistic elevation patterns
+- [ ] **3.1**: Implement multi-scale heightmap generation ⭐ **PRIORITY**
+  - Replace current 2-scale system with proper 4-scale synthesis
+  - Continental (±1400m), Regional (±500m), Local (±120m), Micro (±30m)
+  - Ocean/land detail scaling for realistic terrain characteristics
+  - Independent seed offsets for each scale (+1000, +2000, +3000)
+  - Target elevation range: -2050m to +2050m (fits ±2048m specification)
 - [ ] **3.2**: Create feature placement system
   - Rivers with realistic flow patterns
   - Cave network generation

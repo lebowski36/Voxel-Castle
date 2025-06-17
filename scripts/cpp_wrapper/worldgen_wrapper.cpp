@@ -39,30 +39,27 @@ py::array_t<float> generate_terrain_heightmap(
         float world_x = x_ptr[i] * VOXEL_SCALE;
         float world_z = z_ptr[i] * VOXEL_SCALE;
         
-        // Generate heightmap using C++ terrain system
-        float noise_value = MultiScaleNoise::GenerateHeightmapNoise(world_x, world_z, seed);
+        // Multi-scale terrain synthesis (4 scales for realistic terrain)
+        float continental = MultiScaleNoise::GenerateNoise(world_x, world_z, TerrainScale::CONTINENTAL, seed) * 1400.0f;
+        float regional = MultiScaleNoise::GenerateNoise(world_x, world_z, TerrainScale::REGIONAL, seed + 1000) * 500.0f;
+        float local = MultiScaleNoise::GenerateNoise(world_x, world_z, TerrainScale::LOCAL, seed + 2000) * 120.0f;
+        float micro = MultiScaleNoise::GenerateNoise(world_x, world_z, TerrainScale::MICRO, seed + 3000) * 30.0f;
         
-        // Enhanced terrain generation with realistic distribution
-        // Most terrain should be in -1800m to +1800m range with rare extremes
-        float base_elevation = noise_value * 1600.0f; // Base range: -1600m to +1600m
-        
-        // Add ridge noise for sharp mountain peaks (not broad plateaus)
-        float ridge_value = MultiScaleNoise::GenerateRidgeNoise(world_x, world_z, seed + 1000);
-        float mountain_boost = ridge_value * ridge_value * 600.0f; // Sharp peaks up to +600m
-        
-        // Combine with soft clamping for realistic distribution
-        float total_elevation = base_elevation + mountain_boost;
-        
-        // Soft clamping to avoid flat areas at extremes
-        if (total_elevation > 1800.0f) {
-            float excess = total_elevation - 1800.0f;
-            total_elevation = 1800.0f + excess * 0.3f; // Compress extreme heights
-        } else if (total_elevation < -1800.0f) {
-            float excess = total_elevation + 1800.0f;
-            total_elevation = -1800.0f + excess * 0.3f; // Compress extreme depths
+        // Apply ocean/land detail scaling for realistic characteristics
+        float base_elevation = continental + regional;
+        if (base_elevation < -200.0f) {
+            // Deep ocean - reduce fine detail for smoother ocean floors
+            local *= 0.5f;
+            micro *= 0.5f;
+        } else if (base_elevation > 500.0f) {
+            // Mountain regions - enhance detail for dramatic peaks and ridges
+            local *= 1.25f;
+            micro *= 1.25f;
         }
         
-        // Final hard clamp (should rarely be needed)
+        float total_elevation = base_elevation + local + micro;
+        
+        // Final hard clamp to ±2048m range
         result_ptr[i] = std::max(MIN_ELEVATION, std::min(MAX_ELEVATION, total_elevation));
     }
     
@@ -74,21 +71,25 @@ float generate_single_heightmap(float x, float z, uint64_t seed) {
     float world_x = x * VOXEL_SCALE;
     float world_z = z * VOXEL_SCALE;
     
-    float noise_value = MultiScaleNoise::GenerateHeightmapNoise(world_x, world_z, seed);
-    float base_elevation = noise_value * 1600.0f;
+    // Multi-scale terrain synthesis (4 scales for realistic terrain)
+    float continental = MultiScaleNoise::GenerateNoise(world_x, world_z, TerrainScale::CONTINENTAL, seed) * 1400.0f;
+    float regional = MultiScaleNoise::GenerateNoise(world_x, world_z, TerrainScale::REGIONAL, seed + 1000) * 500.0f;
+    float local = MultiScaleNoise::GenerateNoise(world_x, world_z, TerrainScale::LOCAL, seed + 2000) * 120.0f;
+    float micro = MultiScaleNoise::GenerateNoise(world_x, world_z, TerrainScale::MICRO, seed + 3000) * 30.0f;
     
-    float ridge_value = MultiScaleNoise::GenerateRidgeNoise(world_x, world_z, seed + 1000);
-    float mountain_boost = ridge_value * ridge_value * 600.0f;
-    
-    float total_elevation = base_elevation + mountain_boost;
-    
-    if (total_elevation > 1800.0f) {
-        float excess = total_elevation - 1800.0f;
-        total_elevation = 1800.0f + excess * 0.3f;
-    } else if (total_elevation < -1800.0f) {
-        float excess = total_elevation + 1800.0f;
-        total_elevation = -1800.0f + excess * 0.3f;
+    // Apply ocean/land detail scaling for realistic characteristics
+    float base_elevation = continental + regional;
+    if (base_elevation < -200.0f) {
+        // Deep ocean - reduce fine detail for smoother ocean floors
+        local *= 0.5f;
+        micro *= 0.5f;
+    } else if (base_elevation > 500.0f) {
+        // Mountain regions - enhance detail for dramatic peaks and ridges
+        local *= 1.25f;
+        micro *= 1.25f;
     }
+    
+    float total_elevation = base_elevation + local + micro;
     
     return std::max(MIN_ELEVATION, std::min(MAX_ELEVATION, total_elevation));
 }
