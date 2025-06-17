@@ -6,11 +6,12 @@ namespace VoxelCastle {
 namespace World {
 namespace ProceduralTerrain {
 
-// Scale-specific frequency settings
-static constexpr float CONTINENTAL_FREQUENCY = 0.0001f;  // Very low frequency for large features
-static constexpr float REGIONAL_FREQUENCY = 0.001f;      // Low frequency for regional features
-static constexpr float LOCAL_FREQUENCY = 0.01f;          // Medium frequency for local detail
-static constexpr float MICRO_FREQUENCY = 0.1f;           // High frequency for surface detail
+// Scale-specific frequency settings for realistic continental-scale terrain
+// Reduced frequencies by 5-10x for proper continental-scale features
+static constexpr float CONTINENTAL_FREQUENCY = 0.000002f;  // Ultra-low frequency for continents (~500km features)
+static constexpr float REGIONAL_FREQUENCY = 0.00002f;     // Very low frequency for major mountain ranges (~50km features)  
+static constexpr float LOCAL_FREQUENCY = 0.0002f;         // Low frequency for individual mountains (~5km features)
+static constexpr float MICRO_FREQUENCY = 0.002f;          // Medium frequency for surface detail (~500m features)
 
 float MultiScaleNoise::GenerateNoise(float x, float z, TerrainScale scale, uint64_t seed) {
     float frequency;

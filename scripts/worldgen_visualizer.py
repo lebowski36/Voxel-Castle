@@ -171,6 +171,49 @@ class WorldVisualizer:
                 overlay_map[i, j] = np.clip(shaded_color, 0, 1)
                 
         return overlay_map
+    
+    def add_scale_legend(self, ax, width, height, units='m'):
+        """Add a scale legend showing real-world distances to the map"""
+        # Calculate appropriate scale bar length (about 1/8 of the map width)
+        scale_length = width / 8
+        
+        # Round to nice numbers
+        if scale_length >= 1000:
+            # Use kilometers
+            scale_km = round(scale_length / 1000)
+            if scale_km < 1:
+                scale_km = 1
+            scale_length = scale_km * 1000
+            scale_text = f"{scale_km} km"
+        else:
+            # Use meters
+            scale_m = round(scale_length)
+            if scale_m < 100:
+                scale_m = 100
+            scale_length = scale_m
+            scale_text = f"{scale_m} m"
+        
+        # Position the scale bar in the bottom-left corner
+        x_pos = ax.get_xlim()[0] + width * 0.05  # 5% from left edge
+        y_pos = ax.get_ylim()[0] + height * 0.05  # 5% from bottom edge
+        
+        # Draw the scale bar
+        ax.plot([x_pos, x_pos + scale_length], [y_pos, y_pos], 
+                'k-', linewidth=3, solid_capstyle='butt')
+        
+        # Add end caps
+        bar_height = height * 0.01  # 1% of map height
+        ax.plot([x_pos, x_pos], [y_pos - bar_height/2, y_pos + bar_height/2], 
+                'k-', linewidth=3)
+        ax.plot([x_pos + scale_length, x_pos + scale_length], 
+                [y_pos - bar_height/2, y_pos + bar_height/2], 'k-', linewidth=3)
+        
+        # Add text label
+        ax.text(x_pos + scale_length/2, y_pos + bar_height*2, scale_text, 
+                ha='center', va='bottom', fontsize=10, fontweight='bold',
+                bbox=dict(boxstyle='round,pad=0.3', facecolor='white', alpha=0.8))
+        
+        print(f"Added scale legend: {scale_text}")
 
 def main():
     parser = argparse.ArgumentParser(description='ProceduralTerrain Visualization Tool')
@@ -244,6 +287,9 @@ def main():
         cbar.ax.axhline(y=0, color='white', linewidth=2)
         plt.title(f'Heightmap - Seed {args.seed} (Sea Level = 0m)')
         
+        # Add scale legend
+        visualizer.add_scale_legend(plt.gca(), width, height)
+        
         # Print statistics with fixed reference
         print(f"\nHeightmap Statistics:")
         print(f"  Min elevation: {np.min(data):.1f}m")
@@ -258,6 +304,7 @@ def main():
         plt.imshow(data, cmap='coolwarm', extent=[x_min, x_min+width, y_min+height, y_min])
         plt.colorbar(label='Temperature (°C)')
         plt.title(f'Temperature Map - Seed {args.seed}')
+        visualizer.add_scale_legend(plt.gca(), width, height)
         
     elif args.mode == 'precipitation':
         data = visualizer.generate_climate_map(x_min, y_min, width, height, args.resolution, 'precipitation')
@@ -265,12 +312,14 @@ def main():
         plt.imshow(data, cmap='Blues', extent=[x_min, x_min+width, y_min+height, y_min])
         plt.colorbar(label='Precipitation (mm/year)')
         plt.title(f'Precipitation Map - Seed {args.seed}')
+        visualizer.add_scale_legend(plt.gca(), width, height)
         
     elif args.mode == 'biomes':
         data = visualizer.generate_biome_map(x_min, y_min, width, height, args.resolution)
         plt.figure(figsize=(12, 10))
         plt.imshow(data, extent=[x_min, x_min+width, y_min+height, y_min])
         plt.title(f'Biome Map - Seed {args.seed}')
+        visualizer.add_scale_legend(plt.gca(), width, height)
         
         # Add biome legend
         legend_elements = []
@@ -285,12 +334,14 @@ def main():
         plt.imshow(data, cmap='Blues', extent=[x_min, x_min+width, y_min+height, y_min])
         plt.colorbar(label='River Width (m)')
         plt.title(f'River Network - Seed {args.seed}')
+        visualizer.add_scale_legend(plt.gca(), width, height)
         
     elif args.mode == 'overlay':
         data = visualizer.generate_overlay_map(x_min, y_min, width, height, args.resolution)
         plt.figure(figsize=(12, 10))
         plt.imshow(data, extent=[x_min, x_min+width, y_min+height, y_min])
         plt.title(f'Combined Terrain Overview - Seed {args.seed}')
+        visualizer.add_scale_legend(plt.gca(), width, height)
         plt.text(0.02, 0.98, 'Biomes (color) + Elevation (shading) + Rivers (blue)', 
                 transform=plt.gca().transAxes, verticalalignment='top', 
                 bbox=dict(boxstyle='round', facecolor='white', alpha=0.8))
