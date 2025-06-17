@@ -1,11 +1,15 @@
 # CURRENT_TODO.md - Active Development Tracking
 
-## 🚀 Current Focus: Phase 1 Critical Fixes - Geological Simulation Stabilization
+## 🚀 Current Focus: Debugging Snapshot Pipeline Issues
 
-**CURRENT MAIN TASK: Step 4.1 - Phase 2A: Hybrid Architecture Proof of Concept**
-- **Priority**: Implement minimal hybrid particle/fractal system for immediate visual improvements
-- **Timeline**: Quick proof of concept implementation
-- **Goal**: Eliminate grid artifacts, ensure realistic geological behavior, always show real geological data
+**CURRENT MAIN TASK: Step 4.1 - Snapshot Pipeline Debug**
+- **Priority**: Debug why new geological snapshots are not updating the world preview during simulation  
+- **Issue**: World preview always shows "Initial State" despite tectonic simulation running and creating snapshots
+- **Status**: Debug logging added to trace data flow, ready for testing
+- **Goal**: Fix synchronization between simulation snapshots and UI rendering to show evolving geological features
+
+**COMPLETED**: Added comprehensive file-based debug logging to trace snapshot creation and usage pipeline
+**NEXT**: Build and test with debug logs, analyze data flow issues, fix snapshot-to-UI synchronization
 
 This file tracks our immediate high-level tasks and progress. Detailed sub-tasks for each item are located in corresponding files within the `/home/system-x1/Projects/Voxel Castle/development_tasks/` directory.
 

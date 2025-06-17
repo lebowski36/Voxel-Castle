@@ -1,9 +1,44 @@
 # Step 4.1: Critical Simulation Fixes & Hybrid Architecture Overhaul
 *Created: 2025-06-15*
-*Updated: 2025-06-16 - Transitioned to Phase 2A: Hybrid Architecture Proof of Concept*
-*Status: ACTIVE - Phase 2A: Minimal Hybrid System Implementation*
+*Updated: 2025-06-17 - ACTIVE: Debugging Snapshot Pipeline Issues*
+*Status: DEBUGGING - Snapshot Creation & UI Update Pipeline*
 
-## 🚨 **PHASE 1: CRITICAL FIXES (Current Priority)**
+## 🚨 **CURRENT PRIORITY: SNAPSHOT PIPELINE DEBUG** 
+
+**Goal**: Debug why new geological snapshots are not updating the world preview during simulation.
+
+### **Current Issue Analysis (2025-06-17)**
+- **Problem**: World preview always shows "Initial State" despite tectonic simulation creating new snapshots
+- **Evidence**: Console logs show tectonic force application (mountains/rifts forming) but UI doesn't reflect changes
+- **Root Cause**: Unknown - investigating data flow from simulation → snapshot creation → UI rendering
+
+### **Debugging Progress**
+✅ **COMPLETED**:
+- [x] Added file-based debug logging system (DEBUG_LOG/INFO_LOG/ERROR_LOG) to replace console spam
+- [x] Added debug logging to HybridGeologicalSimulator snapshot creation pipeline
+- [x] Added debug logging to GeologicalSnapshotManager.AddSnapshot() method  
+- [x] Added debug logging to WorldMapRenderer snapshot usage tracking
+- [x] Added debug logging to WorldSimulationUI snapshot control updates
+- [x] Confirmed tectonic forces are modifying particle elevations (console shows mountain/rift events)
+- [x] Identified snapshot creation occurs every 5 simulation steps (5000 years)
+
+🔄 **NEXT STEPS**:
+- [ ] Build project with new debug logging and test
+- [ ] Run simulation and check debug log files in `debug_logs/` directory
+- [ ] Analyze debug logs to trace snapshot creation → UI update pipeline
+- [ ] Identify where the data flow breaks (simulation vs snapshot vs renderer vs UI)
+- [ ] Fix synchronization issues between simulation snapshots and UI display
+- [ ] Verify geological changes (mountains/rifts) become visible in world preview
+
+### **Debug Files Added**:
+- `debug_logs/GeologicalSimulator_TIMESTAMP.log` - Simulation and snapshot creation
+- `debug_logs/SnapshotManager_TIMESTAMP.log` - Snapshot addition and management  
+- `debug_logs/WorldMapRenderer_TIMESTAMP.log` - Snapshot access and rendering
+- `debug_logs/WorldSimulationUI_TIMESTAMP.log` - UI snapshot control updates
+
+---
+
+## 🚨 **PHASE 1: CRITICAL FIXES (Background Priority)**
 
 **Goal**: Stabilize the existing geological simulation system before implementing the hybrid architecture.
 
