@@ -3,6 +3,7 @@
 #include "world/seed_world_generator.h"
 #include "world/tectonic_simulator.h"
 #include "world/FractalContinentGenerator.h"
+#include "utils/debug_logger.h"
 #include <iostream>
 #include <algorithm>
 #include <vector>
@@ -413,6 +414,23 @@ void WorldMapRenderer::generateElevationData(VoxelCastle::World::SeedWorldGenera
                         const auto* currentSnapshot = snapshotManager->GetCurrentSnapshot();
                         if (currentSnapshot) {
                             finalHeight = currentSnapshot->GetElevationAt(worldX, worldZ);
+                            
+                            // Debug log for first few pixels to trace snapshot usage
+                            if (x < 5 && y < 5) {
+                                DEBUG_LOG("WorldMapRenderer", "Using snapshot '" + currentSnapshot->phaseDescription + 
+                                          "' for pixel (" + std::to_string(x) + "," + std::to_string(y) + 
+                                          ") world(" + std::to_string(worldX) + "," + std::to_string(worldZ) + 
+                                          ") elevation: " + std::to_string(finalHeight));
+                            }
+                        } else {
+                            if (x == 0 && y == 0) {
+                                WARN_LOG("WorldMapRenderer", "Current snapshot is null despite " + 
+                                         std::to_string(snapshotManager->GetSnapshotCount()) + " snapshots available");
+                            }
+                        }
+                    } else {
+                        if (x == 0 && y == 0) {
+                            WARN_LOG("WorldMapRenderer", "No snapshots available in geological simulation");
                         }
                     }
                 }

@@ -7,6 +7,7 @@
 #include "world/world_seed.h"
 #include "world/world_parameters.h"
 #include "world/world_persistence_manager.h"
+#include "utils/debug_logger.h"
 #include <iostream>
 #include <thread>
 #include <chrono>
@@ -1428,16 +1429,22 @@ void WorldSimulationUI::updateSnapshotControls() {
     if (!worldMapRenderer_) return;
 
     auto geologicalSim = worldMapRenderer_->getGeologicalSimulator();
-    if (!geologicalSim) return;
+    if (!geologicalSim) {
+        DEBUG_LOG("WorldSimulationUI", "No geological simulator available");
+        return;
+    }
 
     auto* snapshotManager = const_cast<VoxelCastle::World::HybridGeologicalSimulator*>(geologicalSim)->getSnapshotManager();
     if (!snapshotManager) {
-        std::cout << "[WorldSimulationUI] Snapshot system not available in Phase 2A" << std::endl;
+        DEBUG_LOG("WorldSimulationUI", "Snapshot system not available in Phase 2A");
         return;
     }
 
     size_t currentIndex = snapshotManager->GetCurrentSnapshotIndex();
     size_t totalSnapshots = snapshotManager->GetSnapshotCount();
+
+    DEBUG_LOG("WorldSimulationUI", "Updating snapshot controls: " + std::to_string(currentIndex + 1) + 
+              "/" + std::to_string(totalSnapshots) + " snapshots available");
 
     // Update snapshot info display
     if (snapshotInfoButton_) {
@@ -1447,6 +1454,8 @@ void WorldSimulationUI::updateSnapshotControls() {
             snapshotInfo += " - " + phaseDescription;
         }
         snapshotInfoButton_->setText(snapshotInfo);
+        
+        DEBUG_LOG("WorldSimulationUI", "Updated snapshot info button text: " + snapshotInfo);
     }
 
     // Update button states
@@ -1464,8 +1473,8 @@ void WorldSimulationUI::updateSnapshotControls() {
 
     // Fixed variable scope - get phaseDescription within this scope
     std::string phaseDescription = snapshotManager->GetCurrentPhaseDescription();
-    std::cout << "[WorldSimulationUI] Updated snapshot controls: " << (currentIndex + 1)
-              << "/" << totalSnapshots << " - " << phaseDescription << std::endl;
+    DEBUG_LOG("WorldSimulationUI", "Snapshot controls updated successfully: " + std::to_string(currentIndex + 1) +
+              "/" + std::to_string(totalSnapshots) + " - " + phaseDescription);
 }
 
 // Helper methods

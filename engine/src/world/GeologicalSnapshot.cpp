@@ -1,4 +1,5 @@
 #include "world/GeologicalSnapshot.h"
+#include "utils/debug_logger.h"
 #include <iostream>
 #include <algorithm>
 #include <chrono>
@@ -151,10 +152,11 @@ void GeologicalSnapshotManager::AddSnapshot(const ContinuousField<float>& elevat
     snapshots_.push_back(std::move(snapshot));
     currentSnapshotIndex_ = snapshots_.size() - 1;  // Show newest snapshot by default
     
-    std::cout << "[GeologicalSnapshotManager] Added snapshot " << stepNumber 
-              << " (" << phaseDescription << ") - " 
-              << snapshots_.back()->generationTimeMs << "ms generation time, "
-              << snapshots_.size() << " total snapshots" << std::endl;
+    INFO_LOG("SnapshotManager", "Added snapshot " + std::to_string(stepNumber) + 
+             " (" + phaseDescription + ") - " + 
+             std::to_string(snapshots_.back()->generationTimeMs) + "ms generation time, " +
+             std::to_string(snapshots_.size()) + " total snapshots, current index: " + 
+             std::to_string(currentSnapshotIndex_));
 }
 
 const GeologicalSnapshot* GeologicalSnapshotManager::GetCurrentSnapshot() const {
@@ -173,8 +175,9 @@ bool GeologicalSnapshotManager::NextSnapshot() {
     if (currentSnapshotIndex_ + 1 >= snapshots_.size()) return false;
     
     currentSnapshotIndex_++;
-    std::cout << "[GeologicalSnapshotManager] Advanced to snapshot " 
-              << currentSnapshotIndex_ << "/" << snapshots_.size() << std::endl;
+    INFO_LOG("SnapshotManager", "Advanced to snapshot " + 
+             std::to_string(currentSnapshotIndex_) + "/" + std::to_string(snapshots_.size()) + 
+             " (" + snapshots_[currentSnapshotIndex_]->phaseDescription + ")");
     return true;
 }
 

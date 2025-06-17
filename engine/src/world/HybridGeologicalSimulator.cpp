@@ -1,6 +1,7 @@
 #include "world/HybridGeologicalSimulator.h"
 #include "world/ContinuousField.h"
 #include "world/geological_data.h"
+#include "utils/debug_logger.h"
 #include <algorithm>
 #include <cmath>
 #include <iostream>
@@ -101,8 +102,22 @@ void HybridGeologicalSimulator::RunSimulationStep(float timeStepYears) {
         currentTime_ = targetTime_;
     }
     
-    std::cout << "[HybridGeologicalSimulator] Simulation step complete. Progress: " 
-              << (GetProgress() * 100.0f) << "%" << std::endl;
+    // Create snapshots at regular intervals to capture tectonic changes
+    static int lastSnapshotStep = 0;
+    int currentStep = static_cast<int>(currentTime_ / DEFAULT_TIME_STEP);
+    
+    // Create snapshots every 5 simulation steps (5000 years) to show evolution
+    if (currentStep > 0 && (currentStep % 5 == 0) && currentStep != lastSnapshotStep) {
+        std::string phaseDescription = "Tectonic Evolution - " + std::to_string(currentStep * static_cast<int>(DEFAULT_TIME_STEP)) + " years";
+        CreateSnapshot(phaseDescription, currentStep, GetProgress());
+        lastSnapshotStep = currentStep;
+        
+        DEBUG_LOG("GeologicalSimulator", "Created snapshot: " + phaseDescription + 
+                  " (Step: " + std::to_string(currentStep) + ", Progress: " + std::to_string(GetProgress() * 100.0f) + "%)");
+    }
+    
+    DEBUG_LOG("GeologicalSimulator", "Simulation step complete. Time: " + std::to_string(currentTime_) + 
+              " years, Progress: " + std::to_string(GetProgress() * 100.0f) + "%");
 }
 
 bool HybridGeologicalSimulator::StepSimulation() {
@@ -471,11 +486,12 @@ const FractalContinentGenerator* HybridGeologicalSimulator::getFractalContinentG
 
 void HybridGeologicalSimulator::CreateSnapshot(const std::string& phaseDescription, int stepNumber, float completionPercentage) {
     if (!snapshotManager_) {
-        std::cout << "[HybridGeologicalSimulator] Warning: Cannot create snapshot - no snapshot manager" << std::endl;
+        ERROR_LOG("GeologicalSimulator", "Cannot create snapshot - no snapshot manager");
         return;
     }
     
-    std::cout << "[HybridGeologicalSimulator] Creating snapshot: " << phaseDescription << std::endl;
+    DEBUG_LOG("GeologicalSimulator", "Creating snapshot: " + phaseDescription + 
+              " (Step: " + std::to_string(stepNumber) + ", Completion: " + std::to_string(completionPercentage * 100.0f) + "%)");
     
     // Get snapshot resolution from snapshot manager
     int width = 512;  // Match what we initialized with
@@ -516,10 +532,11 @@ void HybridGeologicalSimulator::CreateSnapshot(const std::string& phaseDescripti
             sampleCount++;
             
             // Debug first few samples
-            if (sampleCount <= 10) {
-                std::cout << "[CreateSnapshot] Sample " << sampleCount 
-                          << " at grid(" << x << "," << z << ") world(" << worldX << "," << worldZ 
-                          << ") elevation: " << elevation << "m" << std::endl;
+            if (sampleCount <= 5) {
+                DEBUG_LOG("GeologicalSimulator", "Sample " + std::to_string(sampleCount) + 
+                          " at grid(" + std::to_string(x) + "," + std::to_string(z) + ") world(" + 
+                          std::to_string(worldX) + "," + std::to_string(worldZ) + ") elevation: " + 
+                          std::to_string(elevation) + "m");
             }
             
             // For now, use simple rock type assignment based on elevation
@@ -556,9 +573,9 @@ void HybridGeologicalSimulator::CreateSnapshot(const std::string& phaseDescripti
         currentTime_, phaseDescription, stepNumber, completionPercentage
     );
     
-    std::cout << "[CreateSnapshot] Snapshot created successfully" << std::endl;
-    std::cout << "[CreateSnapshot] Elevation range in snapshot: " << minElevation 
-              << "m to " << maxElevation << "m (from " << sampleCount << " samples)" << std::endl;
+    INFO_LOG("GeologicalSimulator", "Snapshot created successfully: " + phaseDescription);
+    INFO_LOG("GeologicalSimulator", "Elevation range in snapshot: " + std::to_string(minElevation) + 
+             "m to " + std::to_string(maxElevation) + "m (from " + std::to_string(sampleCount) + " samples)");
 }
 
 } // namespace World
