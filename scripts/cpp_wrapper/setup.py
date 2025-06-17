@@ -11,6 +11,7 @@ ext_modules = [
             "../../engine/src/world/procedural_terrain/noise/multi_scale_noise.cpp",
             "../../engine/src/world/procedural_terrain/noise/fractal_patterns.cpp",
             "../../engine/src/world/procedural_terrain/utils/seed_utils.cpp",
+            "../../engine/src/world/procedural_terrain/climate/climate_system.cpp",
         ],
         include_dirs=[
             "../../engine/include",

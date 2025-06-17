@@ -3,6 +3,7 @@
 #include <pybind11/stl.h>
 #include "world/procedural_terrain/noise/multi_scale_noise.h"
 #include "world/procedural_terrain/noise/fractal_patterns.h"
+#include "world/procedural_terrain/climate/climate_system.h"
 #include "world/procedural_terrain/utils/seed_utils.h"
 
 using namespace VoxelCastle::World::ProceduralTerrain;
@@ -94,27 +95,125 @@ float generate_single_heightmap(float x, float z, uint64_t seed) {
     return std::max(MIN_ELEVATION, std::min(MAX_ELEVATION, total_elevation));
 }
 
-// Climate system functions (placeholder - matches design)
+// Climate system functions using the new ClimateSystem
 py::dict generate_climate_data(float x, float z, uint64_t seed, float elevation) {
-    // TODO: Implement full climate system from PROCEDURAL_TERRAIN_DESIGN.md
-    py::dict climate;
-    
-    // Placeholder climate calculation
     float world_x = x * VOXEL_SCALE;
     float world_z = z * VOXEL_SCALE;
     
-    // Base temperature from latitude effect
-    float latitude_factor = abs(world_z) / 10000.0f;
-    float base_temp = 25.0f - (latitude_factor * 30.0f);
+    // Use the new climate system
+    ClimateData climate_data = ClimateSystem::CalculateClimate(world_x, world_z, elevation, seed);
     
-    // Elevation effect (-6.5°C per 1000m)
-    float elevation_effect = -elevation * 0.0065f;
-    
-    climate["temperature"] = base_temp + elevation_effect;
-    climate["humidity"] = 0.5f; // Placeholder
-    climate["precipitation"] = 800.0f; // Placeholder
+    py::dict climate;
+    climate["temperature"] = climate_data.temperature;
+    climate["humidity"] = climate_data.humidity;
+    climate["precipitation"] = climate_data.precipitation;
+    climate["wind_exposure"] = climate_data.windExposure;
+    climate["seasonality"] = climate_data.seasonality;
     
     return climate;
+}
+
+// Batch climate generation for efficient visualization
+py::array_t<float> generate_climate_temperature(
+    py::array_t<float> x_coords,
+    py::array_t<float> z_coords,
+    py::array_t<float> elevations,
+    uint64_t seed
+) {
+    auto x_buf = x_coords.request();
+    auto z_buf = z_coords.request();
+    auto elev_buf = elevations.request();
+    
+    if (x_buf.size != z_buf.size || x_buf.size != elev_buf.size) {
+        throw std::runtime_error("Input arrays must have the same size");
+    }
+    
+    size_t size = x_buf.size;
+    auto result = py::array_t<float>(size);
+    auto result_buf = result.request();
+    
+    float* x_ptr = static_cast<float*>(x_buf.ptr);
+    float* z_ptr = static_cast<float*>(z_buf.ptr);
+    float* elev_ptr = static_cast<float*>(elev_buf.ptr);
+    float* result_ptr = static_cast<float*>(result_buf.ptr);
+    
+    for (size_t i = 0; i < size; i++) {
+        float world_x = x_ptr[i] * VOXEL_SCALE;
+        float world_z = z_ptr[i] * VOXEL_SCALE;
+        
+        ClimateData climate = ClimateSystem::CalculateClimate(world_x, world_z, elev_ptr[i], seed);
+        result_ptr[i] = climate.temperature;
+    }
+    
+    return result;
+}
+
+py::array_t<float> generate_climate_humidity(
+    py::array_t<float> x_coords,
+    py::array_t<float> z_coords,
+    py::array_t<float> elevations,
+    uint64_t seed
+) {
+    auto x_buf = x_coords.request();
+    auto z_buf = z_coords.request();
+    auto elev_buf = elevations.request();
+    
+    if (x_buf.size != z_buf.size || x_buf.size != elev_buf.size) {
+        throw std::runtime_error("Input arrays must have the same size");
+    }
+    
+    size_t size = x_buf.size;
+    auto result = py::array_t<float>(size);
+    auto result_buf = result.request();
+    
+    float* x_ptr = static_cast<float*>(x_buf.ptr);
+    float* z_ptr = static_cast<float*>(z_buf.ptr);
+    float* elev_ptr = static_cast<float*>(elev_buf.ptr);
+    float* result_ptr = static_cast<float*>(result_buf.ptr);
+    
+    for (size_t i = 0; i < size; i++) {
+        float world_x = x_ptr[i] * VOXEL_SCALE;
+        float world_z = z_ptr[i] * VOXEL_SCALE;
+        
+        ClimateData climate = ClimateSystem::CalculateClimate(world_x, world_z, elev_ptr[i], seed);
+        result_ptr[i] = climate.humidity;
+    }
+    
+    return result;
+}
+
+py::array_t<float> generate_climate_precipitation(
+    py::array_t<float> x_coords,
+    py::array_t<float> z_coords,
+    py::array_t<float> elevations,
+    uint64_t seed
+) {
+    auto x_buf = x_coords.request();
+    auto z_buf = z_coords.request();
+    auto elev_buf = elevations.request();
+    
+    if (x_buf.size != z_buf.size || x_buf.size != elev_buf.size) {
+        throw std::runtime_error("Input arrays must have the same size");
+    }
+    
+    size_t size = x_buf.size;
+    auto result = py::array_t<float>(size);
+    auto result_buf = result.request();
+    
+    float* x_ptr = static_cast<float*>(x_buf.ptr);
+    float* z_ptr = static_cast<float*>(z_buf.ptr);
+    float* elev_ptr = static_cast<float*>(elev_buf.ptr);
+    float* result_ptr = static_cast<float*>(result_buf.ptr);
+    
+    for (size_t i = 0; i < size; i++) {
+        float world_x = x_ptr[i] * VOXEL_SCALE;
+        float world_z = z_ptr[i] * VOXEL_SCALE;
+        
+        ClimateData climate = ClimateSystem::CalculateClimate(world_x, world_z, elev_ptr[i], seed);
+        result_ptr[i] = climate.precipitation;
+    }
+    
+    return result;
 }
 
 // Direct access to C++ noise functions
@@ -128,6 +227,67 @@ float generate_regional_noise(float x, float z, uint64_t seed) {
 
 uint64_t create_subsystem_seed(uint64_t base_seed, const std::string& subsystem_name) {
     return SeedUtils::GetComponentSeed(base_seed, subsystem_name);
+}
+
+// Batch noise generation functions for efficient visualization  
+py::array_t<float> generate_continental_noise_batch(
+    py::array_t<float> x_coords,
+    py::array_t<float> z_coords,
+    uint64_t seed
+) {
+    auto x_buf = x_coords.request();
+    auto z_buf = z_coords.request();
+    
+    if (x_buf.size != z_buf.size) {
+        throw std::runtime_error("Input arrays must have the same size");
+    }
+    
+    size_t size = x_buf.size;
+    auto result = py::array_t<float>(size);
+    auto result_buf = result.request();
+    
+    float* x_ptr = static_cast<float*>(x_buf.ptr);
+    float* z_ptr = static_cast<float*>(z_buf.ptr);
+    float* result_ptr = static_cast<float*>(result_buf.ptr);
+    
+    for (size_t i = 0; i < size; i++) {
+        float world_x = x_ptr[i] * VOXEL_SCALE;
+        float world_z = z_ptr[i] * VOXEL_SCALE;
+        
+        result_ptr[i] = MultiScaleNoise::GenerateNoise(world_x, world_z, TerrainScale::CONTINENTAL, seed);
+    }
+    
+    return result;
+}
+
+py::array_t<float> generate_regional_noise_batch(
+    py::array_t<float> x_coords,
+    py::array_t<float> z_coords,
+    uint64_t seed
+) {
+    auto x_buf = x_coords.request();
+    auto z_buf = z_coords.request();
+    
+    if (x_buf.size != z_buf.size) {
+        throw std::runtime_error("Input arrays must have the same size");
+    }
+    
+    size_t size = x_buf.size;
+    auto result = py::array_t<float>(size);
+    auto result_buf = result.request();
+    
+    float* x_ptr = static_cast<float*>(x_buf.ptr);
+    float* z_ptr = static_cast<float*>(z_buf.ptr);
+    float* result_ptr = static_cast<float*>(result_buf.ptr);
+    
+    for (size_t i = 0; i < size; i++) {
+        float world_x = x_ptr[i] * VOXEL_SCALE;
+        float world_z = z_ptr[i] * VOXEL_SCALE;
+        
+        result_ptr[i] = MultiScaleNoise::GenerateNoise(world_x, world_z, TerrainScale::REGIONAL, seed);
+    }
+    
+    return result;
 }
 
 PYBIND11_MODULE(worldgen_cpp, m) {
@@ -147,11 +307,25 @@ PYBIND11_MODULE(worldgen_cpp, m) {
           "Generate climate data for a point",
           py::arg("x"), py::arg("z"), py::arg("seed"), py::arg("elevation"));
     
+    // Batch climate generation functions
+    m.def("generate_climate_temperature", &generate_climate_temperature,
+          "Generate temperature data for multiple points");
+    m.def("generate_climate_humidity", &generate_climate_humidity,
+          "Generate humidity data for multiple points");
+    m.def("generate_climate_precipitation", &generate_climate_precipitation,
+          "Generate precipitation data for multiple points");
+    
     // Direct noise access
     m.def("generate_continental_noise", &generate_continental_noise,
           "Generate continental-scale noise");
     m.def("generate_regional_noise", &generate_regional_noise,
           "Generate regional-scale noise");
+    
+    // Batch noise generation functions
+    m.def("generate_continental_noise_batch", &generate_continental_noise_batch,
+          "Generate continental-scale noise for multiple points");
+    m.def("generate_regional_noise_batch", &generate_regional_noise_batch,
+          "Generate regional-scale noise for multiple points");
     
     // Utility functions
     m.def("create_subsystem_seed", &create_subsystem_seed,

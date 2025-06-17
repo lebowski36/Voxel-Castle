@@ -89,23 +89,46 @@ class WorldVisualizer:
         return heightmap
 
     def generate_climate_map(self, x_min, y_min, width, height, resolution=1.0, mode='temperature'):
-        """Generate climate map (temperature or precipitation)"""
-        x_coords = np.linspace(x_min, x_min + width, int(width * resolution))
-        y_coords = np.linspace(y_min, y_min + height, int(height * resolution))
+        """Generate climate map using C++ backend"""
+        # Ensure width and height are integers
+        width = int(width)
+        height = int(height)
         
-        climate_map = np.zeros((len(y_coords), len(x_coords)))
+        # Calculate actual sampling dimensions based on resolution
+        sample_width = int(width * resolution)
+        sample_height = int(height * resolution)
         
-        for i, y in enumerate(y_coords):
-            for j, x in enumerate(x_coords):
-                elevation = self.terrain.get_elevation(x, y)
-                temperature = self.climate.get_temperature(x, y, elevation)
-                
-                if mode == 'temperature':
-                    climate_map[i, j] = temperature
-                else:  # precipitation
-                    climate_map[i, j] = self.climate.get_precipitation(x, y, temperature, elevation)
-                    
-        return climate_map
+        print(f"Generating {mode} map for {sample_width}x{sample_height} points...")
+        
+        # Create coordinate arrays with proper sampling
+        x_coords = np.linspace(x_min, x_min + width, sample_width, dtype=np.float32)
+        y_coords = np.linspace(y_min, y_min + height, sample_height, dtype=np.float32)
+        xx, yy = np.meshgrid(x_coords, y_coords)
+        
+        # Flatten arrays for the C++ function
+        x_flat = xx.flatten()
+        y_flat = yy.flatten()
+
+        print("Generating heightmap for climate calculation...")
+        # First get elevations using the C++ backend
+        elevations = worldgen_cpp.generate_terrain_heightmap(x_flat, y_flat, self.seed)
+        
+        print(f"Generating {mode} data with C++ backend...")
+        # Generate climate data
+        if mode == 'temperature':
+            climate_data = worldgen_cpp.generate_climate_temperature(x_flat, y_flat, elevations, self.seed)
+        elif mode == 'humidity':
+            climate_data = worldgen_cpp.generate_climate_humidity(x_flat, y_flat, elevations, self.seed)
+        elif mode == 'precipitation':
+            climate_data = worldgen_cpp.generate_climate_precipitation(x_flat, y_flat, elevations, self.seed)
+        else:
+            raise ValueError(f"Unknown climate mode: {mode}")
+        
+        # Reshape back to 2D array
+        result = climate_data.reshape((sample_height, sample_width))
+        
+        print(f"{mode.capitalize()} map generation complete.")
+        return result
     
     def generate_biome_map(self, x_min, y_min, width, height, resolution=1.0):
         """Generate biome classification map"""
@@ -215,11 +238,223 @@ class WorldVisualizer:
         
         print(f"Added scale legend: {scale_text}")
 
+    def generate_noise_map(self, x_min, y_min, width, height, resolution=1.0, scale='continental'):
+        """Generate noise map for a specific scale"""
+        # Ensure width and height are integers
+        width = int(width)
+        height = int(height)
+        
+        # Calculate actual sampling dimensions based on resolution
+        sample_width = int(width * resolution)
+        sample_height = int(height * resolution)
+        
+        print(f"Generating {scale} noise map for {sample_width}x{sample_height} points...")
+        
+        # Create coordinate arrays
+        x_coords = np.linspace(x_min, x_min + width, sample_width, dtype=np.float32)
+        y_coords = np.linspace(y_min, y_min + height, sample_height, dtype=np.float32)
+        xx, yy = np.meshgrid(x_coords, y_coords)
+        
+        # Flatten arrays for the C++ function
+        x_flat = xx.flatten()
+        y_flat = yy.flatten()
+
+        # Generate noise data
+        if scale == 'continental':
+            noise_data = worldgen_cpp.generate_continental_noise_batch(x_flat, y_flat, self.seed)
+        elif scale == 'regional':
+            noise_data = worldgen_cpp.generate_regional_noise_batch(x_flat, y_flat, self.seed)
+        else:
+            raise ValueError(f"Unknown noise scale: {scale}")
+        
+        # Reshape back to 2D array
+        result = noise_data.reshape((sample_height, sample_width))
+        
+        print(f"{scale.capitalize()} noise map generation complete.")
+        return result
+
+    def generate_slope_map(self, x_min, y_min, width, height, resolution=1.0):
+        """Generate slope/gradient map from heightmap"""
+        # Get heightmap first
+        heightmap = self.generate_heightmap(x_min, y_min, width, height, resolution)
+        
+        # Calculate gradients
+        grad_y, grad_x = np.gradient(heightmap)
+        slope = np.sqrt(grad_x**2 + grad_y**2)
+        
+        print("Slope map generation complete.")
+        return slope
+
+    def generate_aspect_map(self, x_min, y_min, width, height, resolution=1.0):
+        """Generate aspect (slope direction) map from heightmap"""
+        # Get heightmap first
+        heightmap = self.generate_heightmap(x_min, y_min, width, height, resolution)
+        
+        # Calculate gradients
+        grad_y, grad_x = np.gradient(heightmap)
+        aspect = np.arctan2(grad_y, grad_x) * 180 / np.pi
+        
+        print("Aspect map generation complete.")
+        return aspect
+
+    def generate_comprehensive_analysis(self, x_min, y_min, width, height, resolution=1.0):
+        """Generate comprehensive multi-panel terrain analysis"""
+        print("=== COMPREHENSIVE TERRAIN ANALYSIS ===")
+        
+        # Generate all available data
+        heightmap = self.generate_heightmap(x_min, y_min, width, height, resolution)
+        temperature = self.generate_climate_map(x_min, y_min, width, height, resolution, 'temperature')
+        humidity = self.generate_climate_map(x_min, y_min, width, height, resolution, 'humidity')
+        precipitation = self.generate_climate_map(x_min, y_min, width, height, resolution, 'precipitation')
+        continental_noise = self.generate_noise_map(x_min, y_min, width, height, resolution, 'continental')
+        regional_noise = self.generate_noise_map(x_min, y_min, width, height, resolution, 'regional')
+        slope = self.generate_slope_map(x_min, y_min, width, height, resolution)
+        aspect = self.generate_aspect_map(x_min, y_min, width, height, resolution)
+        
+        return {
+            'heightmap': heightmap,
+            'temperature': temperature,
+            'humidity': humidity,
+            'precipitation': precipitation,
+            'continental_noise': continental_noise,
+            'regional_noise': regional_noise,
+            'slope': slope,
+            'aspect': aspect
+        }
+
+    def plot_comprehensive_analysis(self, data_dict, x_min, y_min, width, height, seed, output_filename):
+        """Create comprehensive multi-panel visualization"""
+        # Create figure with subplots (4x2 grid)
+        fig, axes = plt.subplots(3, 3, figsize=(24, 18))
+        fig.suptitle(f'Comprehensive Terrain Analysis - Seed {seed}', fontsize=20, y=0.98)
+        
+        # Extent for all plots
+        extent = [x_min, x_min+width, y_min+height, y_min]
+        
+        # 1. Heightmap (top-left)
+        ax = axes[0, 0]
+        from matplotlib.colors import TwoSlopeNorm
+        import matplotlib.colors as mcolors
+        norm = TwoSlopeNorm(vmin=-2048, vcenter=0, vmax=2048)
+        colors_below = plt.cm.Blues_r(np.linspace(0.3, 1, 128))
+        colors_above = plt.cm.terrain(np.linspace(0.35, 1, 128))
+        all_colors = np.vstack((colors_below, colors_above))
+        sea_level_cmap = mcolors.LinearSegmentedColormap.from_list('sea_level', all_colors)
+        
+        im1 = ax.imshow(data_dict['heightmap'], cmap=sea_level_cmap, extent=extent, norm=norm)
+        ax.set_title('Heightmap (Sea Level = 0m)', fontsize=14, fontweight='bold')
+        cbar1 = plt.colorbar(im1, ax=ax, shrink=0.8)
+        cbar1.set_label('Elevation (m)')
+        cbar1.ax.axhline(y=0, color='white', linewidth=2)
+        self.add_scale_legend(ax, width, height)
+        
+        # 2. Temperature (top-center)
+        ax = axes[0, 1]
+        im2 = ax.imshow(data_dict['temperature'], cmap='coolwarm', extent=extent)
+        ax.set_title('Temperature Distribution', fontsize=14, fontweight='bold')
+        cbar2 = plt.colorbar(im2, ax=ax, shrink=0.8)
+        cbar2.set_label('Temperature (°C)')
+        
+        # 3. Humidity (top-right)
+        ax = axes[0, 2]
+        im3 = ax.imshow(data_dict['humidity'], cmap='Blues', extent=extent)
+        ax.set_title('Humidity Distribution', fontsize=14, fontweight='bold')
+        cbar3 = plt.colorbar(im3, ax=ax, shrink=0.8)
+        cbar3.set_label('Humidity (0-1)')
+        
+        # 4. Precipitation (middle-left)
+        ax = axes[1, 0]
+        im4 = ax.imshow(data_dict['precipitation'], cmap='YlGnBu', extent=extent)
+        ax.set_title('Annual Precipitation', fontsize=14, fontweight='bold')
+        cbar4 = plt.colorbar(im4, ax=ax, shrink=0.8)
+        cbar4.set_label('Precipitation (mm/year)')
+        
+        # 5. Continental Noise (middle-center)
+        ax = axes[1, 1]
+        im5 = ax.imshow(data_dict['continental_noise'], cmap='RdGy_r', extent=extent)
+        ax.set_title('Continental-Scale Noise', fontsize=14, fontweight='bold')
+        cbar5 = plt.colorbar(im5, ax=ax, shrink=0.8)
+        cbar5.set_label('Noise Value')
+        
+        # 6. Regional Noise (middle-right)
+        ax = axes[1, 2]
+        im6 = ax.imshow(data_dict['regional_noise'], cmap='RdGy_r', extent=extent)
+        ax.set_title('Regional-Scale Noise', fontsize=14, fontweight='bold')
+        cbar6 = plt.colorbar(im6, ax=ax, shrink=0.8)
+        cbar6.set_label('Noise Value')
+        
+        # 7. Slope (bottom-left)
+        ax = axes[2, 0]
+        im7 = ax.imshow(data_dict['slope'], cmap='plasma', extent=extent)
+        ax.set_title('Terrain Slope', fontsize=14, fontweight='bold')
+        cbar7 = plt.colorbar(im7, ax=ax, shrink=0.8)
+        cbar7.set_label('Slope (gradient magnitude)')
+        
+        # 8. Aspect (bottom-center)
+        ax = axes[2, 1]
+        im8 = ax.imshow(data_dict['aspect'], cmap='hsv', extent=extent)
+        ax.set_title('Slope Aspect (Direction)', fontsize=14, fontweight='bold')
+        cbar8 = plt.colorbar(im8, ax=ax, shrink=0.8)
+        cbar8.set_label('Aspect (degrees)')
+        
+        # 9. Statistics Summary (bottom-right)
+        ax = axes[2, 2]
+        ax.axis('off')  # Turn off axis for text display
+        
+        # Calculate statistics
+        stats_text = f"""TERRAIN STATISTICS
+        
+ELEVATION:
+• Min: {np.min(data_dict['heightmap']):.1f}m
+• Max: {np.max(data_dict['heightmap']):.1f}m  
+• Mean: {np.mean(data_dict['heightmap']):.1f}m
+• Std Dev: {np.std(data_dict['heightmap']):.1f}m
+• Sea Level Coverage: {np.sum(data_dict['heightmap'] < 0) / data_dict['heightmap'].size * 100:.1f}%
+
+CLIMATE:
+• Temperature Range: {np.min(data_dict['temperature']):.1f}°C to {np.max(data_dict['temperature']):.1f}°C
+• Mean Temperature: {np.mean(data_dict['temperature']):.1f}°C
+• Mean Humidity: {np.mean(data_dict['humidity']):.2f}
+• Mean Precipitation: {np.mean(data_dict['precipitation']):.0f}mm/year
+
+TERRAIN COMPLEXITY:
+• Mean Slope: {np.mean(data_dict['slope']):.2f}
+• Max Slope: {np.max(data_dict['slope']):.2f}
+• Continental Noise Range: {np.min(data_dict['continental_noise']):.2f} to {np.max(data_dict['continental_noise']):.2f}
+• Regional Noise Range: {np.min(data_dict['regional_noise']):.2f} to {np.max(data_dict['regional_noise']):.2f}
+
+MAP INFO:
+• Seed: {seed}
+• Region: {width/1000:.1f}km × {height/1000:.1f}km
+• Resolution: {len(data_dict['heightmap'][0])}×{len(data_dict['heightmap'])} points"""
+        
+        ax.text(0.05, 0.95, stats_text, transform=ax.transAxes, fontsize=11, 
+                verticalalignment='top', fontfamily='monospace',
+                bbox=dict(boxstyle='round,pad=0.5', facecolor='lightgray', alpha=0.8))
+        
+        # Add axis labels to all plots
+        for i in range(3):
+            for j in range(2):  # Skip the stats panel
+                if i == 2 and j == 1:  # Skip stats panel
+                    continue
+                axes[i, j].set_xlabel('X (world coordinates)')
+                axes[i, j].set_ylabel('Y (world coordinates)')
+        
+        # Adjust layout
+        plt.tight_layout(rect=[0, 0, 1, 0.97])
+        
+        # Save the comprehensive analysis
+        print(f"Saving comprehensive analysis to {output_filename}...")
+        plt.savefig(output_filename, dpi=150, bbox_inches='tight')
+        print(f"Comprehensive terrain analysis saved!")
+        
+        return fig
+
 def main():
     parser = argparse.ArgumentParser(description='ProceduralTerrain Visualization Tool')
     parser.add_argument('--seed', type=int, default=12345, help='World seed')
-    parser.add_argument('--mode', choices=['heightmap', 'temperature', 'precipitation', 'biomes', 'rivers', 'overlay'], 
-                       default='heightmap', help='Visualization mode')
+    parser.add_argument('--mode', choices=['heightmap', 'temperature', 'humidity', 'precipitation', 'biomes', 'rivers', 'overlay', 'comprehensive'], 
+                       default='comprehensive', help='Visualization mode')
     parser.add_argument('--size', type=int, default=512, help='Map size in world units (creates square map)')
     parser.add_argument('--region', type=str, default=None, 
                        help='Override region as x_min,y_min,width,height (if not specified, uses --size centered at origin)')
@@ -306,6 +541,14 @@ def main():
         plt.title(f'Temperature Map - Seed {args.seed}')
         visualizer.add_scale_legend(plt.gca(), width, height)
         
+    elif args.mode == 'humidity':
+        data = visualizer.generate_climate_map(x_min, y_min, width, height, args.resolution, 'humidity')
+        plt.figure(figsize=(12, 10))
+        plt.imshow(data, cmap='viridis', extent=[x_min, x_min+width, y_min+height, y_min])
+        plt.colorbar(label='Humidity (0-1)')
+        plt.title(f'Humidity Map - Seed {args.seed}')
+        visualizer.add_scale_legend(plt.gca(), width, height)
+        
     elif args.mode == 'precipitation':
         data = visualizer.generate_climate_map(x_min, y_min, width, height, args.resolution, 'precipitation')
         plt.figure(figsize=(12, 10))
@@ -345,6 +588,29 @@ def main():
         plt.text(0.02, 0.98, 'Biomes (color) + Elevation (shading) + Rivers (blue)', 
                 transform=plt.gca().transAxes, verticalalignment='top', 
                 bbox=dict(boxstyle='round', facecolor='white', alpha=0.8))
+    
+    elif args.mode == 'comprehensive':
+        # Generate comprehensive analysis
+        data_dict = visualizer.generate_comprehensive_analysis(x_min, y_min, width, height, args.resolution)
+        
+        # Create comprehensive visualization
+        fig = visualizer.plot_comprehensive_analysis(data_dict, x_min, y_min, width, height, args.seed, args.output)
+        
+        # Print comprehensive statistics
+        print(f"\n=== COMPREHENSIVE TERRAIN ANALYSIS COMPLETE ===")
+        print(f"Generated 8 different visualizations:")
+        print(f"  1. Heightmap with sea-level coloring")
+        print(f"  2. Temperature distribution") 
+        print(f"  3. Humidity distribution")
+        print(f"  4. Annual precipitation")
+        print(f"  5. Continental-scale noise patterns")
+        print(f"  6. Regional-scale noise patterns")
+        print(f"  7. Terrain slope analysis")
+        print(f"  8. Slope aspect (direction) analysis")
+        print(f"  9. Statistical summary panel")
+        
+        # Early return to skip the individual plot formatting
+        return 0
     
     plt.xlabel('X (world coordinates)')
     plt.ylabel('Y (world coordinates)')
