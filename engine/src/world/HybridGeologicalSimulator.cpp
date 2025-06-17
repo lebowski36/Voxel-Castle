@@ -1,7 +1,7 @@
 #include "world/HybridGeologicalSimulator.h"
 #include "world/ContinuousField.h"
 #include "world/geological_data.h"
-#include "utils/debug_logger.h"
+#include "utils/debug_logger_stub.h"
 #include <algorithm>
 #include <cmath>
 #include <iostream>
@@ -27,12 +27,18 @@ HybridGeologicalSimulator::HybridGeologicalSimulator(float worldSizeKm, uint64_t
     fractalEngine_ = std::make_unique<FractalDetailEngine>(worldSizeKm, seed);
     
     // Create snapshot manager for UI integration
-    // Using a reasonable simulation resolution (512x512) for the snapshot system
-    int simulationWidth = 512;
-    int simulationHeight = 512;
+    // Use reasonable simulation resolution for performance vs detail tradeoff
+    // 512x512 = 262k samples, 256x256 = 65k samples 
+    const int GEOLOGICAL_SIMULATION_RESOLUTION = 256; // Start with 256x256 for performance
+    int simulationWidth = GEOLOGICAL_SIMULATION_RESOLUTION;
+    int simulationHeight = GEOLOGICAL_SIMULATION_RESOLUTION;
     float spacing = worldSizeKm * 1000.0f / simulationWidth; // spacing in meters
     snapshotManager_ = std::make_unique<GeologicalSnapshotManager>(
         worldSizeKm, simulationWidth, simulationHeight, spacing);
+    
+    DEBUG_LOG("GeologicalSimulator", "Snapshot manager initialized with resolution: " + 
+              std::to_string(simulationWidth) + "x" + std::to_string(simulationHeight) + 
+              ", spacing: " + std::to_string(spacing) + "m, total samples: " + std::to_string(simulationWidth * simulationHeight));
     
     std::cout << "[HybridGeologicalSimulator] Hybrid system initialized" << std::endl;
 }
@@ -106,9 +112,13 @@ void HybridGeologicalSimulator::RunSimulationStep(float timeStepYears) {
     static int lastSnapshotStep = 0;
     int currentStep = static_cast<int>(currentTime_ / DEFAULT_TIME_STEP);
     
-    // Create snapshots every 5 simulation steps (5000 years) to show evolution
-    if (currentStep > 0 && (currentStep % 5 == 0) && currentStep != lastSnapshotStep) {
+    // Create snapshots at step 1 and then every 5 simulation steps to show evolution
+    if (currentStep > 0 && (currentStep == 1 || (currentStep % 5 == 0)) && currentStep != lastSnapshotStep) {
         std::string phaseDescription = "Tectonic Evolution - " + std::to_string(currentStep * static_cast<int>(DEFAULT_TIME_STEP)) + " years";
+        
+        DEBUG_LOG("GeologicalSimulator", "Triggering snapshot creation at step " + std::to_string(currentStep) + 
+                  " (" + phaseDescription + ")");
+        
         CreateSnapshot(phaseDescription, currentStep, GetProgress());
         lastSnapshotStep = currentStep;
         
@@ -121,12 +131,19 @@ void HybridGeologicalSimulator::RunSimulationStep(float timeStepYears) {
 }
 
 bool HybridGeologicalSimulator::StepSimulation() {
+    DEBUG_LOG("GeologicalSimulator", "StepSimulation called - initialized: " + std::to_string(isInitialized_) + ", complete: " + std::to_string(IsComplete()));
+    
     if (!isInitialized_ || IsComplete()) {
+        DEBUG_LOG("GeologicalSimulator", "StepSimulation early return - not initialized or complete");
         return false;
     }
     
+    DEBUG_LOG("GeologicalSimulator", "StepSimulation calling RunSimulationStep with " + std::to_string(DEFAULT_TIME_STEP) + " years");
+    
     // Run one simulation step
     RunSimulationStep(DEFAULT_TIME_STEP);
+    
+    DEBUG_LOG("GeologicalSimulator", "StepSimulation complete");
     return true;
 }
 
@@ -493,11 +510,15 @@ void HybridGeologicalSimulator::CreateSnapshot(const std::string& phaseDescripti
     DEBUG_LOG("GeologicalSimulator", "Creating snapshot: " + phaseDescription + 
               " (Step: " + std::to_string(stepNumber) + ", Completion: " + std::to_string(completionPercentage * 100.0f) + "%)");
     
-    // Get snapshot resolution from snapshot manager
-    int width = 512;  // Match what we initialized with
-    int height = 512;
-    float worldSizeMeters = 1024000.0f; // 1024km in meters
+    // Get snapshot resolution from snapshot manager - use fixed 256x256 for performance
+    const int SNAPSHOT_RESOLUTION = 256;
+    int width = SNAPSHOT_RESOLUTION;
+    int height = SNAPSHOT_RESOLUTION;
+    float worldSizeMeters = 1024.0f * 1000.0f; // 1024km world size in meters (TODO: get from snapshot manager)
     float spacing = worldSizeMeters / width;
+    
+    DEBUG_LOG("GeologicalSimulator", "Snapshot resolution: " + std::to_string(width) + "x" + std::to_string(height) + 
+              ", spacing: " + std::to_string(spacing) + "m, total pixels: " + std::to_string(width * height));
     
     // Create ContinuousField objects for snapshot data
     ContinuousField<float> elevationField(width, height, spacing);
@@ -515,6 +536,10 @@ void HybridGeologicalSimulator::CreateSnapshot(const std::string& phaseDescripti
     float minElevation = 9999.0f;
     float maxElevation = -9999.0f;
     int sampleCount = 0;
+    int totalSamples = width * height;
+    int progressReportInterval = totalSamples / 20; // Report progress every 5%
+    
+    DEBUG_LOG("GeologicalSimulator", "Starting snapshot sampling: " + std::to_string(totalSamples) + " total samples");
     
     for (int z = 0; z < height; ++z) {
         for (int x = 0; x < width; ++x) {
@@ -530,6 +555,13 @@ void HybridGeologicalSimulator::CreateSnapshot(const std::string& phaseDescripti
             minElevation = std::min(minElevation, elevation);
             maxElevation = std::max(maxElevation, elevation);
             sampleCount++;
+            
+            // Progress reporting
+            if (sampleCount % progressReportInterval == 0) {
+                float progress = (float)sampleCount / totalSamples * 100.0f;
+                DEBUG_LOG("GeologicalSimulator", "Snapshot sampling progress: " + std::to_string(progress) + 
+                          "% (" + std::to_string(sampleCount) + "/" + std::to_string(totalSamples) + ")");
+            }
             
             // Debug first few samples
             if (sampleCount <= 5) {

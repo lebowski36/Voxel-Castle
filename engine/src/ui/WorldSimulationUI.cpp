@@ -7,7 +7,7 @@
 #include "world/world_seed.h"
 #include "world/world_parameters.h"
 #include "world/world_persistence_manager.h"
-#include "utils/debug_logger.h"
+#include "utils/debug_logger_stub.h"
 #include <iostream>
 #include <thread>
 #include <chrono>

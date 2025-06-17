@@ -1,9 +1,15 @@
 #pragma once
 
 #include <string>
+#include <fstream>
+#include <memory>
+#include <chrono>
+#include <iomanip>
+#include <sstream>
+#include <map>
 
-// Stub header for VoxelCastle::Utils logging to satisfy engine linking
-// This is a temporary solution until dual logging systems are merged
+// Header for VoxelCastle::Utils logging to support engine files
+// This provides file-based timestamped logging like the game implementation
 
 namespace VoxelCastle {
 namespace Utils {
@@ -36,7 +42,15 @@ public:
 
 private:
     DebugLogger() = default;
-    ~DebugLogger() = default;
+    ~DebugLogger();
+    
+    std::string getCurrentTimestamp();
+    std::string getLogLevelString(LogLevel level);
+    std::ofstream& getLogFile(const std::string& subsystem);
+    
+    std::string sessionTimestamp_;
+    std::map<std::string, std::unique_ptr<std::ofstream>> logFiles_;
+    bool initialized_ = false;
 };
 
 // Convenience macros for easy logging
@@ -46,7 +60,7 @@ private:
 #define ERROR_LOG(subsystem, message) VoxelCastle::Utils::DebugLogger::getInstance().error(subsystem, message)
 #define CRITICAL_LOG(subsystem, message) VoxelCastle::Utils::DebugLogger::getInstance().critical(subsystem, message)
 
-// Stub logToFile function
+// logToFile function
 extern void logToFile(const std::string& message);
 
 } // namespace Utils

@@ -3,7 +3,7 @@
 #include "world/seed_world_generator.h"
 #include "world/tectonic_simulator.h"
 #include "world/FractalContinentGenerator.h"
-#include "utils/debug_logger.h"
+#include "utils/debug_logger_stub.h"
 #include <iostream>
 #include <algorithm>
 #include <vector>

@@ -1,5 +1,5 @@
 #include "world/GeologicalSnapshot.h"
-#include "utils/debug_logger.h"
+#include "utils/debug_logger_stub.h"
 #include <iostream>
 #include <algorithm>
 #include <chrono>
