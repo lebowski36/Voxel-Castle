@@ -212,7 +212,7 @@ std::shared_ptr<UIButton> BaseMenu::createStyledButton(const std::string& text, 
     // Calculate dynamic button width based on actual text measurements
     float textScale = 1.0f;
     float actualTextWidth = renderer_->getTextWidth(text, textScale);
-    float textPadding = 80.0f; // Increased padding for more margin around text
+    float textPadding = 80.0f; // Increased padding to ensure text fits comfortably
     float buttonWidth = actualTextWidth + textPadding;
     
     // Ensure minimum width and don't exceed maximum width
@@ -229,6 +229,15 @@ std::shared_ptr<UIButton> BaseMenu::createStyledButton(const std::string& text, 
     logger.debug("BaseMenu", "  Min width: " + std::to_string(minWidth));
     logger.debug("BaseMenu", "  Max width: " + std::to_string(maxWidth));
     logger.debug("BaseMenu", "  Final button width: " + std::to_string(buttonWidth));
+    
+    // TEMP: Console debug output to help diagnose button sizing issue
+    std::cout << "[BaseMenu] Button '" << text << "' sizing:" << std::endl;
+    std::cout << "  Actual text width: " << actualTextWidth << std::endl;
+    std::cout << "  Text padding: " << textPadding << std::endl;
+    std::cout << "  Calculated width: " << (actualTextWidth + textPadding) << std::endl;
+    std::cout << "  Min width: " << minWidth << std::endl;
+    std::cout << "  Max width: " << maxWidth << std::endl;
+    std::cout << "  Final button width: " << buttonWidth << std::endl;
     
     // Center the button horizontally in the menu
     float buttonX = (getSize().x - buttonWidth) / 2.0f;

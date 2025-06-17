@@ -18,12 +18,12 @@ bool MainMenu::initialize(MenuSystem* menuSystem) {
     closeButton_->setOnClick([this]() { onCloseClicked(); });
     addElementSpacing();
 
-    worldSelectionButton_ = createStyledButton("Load World", getNextElementY());
-    worldSelectionButton_->setOnClick([this]() { onWorldSelectionClicked(); });
+    createWorldButton_ = createStyledButton("New World", getNextElementY());
+    createWorldButton_->setOnClick([this]() { onCreateWorldClicked(); });
     addElementSpacing();
 
-    createWorldButton_ = createStyledButton("Create New World", getNextElementY());
-    createWorldButton_->setOnClick([this]() { onCreateWorldClicked(); });
+    worldSelectionButton_ = createStyledButton("Load World", getNextElementY());
+    worldSelectionButton_->setOnClick([this]() { onWorldSelectionClicked(); });
     addElementSpacing();
 
     settingsButton_ = createStyledButton("Settings", getNextElementY());
