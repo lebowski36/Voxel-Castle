@@ -16,6 +16,22 @@ The **ProceduralTerrain** system replaces the complex geological simulation appr
 - **Performance-Oriented**: On-the-fly generation without pre-simulation
 - **Backward Compatible**: New biome versions don't break existing chunks
 
+### **User Requirements & Specifications**
+*Based on user consultation session - June 17, 2025*
+
+**World Style**: Fantasy-enhanced (mix of realistic + magical features like floating islands)
+**Height Range**: ±2048m with 25cm voxel resolution (8192 voxel height range)
+**World Scale**: Continent/planet-sized with massive landmasses
+**Water Features**: Oceans, seas, and realistic river networks with substantial land areas
+**Biome Count**: 20+ different biomes initially
+**Biome Transitions**: Realistic transitions - can be fuzzy or sharp depending on biome combination
+**Biome Mix**: Fair mix of realistic biomes with sprinkle of magical elements
+**Cave Importance**: Both surface and underground features are super important
+**Cave Style**: Realistic cave networks (seed-based deterministic)
+**Underground Features**: All realistic and manageable features (ore veins, underground rivers, aquifers, etc.)
+**Performance Target**: Maximum 10 seconds per chunk generation (faster preferred, but quality is priority)
+**Detail Level**: High-quality, detailed terrain (initial loading can take longer for quality)
+
 ---
 
 ## 🏗️ Core Architecture
@@ -51,6 +67,12 @@ engine/src/world/procedural_terrain/
 - **New World Creation**: Replaces the "Create World" simulation system
 - **Menu Integration**: Simple UI with "World Name" + "Seed" input
 - **Chunk Loading**: Integrates with existing chunk management system
+- **Python C++ Wrapper**: `scripts/cpp_wrapper/worldgen_wrapper.cpp` provides Python access to C++ terrain generation for visualization and testing
+  - Built with pybind11 as `worldgen_cpp` Python module
+  - Guarantees visualizer results match actual game generation
+  - Handles proper 25cm voxel scale conversion
+  - Supports batch heightmap generation for large regions
+- **Python C++ Wrapper**: Architecture for exposing C++ functions to Python for world generation scripting and visualization
 
 ---
 
@@ -309,14 +331,19 @@ Replacing the complex geological simulation interface:
 - [ ] **1.4**: Test that "Resume Game" still works perfectly
 
 ### **Task 2: Core Framework Implementation**
-- [ ] **2.1**: Create base ProceduralTerrain architecture
-  - Folder structure and CMakeLists.txt integration
-  - Core interfaces and abstract classes
-  - Seed management system
-- [ ] **2.2**: Implement multi-scale noise system
-  - Continental, regional, local, micro noise layers
-  - Fractal pattern generation utilities
-  - Performance-optimized noise sampling
+- [x] **2.1**: Create base ProceduralTerrain architecture
+  - ✅ Folder structure and CMakeLists.txt integration
+  - ✅ Core interfaces and abstract classes
+  - ✅ Seed management system (SeedUtils)
+- [x] **2.2**: Implement multi-scale noise system ✅ **COMPLETED 2025-06-17**
+  - ✅ Continental, regional, local, micro noise layers (MultiScaleNoise)
+  - ✅ Fractal pattern generation utilities (FractalPatterns)
+  - ✅ Performance-optimized noise sampling with C++ implementation
+  - ✅ Python C++ wrapper for visualization (`scripts/cpp_wrapper/worldgen_wrapper.cpp`)
+  - ✅ Verified with heightmap generation (-2048m to +2048m range)
+  - ✅ Enhanced terrain generation with realistic elevation distribution
+  - ✅ Sharp mountain peaks (ridge noise) instead of flat plateaus
+  - ✅ Proper 25cm voxel scale integration
 - [ ] **2.3**: Build climate calculation system
   - Temperature, humidity, precipitation models
   - Rain shadow and elevation effects
@@ -357,10 +384,13 @@ Replacing the complex geological simulation interface:
 ### **Immediate Goals**
 - [ ] Delete old geological system without breaking "Resume Game"
 - [ ] Create new simplified world creation UI
-- [ ] Generate first chunks with basic heightmap and biomes
-- [ ] Verify deterministic generation (same seed = same world)
+- [x] Generate first chunks with basic heightmap and biomes ✅ **COMPLETED** (via Python C++ wrapper)
+- [x] Verify deterministic generation (same seed = same world) ✅ **COMPLETED**
 
-### **Short-term Goals**
+### **Short-term Goals (NEXT PRIORITIES)**
+- [ ] **Enhanced Python Visualizer**: Multi-mode visualization (heightmap, climate, rivers) with meter legend and larger scales (8km+ regions)
+- [ ] **Climate System Implementation**: Complete Task 2.3 with temperature, humidity, precipitation models
+- [ ] **Terrain Generation Engine**: Task 3.1 - Multi-scale terrain synthesis with mountain ranges and realistic valleys
 - [ ] All terrain feature types implemented and working
 - [ ] Realistic river systems flowing downhill properly
 - [ ] 10-15 biomes with complete implementations
