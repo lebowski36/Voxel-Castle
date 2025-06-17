@@ -16,7 +16,6 @@ add_library(VoxelEngine STATIC
     src/world/world_seed.cpp # Added WorldSeed source
     src/world/world_parameters.cpp # Added WorldParameters source
     src/world/world_coordinates.cpp # Added WorldCoordinates source (±256 chunk range support)
-    src/world/seed_world_generator.cpp # Added SeedWorldGenerator source
     src/world/world_metadata.cpp # World metadata and persistence system
     src/world/world_persistence_manager.cpp # World creation, loading, and directory management
     src/world/voxel_face_patterns.cpp # Added VoxelFacePatterns source
@@ -26,27 +25,8 @@ add_library(VoxelEngine STATIC
     src/world/biome/biome_types.cpp # Biome type definitions and utilities
     src/world/biome/biome_data.cpp # Biome data structures and climate matching
     src/world/biome/biome_registry.cpp # Central biome registry and management
-    src/world/regional_data.cpp # Regional environmental data system
-    src/world/geological_data.cpp # Geological data structures and simulation
-    src/world/hydrological_data.cpp # Hydrological data structures and simulation
-    src/world/climate_data.cpp # Climate data structures and simulation
-    src/world/tectonic_plate.cpp # Tectonic plate structures and operations
-    src/world/tectonic_simulator.cpp # Tectonic simulation system
-    src/world/ContinuousField.cpp # Continuous field mathematics for geological simulation
-    src/world/GeologicalSimulator.cpp # Advanced geological simulation system
-    src/world/geological_constants.cpp # Global geological constants and utilities
-    src/world/FractalContinentGenerator.cpp # Fractal continental generation system
-    src/world/GeologicalSnapshot.cpp # Geological snapshot system for UI visualization
-    # Step 4.1: Modular simulation architecture components
-    src/world/TectonicEngine.cpp # Tectonic processes simulation engine
-    src/world/ErosionEngine.cpp # Erosion and weathering simulation engine
-    src/world/BackgroundSimulationEngine.cpp # Background thread simulation engine
-    src/world/WaterSystemSimulator.cpp # Water system simulation engine
-    # Phase 2A: Hybrid geological simulation - particle system foundation
-    src/world/ParticleSimulationEngine.cpp # Particle-based tectonic simulation engine
-    src/world/SpatialHashGrid.cpp # Spatial hash grid for efficient particle neighbor queries
-    src/world/FractalDetailEngine.cpp # Fractal detail overlay system for seamless terrain
-    src/world/HybridGeologicalSimulator.cpp # Hybrid simulator orchestrating particle + fractal systems
+
+
     src/world/quadtree.cpp      # Added Quadtree source
     src/rendering/mesh_builder.cpp # Added MeshBuilder source
     src/rendering/meshing/two_phase_greedy_meshing_algorithm.cpp # Two-phase greedy meshing algorithm
@@ -80,9 +60,6 @@ add_library(VoxelEngine STATIC
     src/ui/elements/BaseMenu.cpp # Base menu class for consistent styling
     src/ui/elements/MainMenu.cpp # Main menu UI
     src/ui/elements/SettingsMenu.cpp # Settings menu UI
-    src/ui/WorldConfigurationUI.cpp # World generation setup UI
-    src/ui/WorldSimulationUI.cpp # World generation simulation UI
-    src/ui/WorldMapRenderer.cpp # World map visualization for simulation UI
     src/ui/BlockVisualizationPanel.cpp # Block visualization debug panel
     # src/ui/GeologicalDebugUI.cpp # Geological simulation debug UI panel - COMPLEX UI DISABLED, implementing simple debug controls instead
     src/ui/SeedDebugPanel.cpp # Seed debug UI panel

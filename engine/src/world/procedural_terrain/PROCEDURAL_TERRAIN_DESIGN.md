@@ -261,6 +261,39 @@ Replacing the complex geological simulation interface:
 
 ## 🔧 Implementation Tasks
 
+### **IMPORTANT: File Reuse Evaluation Protocol**
+
+**Before implementing any new component**, always check if similar functionality already exists in the codebase. When finding files that could potentially be reused (like "biome", "block properties", "terrain", etc.), follow this evaluation process:
+
+1. **Examine File Dependencies**: Check #include statements and dependencies
+   - Look for references to old geological simulation classes (`GeologicalSimulator`, `TectonicEngine`, `WorldConfigurationUI`, etc.)
+   - Check for complex simulation-based logic that contradicts deterministic generation
+
+2. **Analyze Design Philosophy**: Determine if the file fits our new system
+   - **KEEP**: Files designed for seed-based, deterministic generation
+   - **KEEP**: Files using simple climate parameters (temperature, humidity, precipitation)
+   - **KEEP**: Files with clean, modular interfaces independent of simulation state
+   - **REMOVE**: Files dependent on pre-computed geological simulation data
+   - **REMOVE**: Files requiring complex inter-chunk dependencies or simulation state
+
+3. **Evaluation Examples**:
+   - ✅ **KEEP**: `/engine/src/world/biome/` - Clean registry system with climate-based selection
+   - ✅ **KEEP**: `/engine/src/world/voxel_types.h` - Basic block type definitions
+   - ❌ **REMOVE**: `/engine/src/world/GeologicalSimulator.cpp` - Simulation-dependent
+   - ❌ **REMOVE**: `/engine/src/world/tectonic_*.cpp` - Requires tectonic simulation state
+
+4. **Documentation Requirement**: When keeping existing files, document in this design doc:
+   - Why the file fits our new system
+   - What interfaces it provides
+   - How it integrates with our procedural generation approach
+
+**Current Evaluation Status**:
+- ✅ **Biome System Files**: Evaluated and APPROVED for reuse
+  - `/engine/src/world/biome/biome_types.cpp` - Simple biome enumeration
+  - `/engine/src/world/biome/biome_data.cpp` - Climate-based biome properties
+  - `/engine/src/world/biome/biome_registry.cpp` - Registry system perfect for procedural generation
+  - **Rationale**: These files use temperature/humidity for biome selection, have no simulation dependencies, and provide exactly the interfaces needed for our climate-based biome system.
+
 ### **Task 1: Old System Cleanup**
 - [ ] **1.1**: Delete geological simulation files
   - `/engine/src/world/seed_world_generator.cpp`

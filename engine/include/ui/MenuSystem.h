@@ -2,9 +2,11 @@
 
 #include "ui/UISystem.h"
 #include "world/world_seed.h"
+#include <SDL3/SDL.h>
 #include <memory>
 #include <string>
 #include <functional>
+#include <vector>
 
 namespace VoxelEngine {
 namespace UI {
@@ -15,12 +17,6 @@ class SettingsMenu;
 
 } // namespace UI
 } // namespace VoxelEngine
-
-
-
-// Forward declarations for new split UIs
-class WorldConfigurationUI;
-class WorldSimulationUI;
 
 namespace VoxelEngine {
 namespace UI {
@@ -36,11 +32,7 @@ public:
     enum class MenuState {
         NONE,              // No menu is active
         MAIN_MENU,         // Main menu is active
-        SETTINGS,          // Settings menu is active
-        WORLD_CREATION,    // World creation dialog is active
-        WORLD_GENERATION,  // World generation UI is active (original)
-        WORLD_CONFIGURATION, // World configuration UI is active (new)
-        WORLD_SIMULATION   // World simulation UI is active (new)
+        SETTINGS           // Settings menu is active
     };
 
     MenuSystem();
@@ -56,12 +48,6 @@ public:
     bool initialize(int screenWidth, int screenHeight, const std::string& projectRoot = "");
 
     /**
-     * @brief Update the menu system
-     * @param deltaTime Time since last update in seconds
-     */
-    void update(float deltaTime);
-
-    /**
      * @brief Render the active menu
      */
     void render() override;
@@ -74,6 +60,12 @@ public:
      * @return true if input was handled, false otherwise
      */
     bool handleInput(float mouseX, float mouseY, bool clicked);
+
+    /**
+     * @brief Update the menu system
+     * @param deltaTime Time since last update in seconds
+     */
+    void update(float deltaTime);
 
     /**
      * @brief Handle keyboard input events (key presses, text input, etc.)
@@ -103,19 +95,70 @@ public:
     void showSettingsMenu();
 
     /**
-     * @brief Show the world configuration UI (new split UI)
-     */
-    void showWorldConfigurationUI();
-
-    /**
-     * @brief Show the world simulation UI (new split UI)
-     */
-    void showWorldSimulationUI();
-
-    /**
      * @brief Close all menus
      */
     void closeMenus();
+
+    /**
+     * @brief Handle SDL events
+     * @param event SDL event to handle
+     */
+    void handleEvent(const SDL_Event& event);
+
+    /**
+     * @brief Close the top menu in the stack
+     */
+    void closeTopMenu();
+
+    /**
+     * @brief Close all active menus
+     */
+    void closeAllMenus();
+
+    /**
+     * @brief Check if any menu is currently open
+     * @return true if a menu is open, false otherwise
+     */
+    bool isMenuOpen() const;
+
+    /**
+     * @brief Set the screen size for all menus
+     * @param width Screen width
+     * @param height Screen height
+     */
+    void setScreenSize(int width, int height);
+
+    /**
+     * @brief Handle New Game button click
+     */
+    void onNewGameClicked();
+
+    /**
+     * @brief Handle Load Game button click
+     */
+    void onLoadGameClicked();
+
+    /**
+     * @brief Handle Settings button click
+     */
+    void onSettingsClicked();
+
+    /**
+     * @brief Handle Quit Game button click
+     */
+    void onQuitGameClicked();
+
+    /**
+     * @brief Handle Settings Back button click
+     */
+    void onSettingsBackClicked();
+
+    /**
+     * @brief Handle resolution change
+     * @param width New width
+     * @param height New height
+     */
+    void onResolutionChanged(int width, int height);
 
     /**
      * @brief Toggle fullscreen mode
@@ -230,9 +273,8 @@ private:
     std::shared_ptr<MainMenu> mainMenu_;
     std::shared_ptr<SettingsMenu> settingsMenu_;
     
-    // New split world generation UIs
-    std::shared_ptr<WorldConfigurationUI> worldConfigurationUI_;
-    std::shared_ptr<WorldSimulationUI> worldSimulationUI_;
+    // Active menu stack
+    std::vector<std::shared_ptr<UIElement>> activeMenus_;
     
     std::function<void()> onMenuClosed_;
     std::function<bool(bool)> onFullscreenToggle_;

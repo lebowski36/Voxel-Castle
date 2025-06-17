@@ -62,9 +62,8 @@ void MainMenu::onWorldSelectionClicked() {
 }
 
 void MainMenu::onCreateWorldClicked() {
-    if (menuSystem_) {
-        menuSystem_->showWorldConfigurationUI();
-    }
+    // TODO: Implement new ProceduralTerrain world creation UI
+    std::cout << "[MainMenu] Create World clicked - TODO: Implement ProceduralTerrain world creation" << std::endl;
 }
 
 } // namespace UI

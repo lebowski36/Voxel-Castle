@@ -1,8 +1,6 @@
 #include "ui/MenuSystem.h"
 #include "ui/elements/MainMenu.h"
 #include "ui/elements/SettingsMenu.h" 
-#include "ui/WorldConfigurationUI.h"
-#include "ui/WorldSimulationUI.h"
 #include "world/world_seed.h"
 #include <iostream>
 #include <typeinfo>  // For typeid
@@ -42,84 +40,7 @@ bool MenuSystem::initialize(int screenWidth, int screenHeight, const std::string
         return false;
     }
 
-    // Create new split world generation UIs
-    worldConfigurationUI_ = std::make_shared<WorldConfigurationUI>(renderer);
-    if (!worldConfigurationUI_->initialize(getRenderer().getScreenWidth(), getRenderer().getScreenHeight())) {
-        std::cerr << "[MenuSystem] Failed to initialize world configuration UI" << std::endl;
-        return false;
-    }
-    
-    worldSimulationUI_ = std::make_shared<WorldSimulationUI>(renderer);
-    if (!worldSimulationUI_->initialize(getRenderer().getScreenWidth(), getRenderer().getScreenHeight())) {
-        std::cerr << "[MenuSystem] Failed to initialize world simulation UI" << std::endl;
-        return false;
-    }
-    
-    // Set up new split world generation UI callbacks
-    worldConfigurationUI_->setOnConfigurationCompleteCallback([this](const WorldConfigurationUI::WorldConfig& config) {
-        std::cout << "[MenuSystem] World configuration complete, switching to simulation" << std::endl;
-        
-        // Convert WorldConfigurationUI::WorldConfig to WorldSimulationUI::WorldConfig
-        WorldSimulationUI::WorldConfig simConfig;
-        simConfig.worldName = config.worldName;
-        simConfig.worldSize = config.worldSize;
-        simConfig.simulationDepth = config.simulationDepth;
-        simConfig.climateType = config.climateType;
-        simConfig.geologicalActivity = config.geologicalActivity;
-        simConfig.hydrologyLevel = config.hydrologyLevel;
-        simConfig.customSeed = config.customSeed;
-        simConfig.enableCivilizations = config.enableCivilizations;
-        simConfig.geologicalQuality = config.geologicalQuality;
-        
-        // Switch to simulation UI and start the simulation
-        showWorldSimulationUI();
-        worldSimulationUI_->startSimulation(simConfig, config.worldName);
-    });
-    
-    worldConfigurationUI_->setOnBackCallback([this]() {
-        std::cout << "[MenuSystem] World configuration cancelled, returning to main menu" << std::endl;
-        showMainMenu();
-    });
-    
-    worldSimulationUI_->setOnSimulationCompleteCallback([this](const WorldSimulationUI::WorldStats& stats) {
-        std::cout << "[MenuSystem] World simulation complete!" << std::endl;
-        std::cout << "[MenuSystem] Generated world statistics:" << std::endl;
-        std::cout << "  - Highest Peak: " << stats.highestPeak << "m (" << stats.highestPeakName << ")" << std::endl;
-        std::cout << "  - Deepest Valley: " << stats.deepestValley << "m (" << stats.deepestValleyName << ")" << std::endl;
-        std::cout << "  - Largest Lake: " << stats.largestLakeSize << " (" << stats.largestLakeName << ")" << std::endl;
-        std::cout << "  - Simulation Years: " << stats.simulationYears << std::endl;
-        
-        // TODO: Instead of calling legacy world creation, we should:
-        // 1. Save the SeedWorldGenerator state from the simulation
-        // 2. Pass it to the game system for immediate use
-        // 3. Skip the legacy WorldGenerator entirely
-        
-        // For now, we'll stay in the simulation UI so the user can see completion
-        // This prevents the GameState stack errors and OpenGL corruption
-        std::cout << "[MenuSystem] World generation complete - simulation UI remains active" << std::endl;
-        std::cout << "[MenuSystem] TODO: Add 'Play World' button to transition to gameplay with generated world" << std::endl;
-        
-        // NOTE: Do NOT call closeMenus() here - it causes:
-        // 1. GameState stack underflow ("Cannot pop state: stack is empty")
-        // 2. Mouse capture issues (cursor disappears)
-        // 3. OpenGL state corruption (error 0x502 spam)
-        
-        // The user can use the "Back to Menu" button in WorldSimulationUI to navigate
-        
-        // NOTE: Commented out the problematic calls
-        // closeMenus(); // This was causing GameState stack errors!
-        
-        // TODO: Convert simulation results to WorldSeed and trigger NEW world creation (not legacy)
-        // VoxelCastle::World::WorldSeed seed; // Create with current timestamp  
-        // if (onWorldCreateRequest_) {
-        //     onWorldCreateRequest_(seed, 1); // This was calling the legacy system!
-        // }
-    });
-    
-    worldSimulationUI_->setOnBackCallback([this]() {
-        std::cout << "[MenuSystem] World simulation cancelled, returning to configuration" << std::endl;
-        showWorldConfigurationUI();
-    });
+   
     
     // Set widths only - preserve auto-calculated heights
     glm::vec2 mainSize = mainMenu_->getSize();
@@ -133,42 +54,15 @@ bool MenuSystem::initialize(int screenWidth, int screenHeight, const std::string
      // Hide all menus initially
     mainMenu_->setVisible(false);
     settingsMenu_->setVisible(false);
-    worldConfigurationUI_->setVisible(false);
-    worldSimulationUI_->setVisible(false);
-
+    
     // Add menus to UI system
     addElement(mainMenu_);
     addElement(settingsMenu_);
-    addElement(worldConfigurationUI_);
-    addElement(worldSimulationUI_);
     
     return true;
 }
 
-void MenuSystem::update(float deltaTime) {
-    UISystem::update(deltaTime);
-    
-    // Update new split UIs if they're active
-    if (menuState_ == MenuState::WORLD_CONFIGURATION && worldConfigurationUI_) {
-        // WorldConfigurationUI is a UIElement, so it's updated by UISystem::update()
-    }
-    
-    if (menuState_ == MenuState::WORLD_SIMULATION && worldSimulationUI_) {
-        // WorldSimulationUI is a UIElement, so it's updated by UISystem::update()
-        // But we can add simulation-specific update logic here if needed
-    }
-}
 
-void MenuSystem::render() {
-    // Logging disabled to reduce console spam
-    if (menuState_ == MenuState::WORLD_CONFIGURATION || menuState_ == MenuState::WORLD_SIMULATION) {
-        // New split UIs are UIElements, so they're rendered by UISystem::render()
-        UISystem::render();
-    } else {
-        // Render normal UI system (menus)
-        UISystem::render();
-    }
-}
 
 bool MenuSystem::handleInput(float mouseX, float mouseY, bool clicked) {
     // Use default UISystem input handling for all menus (including new split UIs)
@@ -176,38 +70,7 @@ bool MenuSystem::handleInput(float mouseX, float mouseY, bool clicked) {
     return UISystem::handleInput(mouseX, mouseY, clicked);
 }
 
-bool MenuSystem::handleKeyboardInput(int key, bool pressed) {
-    // Route keyboard input to appropriate UI components based on current menu state
-    if (menuState_ == MenuState::WORLD_CONFIGURATION && worldConfigurationUI_) {
-        // Route keyboard input to WorldConfigurationUI when it's active
-        return worldConfigurationUI_->handleKeyboardInput(key, pressed);
-    }
-    
-    // Other menu states don't currently need keyboard input
-    // (Main menu and Settings menu use mouse-only interaction)
-    return false;
-}
 
-bool MenuSystem::handleMouseWheel(float mouseX, float mouseY, float wheelDelta) {
-    // Route mouse wheel events to the appropriate active menu
-    switch (menuState_) {
-        case MenuState::WORLD_SIMULATION:
-            if (worldSimulationUI_ && worldSimulationUI_->isVisible()) {
-                return worldSimulationUI_->handleExtendedInput(mouseX, mouseY, false, wheelDelta);
-            }
-            break;
-        case MenuState::WORLD_CONFIGURATION:
-            // World configuration UI doesn't need mouse wheel for now
-            break;
-        case MenuState::MAIN_MENU:
-        case MenuState::SETTINGS:
-        case MenuState::NONE:
-        default:
-            // Other menus don't handle mouse wheel events
-            break;
-    }
-    return false;
-}
 
 void MenuSystem::showMainMenu() {
     // First make the menu visible to ensure its size is calculated correctly
@@ -263,57 +126,6 @@ void MenuSystem::showSettingsMenu() {
         screenHeight / 2.0f - menuSize.y / 2.0f
     );
 }
-
-void MenuSystem::showWorldConfigurationUI() {
-    std::cout << "[MenuSystem] showWorldConfigurationUI() called" << std::endl;
-    
-    // Hide all other menus
-    mainMenu_->setVisible(false);
-    settingsMenu_->setVisible(false);
-    worldSimulationUI_->setVisible(false);
-    
-    // Show world configuration UI
-    worldConfigurationUI_->setVisible(true);
-    menuState_ = MenuState::WORLD_CONFIGURATION;
-    
-    // Hide all other UI elements
-    for (const auto& element : elements_) {
-        if (element.get() != worldConfigurationUI_.get()) {
-            element->setVisible(false);
-        }
-    }
-    
-    // Center the configuration UI
-    centerMenus(getRenderer().getScreenWidth(), getRenderer().getScreenHeight());
-    
-    std::cout << "[MenuSystem] WorldConfigurationUI is now active" << std::endl;
-}
-
-void MenuSystem::showWorldSimulationUI() {
-    std::cout << "[MenuSystem] showWorldSimulationUI() called" << std::endl;
-    
-    // Hide all other menus
-    mainMenu_->setVisible(false);
-    settingsMenu_->setVisible(false);
-    worldConfigurationUI_->setVisible(false);
-    
-    // Show world simulation UI
-    worldSimulationUI_->setVisible(true);
-    menuState_ = MenuState::WORLD_SIMULATION;
-    
-    // Hide all other UI elements  
-    for (const auto& element : elements_) {
-        if (element.get() != worldSimulationUI_.get()) {
-            element->setVisible(false);
-        }
-    }
-    
-    // Center the simulation UI
-    centerMenus(getRenderer().getScreenWidth(), getRenderer().getScreenHeight());
-    
-    std::cout << "[MenuSystem] WorldSimulationUI is now active" << std::endl;
-}
-
 void MenuSystem::closeMenus() {
     mainMenu_->setVisible(false);
     settingsMenu_->setVisible(false);
@@ -532,7 +344,52 @@ glm::vec2 MenuSystem::getSettingsMenuSize() const {
     return glm::vec2(0.0f, 0.0f);
 }
 
+void MenuSystem::update(float deltaTime) {
+    // Update active menus
+    if (mainMenu_ && mainMenu_->isVisible()) {
+        mainMenu_->update(deltaTime);
+    }
+    if (settingsMenu_ && settingsMenu_->isVisible()) {
+        settingsMenu_->update(deltaTime);
+    }
+}
 
+void MenuSystem::render() {
+    // Render active menus
+    if (mainMenu_ && mainMenu_->isVisible()) {
+        mainMenu_->render();
+    }
+    if (settingsMenu_ && settingsMenu_->isVisible()) {
+        settingsMenu_->render();
+    }
+}
+
+bool MenuSystem::handleKeyboardInput(int key, bool pressed) {
+    // Handle basic menu navigation
+    if (pressed) {
+        // ESC key closes menus
+        if (key == 27) { // SDL_SCANCODE_ESCAPE
+            if (menuState_ == MenuState::SETTINGS) {
+                showMainMenu();
+                return true;
+            } else if (menuState_ == MenuState::MAIN_MENU) {
+                closeMenus();
+                return true;
+            }
+        }
+    }
+    
+    // Pass input to active menus if they support it
+    // For now, just return false since we don't have keyboard handling in menus yet
+    return false;
+}
+
+bool MenuSystem::handleMouseWheel(float mouseX, float mouseY, float wheelDelta) {
+    // Pass mouse wheel events to active menus
+    // For now, just log and return false
+    (void)mouseX; (void)mouseY; (void)wheelDelta; // Suppress unused parameter warnings
+    return false;
+}
 
 } // namespace UI
 } // namespace VoxelEngine
