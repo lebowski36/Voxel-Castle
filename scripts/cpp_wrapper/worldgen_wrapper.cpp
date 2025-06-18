@@ -4,6 +4,7 @@
 #include "world/procedural_terrain/noise/multi_scale_noise.h"
 #include "world/procedural_terrain/noise/fractal_patterns.h"
 #include "world/procedural_terrain/climate/climate_system.h"
+#include "world/procedural_terrain/features/river_networks.h"
 #include "world/procedural_terrain/utils/seed_utils.h"
 
 using namespace VoxelCastle::World::ProceduralTerrain;
@@ -290,6 +291,143 @@ py::array_t<float> generate_regional_noise_batch(
     return result;
 }
 
+// River network generation for visualization
+py::array_t<float> generate_river_flow(
+    py::array_t<float> x_coords,
+    py::array_t<float> z_coords,
+    py::array_t<float> elevations,
+    py::array_t<float> precipitation,
+    uint64_t seed
+) {
+    auto x_buf = x_coords.request();
+    auto z_buf = z_coords.request();
+    auto elev_buf = elevations.request();
+    auto precip_buf = precipitation.request();
+    
+    if (x_buf.size != z_buf.size || x_buf.size != elev_buf.size || x_buf.size != precip_buf.size) {
+        throw std::runtime_error("Input arrays must have the same size");
+    }
+    
+    size_t size = x_buf.size;
+    auto result = py::array_t<float>(size);
+    auto result_buf = result.request();
+    
+    float* x_ptr = static_cast<float*>(x_buf.ptr);
+    float* z_ptr = static_cast<float*>(z_buf.ptr);
+    float* elev_ptr = static_cast<float*>(elev_buf.ptr);
+    float* precip_ptr = static_cast<float*>(precip_buf.ptr);
+    float* result_ptr = static_cast<float*>(result_buf.ptr);
+    
+    for (size_t i = 0; i < size; i++) {
+        float world_x = x_ptr[i] * VOXEL_SCALE;
+        float world_z = z_ptr[i] * VOXEL_SCALE;
+        
+        result_ptr[i] = RiverNetworks::CalculateFlowAccumulation(world_x, world_z, elev_ptr[i], precip_ptr[i], seed);
+    }
+    
+    return result;
+}
+
+py::array_t<float> generate_river_width(
+    py::array_t<float> x_coords,
+    py::array_t<float> z_coords,
+    uint64_t seed
+) {
+    auto x_buf = x_coords.request();
+    auto z_buf = z_coords.request();
+    
+    if (x_buf.size != z_buf.size) {
+        throw std::runtime_error("Input arrays must have the same size");
+    }
+    
+    size_t size = x_buf.size;
+    auto result = py::array_t<float>(size);
+    auto result_buf = result.request();
+    
+    float* x_ptr = static_cast<float*>(x_buf.ptr);
+    float* z_ptr = static_cast<float*>(z_buf.ptr);
+    float* result_ptr = static_cast<float*>(result_buf.ptr);
+    
+    for (size_t i = 0; i < size; i++) {
+        float world_x = x_ptr[i] * VOXEL_SCALE;
+        float world_z = z_ptr[i] * VOXEL_SCALE;
+        
+        float flow = RiverNetworks::CalculateRiverFlow(world_x, world_z, seed);
+        result_ptr[i] = RiverNetworks::CalculateRiverWidth(flow);
+    }
+    
+    return result;
+}
+
+// River network generation for efficient visualization
+py::array_t<float> generate_river_flow(
+    py::array_t<float> x_coords,
+    py::array_t<float> z_coords,
+    py::array_t<float> elevations,
+    py::array_t<float> precipitations,
+    uint64_t seed
+) {
+    auto x_buf = x_coords.request();
+    auto z_buf = z_coords.request();
+    auto elev_buf = elevations.request();
+    auto precip_buf = precipitations.request();
+    
+    if (x_buf.size != z_buf.size || x_buf.size != elev_buf.size || x_buf.size != precip_buf.size) {
+        throw std::runtime_error("Input arrays must have the same size");
+    }
+    
+    size_t size = x_buf.size;
+    auto result = py::array_t<float>(size);
+    auto result_buf = result.request();
+    
+    float* x_ptr = static_cast<float*>(x_buf.ptr);
+    float* z_ptr = static_cast<float*>(z_buf.ptr);
+    float* elev_ptr = static_cast<float*>(elev_buf.ptr);
+    float* precip_ptr = static_cast<float*>(precip_buf.ptr);
+    float* result_ptr = static_cast<float*>(result_buf.ptr);
+    
+    for (size_t i = 0; i < size; i++) {
+        float world_x = x_ptr[i] * VOXEL_SCALE;
+        float world_z = z_ptr[i] * VOXEL_SCALE;
+        
+        RiverData river = RiverNetworks::CalculateRiverData(world_x, world_z, elev_ptr[i], precip_ptr[i], seed);
+        result_ptr[i] = river.flow_accumulation;
+    }
+    
+    return result;
+}
+
+py::array_t<float> generate_river_width(
+    py::array_t<float> x_coords,
+    py::array_t<float> z_coords,
+    uint64_t seed
+) {
+    auto x_buf = x_coords.request();
+    auto z_buf = z_coords.request();
+    
+    if (x_buf.size != z_buf.size) {
+        throw std::runtime_error("Input arrays must have the same size");
+    }
+    
+    size_t size = x_buf.size;
+    auto result = py::array_t<float>(size);
+    auto result_buf = result.request();
+    
+    float* x_ptr = static_cast<float*>(x_buf.ptr);
+    float* z_ptr = static_cast<float*>(z_buf.ptr);
+    float* result_ptr = static_cast<float*>(result_buf.ptr);
+    
+    for (size_t i = 0; i < size; i++) {
+        float world_x = x_ptr[i] * VOXEL_SCALE;
+        float world_z = z_ptr[i] * VOXEL_SCALE;
+        
+        float flow = RiverNetworks::CalculateRiverFlow(world_x, world_z, seed);
+        result_ptr[i] = RiverNetworks::CalculateRiverWidth(flow);
+    }
+    
+    return result;
+}
+
 PYBIND11_MODULE(worldgen_cpp, m) {
     m.doc() = "C++ Terrain Generation for Voxel Castle ProceduralTerrain System";
     
@@ -314,6 +452,12 @@ PYBIND11_MODULE(worldgen_cpp, m) {
           "Generate humidity data for multiple points");
     m.def("generate_climate_precipitation", &generate_climate_precipitation,
           "Generate precipitation data for multiple points");
+    
+    // River network functions
+    m.def("generate_river_flow", &generate_river_flow,
+          "Generate river flow accumulation data");
+    m.def("generate_river_width", &generate_river_width,
+          "Generate river width data");
     
     // Direct noise access
     m.def("generate_continental_noise", &generate_continental_noise,

@@ -216,9 +216,9 @@ class WorldVisualizer:
             scale_length = scale_m
             scale_text = f"{scale_m} m"
         
-        # Position the scale bar in the bottom-left corner
+        # Position the scale bar in the bottom-left corner (overlaid on map)
         x_pos = ax.get_xlim()[0] + width * 0.05  # 5% from left edge
-        y_pos = ax.get_ylim()[0] + height * 0.05  # 5% from bottom edge
+        y_pos = ax.get_ylim()[0] + height * 0.08  # 8% from bottom edge (overlaid)
         
         # Draw the scale bar
         ax.plot([x_pos, x_pos + scale_length], [y_pos, y_pos], 
@@ -231,10 +231,10 @@ class WorldVisualizer:
         ax.plot([x_pos + scale_length, x_pos + scale_length], 
                 [y_pos - bar_height/2, y_pos + bar_height/2], 'k-', linewidth=3)
         
-        # Add text label
-        ax.text(x_pos + scale_length/2, y_pos + bar_height*2, scale_text, 
+        # Add text label (overlaid on map with better background)
+        ax.text(x_pos + scale_length/2, y_pos + bar_height*3, scale_text, 
                 ha='center', va='bottom', fontsize=10, fontweight='bold',
-                bbox=dict(boxstyle='round,pad=0.3', facecolor='white', alpha=0.8))
+                bbox=dict(boxstyle='round,pad=0.3', facecolor='white', alpha=0.9, edgecolor='black'))
         
         print(f"Added scale legend: {scale_text}")
 

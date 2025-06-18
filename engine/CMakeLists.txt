@@ -31,6 +31,8 @@ add_library(VoxelEngine STATIC
     src/world/procedural_terrain/noise/multi_scale_noise.cpp # Multi-scale noise generation system
     src/world/procedural_terrain/noise/fractal_patterns.cpp # Fractal geological pattern generation
     src/world/procedural_terrain/climate/climate_system.cpp # Climate system (temperature, humidity, precipitation)
+    src/world/procedural_terrain/features/river_networks.cpp # River network generation system
+    src/world/procedural_terrain/features/river_networks.cpp # Realistic river network generation
 
 
     src/world/quadtree.cpp      # Added Quadtree source
