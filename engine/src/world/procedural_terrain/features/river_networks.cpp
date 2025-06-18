@@ -28,46 +28,22 @@ RiverData RiverNetworks::CalculateRiverData(float worldX, float worldZ, float el
 
 float RiverNetworks::CalculateFlowAccumulation(float worldX, float worldZ, float elevation,
                                               float precipitation, uint64_t seed) {
-    float totalFlow = 0.0f;
+    // Calculate hierarchical drainage area using multi-scale approach
+    float continentalDrainage = CalculateContinentalDrainage(worldX, worldZ, seed);
+    float regionalDrainage = CalculateRegionalDrainage(worldX, worldZ, elevation, seed);
+    float localDrainage = CalculateLocalDrainage(worldX, worldZ, elevation, precipitation, seed);
     
-    // Sample points in a radius around the current location to simulate watershed
-    int sampleCount = 16; // Sample 16 points around the location
-    float angleStep = 2.0f * M_PI / sampleCount;
+    // Combine drainage contributions - continental rivers collect from vast areas
+    float totalDrainage = continentalDrainage * 0.6f + regionalDrainage * 0.3f + localDrainage * 0.1f;
     
-    for (int i = 0; i < sampleCount; i++) {
-        float angle = i * angleStep;
-        float sampleX = worldX + std::cos(angle) * SAMPLING_RADIUS;
-        float sampleZ = worldZ + std::sin(angle) * SAMPLING_RADIUS;
-        
-        // Get elevation at sample point using the same noise system
-        float sampleElevation = 
-            MultiScaleNoise::GenerateNoise(sampleX, sampleZ, TerrainScale::CONTINENTAL, seed) * 1400.0f +
-            MultiScaleNoise::GenerateNoise(sampleX, sampleZ, TerrainScale::REGIONAL, seed + 1000) * 500.0f +
-            MultiScaleNoise::GenerateNoise(sampleX, sampleZ, TerrainScale::LOCAL, seed + 2000) * 120.0f +
-            MultiScaleNoise::GenerateNoise(sampleX, sampleZ, TerrainScale::MICRO, seed + 3000) * 30.0f;
-        
-        // If sample point is higher than current point, water flows from there to here
-        if (sampleElevation > elevation) {
-            float elevationDiff = sampleElevation - elevation;
-            float flowContribution = elevationDiff / 100.0f; // Normalize elevation difference
-            
-            // Weight by precipitation at the sample point (more rain = more flow)
-            float precipitationWeight = precipitation / 2000.0f; // Normalize precipitation
-            
-            totalFlow += flowContribution * precipitationWeight;
-        }
-    }
+    // Add distance-to-ocean factor - rivers get larger as they approach the ocean
+    float distanceToOcean = CalculateDistanceToOcean(worldX, worldZ, elevation, seed);
+    float oceanProximityFactor = 1.0f - std::min(1.0f, distanceToOcean / 50000.0f); // 50km max distance
     
-    // Add local precipitation contribution
-    float localContribution = precipitation / 4000.0f; // Convert mm/year to flow factor
-    totalFlow += localContribution;
+    // Rivers accumulate flow downstream
+    float flowAccumulation = totalDrainage * (1.0f + oceanProximityFactor * 3.0f);
     
-    // Add watershed contribution using noise for natural variation
-    float watershedNoise = MultiScaleNoise::GenerateNoise(worldX, worldZ, TerrainScale::REGIONAL, seed + 5000);
-    float watershedContribution = CalculateWatershedContribution(worldX, worldZ, precipitation, seed);
-    totalFlow += watershedContribution * (0.5f + watershedNoise * 0.5f);
-    
-    return std::clamp(totalFlow, 0.0f, 1.0f);
+    return std::clamp(flowAccumulation, 0.0f, 1.0f);
 }
 
 float RiverNetworks::CalculateRiverWidth(float flowAccumulation, float elevation, uint64_t seed) {
@@ -76,17 +52,29 @@ float RiverNetworks::CalculateRiverWidth(float flowAccumulation, float elevation
         return 0.0f;
     }
     
-    // Calculate base width from flow accumulation
-    float baseWidth = (flowAccumulation - FLOW_THRESHOLD) * RIVER_WIDTH_SCALE;
+    // Calculate stream order based on flow accumulation
+    int streamOrder = CalculateStreamOrder(flowAccumulation);
     
-    // Adjust for elevation - rivers are wider at lower elevations
-    float elevationFactor = std::max(0.5f, 1.0f - (elevation / 1000.0f));
+    // Base width scales exponentially with stream order (Strahler's Law)
+    // Order 1: 1-3m, Order 4: 30-100m, Order 7+: 200-1000m+
+    float baseWidth = std::pow(3.5f, streamOrder - 1) * 1.5f;
     
-    // Add some natural variation using noise
+    // Scale by actual flow accumulation within the order
+    float flowFactor = (flowAccumulation - FLOW_THRESHOLD) / (1.0f - FLOW_THRESHOLD);
+    baseWidth *= (0.5f + flowFactor * 1.5f); // 0.5x to 2x variation within order
+    
+    // Distance to ocean factor - rivers get much wider near the ocean
+    float distanceToOcean = CalculateDistanceToOcean(elevation * 10.0f, elevation * 5.0f, elevation, seed);
+    float deltaFactor = 1.0f + (1.0f - std::min(1.0f, distanceToOcean / 10000.0f)) * 2.0f; // Up to 3x wider near ocean
+    
+    // Elevation factor - rivers are wider at lower elevations
+    float elevationFactor = std::max(0.3f, 1.0f - (elevation / 1500.0f));
+    
+    // Natural variation
     float variation = MultiScaleNoise::GenerateNoise(elevation, flowAccumulation, TerrainScale::LOCAL, seed + 6000);
-    float variationFactor = 0.8f + (variation * 0.4f); // 0.8 to 1.2 multiplier
+    float variationFactor = 0.7f + (variation * 0.6f); // 0.7 to 1.3 multiplier
     
-    return baseWidth * elevationFactor * variationFactor;
+    return baseWidth * deltaFactor * elevationFactor * variationFactor;
 }
 
 float RiverNetworks::CalculateRiverDepth(float riverWidth, float flowAccumulation) {
@@ -167,6 +155,57 @@ float RiverNetworks::CalculateWatershedContribution(float worldX, float worldZ,
     return watershedFactor * precipitationFactor * 0.3f; // Up to 30% contribution
 }
 
-} // namespace ProceduralTerrain
-} // namespace World
-} // namespace VoxelCastle
+float RiverNetworks::CalculateContinentalDrainage(float worldX, float worldZ, uint64_t seed) {
+    // Continental-scale drainage basins using large-scale noise
+    float continentalNoise = MultiScaleNoise::GenerateNoise(worldX, worldZ, TerrainScale::CONTINENTAL, seed + 8000);
+    
+    // Create major river corridors - areas with high continental drainage
+    float riverCorridorNoise = MultiScaleNoise::GenerateNoise(worldX * 0.5f, worldZ * 0.5f, TerrainScale::CONTINENTAL, seed + 9000);
+    
+    // Combine to create major river basins
+    float drainageBasin = (continentalNoise + riverCorridorNoise) * 0.5f;
+    
+    // Convert to positive drainage contribution
+    return std::max(0.0f, (drainageBasin + 1.0f) * 0.5f);
+}
+
+float RiverNetworks::CalculateRegionalDrainage(float worldX, float worldZ, float elevation, uint64_t seed) {
+    // Regional drainage patterns following terrain
+    float regionalNoise = MultiScaleNoise::GenerateNoise(worldX, worldZ, TerrainScale::REGIONAL, seed + 10000);
+    
+    // Higher elevation areas contribute more drainage downstream
+    float elevationContribution = std::max(0.0f, elevation / 1000.0f);
+    
+    // Create tributary networks
+    float tributaryNoise = MultiScaleNoise::GenerateNoise(worldX * 2.0f, worldZ * 2.0f, TerrainScale::REGIONAL, seed + 11000);
+    
+    return std::max(0.0f, (regionalNoise + elevationContribution + tributaryNoise) / 3.0f);
+}
+
+float RiverNetworks::CalculateLocalDrainage(float worldX, float worldZ, float elevation, float precipitation, uint64_t seed) {
+    // Local drainage from immediate area
+    float localNoise = MultiScaleNoise::GenerateNoise(worldX, worldZ, TerrainScale::LOCAL, seed + 12000);
+    
+    // Precipitation factor
+    float precipitationFactor = precipitation / 2000.0f; // Normalize
+    
+    // Local terrain contribution
+    float terrainFactor = std::max(0.0f, -elevation / 500.0f + 1.0f); // Lower areas collect more
+    
+    return std::max(0.0f, localNoise * precipitationFactor * terrainFactor);
+}
+
+float RiverNetworks::CalculateDistanceToOcean(float worldX, float worldZ, float elevation, uint64_t seed) {
+    // Use continental noise to determine ocean locations
+    float oceanNoise = MultiScaleNoise::GenerateNoise(worldX * 0.1f, worldZ * 0.1f, TerrainScale::CONTINENTAL, seed + 13000);
+    
+    // Oceans are areas with very low continental elevation
+    float seaLevel = -200.0f;
+    
+    // Simulate distance to nearest ocean using noise patterns
+    float distanceNoise = MultiScaleNoise::GenerateNoise(worldX * 0.3f, worldZ * 0.3f, TerrainScale::CONTINENTAL, seed + 14000);
+    
+    // Base distance on elevation above sea level and noise patterns
+    float baseDistance = std::max(0.0f, elevation - seaLevel);
+    float noiseDistance = (distanceNoise + 1.0f) * 25000.0f; // 0-50km range
+    

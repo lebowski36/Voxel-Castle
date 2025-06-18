@@ -296,74 +296,6 @@ py::array_t<float> generate_river_flow(
     py::array_t<float> x_coords,
     py::array_t<float> z_coords,
     py::array_t<float> elevations,
-    py::array_t<float> precipitation,
-    uint64_t seed
-) {
-    auto x_buf = x_coords.request();
-    auto z_buf = z_coords.request();
-    auto elev_buf = elevations.request();
-    auto precip_buf = precipitation.request();
-    
-    if (x_buf.size != z_buf.size || x_buf.size != elev_buf.size || x_buf.size != precip_buf.size) {
-        throw std::runtime_error("Input arrays must have the same size");
-    }
-    
-    size_t size = x_buf.size;
-    auto result = py::array_t<float>(size);
-    auto result_buf = result.request();
-    
-    float* x_ptr = static_cast<float*>(x_buf.ptr);
-    float* z_ptr = static_cast<float*>(z_buf.ptr);
-    float* elev_ptr = static_cast<float*>(elev_buf.ptr);
-    float* precip_ptr = static_cast<float*>(precip_buf.ptr);
-    float* result_ptr = static_cast<float*>(result_buf.ptr);
-    
-    for (size_t i = 0; i < size; i++) {
-        float world_x = x_ptr[i] * VOXEL_SCALE;
-        float world_z = z_ptr[i] * VOXEL_SCALE;
-        
-        result_ptr[i] = RiverNetworks::CalculateFlowAccumulation(world_x, world_z, elev_ptr[i], precip_ptr[i], seed);
-    }
-    
-    return result;
-}
-
-py::array_t<float> generate_river_width(
-    py::array_t<float> x_coords,
-    py::array_t<float> z_coords,
-    uint64_t seed
-) {
-    auto x_buf = x_coords.request();
-    auto z_buf = z_coords.request();
-    
-    if (x_buf.size != z_buf.size) {
-        throw std::runtime_error("Input arrays must have the same size");
-    }
-    
-    size_t size = x_buf.size;
-    auto result = py::array_t<float>(size);
-    auto result_buf = result.request();
-    
-    float* x_ptr = static_cast<float*>(x_buf.ptr);
-    float* z_ptr = static_cast<float*>(z_buf.ptr);
-    float* result_ptr = static_cast<float*>(result_buf.ptr);
-    
-    for (size_t i = 0; i < size; i++) {
-        float world_x = x_ptr[i] * VOXEL_SCALE;
-        float world_z = z_ptr[i] * VOXEL_SCALE;
-        
-        float flow = RiverNetworks::CalculateRiverFlow(world_x, world_z, seed);
-        result_ptr[i] = RiverNetworks::CalculateRiverWidth(flow);
-    }
-    
-    return result;
-}
-
-// River network generation for efficient visualization
-py::array_t<float> generate_river_flow(
-    py::array_t<float> x_coords,
-    py::array_t<float> z_coords,
-    py::array_t<float> elevations,
     py::array_t<float> precipitations,
     uint64_t seed
 ) {
@@ -421,11 +353,116 @@ py::array_t<float> generate_river_width(
         float world_x = x_ptr[i] * VOXEL_SCALE;
         float world_z = z_ptr[i] * VOXEL_SCALE;
         
-        float flow = RiverNetworks::CalculateRiverFlow(world_x, world_z, seed);
-        result_ptr[i] = RiverNetworks::CalculateRiverWidth(flow);
+        // Get elevation and precipitation for this point to calculate flow
+        float elevation = generate_single_heightmap(x_ptr[i], z_ptr[i], seed);
+        ClimateData climate = ClimateSystem::CalculateClimate(world_x, world_z, elevation, seed);
+        
+        // Calculate flow accumulation first
+        float flow = RiverNetworks::CalculateFlowAccumulation(world_x, world_z, elevation, climate.precipitation, seed);
+        
+        // Then calculate river width from flow
+        result_ptr[i] = RiverNetworks::CalculateRiverWidth(flow, elevation, seed);
     }
     
     return result;
+}
+
+// Enhanced terrain generation with river carving
+py::array_t<float> generate_terrain_heightmap_with_rivers(
+    py::array_t<float> x_coords,
+    py::array_t<float> z_coords,
+    uint64_t seed
+) {
+    auto x_buf = x_coords.request();
+    auto z_buf = z_coords.request();
+    
+    if (x_buf.size != z_buf.size) {
+        throw std::runtime_error("Input arrays must have the same size");
+    }
+    
+    size_t size = x_buf.size;
+    auto result = py::array_t<float>(size);
+    auto result_buf = result.request();
+    
+    float* x_ptr = static_cast<float*>(x_buf.ptr);
+    float* z_ptr = static_cast<float*>(z_buf.ptr);
+    float* result_ptr = static_cast<float*>(result_buf.ptr);
+    
+    // Convert world coordinates to actual world positions (accounting for voxel scale)
+    for (size_t i = 0; i < size; i++) {
+        float world_x = x_ptr[i] * VOXEL_SCALE;
+        float world_z = z_ptr[i] * VOXEL_SCALE;
+        
+        // Multi-scale terrain synthesis (4 scales for realistic terrain)
+        float continental = MultiScaleNoise::GenerateNoise(world_x, world_z, TerrainScale::CONTINENTAL, seed) * 1400.0f;
+        float regional = MultiScaleNoise::GenerateNoise(world_x, world_z, TerrainScale::REGIONAL, seed + 1000) * 500.0f;
+        float local = MultiScaleNoise::GenerateNoise(world_x, world_z, TerrainScale::LOCAL, seed + 2000) * 120.0f;
+        float micro = MultiScaleNoise::GenerateNoise(world_x, world_z, TerrainScale::MICRO, seed + 3000) * 30.0f;
+        
+        // Apply ocean/land detail scaling for realistic characteristics
+        float base_elevation = continental + regional;
+        if (base_elevation < -200.0f) {
+            // Deep ocean - reduce fine detail for smoother ocean floors
+            local *= 0.5f;
+            micro *= 0.5f;
+        } else if (base_elevation > 500.0f) {
+            // Mountain regions - enhance detail for dramatic peaks and ridges
+            local *= 1.25f;
+            micro *= 1.25f;
+        }
+        
+        float terrain_elevation = base_elevation + local + micro;
+        
+        // Calculate climate data for river generation
+        ClimateData climate = ClimateSystem::CalculateClimate(world_x, world_z, terrain_elevation, seed);
+        
+        // Calculate river data
+        RiverData river = RiverNetworks::CalculateRiverData(world_x, world_z, terrain_elevation, climate.precipitation, seed);
+        
+        // Apply river carving to terrain
+        float final_elevation = terrain_elevation;
+        if (river.river_width > 0.0f) {
+            // Rivers carve channels into the terrain
+            float carving_depth = river.river_depth + (river.river_width * 0.1f); // Additional carving based on width
+            final_elevation -= carving_depth;
+            
+            // Ensure rivers don't carve below reasonable depths
+            float min_river_elevation = terrain_elevation - 15.0f; // Max 15m carving depth
+            final_elevation = std::max(final_elevation, min_river_elevation);
+        }
+        
+        if (river.is_lake) {
+            // Lakes create flat water surfaces
+            float lake_depth = river.river_depth * 1.5f; // Lakes are deeper than rivers
+            final_elevation = terrain_elevation - lake_depth;
+        }
+        
+        // Final hard clamp to ±2048m range
+        result_ptr[i] = std::max(MIN_ELEVATION, std::min(MAX_ELEVATION, final_elevation));
+    }
+    
+    return result;
+}
+
+// Complete river data generation for comprehensive visualization
+py::dict generate_river_data(float x, float z, uint64_t seed) {
+    float world_x = x * VOXEL_SCALE;
+    float world_z = z * VOXEL_SCALE;
+    
+    // Get elevation and climate data
+    float elevation = generate_single_heightmap(x, z, seed);
+    ClimateData climate = ClimateSystem::CalculateClimate(world_x, world_z, elevation, seed);
+    
+    // Calculate complete river data
+    RiverData river = RiverNetworks::CalculateRiverData(world_x, world_z, elevation, climate.precipitation, seed);
+    
+    py::dict river_dict;
+    river_dict["flow_accumulation"] = river.flow_accumulation;
+    river_dict["river_width"] = river.river_width;
+    river_dict["river_depth"] = river.river_depth;
+    river_dict["is_lake"] = river.is_lake;
+    
+    return river_dict;
 }
 
 PYBIND11_MODULE(worldgen_cpp, m) {
@@ -434,6 +471,10 @@ PYBIND11_MODULE(worldgen_cpp, m) {
     // Main terrain generation functions
     m.def("generate_terrain_heightmap", &generate_terrain_heightmap,
           "Generate heightmap using C++ MultiScaleNoise system (batch mode)",
+          py::arg("x_coords"), py::arg("z_coords"), py::arg("seed"));
+    
+    m.def("generate_terrain_heightmap_with_rivers", &generate_terrain_heightmap_with_rivers,
+          "Generate heightmap with river carving integrated (batch mode)",
           py::arg("x_coords"), py::arg("z_coords"), py::arg("seed"));
     
     m.def("generate_single_heightmap", &generate_single_heightmap,
@@ -458,6 +499,9 @@ PYBIND11_MODULE(worldgen_cpp, m) {
           "Generate river flow accumulation data");
     m.def("generate_river_width", &generate_river_width,
           "Generate river width data");
+    m.def("generate_river_data", &generate_river_data,
+          "Generate complete river data for a point",
+          py::arg("x"), py::arg("z"), py::arg("seed"));
     
     // Direct noise access
     m.def("generate_continental_noise", &generate_continental_noise,
@@ -481,6 +525,13 @@ PYBIND11_MODULE(worldgen_cpp, m) {
         .value("REGIONAL", TerrainScale::REGIONAL)
         .value("LOCAL", TerrainScale::LOCAL)
         .value("MICRO", TerrainScale::MICRO);
+    
+    // Expose RiverData structure
+    py::class_<RiverData>(m, "RiverData")
+        .def_readwrite("flow_accumulation", &RiverData::flow_accumulation)
+        .def_readwrite("river_width", &RiverData::river_width)
+        .def_readwrite("river_depth", &RiverData::river_depth)
+        .def_readwrite("is_lake", &RiverData::is_lake);
     
     // Constants matching ProceduralTerrain design
     m.attr("VOXEL_SIZE") = VOXEL_SCALE;
