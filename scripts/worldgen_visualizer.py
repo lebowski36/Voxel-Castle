@@ -65,28 +65,91 @@ class WorldVisualizer:
         # Calculate actual sampling dimensions based on resolution
         sample_width = int(width * resolution)
         sample_height = int(height * resolution)
+        total_samples = sample_width * sample_height
+        
+        # Additional safety check (should have been caught in main, but double-check)
+        if total_samples > 10_000_000:
+            raise ValueError(f"Too many samples requested: {total_samples:,}. Maximum is 10,000,000. Use lower resolution.")
         
         print(f"Sampling {sample_width}x{sample_height} points for {width}x{height} world units...")
         
-        # Create coordinate arrays with proper sampling
-        x_coords = np.linspace(x_min, x_min + width, sample_width, dtype=np.float32)
-        y_coords = np.linspace(y_min, y_min + height, sample_height, dtype=np.float32)
-        xx, yy = np.meshgrid(x_coords, y_coords)
-        
-        # Flatten arrays for the C++ function
-        x_flat = xx.flatten()
-        y_flat = yy.flatten()
+        try:
+            # Create coordinate arrays with proper sampling
+            x_coords = np.linspace(x_min, x_min + width, sample_width, dtype=np.float32)
+            y_coords = np.linspace(y_min, y_min + height, sample_height, dtype=np.float32)
+            xx, yy = np.meshgrid(x_coords, y_coords)
+            
+            # Flatten arrays for the C++ function
+            x_flat = xx.flatten()
+            y_flat = yy.flatten()
 
-        print("Generating heightmap with C++ backend...")
+            print("Generating heightmap with C++ backend...")
+            
+            # Call the C++ batch generation function
+            height_values = worldgen_cpp.generate_terrain_heightmap(x_flat, y_flat, self.seed)
+            
+            # Reshape the flat array back into a 2D map
+            heightmap = height_values.reshape((sample_height, sample_width))
+            
+            print("Heightmap generation complete.")
+            return heightmap
+            
+        except MemoryError as e:
+            print(f"ERROR: Out of memory when generating {sample_width}x{sample_height} heightmap!")
+            print(f"Try using a lower resolution (current: {resolution})")
+            print(f"Suggested resolution: {0.5 * resolution:.3f} or lower")
+            raise
+        except Exception as e:
+            print(f"ERROR: Failed to generate heightmap: {e}")
+            raise
+
+    def generate_heightmap_with_rivers(self, x_min, y_min, width, height, resolution):
+        """Generates a heightmap with river carving using the C++ backend."""
         
-        # Call the C++ batch generation function
-        height_values = worldgen_cpp.generate_terrain_heightmap(x_flat, y_flat, self.seed)
+        # Ensure width and height are integers
+        width = int(width)
+        height = int(height)
         
-        # Reshape the flat array back into a 2D map
-        heightmap = height_values.reshape((sample_height, sample_width))
+        # Calculate actual sampling dimensions based on resolution
+        sample_width = int(width * resolution)
+        sample_height = int(height * resolution)
+        total_samples = sample_width * sample_height
         
-        print("Heightmap generation complete.")
-        return heightmap
+        # Additional safety check
+        if total_samples > 10_000_000:
+            raise ValueError(f"Too many samples requested: {total_samples:,}. Maximum is 10,000,000. Use lower resolution.")
+        
+        print(f"Sampling {sample_width}x{sample_height} points for heightmap with rivers...")
+        
+        try:
+            # Create coordinate arrays with proper sampling
+            x_coords = np.linspace(x_min, x_min + width, sample_width, dtype=np.float32)
+            y_coords = np.linspace(y_min, y_min + height, sample_height, dtype=np.float32)
+            xx, yy = np.meshgrid(x_coords, y_coords)
+            
+            # Flatten arrays for the C++ function
+            x_flat = xx.flatten()
+            y_flat = yy.flatten()
+
+            print("Generating heightmap with rivers using C++ backend...")
+            
+            # Call the C++ function that includes river carving
+            height_values = worldgen_cpp.generate_terrain_heightmap_with_rivers(x_flat, y_flat, self.seed)
+            
+            # Reshape the flat array back into a 2D map
+            heightmap = height_values.reshape((sample_height, sample_width))
+            
+            print("Heightmap with rivers generation complete.")
+            return heightmap
+            
+        except MemoryError as e:
+            print(f"ERROR: Out of memory when generating {sample_width}x{sample_height} heightmap with rivers!")
+            print(f"Try using a lower resolution (current: {resolution})")
+            print(f"Suggested resolution: {0.5 * resolution:.3f} or lower")
+            raise
+        except Exception as e:
+            print(f"ERROR: Failed to generate heightmap with rivers: {e}")
+            raise
 
     def generate_climate_map(self, x_min, y_min, width, height, resolution=1.0, mode='temperature'):
         """Generate climate map using C++ backend"""
@@ -149,50 +212,125 @@ class WorldVisualizer:
         return biome_map
     
     def generate_rivers_map(self, x_min, y_min, width, height, resolution=1.0):
-        """Generate river network map"""
-        x_coords = np.linspace(x_min, x_min + width, int(width * resolution))
-        y_coords = np.linspace(y_min, y_min + height, int(height * resolution))
+        """Generate river network map using the new hierarchical fractal river system"""
+        # Ensure width and height are integers
+        width = int(width)
+        height = int(height)
         
-        river_map = np.zeros((len(y_coords), len(x_coords)))
+        # Calculate actual sampling dimensions based on resolution
+        sample_width = int(width * resolution)
+        sample_height = int(height * resolution)
+        total_samples = sample_width * sample_height
         
-        for i, y in enumerate(y_coords):
-            for j, x in enumerate(x_coords):
-                river_width = self.rivers.get_river_width(x, y)
-                river_map[i, j] = river_width
-                
-        return river_map
+        # Additional safety check
+        if total_samples > 10_000_000:
+            raise ValueError(f"Too many samples requested: {total_samples:,}. Maximum is 10,000,000. Use lower resolution.")
+        
+        print(f"Generating river network for {sample_width}x{sample_height} points...")
+        
+        try:
+            # Create coordinate arrays with proper sampling
+            x_coords = np.linspace(x_min, x_min + width, sample_width, dtype=np.float32)
+            y_coords = np.linspace(y_min, y_min + height, sample_height, dtype=np.float32)
+            xx, yy = np.meshgrid(x_coords, y_coords)
+            
+            # Flatten arrays for the C++ function
+            x_flat = xx.flatten()
+            y_flat = yy.flatten()
+
+            print("Generating river flow data with new hierarchical fractal system...")
+            
+            # Use the new comprehensive river flow function
+            river_flow = worldgen_cpp.generate_comprehensive_river_flow(x_flat, y_flat, self.seed)
+            
+            # Get river widths as well for better visualization
+            river_widths = worldgen_cpp.generate_river_width(x_flat, y_flat, self.seed)
+            
+            # Reshape both arrays back to 2D
+            flow_map = river_flow.reshape((sample_height, sample_width))
+            width_map = river_widths.reshape((sample_height, sample_width))
+            
+            # Combine flow and width for better visualization
+            # Use flow strength as the base, but enhance with width information
+            river_map = flow_map.copy()
+            
+            # Apply river threshold - only show significant rivers
+            river_threshold = 30.0  # Matches RIVER_THRESHOLD from C++
+            river_map[river_map < river_threshold] = 0
+            
+            print("River network generation complete.")
+            return river_map
+            
+        except MemoryError as e:
+            print(f"ERROR: Out of memory when generating {sample_width}x{sample_height} river map!")
+            print(f"Try using a lower resolution (current: {resolution})")
+            print(f"Suggested resolution: {0.5 * resolution:.3f} or lower")
+            raise
+        except Exception as e:
+            print(f"ERROR: Failed to generate river map: {e}")
+            raise
     
     def generate_overlay_map(self, x_min, y_min, width, height, resolution=1.0):
-        """Generate combined heightmap with rivers and biome overlay"""
-        x_coords = np.linspace(x_min, x_min + width, int(width * resolution))
-        y_coords = np.linspace(y_min, y_min + height, int(height * resolution))
+        """Generate combined heightmap with rivers overlay using new river system"""
+        # Ensure width and height are integers
+        width = int(width)
+        height = int(height)
         
-        # Start with biome base layer
-        overlay_map = np.zeros((len(y_coords), len(x_coords), 3))  # RGB
+        # Calculate actual sampling dimensions based on resolution
+        sample_width = int(width * resolution)
+        sample_height = int(height * resolution)
         
-        for i, y in enumerate(y_coords):
-            for j, x in enumerate(x_coords):
-                elevation = self.terrain.get_elevation(x, y)
-                temperature = self.climate.get_temperature(x, y, elevation)
-                precipitation = self.climate.get_precipitation(x, y, temperature, elevation)
+        print(f"Generating combined overlay map for {sample_width}x{sample_height} points...")
+        
+        # Create coordinate arrays with proper sampling
+        x_coords = np.linspace(x_min, x_min + width, sample_width, dtype=np.float32)
+        y_coords = np.linspace(y_min, y_min + height, sample_height, dtype=np.float32)
+        xx, yy = np.meshgrid(x_coords, y_coords)
+        
+        # Flatten arrays for the C++ function
+        x_flat = xx.flatten()
+        y_flat = yy.flatten()
+
+        print("Generating base heightmap...")
+        # Get heightmap using C++ backend
+        heightmap = worldgen_cpp.generate_terrain_heightmap(x_flat, y_flat, self.seed)
+        heightmap_2d = heightmap.reshape((sample_height, sample_width))
+        
+        print("Generating river network overlay...")
+        # Get river data using new system
+        river_flow = worldgen_cpp.generate_comprehensive_river_flow(x_flat, y_flat, self.seed)
+        river_flow_2d = river_flow.reshape((sample_height, sample_width))
+        
+        # Create RGB overlay map
+        overlay_map = np.zeros((sample_height, sample_width, 3))
+        
+        # Base terrain coloring based on elevation
+        elevation_normalized = (heightmap_2d + 2048) / 4096.0  # Normalize to 0-1
+        elevation_normalized = np.clip(elevation_normalized, 0, 1)
+        
+        # Create terrain color gradient (brown to white for mountains)
+        for i in range(sample_height):
+            for j in range(sample_width):
+                elev = elevation_normalized[i, j]
                 
-                # Base biome color
-                biome = self.biomes.classify_biome(temperature, precipitation, elevation)
-                base_color = np.array(self.biomes.BIOMES[biome]['color'])
+                # Terrain base color (brown lowlands to white peaks)
+                if elev < 0.3:  # Lowlands - green
+                    base_color = np.array([0.2 + elev*0.4, 0.6 + elev*0.3, 0.1 + elev*0.2])
+                elif elev < 0.7:  # Hills - brown
+                    base_color = np.array([0.5 + elev*0.3, 0.4 + elev*0.2, 0.2 + elev*0.1])
+                else:  # Mountains - gray to white
+                    base_color = np.array([0.6 + elev*0.4, 0.6 + elev*0.4, 0.6 + elev*0.4])
                 
-                # Modify color based on elevation (shading effect)
-                elevation_factor = (elevation + 2048) / 4096.0  # Normalize to 0-1
-                shaded_color = base_color * (0.5 + elevation_factor * 0.5)
+                # Apply river overlay (bright blue)
+                river_strength = river_flow_2d[i, j]
+                if river_strength > 30.0:  # River threshold
+                    river_intensity = min(1.0, np.log(river_strength) / 8.0)  # Logarithmic scaling
+                    river_color = np.array([0.1, 0.4, 1.0])  # Bright blue
+                    base_color = base_color * (1 - river_intensity) + river_color * river_intensity
                 
-                # Add rivers (bright blue overlay)
-                river_width = self.rivers.get_river_width(x, y)
-                if river_width > 0:
-                    river_intensity = min(1.0, river_width / 10.0)  # Normalize river width
-                    river_color = np.array([0.2, 0.6, 1.0])  # Bright blue
-                    shaded_color = shaded_color * (1 - river_intensity) + river_color * river_intensity
-                
-                overlay_map[i, j] = np.clip(shaded_color, 0, 1)
-                
+                overlay_map[i, j] = np.clip(base_color, 0, 1)
+        
+        print("Overlay map generation complete.")
         return overlay_map
     
     def add_scale_legend(self, ax, width, height, units='m'):
@@ -303,23 +441,25 @@ class WorldVisualizer:
         
         # Generate all available data
         heightmap = self.generate_heightmap(x_min, y_min, width, height, resolution)
+        heightmap_with_rivers = self.generate_heightmap_with_rivers(x_min, y_min, width, height, resolution)
+        rivers = self.generate_rivers_map(x_min, y_min, width, height, resolution)
         temperature = self.generate_climate_map(x_min, y_min, width, height, resolution, 'temperature')
         humidity = self.generate_climate_map(x_min, y_min, width, height, resolution, 'humidity')
         precipitation = self.generate_climate_map(x_min, y_min, width, height, resolution, 'precipitation')
         continental_noise = self.generate_noise_map(x_min, y_min, width, height, resolution, 'continental')
         regional_noise = self.generate_noise_map(x_min, y_min, width, height, resolution, 'regional')
         slope = self.generate_slope_map(x_min, y_min, width, height, resolution)
-        aspect = self.generate_aspect_map(x_min, y_min, width, height, resolution)
         
         return {
             'heightmap': heightmap,
+            'heightmap_with_rivers': heightmap_with_rivers,
+            'rivers': rivers,
             'temperature': temperature,
             'humidity': humidity,
             'precipitation': precipitation,
             'continental_noise': continental_noise,
             'regional_noise': regional_noise,
-            'slope': slope,
-            'aspect': aspect
+            'slope': slope
         }
 
     def plot_comprehensive_analysis(self, data_dict, x_min, y_min, width, height, seed, output_filename):
@@ -331,7 +471,7 @@ class WorldVisualizer:
         # Extent for all plots
         extent = [x_min, x_min+width, y_min+height, y_min]
         
-        # 1. Heightmap (top-left)
+        # 1. Heightmap with Rivers (top-left) - This is the main terrain with river carving
         ax = axes[0, 0]
         from matplotlib.colors import TwoSlopeNorm
         import matplotlib.colors as mcolors
@@ -341,8 +481,8 @@ class WorldVisualizer:
         all_colors = np.vstack((colors_below, colors_above))
         sea_level_cmap = mcolors.LinearSegmentedColormap.from_list('sea_level', all_colors)
         
-        im1 = ax.imshow(data_dict['heightmap'], cmap=sea_level_cmap, extent=extent, norm=norm)
-        ax.set_title('Heightmap (Sea Level = 0m)', fontsize=14, fontweight='bold')
+        im1 = ax.imshow(data_dict['heightmap_with_rivers'], cmap=sea_level_cmap, extent=extent, norm=norm)
+        ax.set_title('Terrain with River Carving', fontsize=14, fontweight='bold')
         cbar1 = plt.colorbar(im1, ax=ax, shrink=0.8)
         cbar1.set_label('Elevation (m)')
         cbar1.ax.axhline(y=0, color='white', linewidth=2)
@@ -390,18 +530,31 @@ class WorldVisualizer:
         cbar7 = plt.colorbar(im7, ax=ax, shrink=0.8)
         cbar7.set_label('Slope (gradient magnitude)')
         
-        # 8. Aspect (bottom-center)
+        # 8. Rivers Network (bottom-center)
         ax = axes[2, 1]
-        im8 = ax.imshow(data_dict['aspect'], cmap='hsv', extent=extent)
-        ax.set_title('Slope Aspect (Direction)', fontsize=14, fontweight='bold')
+        # Create a visualization that shows rivers clearly
+        river_vis = np.copy(data_dict['heightmap_with_rivers'])
+        # Highlight areas where rivers have carved the terrain
+        river_strength = data_dict['rivers']
+        # Make river areas more visible by darkening them
+        river_mask = river_strength > 30.0  # River threshold from the design
+        river_vis[river_mask] = river_vis[river_mask] - 50  # Darken river areas
+        
+        im8 = ax.imshow(river_vis, cmap=sea_level_cmap, extent=extent, norm=norm)
+        ax.set_title('River Networks (Highlighted)', fontsize=14, fontweight='bold')
         cbar8 = plt.colorbar(im8, ax=ax, shrink=0.8)
-        cbar8.set_label('Aspect (degrees)')
+        cbar8.set_label('Elevation (m) - Rivers Darkened')
         
         # 9. Statistics Summary (bottom-right)
         ax = axes[2, 2]
         ax.axis('off')  # Turn off axis for text display
         
         # Calculate statistics
+        river_flow_data = data_dict['rivers']
+        rivers_present = np.sum(river_flow_data > 30.0)  # Using river threshold from design
+        total_points = river_flow_data.size
+        river_coverage = rivers_present / total_points * 100
+        
         stats_text = f"""TERRAIN STATISTICS
         
 ELEVATION:
@@ -410,6 +563,12 @@ ELEVATION:
 • Mean: {np.mean(data_dict['heightmap']):.1f}m
 • Std Dev: {np.std(data_dict['heightmap']):.1f}m
 • Sea Level Coverage: {np.sum(data_dict['heightmap'] < 0) / data_dict['heightmap'].size * 100:.1f}%
+
+RIVERS:
+• River Coverage: {river_coverage:.2f}%
+• Max Flow Strength: {np.max(river_flow_data):.1f}
+• Mean Flow (rivers only): {np.mean(river_flow_data[river_flow_data > 30.0]) if rivers_present > 0 else 0:.1f}
+• Total River Points: {rivers_present:,}
 
 CLIMATE:
 • Temperature Range: {np.min(data_dict['temperature']):.1f}°C to {np.max(data_dict['temperature']):.1f}°C
@@ -453,7 +612,7 @@ MAP INFO:
 def main():
     parser = argparse.ArgumentParser(description='ProceduralTerrain Visualization Tool')
     parser.add_argument('--seed', type=int, default=12345, help='World seed')
-    parser.add_argument('--mode', choices=['heightmap', 'temperature', 'humidity', 'precipitation', 'biomes', 'rivers', 'overlay', 'comprehensive'], 
+    parser.add_argument('--mode', choices=['heightmap', 'heightmap_rivers', 'temperature', 'humidity', 'precipitation', 'biomes', 'rivers', 'overlay', 'comprehensive'], 
                        default='comprehensive', help='Visualization mode')
     parser.add_argument('--size', type=int, default=512, help='Map size in world units (creates square map)')
     parser.add_argument('--region', type=str, default=None, 
@@ -476,6 +635,52 @@ def main():
         half_size = args.size / 2
         x_min, y_min = -half_size, -half_size
         width, height = args.size, args.size
+    
+    # CRITICAL: Validate resolution and memory usage to prevent crashes
+    sample_width = int(width * args.resolution)
+    sample_height = int(height * args.resolution)
+    total_samples = sample_width * sample_height
+    
+    # Calculate estimated memory usage (rough estimate: 4 bytes per float + overhead)
+    estimated_memory_mb = (total_samples * 4 * 3) / (1024 * 1024)  # 3 arrays (coords + result)
+    
+    # Set reasonable limits
+    MAX_SAMPLES = 10_000_000  # 10 million samples max
+    MAX_MEMORY_MB = 500  # 500MB max memory usage
+    
+    if total_samples >= MAX_SAMPLES:
+        # Calculate suggested resolution with safety margin to account for int() rounding
+        suggested_resolution = math.sqrt((MAX_SAMPLES - 1) / (width * height))
+        print(f"ERROR: Resolution too high!")
+        print(f"  Requested: {sample_width}x{sample_height} = {total_samples:,} samples")
+        print(f"  Maximum allowed: {MAX_SAMPLES:,} samples")
+        print(f"  Current resolution: {args.resolution}")
+        print(f"  Suggested max resolution: {suggested_resolution:.3f}")
+        print()
+        print(f"TIP: Use resolution {suggested_resolution:.3f} or lower (e.g., --resolution {suggested_resolution:.3f})")
+        return 1
+    
+    if estimated_memory_mb > MAX_MEMORY_MB:
+        # Calculate suggested resolution with safety margin
+        suggested_resolution = math.sqrt((MAX_MEMORY_MB * 1024 * 1024 - 1024) / (width * height * 4 * 3))
+        print(f"ERROR: Estimated memory usage too high!")
+        print(f"  Estimated memory: {estimated_memory_mb:.1f} MB")
+        print(f"  Maximum allowed: {MAX_MEMORY_MB} MB")
+        print(f"  Suggested max resolution: {suggested_resolution:.3f}")
+        print()
+        print(f"TIP: Use resolution {suggested_resolution:.3f} or lower (e.g., --resolution {suggested_resolution:.3f})")
+        return 1
+    
+    # Warn if resolution might be slow
+    if total_samples > 1_000_000:  # 1 million samples
+        print(f"WARNING: Large resolution detected ({sample_width}x{sample_height} = {total_samples:,} samples)")
+        print(f"         Estimated memory: {estimated_memory_mb:.1f} MB")
+        print(f"         This may take several minutes...")
+        print()
+    
+    # Show sampling info
+    print(f"Sampling resolution: {sample_width}x{sample_height} points ({total_samples:,} total)")
+    print(f"Memory estimate: {estimated_memory_mb:.1f} MB")
     
     # Create visualizer
     print(f"Initializing world generator with seed {args.seed}...")
@@ -533,6 +738,59 @@ def main():
         print(f"  Std deviation: {np.std(data):.1f}m")
         print(f"  Sea level (0m) coverage: {np.sum(data < 0) / data.size * 100:.1f}%")
         
+    elif args.mode == 'heightmap_rivers':
+        # Generate heightmap with river carving integrated
+        width = int(width)
+        height = int(height)
+        sample_width = int(width * args.resolution)
+        sample_height = int(height * args.resolution)
+        
+        print(f"Generating heightmap with river carving for {sample_width}x{sample_height} points...")
+        
+        # Create coordinate arrays
+        x_coords = np.linspace(x_min, x_min + width, sample_width, dtype=np.float32)
+        y_coords = np.linspace(y_min, y_min + height, sample_height, dtype=np.float32)
+        xx, yy = np.meshgrid(x_coords, y_coords)
+        x_flat = xx.flatten()
+        y_flat = yy.flatten()
+        
+        # Generate heightmap with river carving using C++ backend
+        data = worldgen_cpp.generate_terrain_heightmap_with_rivers(x_flat, y_flat, args.seed)
+        data = data.reshape((sample_height, sample_width))
+        
+        plt.figure(figsize=(12, 10))
+        
+        # Create custom colormap with sea level at center
+        from matplotlib.colors import TwoSlopeNorm
+        import matplotlib.colors as mcolors
+        
+        # Define sea-level centered normalization
+        norm = TwoSlopeNorm(vmin=-2048, vcenter=0, vmax=2048)
+        
+        # Create custom colormap: blue for below sea level, terrain colors for above
+        colors_below = plt.cm.Blues_r(np.linspace(0.3, 1, 128))  # Deep blue to light blue
+        colors_above = plt.cm.terrain(np.linspace(0.35, 1, 128))  # Green to brown to white
+        all_colors = np.vstack((colors_below, colors_above))
+        sea_level_cmap = mcolors.LinearSegmentedColormap.from_list('sea_level', all_colors)
+        
+        # Use fixed color scale for ±2048m range with sea level centered coloring
+        plt.imshow(data, cmap=sea_level_cmap, extent=[x_min, x_min+width, y_min+height, y_min], 
+                  norm=norm)
+        cbar = plt.colorbar(label='Elevation (m)')
+        cbar.ax.axhline(y=0, color='white', linewidth=2)
+        plt.title(f'Heightmap with River Carving - Seed {args.seed} (Sea Level = 0m)')
+        
+        # Add scale legend
+        visualizer.add_scale_legend(plt.gca(), width, height)
+        
+        # Print statistics
+        print(f"\nHeightmap with River Carving Statistics:")
+        print(f"  Min elevation: {np.min(data):.1f}m")
+        print(f"  Max elevation: {np.max(data):.1f}m") 
+        print(f"  Mean elevation: {np.mean(data):.1f}m")
+        print(f"  Std deviation: {np.std(data):.1f}m")
+        print(f"  Sea level (0m) coverage: {np.sum(data < 0) / data.size * 100:.1f}%")
+        
     elif args.mode == 'temperature':
         data = visualizer.generate_climate_map(x_min, y_min, width, height, args.resolution, 'temperature')
         plt.figure(figsize=(12, 10))
@@ -574,10 +832,38 @@ def main():
     elif args.mode == 'rivers':
         data = visualizer.generate_rivers_map(x_min, y_min, width, height, args.resolution)
         plt.figure(figsize=(12, 10))
-        plt.imshow(data, cmap='Blues', extent=[x_min, x_min+width, y_min+height, y_min])
-        plt.colorbar(label='River Width (m)')
-        plt.title(f'River Network - Seed {args.seed}')
+        
+        # Use logarithmic scale for better river visualization
+        data_log = np.log10(data + 1)  # Add 1 to avoid log(0)
+        
+        # Create custom colormap for rivers (white background, blue rivers)
+        river_cmap = plt.cm.Blues.copy()
+        river_cmap.set_under('white')  # Set background to white
+        
+        plt.imshow(data_log, cmap=river_cmap, extent=[x_min, x_min+width, y_min+height, y_min], 
+                  vmin=np.log10(30), vmax=np.max(data_log))  # Start from river threshold
+        
+        # Create custom colorbar with original values
+        cbar = plt.colorbar(label='River Flow Strength (log scale)')
+        
+        # Update colorbar ticks to show original values
+        log_ticks = cbar.get_ticks()
+        original_ticks = [f"{10**tick:.0f}" if tick > 0 else "0" for tick in log_ticks]
+        cbar.set_ticklabels(original_ticks)
+        
+        plt.title(f'River Network (New Hierarchical Fractal System) - Seed {args.seed}')
         visualizer.add_scale_legend(plt.gca(), width, height)
+        
+        # Print river statistics
+        river_count = np.sum(data > 30)  # Count river pixels above threshold
+        total_pixels = data.size
+        river_coverage = river_count / total_pixels * 100
+        print(f"\nRiver Network Statistics:")
+        print(f"  River pixels (>30 strength): {river_count}")
+        print(f"  Total pixels: {total_pixels}")
+        print(f"  River coverage: {river_coverage:.2f}%")
+        print(f"  Max river strength: {np.max(data):.1f}")
+        print(f"  Mean river strength (rivers only): {np.mean(data[data > 30]):.1f}")
         
     elif args.mode == 'overlay':
         data = visualizer.generate_overlay_map(x_min, y_min, width, height, args.resolution)

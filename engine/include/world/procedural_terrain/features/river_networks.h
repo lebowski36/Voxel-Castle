@@ -2,7 +2,6 @@
 
 #include <cstdint>
 #include <vector>
-#include <glm/glm.hpp>
 #include <glm/vec2.hpp>
 
 namespace VoxelCastle {
@@ -28,12 +27,12 @@ namespace RiverConstants {
     constexpr float CARVING_SCALE_FACTOR = 1.5f;       // Carving depth = river depth * factor
     constexpr float VALLEY_WIDTH_FACTOR = 3.0f;        // Valley width = river width * factor
 
-    // Fractal noise frequencies
-    constexpr float CONTINENTAL_FREQ = 0.00005f;       // 1 cycle per 20km
-    constexpr float REGIONAL_FREQ = 0.0005f;           // 1 cycle per 2km
-    constexpr float LOCAL_FREQ = 0.005f;               // 1 cycle per 200m
-    constexpr float STREAM_FREQ = 0.05f;               // 1 cycle per 20m
-    constexpr float CREEK_FREQ = 0.2f;                 // 1 cycle per 5m
+    // Fractal noise frequencies (more realistic spacing)
+    constexpr float CONTINENTAL_FREQ = 0.00002f;       // 1 cycle per 50km (major rivers)
+    constexpr float REGIONAL_FREQ = 0.0001f;           // 1 cycle per 10km (regional rivers)
+    constexpr float LOCAL_FREQ = 0.0005f;              // 1 cycle per 2km (small rivers)
+    constexpr float STREAM_FREQ = 0.002f;              // 1 cycle per 500m (streams)
+    constexpr float CREEK_FREQ = 0.01f;                // 1 cycle per 100m (creeks)
 }
 
 /**

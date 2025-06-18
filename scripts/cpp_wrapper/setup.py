@@ -16,6 +16,7 @@ ext_modules = [
         ],
         include_dirs=[
             "../../engine/include",
+            "../../build/_deps/glm-src",
             pybind11.get_cmake_dir() + "/../../../include",
         ],
         cxx_std=17,

@@ -322,8 +322,9 @@ py::array_t<float> generate_river_flow(
         float world_x = x_ptr[i] * VOXEL_SCALE;
         float world_z = z_ptr[i] * VOXEL_SCALE;
         
-        RiverData river = RiverNetworks::CalculateRiverData(world_x, world_z, elev_ptr[i], precip_ptr[i], seed);
-        result_ptr[i] = river.flow_accumulation;
+        // Use the new hierarchical fractal river system
+        float flow_accumulation = RiverNetworks::CalculateFlowAccumulation(world_x, world_z, seed);
+        result_ptr[i] = flow_accumulation;
     }
     
     return result;
@@ -353,15 +354,11 @@ py::array_t<float> generate_river_width(
         float world_x = x_ptr[i] * VOXEL_SCALE;
         float world_z = z_ptr[i] * VOXEL_SCALE;
         
-        // Get elevation and precipitation for this point to calculate flow
-        float elevation = generate_single_heightmap(x_ptr[i], z_ptr[i], seed);
-        ClimateData climate = ClimateSystem::CalculateClimate(world_x, world_z, elevation, seed);
+        // Calculate flow accumulation using new hierarchical system
+        float river_strength = RiverNetworks::CalculateFlowAccumulation(world_x, world_z, seed);
         
-        // Calculate flow accumulation first
-        float flow = RiverNetworks::CalculateFlowAccumulation(world_x, world_z, elevation, climate.precipitation, seed);
-        
-        // Then calculate river width from flow
-        result_ptr[i] = RiverNetworks::CalculateRiverWidth(flow, elevation, seed);
+        // Calculate river width from strength using new system
+        result_ptr[i] = RiverNetworks::CalculateRiverWidth(river_strength);
     }
     
     return result;
@@ -416,26 +413,12 @@ py::array_t<float> generate_terrain_heightmap_with_rivers(
         // Calculate climate data for river generation
         ClimateData climate = ClimateSystem::CalculateClimate(world_x, world_z, terrain_elevation, seed);
         
-        // Calculate river data
-        RiverData river = RiverNetworks::CalculateRiverData(world_x, world_z, terrain_elevation, climate.precipitation, seed);
+        // Generate comprehensive river data using new system
+        EnhancedRiverData river = RiverNetworks::GenerateComprehensiveRiverData(
+            world_x, world_z, climate, terrain_elevation, seed);
         
-        // Apply river carving to terrain
-        float final_elevation = terrain_elevation;
-        if (river.river_width > 0.0f) {
-            // Rivers carve channels into the terrain
-            float carving_depth = river.river_depth + (river.river_width * 0.1f); // Additional carving based on width
-            final_elevation -= carving_depth;
-            
-            // Ensure rivers don't carve below reasonable depths
-            float min_river_elevation = terrain_elevation - 15.0f; // Max 15m carving depth
-            final_elevation = std::max(final_elevation, min_river_elevation);
-        }
-        
-        if (river.is_lake) {
-            // Lakes create flat water surfaces
-            float lake_depth = river.river_depth * 1.5f; // Lakes are deeper than rivers
-            final_elevation = terrain_elevation - lake_depth;
-        }
+        // Apply river carving to terrain using new system
+        float final_elevation = RiverNetworks::ApplyRiverCarving(terrain_elevation, world_x, world_z, seed);
         
         // Final hard clamp to ±2048m range
         result_ptr[i] = std::max(MIN_ELEVATION, std::min(MAX_ELEVATION, final_elevation));
@@ -444,25 +427,100 @@ py::array_t<float> generate_terrain_heightmap_with_rivers(
     return result;
 }
 
-// Complete river data generation for comprehensive visualization
-py::dict generate_river_data(float x, float z, uint64_t seed) {
+// Comprehensive river data generation for visualization
+py::dict generate_comprehensive_river_data(float x, float z, uint64_t seed) {
     float world_x = x * VOXEL_SCALE;
     float world_z = z * VOXEL_SCALE;
     
-    // Get elevation and climate data
+    // Get terrain elevation
     float elevation = generate_single_heightmap(x, z, seed);
+    
+    // Calculate climate data
     ClimateData climate = ClimateSystem::CalculateClimate(world_x, world_z, elevation, seed);
     
-    // Calculate complete river data
-    RiverData river = RiverNetworks::CalculateRiverData(world_x, world_z, elevation, climate.precipitation, seed);
+    // Generate comprehensive river data using new system
+    EnhancedRiverData river = RiverNetworks::GenerateComprehensiveRiverData(
+        world_x, world_z, climate, elevation, seed);
     
+    // Create Python dictionary with all river data
     py::dict river_dict;
-    river_dict["flow_accumulation"] = river.flow_accumulation;
-    river_dict["river_width"] = river.river_width;
-    river_dict["river_depth"] = river.river_depth;
-    river_dict["is_lake"] = river.is_lake;
+    river_dict["fractal_river_strength"] = river.fractal_river_strength;
+    river_dict["river_width_m"] = river.river_width_m;
+    river_dict["river_depth_m"] = river.river_depth_m;
+    river_dict["flow_direction_x"] = river.flow_direction.x;
+    river_dict["flow_direction_y"] = river.flow_direction.y;
+    river_dict["flow_velocity_ms"] = river.flow_velocity_ms;
+    river_dict["stream_order"] = river.stream_order;
+    river_dict["is_headwater"] = river.is_headwater;
+    river_dict["is_main_stem"] = river.is_main_stem;
+    river_dict["is_tributary"] = river.is_tributary;
+    river_dict["carving_depth_m"] = river.carving_depth_m;
+    river_dict["valley_width_m"] = river.valley_width_m;
+    river_dict["creates_floodplain"] = river.creates_floodplain;
+    river_dict["floodplain_width_m"] = river.floodplain_width_m;
+    river_dict["meander_intensity"] = river.meander_intensity;
+    river_dict["is_braided"] = river.is_braided;
+    river_dict["is_seasonal"] = river.is_seasonal;
+    river_dict["base_flow_rate"] = river.base_flow_rate;
+    river_dict["drought_resistance"] = river.drought_resistance;
+    
+    // Waterfall data
+    river_dict["has_waterfall"] = river.waterfall.has_waterfall;
+    river_dict["waterfall_height"] = river.waterfall.waterfall_height;
+    river_dict["has_rapids"] = river.waterfall.has_rapids;
+    
+    // Groundwater data
+    river_dict["is_spring_source"] = river.groundwater.is_spring_source;
+    river_dict["spring_flow_rate"] = river.groundwater.spring_flow_rate;
+    river_dict["aquifer_connection"] = river.groundwater.aquifer_connection;
     
     return river_dict;
+}
+
+// Complete river data generation for comprehensive visualization
+py::dict generate_river_data(float x, float z, uint64_t seed) {
+    // Use the new comprehensive system but return legacy-compatible data
+    py::dict comprehensive_data = generate_comprehensive_river_data(x, z, seed);
+    
+    py::dict river_dict;
+    river_dict["flow_accumulation"] = comprehensive_data["fractal_river_strength"];
+    river_dict["river_width"] = comprehensive_data["river_width_m"];
+    river_dict["river_depth"] = comprehensive_data["river_depth_m"];
+    river_dict["is_lake"] = false; // Legacy compatibility
+    
+    return river_dict;
+}
+
+// Batch comprehensive river data generation
+py::array_t<float> generate_comprehensive_river_flow(
+    py::array_t<float> x_coords,
+    py::array_t<float> z_coords,
+    uint64_t seed
+) {
+    auto x_buf = x_coords.request();
+    auto z_buf = z_coords.request();
+    
+    if (x_buf.size != z_buf.size) {
+        throw std::runtime_error("Input arrays must have the same size");
+    }
+    
+    size_t size = x_buf.size;
+    auto result = py::array_t<float>(size);
+    auto result_buf = result.request();
+    
+    float* x_ptr = static_cast<float*>(x_buf.ptr);
+    float* z_ptr = static_cast<float*>(z_buf.ptr);
+    float* result_ptr = static_cast<float*>(result_buf.ptr);
+    
+    for (size_t i = 0; i < size; i++) {
+        float world_x = x_ptr[i] * VOXEL_SCALE;
+        float world_z = z_ptr[i] * VOXEL_SCALE;
+        
+        // Use new hierarchical fractal system for flow accumulation
+        result_ptr[i] = RiverNetworks::CalculateFlowAccumulation(world_x, world_z, seed);
+    }
+    
+    return result;
 }
 
 PYBIND11_MODULE(worldgen_cpp, m) {
@@ -502,6 +560,12 @@ PYBIND11_MODULE(worldgen_cpp, m) {
     m.def("generate_river_data", &generate_river_data,
           "Generate complete river data for a point",
           py::arg("x"), py::arg("z"), py::arg("seed"));
+    m.def("generate_comprehensive_river_data", &generate_comprehensive_river_data,
+          "Generate comprehensive river data using new hierarchical fractal system",
+          py::arg("x"), py::arg("z"), py::arg("seed"));
+    m.def("generate_comprehensive_river_flow", &generate_comprehensive_river_flow,
+          "Generate comprehensive river flow data for multiple points",
+          py::arg("x_coords"), py::arg("z_coords"), py::arg("seed"));
     
     // Direct noise access
     m.def("generate_continental_noise", &generate_continental_noise,
@@ -526,12 +590,25 @@ PYBIND11_MODULE(worldgen_cpp, m) {
         .value("LOCAL", TerrainScale::LOCAL)
         .value("MICRO", TerrainScale::MICRO);
     
-    // Expose RiverData structure
-    py::class_<RiverData>(m, "RiverData")
-        .def_readwrite("flow_accumulation", &RiverData::flow_accumulation)
-        .def_readwrite("river_width", &RiverData::river_width)
-        .def_readwrite("river_depth", &RiverData::river_depth)
-        .def_readwrite("is_lake", &RiverData::is_lake);
+    // Expose EnhancedRiverData structure (new hierarchical system)
+    py::class_<EnhancedRiverData>(m, "EnhancedRiverData")
+        .def_readwrite("fractal_river_strength", &EnhancedRiverData::fractal_river_strength)
+        .def_readwrite("river_width_m", &EnhancedRiverData::river_width_m)
+        .def_readwrite("river_depth_m", &EnhancedRiverData::river_depth_m)
+        .def_readwrite("flow_velocity_ms", &EnhancedRiverData::flow_velocity_ms)
+        .def_readwrite("stream_order", &EnhancedRiverData::stream_order)
+        .def_readwrite("is_headwater", &EnhancedRiverData::is_headwater)
+        .def_readwrite("is_main_stem", &EnhancedRiverData::is_main_stem)
+        .def_readwrite("is_tributary", &EnhancedRiverData::is_tributary)
+        .def_readwrite("carving_depth_m", &EnhancedRiverData::carving_depth_m)
+        .def_readwrite("valley_width_m", &EnhancedRiverData::valley_width_m)
+        .def_readwrite("creates_floodplain", &EnhancedRiverData::creates_floodplain)
+        .def_readwrite("floodplain_width_m", &EnhancedRiverData::floodplain_width_m)
+        .def_readwrite("meander_intensity", &EnhancedRiverData::meander_intensity)
+        .def_readwrite("is_braided", &EnhancedRiverData::is_braided)
+        .def_readwrite("is_seasonal", &EnhancedRiverData::is_seasonal)
+        .def_readwrite("base_flow_rate", &EnhancedRiverData::base_flow_rate)
+        .def_readwrite("drought_resistance", &EnhancedRiverData::drought_resistance);
     
     // Constants matching ProceduralTerrain design
     m.attr("VOXEL_SIZE") = VOXEL_SCALE;

@@ -5,8 +5,6 @@
 #include "util/enhanced_noise.h"
 #include <algorithm>
 #include <cmath>
-#include <glm/glm.hpp>
-#include <glm/geometric.hpp>
 
 namespace VoxelCastle {
 namespace World {
@@ -53,41 +51,41 @@ float RiverNetworks::CalculateFlowAccumulation(float worldX, float worldZ, uint6
     
     float flow_accumulation = 0.0f;
     
-    // Hierarchical accumulation: deeper in tree = more accumulated flow
-    // Continental drainage (major rivers) - highest flow
-    if (continental > 0.7f) {
+    // More realistic thresholds - each level becomes progressively rarer
+    // Continental drainage (major rivers) - very rare (5% of land)
+    if (continental > 0.95f) {
         flow_accumulation += 1000.0f; // Base flow for major rivers
         
-        // Add all tributary contributions when in continental drainage
-        if (regional > 0.6f) flow_accumulation += 200.0f;
-        if (local > 0.5f) flow_accumulation += 40.0f;
-        if (streams > 0.4f) flow_accumulation += 8.0f;
-        if (creeks > 0.3f) flow_accumulation += 1.0f;
+        // Major rivers collect from all smaller systems in their watershed
+        if (regional > 0.3f) flow_accumulation += 200.0f;
+        if (local > 0.2f) flow_accumulation += 40.0f;
+        if (streams > 0.1f) flow_accumulation += 8.0f;
+        if (creeks > 0.1f) flow_accumulation += 1.0f;
     }
-    // Regional drainage (tributaries) - medium flow
-    else if (regional > 0.7f) {
+    // Regional drainage (tributaries) - uncommon (10% of remaining land)
+    else if (regional > 0.9f) {
         flow_accumulation += 200.0f; // Base flow for tributaries
         
-        // Add smaller tributary contributions
-        if (local > 0.5f) flow_accumulation += 40.0f;
-        if (streams > 0.4f) flow_accumulation += 8.0f;
-        if (creeks > 0.3f) flow_accumulation += 1.0f;
+        // Regional rivers collect from smaller systems
+        if (local > 0.3f) flow_accumulation += 40.0f;
+        if (streams > 0.2f) flow_accumulation += 8.0f;
+        if (creeks > 0.1f) flow_accumulation += 1.0f;
     }
-    // Local drainage (small rivers) - lower flow
-    else if (local > 0.7f) {
+    // Local drainage (small rivers) - moderate (15% of remaining land)
+    else if (local > 0.85f) {
         flow_accumulation += 40.0f; // Base flow for small rivers
         
         if (streams > 0.4f) flow_accumulation += 8.0f;
-        if (creeks > 0.3f) flow_accumulation += 1.0f;
+        if (creeks > 0.2f) flow_accumulation += 1.0f;
     }
-    // Stream drainage - minimal flow
+    // Stream drainage - common (20% of remaining land)
     else if (streams > 0.8f) {
         flow_accumulation += 8.0f; // Base flow for streams
         
         if (creeks > 0.3f) flow_accumulation += 1.0f;
     }
-    // Creek drainage - tiny flow
-    else if (creeks > 0.85f) {
+    // Creek drainage - most common (25% of remaining land)
+    else if (creeks > 0.75f) {
         flow_accumulation += 1.0f; // Base flow for creeks
     }
     
