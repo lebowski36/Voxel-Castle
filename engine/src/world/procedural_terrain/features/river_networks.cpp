@@ -341,15 +341,17 @@ uint64_t RiverNetworks::GetRegionHash(int region_x, int region_z, int region_siz
 
 float RiverNetworks::ApplyRiverCarving(float base_elevation, float world_x, 
                                       float world_z, uint64_t seed) {
-    RiverQueryResult river_query = QueryRiverAtPoint(world_x, world_z, seed);
+    // Use flow accumulation directly instead of trying to query existing rivers
+    float flow_strength = CalculateFlowAccumulation(world_x, world_z, seed);
     
-    if (river_query.has_river) {
-        // Carve river channel
-        float carving_depth = river_query.river_depth * 1.5f; // Deeper than water level
+    // Only carve if flow strength indicates a river should be here
+    if (flow_strength >= 20.0f) {
+        // Calculate river width and depth from flow strength
+        float river_width = 1.0f + (flow_strength - 20.0f) * 0.1f; // 1m base + flow scaling
+        float river_depth = river_width * RiverConstants::CARVING_DEPTH_FACTOR;
+        float carving_depth = river_depth * 1.5f; // Deeper carving for river channel
+        
         return base_elevation - carving_depth;
-    } else if (river_query.has_lake) {
-        // Carve lake basin
-        return std::min(base_elevation, river_query.water_elevation);
     }
     
     return base_elevation;
