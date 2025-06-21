@@ -1,53 +1,91 @@
 #!/usr/bin/env python3
 """
-River Location Scanner for Voxel Castle
-Finds coordinates where rivers are present for a given seed, 
-so world previews can be centered on visible rivers at appropriate scales.
+Find guaranteed river locations by directly accessing the river network data.
+This script will scan the generated river networks and identify small areas
+that are guaranteed to contain rivers for high-resolution visualization.
 """
 
 import sys
 import os
 import numpy as np
 import matplotlib.pyplot as plt
-from elevation_colormap import apply_elevation_coloring
+from matplotlib.colors import LinearSegmentedColormap
+import random
 
-# Add the C++ wrapper to Python path
-sys.path.append('scripts/cpp_wrapper')
+# Add the cpp_wrapper to Python path
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'scripts', 'cpp_wrapper'))
 
 try:
     import worldgen_cpp
-    print("✅ Using C++ backend for river generation")
-    USE_CPP_BACKEND = True
+    print("✓ Successfully imported worldgen_cpp module")
 except ImportError as e:
-    print(f"❌ C++ backend not available: {e}")
-    print("❌ Cannot analyze rivers without C++ backend")
+    print(f"✗ Failed to import worldgen_cpp: {e}")
+    print("Make sure the C++ extension is built. Run:")
+    print("cd scripts/cpp_wrapper && python setup.py build_ext --inplace")
     sys.exit(1)
 
-def scan_for_rivers(seed, center_x=0, center_z=0, scan_radius_km=100, resolution=200):
+# Import the standardized elevation colormap
+from elevation_colormap import get_elevation_colormap
+
+def scan_for_river_locations(seed=12345, scan_regions=9, area_size=512):
     """
-    Scan a region to find coordinates with significant river presence.
+    Scan multiple regions to find river locations by directly checking
+    the generated river network data.
     
     Args:
-        seed: World seed to use
-        center_x, center_z: Center of scan area (world coordinates)
-        scan_radius_km: Radius to scan in kilometers
-        resolution: Number of sample points per dimension
+        seed: Random seed for terrain generation
+        scan_regions: Number of regions to scan (9 = 3x3 grid)
+        area_size: Size of each scan area in meters
     
     Returns:
-        List of (x, z, river_strength) tuples for locations with rivers
+        List of (x, z, river_count) tuples for areas with rivers
     """
-    print(f"🔍 Scanning {scan_radius_km}km radius around ({center_x}, {center_z}) for rivers...")
+    print(f"Scanning {scan_regions} regions for river locations...")
     
-    # Convert to world coordinates (accounting for 0.25m voxel scale)
-    scan_radius_world = scan_radius_km * 1000 / 0.25  # km to world coordinates
+    river_locations = []
+    region_size = 2048  # Size of each region to scan
     
-    # Create coordinate grids
-    x_range = np.linspace(center_x - scan_radius_world, center_x + scan_radius_world, resolution)
-    z_range = np.linspace(center_z - scan_radius_world, center_z + scan_radius_world, resolution)
+    # Scan a grid of regions centered around origin
+    grid_size = int(np.sqrt(scan_regions))
+    start_offset = -(grid_size // 2) * region_size
     
-    X, Z = np.meshgrid(x_range, z_range)
-    X_flat = X.flatten()
-    Z_flat = Z.flatten()
+    for i in range(grid_size):
+        for j in range(grid_size):
+            center_x = start_offset + i * region_size
+            center_z = start_offset + j * region_size
+            
+            print(f"Scanning region {i*grid_size + j + 1}/{scan_regions}: center ({center_x}, {center_z})")
+            
+            # Sample multiple points in this region to find rivers
+            sample_points = 32  # 32x32 grid within each region
+            step = region_size // sample_points
+            
+            river_count = 0
+            sample_locations = []
+            
+            for x_idx in range(sample_points):
+                for z_idx in range(sample_points):
+                    world_x = center_x - region_size//2 + x_idx * step
+                    world_z = center_z - region_size//2 + z_idx * step
+                    
+                    # Query river at this point
+                    try:
+                        river_data = worldgen_cpp.query_river_at_point(world_x, world_z, seed)
+                        if river_data['has_river']:
+                            river_count += 1
+                            sample_locations.append((world_x, world_z, river_data['river_width']))
+                    except Exception as e:
+                        # Skip points that cause errors
+                        continue
+            
+            print(f"  Found {river_count} river points in region ({center_x}, {center_z})")
+            
+            if river_count > 0:
+                # Pick a river location from this region
+                location = random.choice(sample_locations)
+                river_locations.append((location[0], location[1], river_count, location[2]))
+    
+    return river_locations
     
     # Generate terrain and climate data first
     print("📊 Generating terrain elevation data...")

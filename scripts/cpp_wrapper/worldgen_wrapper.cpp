@@ -508,8 +508,11 @@ py::array_t<float> generate_comprehensive_river_flow(
         float world_x = x_ptr[i] * VOXEL_SCALE;
         float world_z = z_ptr[i] * VOXEL_SCALE;
         
-        // Use new hierarchical fractal system for flow accumulation
-        result_ptr[i] = RiverNetworks::CalculateFlowAccumulation(world_x, world_z, seed);
+        // FIX: Use actual river network data instead of flow accumulation noise
+        RiverQueryResult river_result = RiverNetworks::QueryRiverAtPoint(world_x, world_z, seed);
+        
+        // Return river width as flow strength (0 if no river)
+        result_ptr[i] = river_result.has_river ? river_result.river_width : 0.0f;
     }
     
     return result;

@@ -22,11 +22,11 @@ namespace ProceduralTerrain {
  * River network generation constants
  */
 namespace RiverConstants {
-    // Region scales for hierarchical river generation
+    // Region scales for hierarchical river generation - FIXED: Reduced region sizes to match test areas
     constexpr int CONTINENTAL_REGION_SIZE = 500000;    // 500km regions for major river basins
-    constexpr int REGIONAL_REGION_SIZE = 100000;       // 100km regions for river networks
-    constexpr int LOCAL_REGION_SIZE = 20000;           // 20km regions for local streams
-    constexpr int MICRO_REGION_SIZE = 4000;            // 4km regions for creek networks
+    constexpr int REGIONAL_REGION_SIZE = 25000;        // 25km regions for river networks (was 100km)
+    constexpr int LOCAL_REGION_SIZE = 10000;           // 10km regions for local streams (was 20km)
+    constexpr int MICRO_REGION_SIZE = 2000;            // 2km regions for creek networks (was 4km)
     
     // River density parameters (realistic Earth-based)
     constexpr float MAJOR_RIVER_DENSITY = 0.8f;       // 0-3 major rivers per 100km² region

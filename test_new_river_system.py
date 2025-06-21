@@ -7,16 +7,16 @@ sys.path.append('scripts/cpp_wrapper')
 import numpy as np
 import matplotlib.pyplot as plt
 import worldgen_cpp
-from elevation_colormap import apply_elevation_coloring
+from elevation_colormap import apply_standardized_elevation_coloring, get_elevation_stats
 
 def test_new_river_system():
     print("Testing new realistic river system...")
     
-    # Test at different scales to show realistic river networks
+    # Test at different scales with higher resolution for better detail
     test_areas = [
-        {"name": "25km_area", "size": 25000, "resolution": 0.02},   # 500x500 samples
-        {"name": "50km_area", "size": 50000, "resolution": 0.015}, # 750x750 samples
-        {"name": "100km_area", "size": 100000, "resolution": 0.01}, # 1000x1000 samples
+        {"name": "25km_area", "size": 25000, "resolution": 0.04},   # 1000x1000 samples (was 500x500)
+        {"name": "50km_area", "size": 50000, "resolution": 0.03},   # 1500x1500 samples (was 750x750)
+        {"name": "100km_area", "size": 100000, "resolution": 0.02}, # 2000x2000 samples (was 1000x1000)
     ]
     
     seed = 12345
@@ -61,10 +61,16 @@ def test_new_river_system():
         river_count = np.sum(rivers_mask)
         river_percentage = (river_count / (samples * samples)) * 100
         
+        # Get terrain statistics using standardized system
+        terrain_stats = get_elevation_stats(carved_grid)
+        
         print(f"Results:")
         print(f"  Total samples: {samples * samples:,}")
         print(f"  Rivers found: {river_count:,}")
         print(f"  River coverage: {river_percentage:.2f}%")
+        print(f"  Terrain elevation range: {terrain_stats['min_elevation']:.1f}m to {terrain_stats['max_elevation']:.1f}m")
+        print(f"  Land coverage: {terrain_stats['land_percentage']:.1f}%")
+        print(f"  Sea coverage: {terrain_stats['sea_level_percentage']:.1f}%")
         print(f"  Average carving depth: {np.mean(carving_depth):.2f}m")
         print(f"  Max carving depth: {np.max(carving_depth):.2f}m")
         
@@ -76,17 +82,17 @@ def test_new_river_system():
         # Generate comprehensive visualization
         plt.figure(figsize=(20, 10))
         
-        # Find common elevation range for consistent coloring
-        vmin = min(np.min(regular_grid), np.min(carved_grid))
-        vmax = max(np.max(regular_grid), np.max(carved_grid))
+        # Use absolute game world elevation range for consistent coloring
+        GAME_MIN_ELEVATION = -2048.0  # Game world minimum
+        GAME_MAX_ELEVATION = 2048.0   # Game world maximum
         
         # Regular terrain
         plt.subplot(2, 4, 1)
-        apply_elevation_coloring(regular_grid, plt.gca(), f'Regular Terrain - {area["name"]}', vmin, vmax)
+        apply_standardized_elevation_coloring(regular_grid, plt.gca(), f'Regular Terrain - {area["name"]}')
         
         # River-carved terrain
         plt.subplot(2, 4, 2)
-        apply_elevation_coloring(carved_grid, plt.gca(), f'River-Carved Terrain - {area["name"]}', vmin, vmax)
+        apply_standardized_elevation_coloring(carved_grid, plt.gca(), f'River-Carved Terrain - {area["name"]}')
         
         # Carving depth map
         plt.subplot(2, 4, 3)
@@ -96,7 +102,7 @@ def test_new_river_system():
         
         # Rivers overlay on carved terrain
         plt.subplot(2, 4, 4)
-        apply_elevation_coloring(carved_grid, plt.gca(), f'Rivers on Carved Terrain ({river_count} rivers)', vmin, vmax)
+        apply_standardized_elevation_coloring(carved_grid, plt.gca(), f'Rivers on Carved Terrain ({river_count} rivers)')
         if river_count > 0:
             river_masked = np.ma.masked_where(river_grid < river_threshold, river_grid)
             plt.imshow(river_masked, cmap='Blues', origin='lower', alpha=0.6)
