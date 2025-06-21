@@ -41,7 +41,7 @@ bool MenuSystem::handleInput(float mouseX, float mouseY, bool clicked) {
     return false;
 }
 
-void MenuSystem::render() {
+void MenuSystem::Render() {
     // Use UISystem's render method
     UISystem::Render();
 }
@@ -174,6 +174,32 @@ void MenuSystem::updateScreenSize(int width, int height) {
     m_screenHeight = height;
     setScreenSize(width, height);
     // TODO: Update menu positioning when menus are properly implemented
+}
+
+// New game action methods
+void MenuSystem::resumeGame() {
+    std::cout << "[MenuSystem] resumeGame() called" << std::endl;
+    requestWorldInitialization();
+}
+
+void MenuSystem::createNewWorld() {
+    std::cout << "[MenuSystem] createNewWorld() called" << std::endl;
+    showCreateWorldMenu();
+}
+
+void MenuSystem::loadGame() {
+    std::cout << "[MenuSystem] loadGame() called" << std::endl;
+    // TODO: Implement load game functionality
+}
+
+void MenuSystem::openSettings() {
+    std::cout << "[MenuSystem] openSettings() called" << std::endl;
+    showSettingsMenu();
+}
+
+void MenuSystem::exitGame() {
+    std::cout << "[MenuSystem] exitGame() called" << std::endl;
+    requestExit();
 }
 
 } // namespace UI

@@ -862,6 +862,12 @@ void Game::render() {
     int currentWidth = gameWindow_->getWidth();
     int currentHeight = gameWindow_->getHeight();
 
+    // Only pass menuSystem if it's properly initialized
+    VoxelEngine::UI::UISystem* uiSystemPtr = nullptr;
+    if (menuSystem_ && menuSystem_.get()) {
+        uiSystemPtr = menuSystem_.get();
+    }
+
     // Delegate all rendering to the GameRenderCoordinator
     renderCoordinator_->render(
         *this,
@@ -870,7 +876,7 @@ void Game::render() {
         *textureAtlas_,
         *gameWindow_,
         *worldManager_,
-        menuSystem_.get(),
+        uiSystemPtr,
         currentWidth,
         currentHeight
     );

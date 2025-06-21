@@ -466,3 +466,41 @@ With the block system complete, the next logical major milestones are:
 - [ ] **SeedWorldGenerator Integration (04)** - Replace/extend existing world generation with new geological system
 - [ ] **UI Components Implementation (05)** - Enhanced world configuration UI with geological parameters and real-time simulation visualization
 - [ ] **Chunk Management System (06)** - On-demand ultra-realistic chunk generation with geological data persistence
+
+---
+
+## 🧹 SYSTEM-WIDE CRUFT CLEANUP & CODEBASE AUDIT
+
+**Priority**: MEDIUM - Periodic maintenance to keep codebase clean and maintainable
+**Status**: PENDING - Needs comprehensive investigation
+
+### 🔍 Comprehensive Codebase Investigation
+- **Audit all legacy systems and outdated code**
+- **Identify unused files, functions, and dependencies**
+- **Review include statements and remove obsolete references**
+- **Check for duplicate code and consolidation opportunities**
+- **Investigate performance bottlenecks and architectural debt**
+
+### 🚨 CRITICAL PROTOCOL: User Consultation Required
+- **NEVER delete ANY files or code without explicit user approval**
+- **Present findings with clear recommendations before taking action**
+- **Categorize findings: Safe to remove vs. Needs investigation vs. Keep**
+- **Document all discovered cruft and cleanup rationale**
+
+### 📋 Areas to Investigate
+- **Legacy UI elements and outdated interface code**
+- **Unused world generation components**
+- **Obsolete texture and rendering pipeline remnants**
+- **Duplicate or conflicting system implementations**
+- **Outdated dependencies and library integrations**
+- **Performance optimization opportunities**
+- **Code style inconsistencies and naming violations**
+
+### 🎯 Expected Outcomes
+- **Cleaner, more maintainable codebase**
+- **Reduced build times and binary size**
+- **Elimination of confusing legacy code paths**
+- **Better code organization and clarity**
+- **Foundation for future development efficiency**
+
+**Note**: This is an ongoing maintenance task that should be revisited periodically to prevent technical debt accumulation.

@@ -5,7 +5,7 @@
 #include "rendering/block_outline_renderer.h"
 #include "rendering/texture_atlas.h"
 #include "interaction/BlockPlacement.h"
-#include "ui/UISystem.h"
+#include "ui/core/UISystem.h"
 #include "world/world_manager.h"
 #include <GL/gl.h>
 #include "core/GameRenderer.h"
@@ -135,20 +135,33 @@ void VoxelCastle::Core::GameRenderCoordinator::ensureViewportForUI(int screenWid
 }
 
 void VoxelCastle::Core::GameRenderCoordinator::renderUIOverlay(VoxelEngine::UI::UISystem* uiSystem) {
-    if (uiSystem) {
-        // Get the dimensions from both sources for comparison
-        int rendererWidth = uiSystem->getRenderer().getScreenWidth();
-        int rendererHeight = uiSystem->getRenderer().getScreenHeight();
+    if (!uiSystem) {
+        return;
+    }
+    
+    try {
+        // Get the renderer pointer (using new UI system API)
+        auto* renderer = uiSystem->GetRenderer();
+        if (!renderer) {
+            std::cerr << "[ERROR] UISystem renderer is null" << std::endl;
+            return;
+        }
         
-        // Ensure the renderer has up-to-date dimensions
-        // Sometimes the UISystem's internal dimensions might be outdated
-        // This is particularly important after toggling fullscreen
+        // Get the dimensions from the renderer
+        int rendererWidth = renderer->getScreenWidth();
+        int rendererHeight = renderer->getScreenHeight();
         
         // Ensure the viewport is properly set for UI rendering
         ensureViewportForUI(rendererWidth, rendererHeight);
         
         // Now render the UI
-        uiSystem->render();
+        uiSystem->Render();
+    }
+    catch (const std::exception& e) {
+        std::cerr << "[ERROR] Exception in renderUIOverlay: " << e.what() << std::endl;
+    }
+    catch (...) {
+        std::cerr << "[ERROR] Unknown exception in renderUIOverlay" << std::endl;
     }
 }
 
