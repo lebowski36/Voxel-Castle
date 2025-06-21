@@ -69,6 +69,8 @@ add_library(VoxelEngine STATIC
     src/ui/elements/BaseMenu.cpp # Base menu class for consistent styling
     src/ui/elements/MainMenu.cpp # Main menu UI
     src/ui/elements/SettingsMenu.cpp # Settings menu UI
+    src/ui/elements/CreateWorldMenu.cpp # Create world menu UI
+    src/ui/elements/UITextInput.cpp # Text input UI element
     src/ui/BlockVisualizationPanel.cpp # Block visualization debug panel
     # src/ui/GeologicalDebugUI.cpp # Geological simulation debug UI panel - COMPLEX UI DISABLED, implementing simple debug controls instead
     src/ui/SeedDebugPanel.cpp # Seed debug UI panel

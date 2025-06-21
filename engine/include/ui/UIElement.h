@@ -31,6 +31,13 @@ public:
     virtual void update(float deltaTime) { (void)deltaTime; }
     virtual void render() = 0;
     virtual bool handleInput(float mouseX, float mouseY, bool clicked) { (void)mouseX; (void)mouseY; (void)clicked; return false; }
+    
+    // New input handling methods for advanced UI components
+    virtual void handleMouseButton(int button, int action, int mods, double xpos, double ypos) { (void)button; (void)action; (void)mods; (void)xpos; (void)ypos; }
+    virtual void handleKey(int key, int scancode, int action, int mods) { (void)key; (void)scancode; (void)action; (void)mods; }
+    virtual void handleChar(unsigned int codepoint) { (void)codepoint; }
+
+    virtual bool isFocused() const { return false; }
 
     // Utility methods
     bool containsPoint(float x, float y) const;

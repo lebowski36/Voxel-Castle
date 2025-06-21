@@ -242,6 +242,13 @@ std::shared_ptr<UIButton> BaseMenu::createStyledButton(const std::string& text, 
     // Center the button horizontally in the menu
     float buttonX = (getSize().x - buttonWidth) / 2.0f;
     
+    // TEMP: Add console debug for button positioning to compare with input field
+    std::cout << "[BaseMenu] Button '" << text << "' positioning:" << std::endl;
+    std::cout << "  Menu size: (" << getSize().x << ", " << getSize().y << ")" << std::endl;
+    std::cout << "  Button width: " << buttonWidth << std::endl;
+    std::cout << "  Calculated buttonX: " << buttonX << std::endl;
+    std::cout << "  yPosition: " << yPosition << std::endl;
+    
     // DEBUG: Log positioning information to UI log
     glm::vec2 menuPos = getAbsolutePosition();
     logger.debug("BaseMenu", "Creating button '" + text + "':");

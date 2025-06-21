@@ -14,6 +14,7 @@ namespace UI {
 // Forward declarations
 class MainMenu;
 class SettingsMenu;
+class CreateWorldMenu;
 
 } // namespace UI
 } // namespace VoxelEngine
@@ -32,7 +33,8 @@ public:
     enum class MenuState {
         NONE,              // No menu is active
         MAIN_MENU,         // Main menu is active
-        SETTINGS           // Settings menu is active
+        SETTINGS,          // Settings menu is active
+        CREATE_WORLD       // Create world menu is active
     };
 
     MenuSystem();
@@ -95,15 +97,16 @@ public:
     void showSettingsMenu();
 
     /**
-     * @brief Close all menus
+     * @brief Show the create world menu
      */
+    void showCreateWorldMenu();
+
     void closeMenus();
 
-    /**
-     * @brief Handle SDL events
-     * @param event SDL event to handle
-     */
-    void handleEvent(const SDL_Event& event);
+    // Input handling
+    void handleKey(int key, int scancode, int action, int mods);
+    void handleChar(unsigned int codepoint);
+    void handleMouseButton(int button, int action, int mods, double xpos, double ypos);
 
     /**
      * @brief Close the top menu in the stack
@@ -176,6 +179,12 @@ public:
      * @brief Request world initialization when resuming game
      */
     void requestWorldInitialization();
+
+    /**
+     * @brief Request procedural world creation
+     * @param seed The world seed
+     */
+    void requestProceduralWorldCreation(const std::string& seed);
 
     /**
      * @brief Get the current menu state
@@ -272,6 +281,7 @@ private:
     MenuState menuState_ = MenuState::NONE;
     std::shared_ptr<MainMenu> mainMenu_;
     std::shared_ptr<SettingsMenu> settingsMenu_;
+    std::shared_ptr<CreateWorldMenu> createWorldMenu_;
     
     // Active menu stack
     std::vector<std::shared_ptr<UIElement>> activeMenus_;
@@ -281,6 +291,8 @@ private:
     std::function<void()> onExitRequest_;
     std::function<void()> onWorldInitRequest_;
     std::function<void(const VoxelCastle::World::WorldSeed&, int)> onWorldCreateRequest_;
+    std::function<void()> onWorldInitializationRequested_;
+    std::function<void(const std::string&)> onProceduralWorldCreationRequested_;
 };
 
 } // namespace UI
