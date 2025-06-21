@@ -54,7 +54,7 @@ void CreateWorldMenu::CreateTitle() {
     auto uiSystem = GetUISystem();
     if (uiSystem) {
         auto theme = uiSystem->GetTheme();
-        titleLabel_->SetTextColor(theme->colors.text);
+        titleLabel_->SetTextColor(theme->colors.textPrimary);
     }
     
     backgroundPanel_->AddChild(titleLabel_);
@@ -126,7 +126,7 @@ void CreateWorldMenu::ApplyTheme() {
     auto theme = uiSystem->GetTheme();
     
     // Apply theme to labels
-    titleLabel_->SetTextColor(theme->colors.text);
+    titleLabel_->SetTextColor(theme->colors.textPrimary);
     seedLabel_->SetTextColor(theme->colors.textSecondary);
     
     std::cout << "[CreateWorldMenu] Theme applied successfully" << std::endl;
@@ -138,7 +138,7 @@ void CreateWorldMenu::OnCreateWorldClick() {
     
     if (menuSystem_) {
         // Request procedural world creation with the entered seed
-        menuSystem_->RequestProceduralWorldCreation(seed);
+        menuSystem_->requestProceduralWorldCreation(seed);
     }
 }
 
@@ -146,7 +146,7 @@ void CreateWorldMenu::OnCancelClick() {
     std::cout << "[CreateWorldMenu] Cancel clicked, returning to main menu" << std::endl;
     
     if (menuSystem_) {
-        menuSystem_->ShowMainMenu();
+        menuSystem_->closeAllMenus();
     }
 }
 

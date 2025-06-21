@@ -83,7 +83,7 @@ void Label::OnRender() {
     glm::vec2 absolutePos = GetAbsolutePosition();
     
     // Apply UI scaling
-    float scale = uiSystem->GetUIScale();
+    float scale = uiSystem->GetTotalScale();
     float scaledFontSize = fontSize_ * scale;
     
     // Render the text
@@ -102,7 +102,7 @@ glm::vec2 Label::MeasureText() const {
         if (uiSystem) {
             auto renderer = uiSystem->GetRenderer();
             if (renderer) {
-                float scale = uiSystem->GetUIScale();
+                float scale = uiSystem->GetTotalScale();
                 float scaledFontSize = fontSize_ * scale;
                 
                 // Measure text size

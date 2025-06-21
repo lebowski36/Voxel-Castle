@@ -31,7 +31,7 @@ void Button::Initialize() {
     
     // Set initial size based on content
     glm::vec2 preferredSize = CalculatePreferredSize();
-    SetSize(preferredSize);
+    UIComponent::SetSize(preferredSize);
     
     std::cout << "[Button] Initialized button: '" << text_ << "' size: " 
               << preferredSize.x << "x" << preferredSize.y << std::endl;
@@ -47,7 +47,6 @@ glm::vec2 Button::CalculatePreferredSize() const {
     auto renderer = uiSystem->GetRenderer();
     
     // Calculate text size
-    float fontSize = theme->typography.button;
     float textWidth = renderer->getTextWidth(text_, 1.0f); // Scale will be applied later
     
     // Add padding
@@ -165,11 +164,11 @@ void Button::OnRender() {
     // Get current colors based on state
     glm::vec4 backgroundColor = GetCurrentBackgroundColor();
     glm::vec4 textColor = GetCurrentTextColor();
-    float borderRadius = GetCurrentBorderRadius();
+    // float borderRadius = GetCurrentBorderRadius(); // TODO: Implement rounded corners
     
     // Get absolute position and size in screen coordinates
     glm::vec2 absPos = uiSystem->LogicalToScreen(GetAbsolutePosition());
-    glm::vec2 size = uiSystem->LogicalToScreen(GetSize());
+    glm::vec2 size = uiSystem->LogicalToScreen(UIComponent::GetSize());
     
     // Draw button background
     renderer->renderColoredQuad(absPos.x, absPos.y, size.x, size.y, backgroundColor);

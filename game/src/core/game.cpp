@@ -12,7 +12,7 @@
 #include "world/seed_world_generator.h" // For SeedWorldGenerator
 
 // UI System includes
-#include "ui/UISystem.h"
+// #include "ui/UISystem.h" // Legacy UISystem - replaced by new system
 #include "ui/MenuSystem.h"
 #include "ui/elements/HUD.h"
 #include "ui/elements/Crosshair.h"
@@ -355,9 +355,9 @@ bool Game::initialize() {
         // Get the texture atlas OpenGL texture ID from mesh renderer
         GLuint atlasTextureId = meshRenderer_->getTextureAtlasID();
         
-        // Create HUD element with proper constructor parameters
+        // Create HUD element with new UI system
         hudSystem_ = std::make_shared<VoxelEngine::UI::HUD>(
-            &menuSystem_->getRenderer(), 
+            menuSystem_->GetRenderer(), 
             textureAtlas_.get(), 
             atlasTextureId
         );
@@ -379,20 +379,20 @@ bool Game::initialize() {
                   std::to_string(static_cast<int>(hudSystem_->getPosition().x)) + ", " + 
                   std::to_string(static_cast<int>(hudSystem_->getPosition().y)) + ")");
         
-        // Add to UI system
-        menuSystem_->addElement(hudSystem_);
+        // Add to UI system - TODO: Convert to new UI component system
+        // menuSystem_->addElement(hudSystem_);
         
         // Create crosshair system for targeting/aiming
         crosshairSystem_ = std::make_shared<VoxelEngine::UI::Crosshair>(
-            &menuSystem_->getRenderer()
+            menuSystem_->GetRenderer()
         );
         
         // Center crosshair on screen
         crosshairSystem_->centerOnScreen(screenWidth_, screenHeight_);
         crosshairSystem_->setVisible(true); // Visible by default in gameplay mode
         
-        // Add crosshair to UI system
-        menuSystem_->addElement(crosshairSystem_);
+        // Add crosshair to UI system - TODO: Convert to new UI component system
+        // menuSystem_->addElement(crosshairSystem_);
         
         DEBUG_LOG("Game", "Crosshair system initialized and centered on screen");
         
@@ -487,18 +487,18 @@ bool Game::initializeWorldSystems(const std::string& worldSeed) {
     if (menuSystem_) {
         // Create HUD
         hudSystem_ = std::make_shared<VoxelEngine::UI::HUD>(
-            &menuSystem_->getRenderer(), textureAtlas_.get(), textureAtlas_->getTextureID()
+            menuSystem_->GetRenderer(), textureAtlas_.get(), textureAtlas_->getTextureID()
         );
         hudSystem_->setVisible(true);
-        menuSystem_->addElement(hudSystem_);
+        // menuSystem_->addElement(hudSystem_); // TODO: Convert to new UI system
         
         // Create crosshair
         crosshairSystem_ = std::make_shared<VoxelEngine::UI::Crosshair>(
-            &menuSystem_->getRenderer()
+            menuSystem_->GetRenderer()
         );
         crosshairSystem_->centerOnScreen(screenWidth_, screenHeight_);
         crosshairSystem_->setVisible(true);
-        menuSystem_->addElement(crosshairSystem_);
+        // menuSystem_->addElement(crosshairSystem_); // TODO: Convert to new UI system
         
         std::cout << "[Game] Game UI elements (HUD, crosshair) initialized" << std::endl;
     }
@@ -551,7 +551,7 @@ void Game::shutdown() {
         crosshairSystem_.reset();
     }
     if (menuSystem_) {
-        menuSystem_->shutdown();
+        menuSystem_->Shutdown();
         menuSystem_.reset();
     }
     

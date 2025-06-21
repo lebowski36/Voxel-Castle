@@ -48,7 +48,7 @@ void MainMenu::CreateTitle() {
     auto uiSystem = GetUISystem();
     if (uiSystem) {
         auto theme = uiSystem->GetTheme();
-        titleLabel_->SetTextColor(theme->colors.primary);
+        titleLabel_->SetTextColor(theme->colors.primaryAccent);
     }
     
     AddChild(titleLabel_);
@@ -107,7 +107,7 @@ void MainMenu::ApplyTheme() {
     auto theme = uiSystem->GetTheme();
     
     // Apply theme to title
-    titleLabel_->SetTextColor(theme->colors.text);
+    titleLabel_->SetTextColor(theme->colors.textPrimary);
     
     std::cout << "[MainMenu] Theme applied successfully" << std::endl;
 }
@@ -117,7 +117,7 @@ void MainMenu::OnResumeGameClick() {
     
     if (menuSystem_) {
         // Use legacy world system for Resume Game
-        menuSystem_->RequestResumeGame();
+        menuSystem_->requestWorldInitialization();
     }
 }
 
@@ -126,7 +126,7 @@ void MainMenu::OnNewWorldClick() {
     
     if (menuSystem_) {
         // Show new world creation menu
-        menuSystem_->ShowCreateWorldMenu();
+        menuSystem_->onNewGameClicked();
     }
 }
 
@@ -135,7 +135,7 @@ void MainMenu::OnLoadWorldClick() {
     
     if (menuSystem_) {
         // TODO: Implement world loading menu
-        menuSystem_->ShowLoadWorldMenu();
+        menuSystem_->onLoadGameClicked();
     }
 }
 
@@ -144,7 +144,7 @@ void MainMenu::OnSettingsClick() {
     
     if (menuSystem_) {
         // TODO: Implement settings menu
-        menuSystem_->ShowSettingsMenu();
+        menuSystem_->onSettingsClicked();
     }
 }
 
@@ -152,7 +152,7 @@ void MainMenu::OnExitGameClick() {
     std::cout << "[MainMenu] Exit Game clicked" << std::endl;
     
     if (menuSystem_) {
-        menuSystem_->RequestExit();
+        menuSystem_->requestExit();
     }
 }
 

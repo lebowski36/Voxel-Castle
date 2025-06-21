@@ -60,7 +60,7 @@ glm::vec2 TextInput::CalculatePreferredSize() const {
     }
     
     auto theme = uiSystem->GetTheme();
-    float fontSize = theme->typography.body;
+    float fontSize = theme->typography.bodyMedium;
     float height = fontSize * 1.5f + padding_.y + padding_.w + borderWidth_ * 2;
     
     return glm::vec2(200, height);
@@ -71,7 +71,7 @@ bool TextInput::HandleMouseButton(int button, int action, int mods, const glm::v
         // Request focus
         auto uiSystem = GetUISystem();
         if (uiSystem) {
-            uiSystem->SetFocus(shared_from_this());
+            uiSystem->SetFocusedComponent(shared_from_this());
         }
         
         // Position cursor at click location
@@ -323,8 +323,8 @@ void TextInput::RenderText() {
     float scale = uiSystem->GetTotalScale();
     
     // Calculate text position with padding
-    float textX = pos.x + padding_.x;
-    float textY = pos.y + (size.y - 16.0f) * 0.5f; // Center vertically
+    float textX = (pos.x + padding_.x) * scale;
+    float textY = (pos.y + (size.y - 16.0f) * 0.5f) * scale; // Center vertically
     
     // Render text
     renderer->drawText(displayText, textX, textY, 1.0f, glm::vec3(textColor.r, textColor.g, textColor.b));

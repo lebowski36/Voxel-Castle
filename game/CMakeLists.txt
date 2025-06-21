@@ -38,6 +38,7 @@ add_executable(VoxelFortressGame
 target_link_libraries(VoxelFortressGame PRIVATE 
     VoxelEngine
     flecs::flecs # Add Flecs here so the game target can find flecs.h
+    X11          # Add X11 for UI system DPI detection
 )
 
 # Explicitly include SDL3 directories for the game module

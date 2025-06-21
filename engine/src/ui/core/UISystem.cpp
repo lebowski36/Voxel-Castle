@@ -2,6 +2,7 @@
 #include "ui/core/UIComponent.h"
 #include "ui/core/UIScaleManager.h"
 #include "ui/core/UITheme.h"
+#include "ui/core/UIInputManager.h"
 #include <iostream>
 #include <algorithm>
 
@@ -11,9 +12,9 @@ namespace UI {
 UISystem* UISystem::instance_ = nullptr;
 
 UISystem::UISystem() 
-    : userScale_(1.0f)
+    : screenSize_(0, 0)
+    , userScale_(1.0f)
     , debugMode_(false)
-    , screenSize_(0, 0)
     , lastMousePos_(0, 0) {
     
     if (instance_ != nullptr) {
@@ -124,7 +125,11 @@ void UISystem::SetScreenSize(int width, int height) {
         rootComponent_->InvalidateLayout();
     }
     
-    std::cout << "[UISystem] Screen size changed to: " << width << "x" << height << std::endl;
+    std::cout << "[UISystem] Screen size set to " << width << "x" << height << std::endl;
+}
+
+void UISystem::setScreenSize(int width, int height) {
+    SetScreenSize(width, height);
 }
 
 float UISystem::GetAspectRatio() const {

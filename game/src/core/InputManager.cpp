@@ -283,8 +283,9 @@ void processInput(Game& game) {
                     
                 case SDL_SCANCODE_F3: // Block Visualization Panel Toggle
                     if (game.getMenuSystem()) {
-                        std::cout << "[Debug] Block Visualization Panel toggled (F3)" << std::endl;
-                        game.getMenuSystem()->toggleBlockVisualizationPanel();
+                        std::cout << "[Debug] Block Visualization Panel toggled (F3) - TODO: Implement in new UI system" << std::endl;
+                        // TODO: Implement block visualization panel in new UI system
+                        // game.getMenuSystem()->toggleBlockVisualizationPanel();
                     }
                     break;
                 

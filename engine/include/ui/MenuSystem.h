@@ -14,6 +14,7 @@ namespace UI {
 // Forward declarations - New UI System
 class MainMenu;
 class CreateWorldMenu;
+class SettingsMenu;
 
 // Forward declarations - Legacy UI System  
 namespace Legacy {
@@ -58,7 +59,7 @@ public:
     /**
      * @brief Render the active menu
      */
-    void render() override;
+    void render();
 
     /**
      * @brief Handle input events (mouse clicks, etc.)
@@ -299,6 +300,10 @@ private:
     std::function<void(const VoxelCastle::World::WorldSeed&, int)> onWorldCreateRequest_;
     std::function<void()> onWorldInitializationRequested_;
     std::function<void(const std::string&)> onProceduralWorldCreationRequested_;
+
+    // Screen size tracking for legacy compatibility
+    int m_screenWidth = 1920;
+    int m_screenHeight = 1080;
 };
 
 } // namespace UI

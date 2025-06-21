@@ -113,6 +113,13 @@ protected:
     virtual void OnRender() {}
     virtual void OnUpdate(float deltaTime) {}
     
+    // Input events - override these for custom input handling
+    virtual void OnMouseDown(int button, float x, float y) {}
+    virtual void OnMouseUp(int button, float x, float y) {}
+    virtual void OnKeyDown(int key) {}
+    virtual void OnKeyUp(int key) {}
+    virtual void OnTextInput(const char* text) {}
+    
     // Layout helpers
     void UpdateLayout();
     glm::vec2 ApplySizeConstraints(const glm::vec2& size) const;

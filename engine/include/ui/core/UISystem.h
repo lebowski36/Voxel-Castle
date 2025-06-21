@@ -5,6 +5,7 @@
 #include <functional>
 #include <glm/glm.hpp>
 #include "ui/UIRenderer.h"
+#include "ui/core/UIInputManager.h"
 
 namespace VoxelEngine {
 namespace UI {
@@ -40,6 +41,7 @@ public:
     
     // Screen management
     void SetScreenSize(int width, int height);
+    void setScreenSize(int width, int height); // Compatibility wrapper
     glm::vec2 GetScreenSize() const { return screenSize_; }
     float GetAspectRatio() const;
     

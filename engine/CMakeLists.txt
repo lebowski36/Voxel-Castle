@@ -55,6 +55,7 @@ add_library(VoxelEngine STATIC
     # New UI System (Complete Rebuild)
     src/ui/core/UISystem.cpp
     src/ui/core/UIComponent.cpp
+    src/ui/core/UIInputManager.cpp
     src/ui/core/UIScaleManager.cpp
     src/ui/core/UITheme.cpp
     

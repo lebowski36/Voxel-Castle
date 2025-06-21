@@ -1,7 +1,7 @@
 #include "ui/MenuSystem.h"
 #include "ui/menus/MainMenu.h"
 #include "ui/menus/CreateWorldMenu.h"
-// #include "ui/menus/SettingsMenu.h" // TODO: Create SettingsMenu
+#include "ui/menus/SettingsMenu.h"
 #include <iostream>
 
 namespace VoxelEngine {
@@ -149,31 +149,6 @@ void MenuSystem::handleChar(unsigned int codepoint) {
 
 void MenuSystem::handleMouseButton(int button, int action, int mods, double xpos, double ypos) {
     HandleMouseButton(button, action, mods, xpos, ypos);
-}
-
-void MenuSystem::updateFullscreenState(bool isFullscreen) {
-    std::cout << "[MenuSystem] updateFullscreenState(" << isFullscreen << ")" << std::endl;
-    // TODO: Update fullscreen checkbox state in settings menu when implemented
-}
-
-glm::vec2 MenuSystem::getMainMenuSize() const {
-    std::cout << "[MenuSystem] getMainMenuSize() called" << std::endl;
-    // Return default size for now
-    return glm::vec2(400.0f, 600.0f);
-}
-
-glm::vec2 MenuSystem::getSettingsMenuSize() const {
-    std::cout << "[MenuSystem] getSettingsMenuSize() called" << std::endl;
-    // Return default size for now
-    return glm::vec2(500.0f, 700.0f);
-}
-
-void MenuSystem::updateScreenSize(int width, int height) {
-    std::cout << "[MenuSystem] updateScreenSize(" << width << ", " << height << ")" << std::endl;
-    m_screenWidth = width;
-    m_screenHeight = height;
-    setScreenSize(width, height);
-    // TODO: Update menu positioning when menus are properly implemented
 }
 
 } // namespace UI

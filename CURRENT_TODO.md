@@ -1,12 +1,43 @@
 # CURRENT_TODO.md - Active Development Tracking
 
-## 🚀 Current Focus: UI System Architecture Overhaul
+## 🚨 CRITICAL ISSUES - IMMEDIATE ATTENTION REQUIRED
 
-**CURRENT MAIN TASK: Complete UI System Rebuild**
-- **Priority**: 🚨 **CRITICAL** - Blocking all menu-dependent development
-- **Issue**: Current UI system has fundamental architectural flaws preventing proper menu functionality
-- **Status**: Actively rebuilding entire UI system with proper responsive design, component architecture, and layout management
-- **Goal**: Create production-ready UI framework with reusable components, proper screen size handling, and comprehensive developer documentation
+### 1. UI System Segmentation Fault (BLOCKING ALL DEVELOPMENT)
+**Status**: CRITICAL - Game crashes after UI system initialization
+**Issue**: Segfault occurs after "[UISystem] Screen size set to 1920x1080" message
+**Root Cause**: Unknown - likely in UIInputManager or renderer initialization
+**Action**: Debug with gdb to find exact crash location and fix immediately
+
+### 2. Screen Size Mismatch (HIGH PRIORITY)
+**Status**: Multiple systems using conflicting screen size constants
+**Issue**: UI system initializes with 1920x1080, but game code has 1280x720 constants
+**Root Cause**: No centralized screen size management
+**Action**: Create global SCREEN_WIDTH/SCREEN_HEIGHT constants for all systems
+
+---
+
+## 🚀 Current Focus: UI System Architecture Overhaul (90% COMPLETE)
+
+**CURRENT MAIN TASK: Fix Runtime Issues in Rebuilt UI System**
+- **Priority**: 🚨 **CRITICAL** - System builds successfully but crashes at runtime
+- **Status**: Core rebuild complete, debugging runtime issues
+- **Achievement**: Successfully migrated from legacy UI to modern component-based architecture
+- **Blocker**: Segfault preventing testing of new UI functionality
+
+**Completed in UI Rebuild:**
+- ✅ New component-based architecture (UISystem, UIComponent, etc.)
+- ✅ Layout managers (FlexLayout, GridLayout, StackLayout)  
+- ✅ UI components (Button, TextInput, Label, Panel)
+- ✅ Menu implementations (MainMenu, CreateWorldMenu, SettingsMenu)
+- ✅ DPI scaling and theme management
+- ✅ Clean build with no legacy dependencies
+- ✅ Complete removal of legacy UI code
+
+**Remaining for UI System:**
+- 🚨 Fix segmentation fault (CRITICAL)
+- 🚨 Fix screen size mismatch (HIGH)
+- ⚠️  Test menu functionality after crash fix
+- ⚠️  Complete SettingsMenu implementation
 
 **See `development_tasks/05_ui_system_rebuild/05a_ui_system_architecture_overhaul.md` for the complete rebuild plan.**
 
