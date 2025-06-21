@@ -358,7 +358,7 @@ py::array_t<float> generate_river_width(
         float river_strength = RiverNetworks::CalculateFlowAccumulation(world_x, world_z, seed);
         
         // Calculate river width from strength using new system
-        result_ptr[i] = RiverNetworks::CalculateRiverWidth(river_strength);
+        result_ptr[i] = RiverNetworks::CalculateRiverWidth(river_strength, RiverConstants::CREEK_WIDTH);
     }
     
     return result;
@@ -460,19 +460,11 @@ py::dict generate_comprehensive_river_data(float x, float z, uint64_t seed) {
     river_dict["floodplain_width_m"] = river.floodplain_width_m;
     river_dict["meander_intensity"] = river.meander_intensity;
     river_dict["is_braided"] = river.is_braided;
-    river_dict["is_seasonal"] = river.is_seasonal;
-    river_dict["base_flow_rate"] = river.base_flow_rate;
-    river_dict["drought_resistance"] = river.drought_resistance;
     
-    // Waterfall data
-    river_dict["has_waterfall"] = river.waterfall.has_waterfall;
-    river_dict["waterfall_height"] = river.waterfall.waterfall_height;
-    river_dict["has_rapids"] = river.waterfall.has_rapids;
-    
-    // Groundwater data
-    river_dict["is_spring_source"] = river.groundwater.is_spring_source;
-    river_dict["spring_flow_rate"] = river.groundwater.spring_flow_rate;
-    river_dict["aquifer_connection"] = river.groundwater.aquifer_connection;
+    // Simplified waterfall/rapids data (derived from query)
+    RiverQueryResult query = RiverNetworks::QueryRiverAtPoint(world_x, world_z, seed);
+    river_dict["has_waterfall"] = query.has_waterfall;
+    river_dict["has_rapids"] = query.has_rapids;
     
     return river_dict;
 }
@@ -605,10 +597,7 @@ PYBIND11_MODULE(worldgen_cpp, m) {
         .def_readwrite("creates_floodplain", &EnhancedRiverData::creates_floodplain)
         .def_readwrite("floodplain_width_m", &EnhancedRiverData::floodplain_width_m)
         .def_readwrite("meander_intensity", &EnhancedRiverData::meander_intensity)
-        .def_readwrite("is_braided", &EnhancedRiverData::is_braided)
-        .def_readwrite("is_seasonal", &EnhancedRiverData::is_seasonal)
-        .def_readwrite("base_flow_rate", &EnhancedRiverData::base_flow_rate)
-        .def_readwrite("drought_resistance", &EnhancedRiverData::drought_resistance);
+        .def_readwrite("is_braided", &EnhancedRiverData::is_braided);
     
     // Constants matching ProceduralTerrain design
     m.attr("VOXEL_SIZE") = VOXEL_SCALE;

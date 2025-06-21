@@ -1,354 +1,326 @@
 #pragma once
 
-#include <cstdint>
 #include <vector>
-#include <glm/vec2.hpp>
+#include <unordered_map>
+#include <glm/glm.hpp>
+#include <cstdint>
+
+// Forward declarations
+namespace VoxelCastle {
+namespace World {
+namespace ProceduralTerrain {
+    struct ClimateData;
+}
+}
+}
 
 namespace VoxelCastle {
 namespace World {
 namespace ProceduralTerrain {
 
-// Forward declarations
-struct ClimateData;
-
 /**
- * River generation constants and thresholds
+ * River network generation constants
  */
 namespace RiverConstants {
-    constexpr float RIVER_THRESHOLD = 30.0f;           // Minimum strength for river presence
-    constexpr float CONFLUENCE_THRESHOLD = 100.0f;     // Minimum strength for confluence
-    constexpr float MAJOR_RIVER_THRESHOLD = 500.0f;    // Threshold for major rivers
-    constexpr float WATERFALL_GRADIENT = 0.15f;        // Minimum gradient for waterfalls
-    constexpr float RAPIDS_GRADIENT = 0.08f;           // Minimum gradient for rapids
-
-    // Scaling factors
-    constexpr float WIDTH_SCALE_FACTOR = 0.1f;         // River width = strength * factor
-    constexpr float DEPTH_SCALE_FACTOR = 0.05f;        // River depth = strength * factor
-    constexpr float CARVING_SCALE_FACTOR = 1.5f;       // Carving depth = river depth * factor
-    constexpr float VALLEY_WIDTH_FACTOR = 3.0f;        // Valley width = river width * factor
-
-    // Fractal noise frequencies (more realistic spacing)
-    constexpr float CONTINENTAL_FREQ = 0.00002f;       // 1 cycle per 50km (major rivers)
-    constexpr float REGIONAL_FREQ = 0.0001f;           // 1 cycle per 10km (regional rivers)
-    constexpr float LOCAL_FREQ = 0.0005f;              // 1 cycle per 2km (small rivers)
-    constexpr float STREAM_FREQ = 0.002f;              // 1 cycle per 500m (streams)
-    constexpr float CREEK_FREQ = 0.01f;                // 1 cycle per 100m (creeks)
+    // Region scales for hierarchical river generation
+    constexpr int CONTINENTAL_REGION_SIZE = 500000;    // 500km regions for major river basins
+    constexpr int REGIONAL_REGION_SIZE = 100000;       // 100km regions for river networks
+    constexpr int LOCAL_REGION_SIZE = 20000;           // 20km regions for local streams
+    constexpr int MICRO_REGION_SIZE = 4000;            // 4km regions for creek networks
+    
+    // River density parameters (realistic Earth-based)
+    constexpr float MAJOR_RIVER_DENSITY = 0.8f;       // 0-3 major rivers per 100km² region
+    constexpr float REGIONAL_RIVER_DENSITY = 2.5f;    // 1-5 regional rivers per 100km²
+    constexpr float STREAM_DENSITY = 8.0f;            // 3-15 streams per 100km²
+    
+    // River size thresholds
+    constexpr float MAJOR_RIVER_WIDTH = 100.0f;       // 100m+ wide
+    constexpr float REGIONAL_RIVER_WIDTH = 30.0f;     // 30-100m wide
+    constexpr float STREAM_WIDTH = 5.0f;              // 5-30m wide
+    constexpr float CREEK_WIDTH = 1.0f;               // 1-5m wide
+    
+    // Terrain carving parameters
+    constexpr float CARVING_DEPTH_FACTOR = 0.1f;      // River depth = width * factor
+    constexpr float VALLEY_WIDTH_FACTOR = 3.0f;       // Valley width = river width * factor
+    constexpr float WATERFALL_MIN_GRADIENT = 0.15f;   // 15% gradient for waterfalls
+    constexpr float RAPIDS_MIN_GRADIENT = 0.08f;      // 8% gradient for rapids
+    
+    // Lake generation parameters
+    constexpr float LAKE_FORMATION_THRESHOLD = 0.3f;  // Probability threshold for lake formation
+    constexpr float MIN_LAKE_SIZE = 500.0f;           // Minimum lake diameter (meters)
+    constexpr float MAX_LAKE_SIZE = 50000.0f;         // Maximum lake diameter (meters)
 }
 
 /**
- * Confluence detection data
+ * River network data structures
  */
-struct ConfluenceData {
-    bool is_confluence;
-    float confluence_strength;
-    int tributary_count;
-    float main_river_direction;
-    std::vector<float> tributary_strengths;
+
+// River point along a path
+struct RiverPoint {
+    float x, z;              // World coordinates
+    float elevation;         // Water surface elevation
+    float width;             // River width at this point
+    float depth;             // River depth
+    bool has_waterfall;      // Waterfall at this point
+    bool has_rapids;         // Rapids at this point
     
-    ConfluenceData() : is_confluence(false), confluence_strength(0.0f), 
-                      tributary_count(0), main_river_direction(0.0f) {}
+    RiverPoint() : x(0), z(0), elevation(0), width(0), depth(0), 
+                   has_waterfall(false), has_rapids(false) {}
 };
 
-/**
- * Waterfall and rapids data
- */
-struct WaterfallData {
-    bool has_waterfall;
-    float waterfall_height;
-    bool has_rapids;
-    float gradient;
+// Complete river path from source to destination
+struct RiverPath {
+    std::vector<RiverPoint> points;    // Path points in order from source
+    int river_id;                      // Unique river identifier
+    int parent_river_id;               // ID of river this joins (-1 if flows to ocean)
+    float total_length;                // Total river length in meters
+    float max_width;                   // Maximum width along path
+    bool flows_to_ocean;               // True if reaches ocean, false if internal drainage
+    bool is_seasonal;                  // True if dries up in dry seasons
     
-    WaterfallData() : has_waterfall(false), waterfall_height(0.0f), 
-                     has_rapids(false), gradient(0.0f) {}
+    RiverPath() : river_id(-1), parent_river_id(-1), total_length(0), 
+                  max_width(0), flows_to_ocean(false), is_seasonal(false) {}
 };
 
-/**
- * Groundwater and spring data
- */
-struct GroundwaterData {
-    float water_table_depth;    // Depth to groundwater (meters)
-    bool is_spring_source;      // Natural spring location
-    float spring_flow_rate;     // Water volume from spring
-    bool aquifer_connection;    // Connected to underground water
+// Lake data structure
+struct Lake {
+    float center_x, center_z;         // Lake center coordinates
+    float surface_elevation;          // Water surface elevation
+    float radius;                     // Lake radius (approximate)
+    int connected_river_id;           // River ID if connected (-1 if standalone)
+    bool is_seasonal;                 // True if dries up seasonally
+    bool has_outflow;                 // True if lake has river outlet
     
-    GroundwaterData() : water_table_depth(0.0f), is_spring_source(false), 
-                       spring_flow_rate(0.0f), aquifer_connection(false) {}
+    Lake() : center_x(0), center_z(0), surface_elevation(0), radius(0),
+             connected_river_id(-1), is_seasonal(false), has_outflow(false) {}
 };
 
-/**
- * River termination types
- */
-enum class RiverTerminationType {
-    OCEAN,              // Flows to ocean/sea
-    INLAND_LAKE,        // Ends in endorheic lake
-    DESERT_SINK,        // Disappears in arid region
-    UNDERGROUND_CAPTURE, // Goes underground in karst
-    WETLAND_DISPERSION, // Spreads into marshland
-    GLACIER_SOURCE      // Starts/ends at glacier
-};
-
-/**
- * Riparian biome types
- */
-enum class RiparianBiomeType {
-    RIPARIAN_FOREST,      // Forested river corridors
-    WETLAND_MARSH,        // Marshy transition zones
-    FLOODPLAIN_GRASSLAND, // Seasonal flood zones
-    DESERT_OASIS,         // Water sources in arid regions
-    ALPINE_MEADOW,        // High elevation river valleys
-    MANGROVE_SWAMP        // Tropical coastal wetlands
-};
-
-/**
- * Simple flow data for local chunk simulation
- */
-struct SimpleFlowData {
-    glm::vec2 flow_direction;    // Which way water flows (normalized)
-    float flow_speed_ms;         // Flow speed in meters/second (0.1-5.0)
-    float terrain_slope;         // Local terrain gradient (0.0-1.0)
-    bool has_water_now;          // Whether water is present (climate-based)
-    float visual_flow_rate;      // For visual effects (particle systems, etc.)
+// River network for a region
+struct RiverNetwork {
+    std::vector<RiverPath> rivers;     // All rivers in this region
+    std::vector<Lake> lakes;           // All lakes in this region
+    int region_x, region_z;            // Region coordinates
+    int region_size;                   // Region size in meters
     
-    SimpleFlowData() : flow_direction(0.0f), flow_speed_ms(0.0f), terrain_slope(0.0f), 
-                      has_water_now(false), visual_flow_rate(0.0f) {}
+    RiverNetwork() : region_x(0), region_z(0), region_size(0) {}
 };
 
-/**
- * Underground river connections
- */
-struct UndergroundConnection {
-    bool connects_to_caves;
-    float underground_flow_rate;
-    int cave_entrance_count;
-    bool creates_aquifer;
-    float aquifer_extent;
+// Result of querying rivers at a specific point
+struct RiverQueryResult {
+    bool has_river;                    // True if river passes through this point
+    float river_width;                 // River width at this point (0 if no river)
+    float river_depth;                 // River depth at this point
+    float water_elevation;             // Water surface elevation
+    bool has_lake;                     // True if lake covers this point
+    float lake_depth;                  // Lake depth at this point (0 if no lake)
+    bool has_waterfall;                // True if waterfall at this point
+    bool has_rapids;                   // True if rapids at this point
     
-    UndergroundConnection() : connects_to_caves(false), underground_flow_rate(0.0f), 
-                             cave_entrance_count(0), creates_aquifer(false), aquifer_extent(0.0f) {}
+    RiverQueryResult() : has_river(false), river_width(0), river_depth(0), 
+                        water_elevation(0), has_lake(false), lake_depth(0),
+                        has_waterfall(false), has_rapids(false) {}
 };
 
-/**
- * Complete river data structure using hierarchical fractal generation
- */
+// Legacy structure for backward compatibility with existing code
 struct EnhancedRiverData {
-    // Basic flow characteristics
-    float fractal_river_strength;   // Raw fractal strength calculation (0-1000+)
-    float river_width_m;            // Channel width (0.5m to 1000m+)
-    float river_depth_m;            // Channel depth (0.2m to 50m+)
-    glm::vec2 flow_direction;       // Normalized flow direction vector
-    float flow_velocity_ms;         // Water velocity (0.1-5.0 m/s)
+    float fractal_river_strength;
+    float river_width_m;
+    float river_depth_m;
+    glm::vec2 flow_direction;
+    float flow_velocity_ms;
+    int stream_order;
+    bool is_headwater;
+    bool is_main_stem;
+    bool is_tributary;
+    float carving_depth_m;
+    float valley_width_m;
+    bool creates_floodplain;
+    float floodplain_width_m;
+    float meander_intensity;
+    bool is_braided;
     
-    // Hierarchical classification
-    int stream_order;               // Strahler stream order (1-12)
-    bool is_headwater;              // Source/spring location
-    bool is_main_stem;              // Primary river channel
-    bool is_tributary;              // Branch/tributary channel
-    
-    // Confluence data
-    ConfluenceData confluence;      // Junction information
-    
-    // Terrain modification
-    float carving_depth_m;          // How deep river carves terrain
-    float valley_width_m;           // Width of carved valley
-    bool creates_floodplain;        // Has seasonal flood zones
-    float floodplain_width_m;       // Width of flood zone
-    
-    // Special features
-    WaterfallData waterfall;        // Waterfall/rapids information
-    float meander_intensity;        // How curvy the river is (0-1)
-    bool is_braided;               // Multiple interweaving channels
-    
-    // Termination and sources
-    GroundwaterData groundwater;    // Spring/aquifer connections
-    RiverTerminationType termination; // How/where river ends
-    
-    // Environmental integration
-    RiparianBiomeType riparian_biome; // Associated vegetation type
-    UndergroundConnection underground; // Cave/aquifer connections
-    
-    // Climate interaction
-    bool is_seasonal;              // Varies with seasons (not implemented yet)
-    float base_flow_rate;          // Baseline water volume
-    float drought_resistance;      // How well river survives dry periods
-    
-    EnhancedRiverData() : fractal_river_strength(0.0f), river_width_m(0.0f), river_depth_m(0.0f),
-                         flow_direction(0.0f), flow_velocity_ms(0.0f), stream_order(0),
+    EnhancedRiverData() : fractal_river_strength(0), river_width_m(0), river_depth_m(0),
+                         flow_direction(0, 0), flow_velocity_ms(0), stream_order(0),
                          is_headwater(false), is_main_stem(false), is_tributary(false),
-                         carving_depth_m(0.0f), valley_width_m(0.0f), creates_floodplain(false),
-                         floodplain_width_m(0.0f), meander_intensity(0.0f), is_braided(false),
-                         termination(RiverTerminationType::WETLAND_DISPERSION),
-                         riparian_biome(RiparianBiomeType::RIPARIAN_FOREST),
-                         is_seasonal(false), base_flow_rate(0.0f), drought_resistance(0.0f) {}
+                         carving_depth_m(0), valley_width_m(0), creates_floodplain(false),
+                         floodplain_width_m(0), meander_intensity(0), is_braided(false) {}
 };
 
 /**
- * Deterministic Fractal River Networks System
- * Generates realistic river systems using hierarchical fractals while maintaining perfect chunk independence
+ * River Network Generation System
+ * Generates realistic connected river networks with proper flow paths, lakes, and terrain carving
  */
 class RiverNetworks {
 public:
-    // === Core Hierarchical Fractal Functions ===
+    // === Main River Network Generation ===
     
     /**
-     * Calculate hierarchical flow accumulation using fractal watershed levels
-     * This is the core function that replaces traditional watershed analysis
+     * Generate complete river network for a region
+     * @param region_x Region X coordinate (in region units)
+     * @param region_z Region Z coordinate (in region units)  
+     * @param region_size Size of region in meters
+     * @param seed World seed for deterministic generation
+     * @return Complete river network for the region
+     */
+    static RiverNetwork GenerateRiverNetwork(int region_x, int region_z, 
+                                            int region_size, uint64_t seed);
+    
+    /**
+     * Query river data at a specific world coordinate
+     * @param world_x X coordinate in world space
+     * @param world_z Z coordinate in world space
+     * @param seed World seed
+     * @return River query result with all water feature data
+     */
+    static RiverQueryResult QueryRiverAtPoint(float world_x, float world_z, uint64_t seed);
+    
+    /**
+     * Apply river carving to terrain elevation
+     * @param base_elevation Original terrain elevation
+     * @param world_x X coordinate in world space
+     * @param world_z Z coordinate in world space
+     * @param seed World seed
+     * @return Modified elevation with river carving applied
+     */
+    static float ApplyRiverCarving(float base_elevation, float world_x, 
+                                 float world_z, uint64_t seed);
+    
+    // === Legacy Compatibility Functions ===
+    
+    /**
+     * Generate comprehensive river data (legacy compatibility)
+     */
+    static EnhancedRiverData GenerateComprehensiveRiverData(float worldX, float worldZ, 
+                                                           const ClimateData& climate, 
+                                                           float elevation, uint64_t seed);
+    
+    /**
+     * Calculate flow accumulation (legacy compatibility)
      */
     static float CalculateFlowAccumulation(float worldX, float worldZ, uint64_t seed);
     
     /**
-     * Enhanced river strength calculation (alias for flow accumulation)
+     * Calculate flow direction (legacy compatibility)
      */
-    static float CalculateFractalRiverStrength(float worldX, float worldZ, uint64_t seed);
+    static glm::vec2 CalculateFlowDirection(float world_x, float world_z, uint64_t seed);
+    
+    // === River Path Generation ===
     
     /**
-     * Ensure river continuity by connecting strong neighboring segments
+     * Trace a complete river path from source to destination
+     * @param source_x Starting X coordinate
+     * @param source_z Starting Z coordinate
+     * @param source_elevation Starting elevation
+     * @param seed World seed
+     * @return Complete river path with all points
      */
-    static float EnsureRiverContinuity(float baseStrength, float worldX, float worldZ, uint64_t seed);
+    static RiverPath TraceRiverPath(float source_x, float source_z, 
+                                   float source_elevation, uint64_t seed);
     
     /**
-     * Calculate natural confluence points where fractal scales converge
+     * Generate detailed river points along a path segment
+     * @param start_x Start X coordinate
+     * @param start_z Start Z coordinate
+     * @param end_x End X coordinate
+     * @param end_z End Z coordinate
+     * @param start_elevation Start elevation
+     * @param end_elevation End elevation
+     * @param river_width River width for this segment
+     * @param seed World seed
+     * @return Vector of detailed river points
      */
-    static ConfluenceData CalculateConfluence(float worldX, float worldZ, uint64_t seed);
+    static std::vector<RiverPoint> GenerateRiverPoints(float start_x, float start_z,
+                                                     float end_x, float end_z,
+                                                     float start_elevation, float end_elevation,
+                                                     float river_width, uint64_t seed);
     
-    // === Flow Direction & Terrain Integration ===
+    // === Lake Generation ===
     
     /**
-     * Calculate deterministic flow direction using elevation gradients
+     * Generate lakes for a region
+     * @param region_x Region X coordinate
+     * @param region_z Region Z coordinate
+     * @param region_size Region size in meters
+     * @param seed World seed
+     * @return Vector of lakes in the region
      */
-    static glm::vec2 CalculateFlowDirection(float worldX, float worldZ, uint64_t seed);
+    static std::vector<Lake> GenerateLakes(int region_x, int region_z, 
+                                         int region_size, uint64_t seed);
+    
+    // === River Source Detection ===
     
     /**
-     * Apply river carving to terrain elevation
+     * Determine if a location should be a river source
+     * @param world_x X coordinate in world space
+     * @param world_z Z coordinate in world space
+     * @param climate Climate data for the location
+     * @param elevation Terrain elevation
+     * @param seed World seed
+     * @return True if this should be a river source
      */
-    static float ApplyRiverCarving(float baseElevation, float worldX, float worldZ, uint64_t seed);
+    static bool IsRiverSource(float world_x, float world_z, 
+                            const ClimateData& climate, float elevation, uint64_t seed);
+    
+    // === River Width and Flow Calculations ===
     
     /**
-     * Calculate terrain gradient magnitude
+     * Calculate river width based on accumulated flow
+     * @param accumulated_flow Total flow accumulation
+     * @param base_width Base width for the river type
+     * @return Calculated river width in meters
      */
-    static float CalculateTerrainGradient(float worldX, float worldZ, uint64_t seed);
-    
-    // === River Feature Generation ===
-    
-    /**
-     * Calculate waterfall and rapids features
-     */
-    static WaterfallData CalculateWaterfallFeatures(float worldX, float worldZ, float riverStrength, uint64_t seed);
-    
-    /**
-     * Calculate meandering intensity based on terrain and river size
-     */
-    static float CalculateMeanderIntensity(float riverStrength, float terrainGradient, uint64_t seed);
-    
-    /**
-     * Apply meandering to flow direction
-     */
-    static glm::vec2 ApplyMeandering(glm::vec2 baseFlowDirection, float worldX, float worldZ, 
-                                    float meanderIntensity, uint64_t seed);
-    
-    /**
-     * Calculate groundwater and spring data
-     */
-    static GroundwaterData CalculateGroundwater(float worldX, float worldZ, float surfaceElevation, uint64_t seed);
-    
-    // === River Dimensions & Classification ===
-    
-    /**
-     * Calculate river width based on flow accumulation
-     */
-    static float CalculateRiverWidth(float riverStrength);
-    
-    /**
-     * Calculate river depth based on flow accumulation
-     */
-    static float CalculateRiverDepth(float riverStrength);
-    
-    /**
-     * Calculate flow velocity based on strength and terrain gradient
-     */
-    static float CalculateFlowVelocity(float riverStrength, float terrainGradient);
-    
-    /**
-     * Calculate Strahler stream order from river strength
-     */
-    static int CalculateStreamOrder(float riverStrength);
-    
-    /**
-     * Determine if location is a headwater (river source)
-     */
-    static bool DetermineIfHeadwater(float worldX, float worldZ, float riverStrength, uint64_t seed);
-    
-    /**
-     * Determine if river has braided pattern (multiple channels)
-     */
-    static bool DetermineBraidedPattern(float riverStrength, const ClimateData& climate, uint64_t seed);
-    
-    // === Termination & Biome Integration ===
-    
-    /**
-     * Determine how/where river terminates
-     */
-    static RiverTerminationType DetermineRiverTermination(float worldX, float worldZ, float riverStrength, 
-                                                         const ClimateData& climate, uint64_t seed);
-    
-    /**
-     * Determine riparian biome type
-     */
-    static RiparianBiomeType DetermineRiparianBiome(const ClimateData& climate, float elevation, 
-                                                   float distanceFromRiver, float riverStrength);
-    
-    /**
-     * Calculate underground connections to caves and aquifers
-     */
-    static UndergroundConnection CalculateUndergroundConnection(float worldX, float worldZ, 
-                                                               float riverStrength, uint64_t seed);
-    
-    // === Local Flow Simulation ===
-    
-    /**
-     * Calculate simple local flow data for chunk-level simulation
-     */
-    static SimpleFlowData CalculateLocalFlow(float worldX, float worldZ, uint64_t seed, 
-                                           const ClimateData& climate);
-    
-    /**
-     * Calculate terrain slope for flow physics
-     */
-    static float CalculateTerrainSlope(float worldX, float worldZ, uint64_t seed);
-    
-    // === Main Generation Function ===
-    
-    /**
-     * Generate comprehensive river data for a specific world position
-     * This is the main entry point that combines all fractal river calculations
-     */
-    static EnhancedRiverData GenerateComprehensiveRiverData(float worldX, float worldZ, 
-                                                          const ClimateData& climate, 
-                                                          float surfaceElevation, 
-                                                          uint64_t seed);
-    
-    // === Helper Functions ===
-    
-    /**
-     * Calculate distance from river centerline
-     */
-    static float CalculateDistanceFromRiverCenter(float worldX, float worldZ, glm::vec2 flowDirection, uint64_t seed);
-    
-    /**
-     * Calculate drought resistance based on groundwater and river size
-     */
-    static float CalculateDroughtResistance(const GroundwaterData& groundwater, float riverStrength);
-    
-    /**
-     * Calculate distance to nearest river (for biome influence)
-     */
-    static float CalculateDistanceToNearestRiver(float worldX, float worldZ, uint64_t seed);
-    
-    /**
-     * Helper function for rotating vectors (used in delta generation)
-     */
-    static glm::vec2 RotateVector(glm::vec2 vec, float angleRadians);
+    static float CalculateRiverWidth(float accumulated_flow, float base_width);
 
 private:
+    // === Internal Helper Functions ===
+    
+    /**
+     * Get terrain elevation at a point (without river carving)
+     */
+    static float GetTerrainElevation(float world_x, float world_z, uint64_t seed);
+    
+    /**
+     * Calculate flow accumulation along a river path
+     */
+    static float CalculateFlowAccumulation(const std::vector<RiverPoint>& upstream_points);
+    
+    /**
+     * Determine if elevation change should create a waterfall
+     */
+    static bool ShouldCreateWaterfall(float elevation_change, float distance);
+    
+    /**
+     * Determine if elevation change should create rapids
+     */
+    static bool ShouldCreateRapids(float elevation_change, float distance);
+    
+    /**
+     * Find potential river sources in a region
+     */
+    static std::vector<std::pair<float, float>> FindRiverSources(int region_x, int region_z, 
+                                                               int region_size, uint64_t seed);
+    
+    /**
+     * Determine river density based on climate and terrain
+     */
+    static float GetRiverDensityFactor(const ClimateData& climate, float elevation);
+    
+    // === Region-based Caching System ===
+    
+    /**
+     * Get cached river network or generate new one
+     */
+    static const RiverNetwork& GetCachedRiverNetwork(int region_x, int region_z, 
+                                                   int region_size, uint64_t seed);
+    
+    /**
+     * Generate unique hash for a region
+     */
+    static uint64_t GetRegionHash(int region_x, int region_z, int region_size);
+    
+    // Cache for river networks (static to persist across calls)
+    static std::unordered_map<uint64_t, RiverNetwork> cached_networks;
+    
     // Prevent instantiation - this is a static utility class
     RiverNetworks() = delete;
 };
