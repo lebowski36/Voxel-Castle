@@ -1,6 +1,6 @@
 #pragma once
 
-#include "ui/UISystem.h"
+#include "ui/core/UISystem.h"
 #include "world/world_seed.h"
 #include <SDL3/SDL.h>
 #include <memory>
@@ -11,10 +11,16 @@
 namespace VoxelEngine {
 namespace UI {
 
-// Forward declarations
+// Forward declarations - New UI System
 class MainMenu;
-class SettingsMenu;
 class CreateWorldMenu;
+
+// Forward declarations - Legacy UI System  
+namespace Legacy {
+    class MainMenu;
+    class CreateWorldMenu;
+    class SettingsMenu;
+}
 
 } // namespace UI
 } // namespace VoxelEngine
@@ -25,8 +31,8 @@ namespace UI {
 /**
  * @brief System for managing game menus
  * 
- * The MenuSystem extends the UISystem to provide specialized menu functionality.
- * It handles menu navigation, state, and organization of different menu screens.
+ * TRANSITION STATE: This MenuSystem is being migrated from the legacy UI system
+ * to the new component-based UI system. During transition, it manages both systems.
  */
 class MenuSystem : public UISystem {
 public:

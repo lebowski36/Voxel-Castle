@@ -1,11 +1,21 @@
 # CURRENT_TODO.md - Active Development Tracking
 
-## 🚀 Current Focus: New Procedural World Generation
+## 🚀 Current Focus: UI System Architecture Overhaul
 
-**CURRENT MAIN TASK: Phase 1.2 - Foundational Terrain Generation**
+**CURRENT MAIN TASK: Complete UI System Rebuild**
+- **Priority**: 🚨 **CRITICAL** - Blocking all menu-dependent development
+- **Issue**: Current UI system has fundamental architectural flaws preventing proper menu functionality
+- **Status**: Actively rebuilding entire UI system with proper responsive design, component architecture, and layout management
+- **Goal**: Create production-ready UI framework with reusable components, proper screen size handling, and comprehensive developer documentation
+
+**See `development_tasks/05_ui_system_rebuild/05a_ui_system_architecture_overhaul.md` for the complete rebuild plan.**
+
+## 🏞️ Next Priority: New Procedural World Generation
+
+**UPCOMING TASK: Phase 1.2 - Foundational Terrain Generation**
 - **Priority**: Implement the core procedural generation system as the foundation for all future world-building.
 - **Issue**: The previous simulation-based approach was overly complex and has been shelved. We are now building a robust, deterministic procedural system.
-- **Status**: UI changes are complete. Actively implementing the foundational 4-scale noise system in `seed_world_generator.cpp`.
+- **Status**: UI system rebuild must complete first. Terrain generation implementation ready to begin after UI completion.
 - **Goal**: Achieve feature parity with the legacy generator but with a superior, extensible architecture based on `PROCEDURAL_TERRAIN_DESIGN.md`.
 
 **See `engine/src/world/procedural_terrain/PROCEDURAL_TERRAIN_DESIGN.md` for the full Development Roadmap.**

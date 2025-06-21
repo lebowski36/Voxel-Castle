@@ -96,11 +96,18 @@ engine/src/world/procedural_terrain/
 
 The goal of this phase is to create a new world generation system that is at least as good as the legacy one, but with a better foundation for future expansion, improved performance, and some initial variety.
 
-- **Task 1.1: UI Overhaul** - ✅ **COMPLETED**
+- **Task 1.1: UI Overhaul** - 🚨 **PARTIALLY COMPLETED - NEEDS REBUILD**
   - ✅ Modified the main menu UI.
   - ✅ Renamed "Resume Game" to "Resume Game (Legacy)".
   - ✅ Added a "Create World" button.
   - ✅ Added a "Load World" button.
+  - 🚨 **ISSUE DISCOVERED**: Current UI system has fundamental architectural problems:
+    - Broken sizing and positioning logic (elements positioned off-screen)
+    - No proper responsive design for screen size changes
+    - Inconsistent element visibility and rendering
+    - Poor component reusability and extensibility
+  - 🎯 **DECISION**: Pause terrain generation work to rebuild UI system properly
+  - 📋 **STATUS**: UI system rebuild scheduled as immediate priority
 
 - **Task 1.2: Foundational Terrain Generation** - 🎯 **ACTIVE**
   - [ ] Implement the 4-scale noise system (`Continental`, `Regional`, `Local`, `Micro`).
