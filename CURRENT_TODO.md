@@ -1,19 +1,14 @@
 # CURRENT_TODO.md - Active Development Tracking
 
-## 🚀 Current Focus: Debugging Snapshot Pipeline Issues
+## 🚀 Current Focus: New Procedural World Generation
 
-**CURRENT MAIN TASK: Step 4.1 - Snapshot Pipeline Debug**
-- **Priority**: Debug why new geological snapshots are not updating the world preview during simulation  
-- **Issue**: World preview always shows "Initial State" despite tectonic simulation running and creating snapshots
-- **Status**: Debug logging added to trace data flow, ready for testing
-- **Goal**: Fix synchronization between simulation snapshots and UI rendering to show evolving geological features
+**CURRENT MAIN TASK: Phase 1.2 - Foundational Terrain Generation**
+- **Priority**: Implement the core procedural generation system as the foundation for all future world-building.
+- **Issue**: The previous simulation-based approach was overly complex and has been shelved. We are now building a robust, deterministic procedural system.
+- **Status**: UI changes are complete. Actively implementing the foundational 4-scale noise system in `seed_world_generator.cpp`.
+- **Goal**: Achieve feature parity with the legacy generator but with a superior, extensible architecture based on `PROCEDURAL_TERRAIN_DESIGN.md`.
 
-**COMPLETED**: Added comprehensive file-based debug logging to trace snapshot creation and usage pipeline
-**NEXT**: Build and test with debug logs, analyze data flow issues, fix snapshot-to-UI synchronization
-
-This file tracks our immediate high-level tasks and progress. Detailed sub-tasks for each item are located in corresponding files within the `/home/system-x1/Projects/Voxel Castle/development_tasks/` directory.
-
-**IMPORTANT: This file is updated after each major development step is confirmed as complete by the user. The agent works from detailed sub-task files.**
+**See `engine/src/world/procedural_terrain/PROCEDURAL_TERRAIN_DESIGN.md` for the full Development Roadmap.**
 
 ---
 

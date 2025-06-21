@@ -1,7 +1,9 @@
-# New World Generation Plan
+# New World Generation Plan - SUPERSEDED
 
 *Created: 2025-06-21*
-*Status: Proposed*
+*Status: Superseded by `engine/src/world/procedural_terrain/PROCEDURAL_TERRAIN_DESIGN.md`*
+
+**This plan has been merged into the main design document. Please refer to the "Development Roadmap" section in `engine/src/world/procedural_terrain/PROCEDURAL_TERRAIN_DESIGN.md` for the current, up-to-date plan.**
 
 ## 1. Overview & Philosophy
 

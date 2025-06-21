@@ -9,6 +9,7 @@
 #include "core/GameRenderCoordinator.h" // Game render coordination
 #include "core/SaveManager.h" // Save/load management
 #include "utils/debug_logger.h" // For DEBUG_LOG
+#include "world/seed_world_generator.h" // For SeedWorldGenerator
 
 // UI System includes
 #include "ui/UISystem.h"
@@ -147,7 +148,7 @@ bool Game::initialize() {
     // Initialize basic systems (ECS, texture atlas, renderer)
     ecs_ = std::make_unique<flecs::world>();
     worldManager_ = std::make_unique<VoxelCastle::World::WorldManager>();
-    worldGenerator_ = std::make_unique<VoxelCastle::World::WorldGenerator>();
+    // worldGenerator_ = std::make_unique<VoxelCastle::World::WorldGenerator>(); // Deferred to world creation
     
     // Initialize texture atlas and load the texture file
     textureAtlas_ = std::make_unique<VoxelEngine::Rendering::TextureAtlas>();
@@ -290,7 +291,12 @@ bool Game::initialize() {
         
         // Set up world initialization callback - only for explicit user action
         menuSystem_->setOnWorldInitRequest([this]() {
-            std::cout << "[Game] World initialization requested by user" << std::endl;
+            std::cout << "[Game] World initialization requested by user (Legacy)" << std::endl;
+
+            if (!worldGenerator_) {
+                std::cout << "[Game] Creating legacy WorldGenerator" << std::endl;
+                worldGenerator_ = std::make_unique<VoxelCastle::World::WorldGenerator>();
+            }
             
             // Initialize world systems if not already initialized
             if (!worldManager_ || !worldManager_->isInitialized()) {
@@ -318,8 +324,10 @@ bool Game::initialize() {
             std::cout << "[Game] New world creation requested with seed: " << seed.getMasterSeed() 
                       << ", size: " << sizeInt << std::endl;
             
-            // TODO: Implement advanced world creation with SeedWorldGenerator
-            // For now, create a world using the provided seed
+            std::cout << "[Game] Creating new SeedWorldGenerator" << std::endl;
+            worldGenerator_ = std::make_unique<SeedWorldGenerator>(seed.getMasterSeed());
+            
+            // Create a world using the provided seed
             std::string seedString = std::to_string(seed.getMasterSeed());
             if (initializeWorldSystems(seedString)) {
                 // Transition to gameplay state

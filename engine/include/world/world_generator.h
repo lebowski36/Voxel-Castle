@@ -11,6 +11,7 @@ namespace World {
 
 class WorldGenerator {
 public:
+    virtual ~WorldGenerator() = default; // Add virtual destructor
     // Constructor initializes with a default random seed
     WorldGenerator();
     
@@ -35,7 +36,7 @@ public:
     uint64_t getScaleSeed(int64_t x, int64_t y, int64_t z, ScaleLevel scale, FeatureType feature = FeatureType::TERRAIN) const;
     
     // Simple heightmap-based terrain using value noise
-    void generateChunkSegment(ChunkSegment& segment, int worldX, int worldY, int worldZ);
+    virtual void generateChunkSegment(ChunkSegment& segment, int worldX, int worldY, int worldZ);
     
     // Enhanced terrain generation (new system)
     void generateChunkSegmentEnhanced(ChunkSegment& segment, int worldX, int worldY, int worldZ);

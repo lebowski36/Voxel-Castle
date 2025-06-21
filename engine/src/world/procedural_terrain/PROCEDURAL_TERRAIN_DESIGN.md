@@ -88,6 +88,59 @@ engine/src/world/procedural_terrain/
 
 ---
 
+## 🛠️ Development Roadmap
+
+*This roadmap operationalizes the design outlined above, following a phased, iterative approach.*
+
+### **Phase 1: Foundation & Feature Parity (In Progress)**
+
+The goal of this phase is to create a new world generation system that is at least as good as the legacy one, but with a better foundation for future expansion, improved performance, and some initial variety.
+
+- **Task 1.1: UI Overhaul** - ✅ **COMPLETED**
+  - ✅ Modified the main menu UI.
+  - ✅ Renamed "Resume Game" to "Resume Game (Legacy)".
+  - ✅ Added a "Create World" button.
+  - ✅ Added a "Load World" button.
+
+- **Task 1.2: Foundational Terrain Generation** - 🎯 **ACTIVE**
+  - [ ] Implement the 4-scale noise system (`Continental`, `Regional`, `Local`, `Micro`).
+  - [ ] This will be implemented in `engine/src/world/seed_world_generator.cpp`.
+  - [ ] The output should be basic continents, oceans, and varied elevation, achieving feature parity with the legacy generator's noise.
+
+- **Task 1.3: Core Biome System** - PENDING
+  - [ ] Create a `Biome` base class and a `BiomeRegistry`.
+  - [ ] Implement a simple `BiomeSelector` that uses elevation and a single climate noise map (e.g., temperature) to assign biomes.
+  - [ ] **Initial Biomes:**
+      - [ ] `OceanBiome`: For areas below sea level.
+      - [ ] `PlainsBiome`: For low-lying, flat-ish land.
+      - [ ] `ForestBiome`: For mid-elevation areas.
+      - [ ] `HillsBiome`: For more rugged terrain.
+      - [ ] `MountainsBiome`: For high-elevation peaks.
+
+- **Task 1.4: Chunk Management & Performance** - PENDING
+  - [ ] Investigate the current chunk loading and management system.
+  - [ ] Implement optimizations to support a wider visible area of chunks (e.g., 16-32 chunks view distance).
+  - [ ] Profile and optimize the chunk generation pipeline to ensure smooth performance.
+
+### **Phase 2: Iterative Biome Development (Upcoming)**
+
+This phase will be a continuous loop of development and user feedback. For each new biome, we will follow this process:
+
+1.  **Discuss:** Clarify the user's vision for the biome (aesthetics, features, rarity).
+2.  **Implement:** Add the biome to the `BiomeRegistry` and implement its specific features (terrain modifications, vegetation, decorations, etc.).
+3.  **Review:** Present the result to the user for feedback and iteration.
+
+### **Phase 3: Advanced Features (Postponed)**
+
+Once the world is diverse and stable, we can revisit these complex features. The following are explicitly postponed to focus on core gameplay and world variety first.
+
+- **Complex River Networks:** The system described in `Realistic Water Systems` is postponed. A simpler implementation may be considered after Phase 2.
+- **Advanced Cave Systems:** A dedicated procedural system for underground networks.
+- **Full Climate Simulation:** Incorporating advanced features like wind, moisture, and seasons.
+- **Procedural Structures & Points of Interest:** Villages, dungeons, etc.
+
+---
+
 ## 🌍 Climate & Environmental Systems
 
 ### **Deterministic Climate Calculation**
