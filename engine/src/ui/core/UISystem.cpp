@@ -110,7 +110,13 @@ void UISystem::EndFrame() {
 }
 
 void UISystem::SetScreenSize(int width, int height) {
-    screenSize_ = glm::vec2(width, height);
+    // Only update if screen size actually changed
+    glm::vec2 newSize(width, height);
+    if (screenSize_.x == newSize.x && screenSize_.y == newSize.y) {
+        return; // No change, skip update
+    }
+    
+    screenSize_ = newSize;
     
     if (renderer_) {
         renderer_->setScreenSize(width, height);
@@ -125,7 +131,7 @@ void UISystem::SetScreenSize(int width, int height) {
         rootComponent_->InvalidateLayout();
     }
     
-    std::cout << "[UISystem] Screen size set to " << width << "x" << height << std::endl;
+    std::cout << "[UISystem] Screen size changed to " << width << "x" << height << std::endl;
 }
 
 void UISystem::setScreenSize(int width, int height) {
