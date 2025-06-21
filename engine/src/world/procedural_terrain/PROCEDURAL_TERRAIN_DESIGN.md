@@ -36,6 +36,18 @@ The **ProceduralTerrain** system replaces the complex geological simulation appr
 
 ## 🏗️ Core Architecture
 
+### **Architectural Principles**
+
+**🎯 CRITICAL: Dynamic Resolution Handling**
+- **Engine Responsibility**: All sampling resolution and detail level logic MUST be handled dynamically by the C++ engine code
+- **Test File Limitation**: Python test files should ONLY be used for visualization and testing, NOT for defining resolution or sampling logic
+- **Dynamic Scaling**: The terrain generation system should automatically determine appropriate resolution based on:
+  - Query area size (1km vs 100km should auto-scale detail)
+  - Available memory and performance constraints
+  - Feature density requirements (rivers need higher resolution than basic terrain)
+- **No Hardcoded Values**: Test files should never contain hardcoded `samples = 800` or similar resolution values
+- **Rationale**: Prevents architectural issues when changing test area sizes and ensures consistent behavior across all use cases
+
 ### **System Location**
 ```
 engine/src/world/procedural_terrain/

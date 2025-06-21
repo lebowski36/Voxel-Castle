@@ -68,26 +68,19 @@ glm::vec2 RiverNetworks::CalculateFlowDirection(float world_x, float world_z, ui
 
 bool RiverNetworks::IsRiverSource(float world_x, float world_z, 
                                  const ClimateData& climate, float elevation, uint64_t seed) {
-    // FIX: More aggressive river source generation to ensure test areas have rivers
+    // FIX: Much more restrictive river source detection to prevent too many rivers
     
-    // Elevation factor: favor higher elevations for river sources
-    float elevation_factor = std::max(0.0f, (elevation + 100.0f) / 500.0f); // Favor elevation > -100m
-    elevation_factor = std::min(1.0f, elevation_factor);
+    // Only allow rivers at high elevations (mountains/hills)
+    if (elevation < 200.0f) return false; // Must be above 200m elevation
     
-    // Precipitation factor: any precipitation can support rivers
-    float precipitation_factor = std::min(1.0f, climate.precipitation / 50.0f); // Lower threshold
+    // Require significant precipitation
+    if (climate.precipitation < 100.0f) return false; // Need substantial rainfall
     
-    // Multiple noise sources for more varied river placement
-    float source_noise1 = SimpleNoise(world_x * 0.0003f, world_z * 0.0003f, seed + 9999);
-    float source_noise2 = SimpleNoise(world_x * 0.0007f, world_z * 0.0007f, seed + 8888);
-    float combined_noise = (source_noise1 + source_noise2) * 0.5f;
+    // Use sparse noise for very selective river placement
+    float source_noise = SimpleNoise(world_x * 0.0001f, world_z * 0.0001f, seed + 9999);
     
-    // More generous combination - only need moderate elevation OR precipitation
-    float base_probability = std::max(elevation_factor * 0.7f, precipitation_factor * 0.8f);
-    float final_probability = base_probability * combined_noise;
-    
-    // Much lower threshold to ensure rivers appear in test areas
-    return final_probability > 0.08f; // Was 0.15f
+    // Very restrictive threshold - only ~1% of high elevation areas should have rivers
+    return source_noise > 0.95f;
 }
 
 // === River Path Generation ===
@@ -247,8 +240,8 @@ std::vector<std::pair<float, float>> RiverNetworks::FindRiverSources(int region_
     float region_world_x = region_x * region_size;
     float region_world_z = region_z * region_size;
     
-    // CHUNK-LEVEL SAMPLING: Use reasonable density for river placement
-    const float SAMPLE_SPACING = 100.0f;  // 100m spacing (was 8m chunks - too dense!)
+    // SPARSE SAMPLING: Use much larger spacing for river placement to avoid performance issues
+    const float SAMPLE_SPACING = 500.0f;  // 500m spacing (was 100m - too dense!)
     const int samples_per_side = static_cast<int>(region_size / SAMPLE_SPACING);
     const int total_samples = samples_per_side * samples_per_side;
     
@@ -259,13 +252,6 @@ std::vector<std::pair<float, float>> RiverNetworks::FindRiverSources(int region_
     int samples_processed = 0;
     for (int i = 0; i < samples_per_side; ++i) {
         for (int j = 0; j < samples_per_side; ++j) {
-            // Progress feedback every 10,000 samples
-            if (samples_processed % 10000 == 0) {
-                float progress = (float)samples_processed / total_samples * 100.0f;
-                printf("  River source detection: %.1f%% (%d/%d samples)\n", 
-                       progress, samples_processed, total_samples);
-            }
-            
             // Calculate sample coordinates
             float world_x = region_world_x + (i + 0.5f) * SAMPLE_SPACING;
             float world_z = region_world_z + (j + 0.5f) * SAMPLE_SPACING;
@@ -294,16 +280,9 @@ RiverQueryResult RiverNetworks::QueryRiverAtPoint(float world_x, float world_z, 
     int region_x = static_cast<int>(std::floor(world_x / RiverConstants::REGIONAL_REGION_SIZE));
     int region_z = static_cast<int>(std::floor(world_z / RiverConstants::REGIONAL_REGION_SIZE));
     
-    // DEBUG: Print region calculation details
-    printf("DEBUG: QueryRiverAtPoint(%.1f, %.1f) -> region (%d, %d) [region_size=%d]\n", 
-           world_x, world_z, region_x, region_z, RiverConstants::REGIONAL_REGION_SIZE);
-    
     // Get cached river network for this region
     const RiverNetwork& network = GetCachedRiverNetwork(region_x, region_z, 
                                                        RiverConstants::REGIONAL_REGION_SIZE, seed);
-    
-    printf("DEBUG: Region (%d,%d) has %zu rivers and %zu lakes\n", 
-           region_x, region_z, network.rivers.size(), network.lakes.size());
     
     // Check if point is in any river - use more flexible search
     float closest_distance = std::numeric_limits<float>::max();
@@ -322,7 +301,6 @@ RiverQueryResult RiverNetworks::QueryRiverAtPoint(float world_x, float world_z, 
                 result.water_elevation = point.elevation;
                 result.has_waterfall = point.has_waterfall;
                 result.has_rapids = point.has_rapids;
-                printf("DEBUG: Found exact river match at distance %.1fm (width %.1fm)\n", distance, point.width);
                 break;
             }
             
@@ -344,7 +322,6 @@ RiverQueryResult RiverNetworks::QueryRiverAtPoint(float world_x, float world_z, 
         result.water_elevation = closest_river_point->elevation;
         result.has_waterfall = closest_river_point->has_waterfall;
         result.has_rapids = closest_river_point->has_rapids;
-        printf("DEBUG: Found fallback river match at distance %.1fm (width %.1fm)\n", closest_distance, closest_river_point->width);
     }
     
     // Check if point is in any lake
@@ -531,6 +508,57 @@ std::vector<RiverPoint> RiverNetworks::GenerateRiverPoints(float start_x, float 
     }
     
     return points;
+}
+
+// === Dynamic Resolution System ===
+
+float RiverNetworks::GetOptimalSamplingResolution(float area_size, const std::string& feature_type) {
+    // Dynamic resolution based on area size and feature requirements
+    
+    // Base resolution targets (samples per meter)
+    float base_resolution;
+    
+    if (feature_type == "rivers") {
+        // Rivers need higher resolution to capture flow paths
+        base_resolution = 2.0f;  // 0.5m per sample
+    } else if (feature_type == "terrain") {
+        // Terrain can use moderate resolution
+        base_resolution = 1.0f;  // 1m per sample  
+    } else {
+        // Default case
+        base_resolution = 1.0f;
+    }
+    
+    // Scale resolution based on area size
+    if (area_size <= 500.0f) {
+        // Very small areas (≤500m) - high detail
+        return base_resolution * 2.0f;
+    } else if (area_size <= 2000.0f) {
+        // Small areas (≤2km) - normal detail
+        return base_resolution;
+    } else if (area_size <= 10000.0f) {
+        // Medium areas (≤10km) - reduced detail
+        return base_resolution * 0.5f;
+    } else if (area_size <= 50000.0f) {
+        // Large areas (≤50km) - low detail
+        return base_resolution * 0.2f;
+    } else {
+        // Very large areas (>50km) - minimal detail
+        return base_resolution * 0.1f;
+    }
+}
+
+int RiverNetworks::GetOptimalSampleCount(float area_size, const std::string& feature_type) {
+    float resolution = GetOptimalSamplingResolution(area_size, feature_type);
+    int sample_count = static_cast<int>(area_size * resolution);
+    
+    // Enforce reasonable limits
+    const int MIN_SAMPLES = 50;    // Minimum detail
+    const int MAX_SAMPLES = 2000;  // Maximum for performance
+    
+    sample_count = std::max(MIN_SAMPLES, std::min(MAX_SAMPLES, sample_count));
+    
+    return sample_count;
 }
 
 } // namespace ProceduralTerrain

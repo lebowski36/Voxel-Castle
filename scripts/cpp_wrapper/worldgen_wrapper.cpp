@@ -518,6 +518,26 @@ py::array_t<float> generate_comprehensive_river_flow(
     return result;
 }
 
+// Simple river query for single point (used for river location finding)
+float query_river_at_point(float x, float z, uint64_t seed) {
+    float world_x = x * VOXEL_SCALE;
+    float world_z = z * VOXEL_SCALE;
+    
+    RiverQueryResult river_result = RiverNetworks::QueryRiverAtPoint(world_x, world_z, seed);
+    
+    // Return river width as strength (0 if no river)
+    return river_result.has_river ? river_result.river_width : 0.0f;
+}
+
+// Dynamic resolution calculation functions
+int get_optimal_sample_count(float area_size, const std::string& feature_type = "terrain") {
+    return RiverNetworks::GetOptimalSampleCount(area_size, feature_type);
+}
+
+float get_optimal_sampling_resolution(float area_size, const std::string& feature_type = "terrain") {
+    return RiverNetworks::GetOptimalSamplingResolution(area_size, feature_type);
+}
+
 PYBIND11_MODULE(worldgen_cpp, m) {
     m.doc() = "C++ Terrain Generation for Voxel Castle ProceduralTerrain System";
     
@@ -606,4 +626,17 @@ PYBIND11_MODULE(worldgen_cpp, m) {
     m.attr("VOXEL_SIZE") = VOXEL_SCALE;
     m.attr("MAX_ELEVATION") = MAX_ELEVATION;
     m.attr("MIN_ELEVATION") = MIN_ELEVATION;
+    
+    // River query functions
+    m.def("query_river_at_point", &query_river_at_point,
+          "Query river data at a single point (returns river width or 0)",
+          py::arg("x"), py::arg("z"), py::arg("seed"));
+    
+    // Dynamic resolution functions
+    m.def("get_optimal_sample_count", &get_optimal_sample_count,
+          "Get optimal sample count for a given area size and feature type",
+          py::arg("area_size"), py::arg("feature_type") = "terrain");
+    m.def("get_optimal_sampling_resolution", &get_optimal_sampling_resolution,
+          "Get optimal sampling resolution for a given area size and feature type",
+          py::arg("area_size"), py::arg("feature_type") = "terrain");
 }

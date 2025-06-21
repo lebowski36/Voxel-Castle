@@ -2,6 +2,7 @@
 
 #include <vector>
 #include <unordered_map>
+#include <string>
 #include <glm/glm.hpp>
 #include <cstdint>
 
@@ -270,6 +271,22 @@ public:
      * @return Calculated river width in meters
      */
     static float CalculateRiverWidth(float accumulated_flow, float base_width);
+
+    /**
+     * Calculate optimal sampling resolution for terrain queries
+     * @param area_size Size of the area being queried (in meters)
+     * @param feature_type Type of features being analyzed (terrain, rivers, etc.)
+     * @return Recommended samples per meter for optimal detail/performance balance
+     */
+    static float GetOptimalSamplingResolution(float area_size, const std::string& feature_type = "terrain");
+    
+    /**
+     * Calculate optimal sample count for a given area
+     * @param area_size Size of the area being queried (in meters)
+     * @param feature_type Type of features being analyzed
+     * @return Recommended total sample count (samples_per_side)
+     */
+    static int GetOptimalSampleCount(float area_size, const std::string& feature_type = "terrain");
 
 private:
     // === Internal Helper Functions ===
