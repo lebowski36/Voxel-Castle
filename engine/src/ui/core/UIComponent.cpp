@@ -1,5 +1,6 @@
 #include "ui/core/UIComponent.h"
 #include "ui/core/UISystem.h"
+#include "ui/core/UITheme.h"
 #include "ui/layout/LayoutManager.h"
 #include <algorithm>
 #include <iostream>
@@ -242,6 +243,40 @@ std::shared_ptr<UIComponent> UIComponent::FindChildAt(const glm::vec2& point) {
         }
     }
     return nullptr;
+}
+
+float UIComponent::GetResponsiveSpacing(float baseSpacing) const {
+    auto uiSystem = GetUISystem();
+    if (!uiSystem) return baseSpacing;
+    
+    auto theme = uiSystem->GetTheme();
+    if (!theme) return baseSpacing;
+    
+    auto screenSize = uiSystem->GetScreenSize();
+    return theme->GetResponsiveSpacing(baseSpacing, screenSize.x);
+}
+
+float UIComponent::GetResponsiveFontSize(float baseFontSize) const {
+    auto uiSystem = GetUISystem();
+    if (!uiSystem) return baseFontSize;
+    
+    auto theme = uiSystem->GetTheme();
+    if (!theme) return baseFontSize;
+    
+    auto screenSize = uiSystem->GetScreenSize();
+    return theme->GetResponsiveFontSize(baseFontSize, screenSize.x);
+}
+
+glm::vec2 UIComponent::GetResponsiveSize(const glm::vec2& baseSize) const {
+    auto uiSystem = GetUISystem();
+    if (!uiSystem) return baseSize;
+    
+    auto theme = uiSystem->GetTheme();
+    if (!theme) return baseSize;
+    
+    auto screenSize = uiSystem->GetScreenSize();
+    float multiplier = theme->breakpoints.GetSpacingMultiplier(screenSize.x);
+    return baseSize * multiplier;
 }
 
 } // namespace UI

@@ -111,6 +111,41 @@ struct UIShadows {
 };
 
 /**
+ * @brief Responsive breakpoints for adaptive layouts
+ */
+struct UIBreakpoints {
+    float small = 1366.0f;      // Small desktop (< 1366px)
+    float medium = 1920.0f;     // Standard desktop (1366-1920px)
+    float large = 2560.0f;      // Large desktop (1920-2560px)
+    float xlarge = 3840.0f;     // Ultra-wide/4K (> 2560px)
+    
+    // Get responsive spacing multiplier based on screen width
+    float GetSpacingMultiplier(float screenWidth) const {
+        if (screenWidth < small) return 0.75f;        // Compact spacing for small screens
+        else if (screenWidth < medium) return 1.0f;   // Normal spacing
+        else if (screenWidth < large) return 1.25f;   // Generous spacing for large screens
+        else return 1.5f;                             // Extra generous for ultra-wide
+    }
+    
+    // Get responsive font scale based on screen width
+    float GetFontScale(float screenWidth) const {
+        if (screenWidth < small) return 0.9f;         // Smaller fonts for small screens
+        else if (screenWidth < medium) return 1.0f;   // Normal fonts
+        else if (screenWidth < large) return 1.1f;    // Slightly larger for large screens
+        else return 1.2f;                             // Larger fonts for ultra-wide
+    }
+    
+    // Determine screen size category
+    enum class ScreenCategory { SMALL, MEDIUM, LARGE, XLARGE };
+    ScreenCategory GetScreenCategory(float screenWidth) const {
+        if (screenWidth < small) return ScreenCategory::SMALL;
+        else if (screenWidth < medium) return ScreenCategory::MEDIUM;
+        else if (screenWidth < large) return ScreenCategory::LARGE;
+        else return ScreenCategory::XLARGE;
+    }
+};
+
+/**
  * @brief Main theme class containing all styling information
  */
 class UITheme {
@@ -124,6 +159,7 @@ public:
     UISpacing spacing;
     UIBorderRadius borderRadius;
     UIShadows shadows;
+    UIBreakpoints breakpoints;
     
     // Animation timing
     float animationFast = 0.15f;      // 150ms
@@ -142,6 +178,19 @@ public:
     // Static theme access
     static std::shared_ptr<UITheme> GetDefault();
     static std::shared_ptr<UITheme> CreateDarkTheme();
+    
+    // Responsive design helpers
+    float GetResponsiveSpacing(float baseSpacing, float screenWidth) const {
+        return baseSpacing * breakpoints.GetSpacingMultiplier(screenWidth);
+    }
+    
+    float GetResponsiveFontSize(float baseFontSize, float screenWidth) const {
+        return baseFontSize * breakpoints.GetFontScale(screenWidth);
+    }
+    
+    UIBreakpoints::ScreenCategory GetScreenCategory(float screenWidth) const {
+        return breakpoints.GetScreenCategory(screenWidth);
+    }
     
 private:
     static std::shared_ptr<UITheme> defaultTheme_;

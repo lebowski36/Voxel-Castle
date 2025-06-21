@@ -129,6 +129,7 @@ void UISystem::SetScreenSize(int width, int height) {
     // Invalidate layout for root component
     if (rootComponent_) {
         rootComponent_->InvalidateLayout();
+        NotifyScreenSizeChanged(rootComponent_);
     }
     
     std::cout << "[UISystem] Screen size changed to " << width << "x" << height << std::endl;
@@ -332,6 +333,18 @@ std::shared_ptr<UIComponent> UISystem::FindComponentAt(const glm::vec2& screenPo
     };
     
     return searchComponent(rootComponent_, screenPos);
+}
+
+void UISystem::NotifyScreenSizeChanged(std::shared_ptr<UIComponent> component) {
+    if (!component) return;
+    
+    // Notify this component
+    component->OnScreenSizeChanged();
+    
+    // Recursively notify all children
+    for (auto& child : component->GetChildren()) {
+        NotifyScreenSizeChanged(child);
+    }
 }
 
 } // namespace UI

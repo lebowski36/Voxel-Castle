@@ -108,6 +108,14 @@ public:
         return component;
     }
     
+    // Responsive design helpers
+    float GetResponsiveSpacing(float baseSpacing) const;
+    float GetResponsiveFontSize(float baseFontSize) const;
+    glm::vec2 GetResponsiveSize(const glm::vec2& baseSize) const;
+    
+    // Override this for responsive layout changes
+    virtual void OnScreenSizeChanged() {}
+    
 protected:
     // Override these for custom rendering
     virtual void OnRender() {}

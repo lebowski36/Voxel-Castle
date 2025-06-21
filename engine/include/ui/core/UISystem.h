@@ -122,6 +122,7 @@ private:
     void RenderComponentHierarchy();
     std::shared_ptr<UIComponent> FindComponentAt(const glm::vec2& screenPos);
     void DistributeInputEvent(const std::function<bool(UIComponent*)>& eventHandler);
+    void NotifyScreenSizeChanged(std::shared_ptr<UIComponent> component);
 };
 
 } // namespace UI
