@@ -51,51 +51,39 @@ add_library(VoxelEngine STATIC
     src/util/enhanced_noise.cpp # Added EnhancedNoise source
     # Utils system sources
     src/utils/debug_logger_stub.cpp # Stub implementation for VoxelCastle::Utils logging (temporary until dual logging systems are merged)
-    # UI System sources
-    # New UI System (Complete Rebuild)
-    src/ui/core/UISystem.cpp
-    src/ui/core/UIComponent.cpp
-    src/ui/core/UIInputManager.cpp
-    src/ui/core/UIScaleManager.cpp
-    src/ui/core/UITheme.cpp
     
-    # Layout System
-    src/ui/layout/LayoutManager.cpp
-    src/ui/layout/FlexLayout.cpp
+    # Modern UI System (Component-Based Architecture)
+    src/ui/UIRenderer.cpp # UI rendering system (legacy - kept for transition)
+    src/ui/TextRenderer.cpp # Text rendering system (legacy - kept for transition)
+    src/ui/FontManager.cpp # Font management system (legacy - kept for transition)
+    src/ui/MenuSystem.cpp # Modern menu system manager
     
-    # UI Components
-    src/ui/components/Button.cpp
-    src/ui/components/Label.cpp
-    src/ui/components/Panel.cpp
-    src/ui/components/TextInput.cpp
+    # Core UI Framework
+    src/ui/core/UISystem.cpp # Main UI system manager
+    src/ui/core/UIComponent.cpp # Base component class
+    src/ui/core/UIInputManager.cpp # Centralized input handling
+    src/ui/core/UIScaleManager.cpp # DPI and user scaling system
+    src/ui/core/UITheme.cpp # Consistent styling system
+    
+    # Layout Management
+    src/ui/layout/LayoutManager.cpp # Base layout interface
+    src/ui/layout/FlexLayout.cpp # Flexbox-style layout
+    
+    # Reusable UI Components
+    src/ui/components/Button.cpp # Enhanced button component
+    src/ui/components/TextInput.cpp # Text input field
+    src/ui/components/Label.cpp # Text display
+    src/ui/components/Panel.cpp # Container component
     
     # Menu Implementations
-    src/ui/menus/MainMenu.cpp
-    src/ui/menus/CreateWorldMenu.cpp
+    src/ui/menus/MainMenu.cpp # Main menu (rebuilt)
+    src/ui/menus/CreateWorldMenu.cpp # World creation (rebuilt)
+    # src/ui/menus/SettingsMenu.cpp # Settings interface (TODO: implement)
     
-    # Legacy UI System (Keep for renderer and transition)
-    src/ui/UIRenderer.cpp # UI rendering system
-    src/ui/TextRenderer.cpp # Text rendering system
-    src/ui/FontManager.cpp # Font management system
-    src/ui/MenuSystem.cpp # Menu system manager (will be updated to use new UI)
-    
-    # Legacy UI Elements (Will be removed after migration)
-    src/ui/UIElement.cpp # UI base element
+    # Legacy UI elements (keep minimal set for transition)
+    src/ui/UIElement.cpp # UI base element (legacy)
     src/ui/UILogger.cpp # UI logging system
-    src/ui/elements/UITexture.cpp # Basic texture UI element
-    src/ui/elements/UIPanel.cpp # Basic solid color UI element
-    src/ui/elements/HUD.cpp # Game HUD element
-    src/ui/elements/Crosshair.cpp # Crosshair targeting reticle
-    src/ui/elements/UIButton.cpp # Button UI element
-    src/ui/elements/UITextPanel.cpp # Multi-line text panel with scrolling support
-    src/ui/elements/UICheckbox.cpp # Checkbox UI element
-    src/ui/elements/BaseMenu.cpp # Base menu class for consistent styling
-    src/ui/elements/MainMenu.cpp # Main menu UI (OLD - will be removed)
-    src/ui/elements/SettingsMenu.cpp # Settings menu UI
-    src/ui/elements/CreateWorldMenu.cpp # Create world menu UI (OLD - will be removed)
-    src/ui/elements/UITextInput.cpp # Text input UI element (OLD - will be removed)
     src/ui/BlockVisualizationPanel.cpp # Block visualization debug panel
-    # src/ui/GeologicalDebugUI.cpp # Geological simulation debug UI panel - COMPLEX UI DISABLED, implementing simple debug controls instead
     src/ui/SeedDebugPanel.cpp # Seed debug UI panel
     # Input system sources
     src/input/MouseCaptureManager.cpp # Mouse capture management

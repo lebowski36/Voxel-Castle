@@ -2,8 +2,6 @@
 #include "core/GameStateManager.h"
 #include <iostream>
 #include "ui/MenuSystem.h"
-#include "ui/elements/HUD.h"
-#include "ui/elements/Crosshair.h"
 #include "platform/Window.h"  // Added Window include
 #include "utils/debug_logger.h" // Added for DEBUG_LOG
 
@@ -55,6 +53,9 @@ bool Game::canAcceptInput() const {
 
 // State change event handler
 void Game::onStateChanged(GameState from, GameState to) {
+    // Suppress unused parameter warning
+    (void)from;
+    
     // Update the legacy gameState_ variable to maintain backward compatibility
     gameState_ = to;
     
@@ -63,28 +64,9 @@ void Game::onStateChanged(GameState from, GameState to) {
         // Entering gameplay state
         setMouseCaptured(true);
         
-        // Show game UI elements
-        if (hudSystem_) {
-            hudSystem_->setVisible(true);
-            
-            // Get current window dimensions from the window
-            int width = gameWindow_->getWidth();
-            int height = gameWindow_->getHeight();
-            
-            // Ensure HUD is properly positioned when resuming game
-            hudSystem_->centerBottomOfScreen(width, height, 50); // 50px margin
-            DEBUG_LOG("Game", "HUD repositioned on state change to: " + 
-                      std::to_string(static_cast<int>(hudSystem_->getPosition().x)) + ", " +
-                      std::to_string(static_cast<int>(hudSystem_->getPosition().y)));
-        }
-        if (crosshairSystem_) {
-            crosshairSystem_->setVisible(true);
-            
-            // Ensure crosshair is properly centered when resuming game
-            int width = gameWindow_->getWidth();
-            int height = gameWindow_->getHeight();
-            crosshairSystem_->centerOnScreen(width, height);
-        }
+        // TODO: Show game UI elements using new UI system
+        // The new UI system will handle HUD and crosshair rendering
+        // once fully implemented
         
         // Set appropriate camera mode based on game state
         if (to == GameState::FIRST_PERSON_MODE && cameraMode_ != CameraMode::FIRST_PERSON) {
@@ -100,13 +82,9 @@ void Game::onStateChanged(GameState from, GameState to) {
         // Entering menu state
         setMouseCaptured(false);
         
-        // Hide game UI elements
-        if (hudSystem_) {
-            hudSystem_->setVisible(false);
-        }
-        if (crosshairSystem_) {
-            crosshairSystem_->setVisible(false);
-        }
+        // TODO: Hide game UI elements using new UI system
+        // The new UI system will handle HUD and crosshair visibility
+        // once fully implemented
         
         // Show menu
         if (menuSystem_) {

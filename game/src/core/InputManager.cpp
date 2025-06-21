@@ -502,17 +502,11 @@ void processInput(Game& game) {
             // Update viewport
             glViewport(0, 0, width, height);
             
-            // Update HUD position for new screen size
-            if (game.hudSystem_) {
-                game.hudSystem_->centerBottomOfScreen(width, height, 50); // 50px margin
-                DEBUG_LOG("InputManager", "HUD repositioned for window resize: " + 
-                          std::to_string(width) + "x" + std::to_string(height));
-            }
-            
-            // Update crosshair position for new screen size
-            if (game.crosshairSystem_) {
-                game.crosshairSystem_->centerOnScreen(width, height);
-                DEBUG_LOG("InputManager", "Crosshair repositioned for window resize: " + 
+            // TODO: Update UI layout for new screen size using new UI system
+            // The new MenuSystem will handle all UI positioning and scaling
+            if (game.menuSystem_) {
+                game.menuSystem_->updateScreenSize(width, height);
+                DEBUG_LOG("InputManager", "UI system updated for window resize: " + 
                           std::to_string(width) + "x" + std::to_string(height));
             }
         }

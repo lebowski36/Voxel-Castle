@@ -13,10 +13,8 @@ bool Game::togglePauseSimulation() {
     if (timeManager_) {
         bool isPaused = timeManager_->togglePause();
         
-        // Update UI elements based on pause state
-        if (hudSystem_) {
-            // Future: Add pause indicator to HUD
-        }
+        // TODO: Update UI elements based on pause state using new UI system
+        // The new MenuSystem will handle pause indicators when implemented
         
         return isPaused;
     }

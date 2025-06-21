@@ -13,8 +13,7 @@
 #include "world/voxel_types.h"        // For VoxelEngine::World::VoxelType
 #include "input/MouseCaptureManager.h" // Mouse capture management
 #include "core/GameLoop.h"            // Game loop management
-#include "ui/elements/HUD.h"
-#include "ui/elements/Crosshair.h"
+#include "ui/MenuSystem.h"            // Modern UI system
 
 // Forward declaration of GameLoop
 class GameLoop;
@@ -294,9 +293,7 @@ private:
     std::unique_ptr<VoxelEngine::Rendering::MeshRenderer> meshRenderer_;
     std::unique_ptr<VoxelEngine::Rendering::BlockOutlineRenderer> blockOutlineRenderer_;
     std::unique_ptr<SpectatorCamera> camera_;
-    std::unique_ptr<VoxelEngine::UI::MenuSystem> menuSystem_; // Menu system for game interface
-    std::shared_ptr<VoxelEngine::UI::HUD> hudSystem_; // HUD (Heads Up Display) for in-game UI elements
-    std::shared_ptr<VoxelEngine::UI::Crosshair> crosshairSystem_; // Crosshair for targeting/aiming
+    std::unique_ptr<VoxelEngine::UI::MenuSystem> menuSystem_; // Modern UI system for menus and HUD
     std::unique_ptr<VoxelEngine::Input::MouseCaptureManager> mouseCaptureManager_; // Mouse capture management
     std::unique_ptr<GameLoop> gameLoop_; // Game loop management
     std::unique_ptr<VoxelCastle::Core::GameRenderCoordinator> renderCoordinator_; // Render coordination

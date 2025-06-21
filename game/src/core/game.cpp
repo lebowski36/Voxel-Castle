@@ -12,11 +12,7 @@
 #include "world/seed_world_generator.h" // For SeedWorldGenerator
 
 // UI System includes
-// #include "ui/UISystem.h" // Legacy UISystem - replaced by new system
 #include "ui/MenuSystem.h"
-#include "ui/elements/HUD.h"
-#include "ui/elements/Crosshair.h"
-#include "ui/elements/UIPanel.h"
 #include "ui/BlockVisualizationPanel.h"
 
 // Include headers that will be needed for the actual implementations later
@@ -98,8 +94,6 @@ Game::Game()
       blockOutlineRenderer_(nullptr),
       camera_(nullptr),
       menuSystem_(nullptr),
-      hudSystem_(nullptr),
-      crosshairSystem_(nullptr),
       mouseCaptureManager_(nullptr),
       gameLoop_(std::make_unique<GameLoop>()),
       renderCoordinator_(std::make_unique<VoxelCastle::Core::GameRenderCoordinator>()),
@@ -280,10 +274,8 @@ bool Game::initialize() {
                 }
                 setMouseCaptured(true);
                 
-                // Ensure game UI is visible again
-                if (hudSystem_) {
-                    hudSystem_->setVisible(true);
-                }
+                // TODO: Ensure game UI is visible again using new UI system
+                // The new UI system will handle HUD visibility once implemented
                 
                 std::cout << "[Game] Menu closed via callback - game resumed, cursor hidden" << std::endl;
             }
@@ -355,63 +347,20 @@ bool Game::initialize() {
         // Get the texture atlas OpenGL texture ID from mesh renderer
         GLuint atlasTextureId = meshRenderer_->getTextureAtlasID();
         
-        // Create HUD element with new UI system
-        hudSystem_ = std::make_shared<VoxelEngine::UI::HUD>(
-            menuSystem_->GetRenderer(), 
-            textureAtlas_.get(), 
-            atlasTextureId
-        );
+        // TODO: Create in-game UI elements using new UI system
+        // The new UI system will handle HUD and crosshair rendering
+        // once the component-based architecture is fully implemented
         
-        // Position it at bottom center of screen using the proper method
-        float uiSize = 120.0f; // Reasonable size for UI element
+        DEBUG_LOG("Game", "UI system initialized successfully");
         
-        DEBUG_LOG("Game", "Positioning HUD at bottom center of screen " + 
-                  std::to_string(screenWidth_) + "x" + std::to_string(screenHeight_));
-        
-        hudSystem_->setSize(uiSize, uiSize);
-        
-        // Use proper method to position at bottom center
-        hudSystem_->centerBottomOfScreen(screenWidth_, screenHeight_, 50); // 50px margin
-        hudSystem_->setVisible(true); // Ensure it's visible by default in gameplay mode
-        
-        // Debug: Let's verify the position was set correctly
-        DEBUG_LOG("Game", "Actual HUD position: (" + 
-                  std::to_string(static_cast<int>(hudSystem_->getPosition().x)) + ", " + 
-                  std::to_string(static_cast<int>(hudSystem_->getPosition().y)) + ")");
-        
-        // Add to UI system - TODO: Convert to new UI component system
-        // menuSystem_->addElement(hudSystem_);
-        
-        // Create crosshair system for targeting/aiming
-        crosshairSystem_ = std::make_shared<VoxelEngine::UI::Crosshair>(
-            menuSystem_->GetRenderer()
-        );
-        
-        // Center crosshair on screen
-        crosshairSystem_->centerOnScreen(screenWidth_, screenHeight_);
-        crosshairSystem_->setVisible(true); // Visible by default in gameplay mode
-        
-        // Add crosshair to UI system - TODO: Convert to new UI component system
-        // menuSystem_->addElement(crosshairSystem_);
-        
-        DEBUG_LOG("Game", "Crosshair system initialized and centered on screen");
-        
-        std::cout << "[Game] UI system initialized successfully with HUD and Crosshair" << std::endl;
+        std::cout << "[Game] UI system initialized successfully" << std::endl;
         
         // Since we start in MAIN_MENU state, show the main menu
         if (stateManager_ && stateManager_->getCurrentState() == GameState::MAIN_MENU) {
             menuSystem_->showMainMenu();
             setMouseCaptured(false); // Menu should show cursor
             
-            // Hide game UI elements while in menu
-            if (hudSystem_) {
-                hudSystem_->setVisible(false);
-            }
-            if (crosshairSystem_) {
-                crosshairSystem_->setVisible(false);
-            }
-            
-            std::cout << "[Game] Starting in main menu - cursor visible, game UI hidden" << std::endl;
+            std::cout << "[Game] Starting in main menu - cursor visible" << std::endl;
         }
     }
     
@@ -485,22 +434,11 @@ bool Game::initializeWorldSystems(const std::string& worldSeed) {
     
     // Initialize additional in-game UI elements if needed
     if (menuSystem_) {
-        // Create HUD
-        hudSystem_ = std::make_shared<VoxelEngine::UI::HUD>(
-            menuSystem_->GetRenderer(), textureAtlas_.get(), textureAtlas_->getTextureID()
-        );
-        hudSystem_->setVisible(true);
-        // menuSystem_->addElement(hudSystem_); // TODO: Convert to new UI system
+        // TODO: Create in-game UI elements using new UI system
+        // The new UI system will handle HUD and crosshair rendering
+        // once the component-based architecture is fully implemented
         
-        // Create crosshair
-        crosshairSystem_ = std::make_shared<VoxelEngine::UI::Crosshair>(
-            menuSystem_->GetRenderer()
-        );
-        crosshairSystem_->centerOnScreen(screenWidth_, screenHeight_);
-        crosshairSystem_->setVisible(true);
-        // menuSystem_->addElement(crosshairSystem_); // TODO: Convert to new UI system
-        
-        std::cout << "[Game] Game UI elements (HUD, crosshair) initialized" << std::endl;
+        std::cout << "[Game] Game UI elements will be handled by new UI system" << std::endl;
     }
     
     // Initialize save manager if needed
@@ -544,12 +482,6 @@ void Game::shutdown() {
     }
     
     // Clean up UI system first
-    if (hudSystem_) {
-        hudSystem_.reset();
-    }
-    if (crosshairSystem_) {
-        crosshairSystem_.reset();
-    }
     if (menuSystem_) {
         menuSystem_->Shutdown();
         menuSystem_.reset();
@@ -679,13 +611,9 @@ void Game::toggleMenu() {
             gameState_ = GameState::MENU;
             setMouseCaptured(false); // Show cursor for menu navigation
             
-            // Hide game UI elements when menu is open
-            if (hudSystem_) {
-                hudSystem_->setVisible(false);
-            }
-            if (crosshairSystem_) {
-                crosshairSystem_->setVisible(false);
-            }
+            // TODO: Hide game UI elements using new UI system
+            // The new UI system will handle HUD and crosshair visibility
+            // once fully implemented
             
             // Show menu
             if (menuSystem_) {
@@ -698,13 +626,9 @@ void Game::toggleMenu() {
             gameState_ = previousPlayingState_;
             setMouseCaptured(true); // Hide cursor for gameplay
             
-            // Show game UI elements when menu is closed
-            if (hudSystem_) {
-                hudSystem_->setVisible(true);
-            }
-            if (crosshairSystem_) {
-                crosshairSystem_->setVisible(true);
-            }
+            // TODO: Show game UI elements using new UI system
+            // The new UI system will handle HUD and crosshair visibility
+            // once fully implemented
             
             // Hide menu
             if (menuSystem_) {
@@ -753,21 +677,10 @@ bool Game::toggleFullscreen() {
             // Double-check menu sizes were preserved properly
             DEBUG_LOG("Game", "Menu system updated for new screen size: " + std::to_string(width) + "x" + std::to_string(height));
         }
-         // Update HUD position for new screen size
-        if (hudSystem_) {
-            // Use the proper method to position HUD at bottom center
-            hudSystem_->centerBottomOfScreen(width, height, 50); // 50px margin
-            
-            DEBUG_LOG("Game", "HUD repositioned at bottom center for screen size: " + 
-                      std::to_string(width) + "x" + std::to_string(height));
-        }
-
-        // Update crosshair position for new screen size
-        if (crosshairSystem_) {
-            crosshairSystem_->centerOnScreen(width, height);
-            DEBUG_LOG("Game", "Crosshair repositioned for screen size: " + 
-                      std::to_string(width) + "x" + std::to_string(height));
-        }
+         
+        // TODO: Update in-game UI elements for new screen size using new UI system
+        // The new UI system will handle HUD and crosshair positioning
+        // once the component-based architecture is fully implemented
         
         // Update render coordinator if needed
         if (renderCoordinator_) {
@@ -845,10 +758,8 @@ void Game::update(float deltaTime) {
     if (menuSystem_) {
         menuSystem_->update(deltaTime);
         
-        // Sync block selection UI with current block type
-        if (hudSystem_ && hudSystem_->getCurrentBlockType() != currentBlockType_) {
-            hudSystem_->setCurrentBlockType(currentBlockType_);
-        }
+        // TODO: Sync block selection UI with current block type using new UI system
+        // The new UI system will handle HUD updates once implemented
     }
 }
 

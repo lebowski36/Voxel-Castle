@@ -118,7 +118,7 @@ protected:
     virtual void OnMouseUp(int button, float x, float y) {}
     virtual void OnKeyDown(int key) {}
     virtual void OnKeyUp(int key) {}
-    virtual void OnTextInput(const char* text) {}
+    virtual void OnTextInput(const char* /*text*/) {}
     
     // Layout helpers
     void UpdateLayout();

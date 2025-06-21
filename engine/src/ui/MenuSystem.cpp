@@ -134,8 +134,19 @@ void MenuSystem::requestWorldInitialization() {
 }
 
 void MenuSystem::requestProceduralWorldCreation(const std::string& seed) {
-    std::cout << "[MenuSystem] Procedural world creation requested with seed: " << seed << std::endl;
-    // TODO: Implement world creation
+    std::cout << "[MenuSystem] requestProceduralWorldCreation() called with seed: '" << seed << "'" << std::endl;
+    
+    // Create world seed object
+    VoxelCastle::World::WorldSeed worldSeed;
+    worldSeed.setSeedFromString(seed);
+    
+    // Use the advanced world creation callback
+    if (onWorldCreateRequest_) {
+        onWorldCreateRequest_(worldSeed, 0); // 0 = default world size
+    }
+    
+    // Close menus after world creation request
+    closeMenus();
 }
 
 // Input handling stubs
@@ -170,8 +181,6 @@ glm::vec2 MenuSystem::getSettingsMenuSize() const {
 
 void MenuSystem::updateScreenSize(int width, int height) {
     std::cout << "[MenuSystem] updateScreenSize(" << width << ", " << height << ")" << std::endl;
-    m_screenWidth = width;
-    m_screenHeight = height;
     setScreenSize(width, height);
     // TODO: Update menu positioning when menus are properly implemented
 }
