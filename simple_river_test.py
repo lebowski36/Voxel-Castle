@@ -14,17 +14,18 @@ def simple_river_test():
     print("=== Simple River Test ===")
     seed = 12345
     
-    # Use 2km area with DYNAMIC resolution calculated by C++ engine
-    view_size = 2000  # 2km x 2km (good size for rivers)
-    samples = worldgen_cpp.get_optimal_sample_count(view_size, "rivers")  # Dynamic resolution from C++ engine
+    # Use smaller area with reasonable resolution for testing
+    view_size = 500   # 500m x 500m area (much smaller)
+    samples = 50      # 50x50 = 2.5k samples (very manageable)
     resolution = samples / view_size
     
     print(f"Testing {view_size}m x {view_size}m area with {samples}x{samples} samples ({samples*samples:,} total)")
-    print(f"Resolution: {view_size/samples:.1f}m per pixel (dynamically calculated)")
+    print(f"Resolution: {view_size/samples:.1f}m per pixel")
     
-    # Center the view well within a single region (25km = 25000m regions)
-    # Place center at (5000, 5000) to be well within the (0,0) region
-    center_x, center_z = 5000.0, 5000.0
+    # Test area where rivers were actually generated (from tracing output)
+    # Pick a specific river source location we saw in the output
+    # For example: "Tracing river from (-24750, -24750) elevation: 105.873m"
+    center_x, center_z = -24750.0, -24750.0
     
     # Create coordinate arrays
     half_size = view_size / 2
@@ -32,14 +33,38 @@ def simple_river_test():
     z_coords = np.linspace(center_z - half_size, center_z + half_size, samples)
     x_grid, z_grid = np.meshgrid(x_coords, z_coords)
     
+    print(f"Query area: X=[{x_coords[0]:.1f}, {x_coords[-1]:.1f}], Z=[{z_coords[0]:.1f}, {z_coords[-1]:.1f}]")
+    
+    # Show which region this corresponds to (assuming 25km regions)
+    region_size = 25000  # 25km regions as mentioned in output
+    min_region_x = int(np.floor(x_coords[0] / region_size))
+    max_region_x = int(np.floor(x_coords[-1] / region_size))
+    min_region_z = int(np.floor(z_coords[0] / region_size))
+    max_region_z = int(np.floor(z_coords[-1] / region_size))
+    print(f"Querying regions: X=[{min_region_x}, {max_region_x}], Z=[{min_region_z}, {max_region_z}]")
+    
+    print(f"Query region: X=({x_coords[0]:.1f} to {x_coords[-1]:.1f}), Z=({z_coords[0]:.1f} to {z_coords[-1]:.1f})")
+    
     x_flat = x_grid.flatten()
     z_flat = z_grid.flatten()
     
     print("Generating terrain...")
+    sys.stdout.flush()  # Ensure this message appears before C++ output
     # Generate terrain data (this should be fast for 1km area)
     regular_terrain = worldgen_cpp.generate_terrain_heightmap(x_flat, z_flat, seed)
+    
+    print("Generating carved terrain with rivers...")
+    sys.stdout.flush()  # Ensure this message appears before C++ output
     carved_terrain = worldgen_cpp.generate_terrain_heightmap_with_rivers(x_flat, z_flat, seed)
+    
+    print("Querying cached river network...")
+    print(f"About to query {len(x_flat):,} points for river data...")
+    sys.stdout.flush()  # Ensure this message appears before C++ output
+    
+    # Query river network using the cached data (batch function with progress bar)
     river_flow = worldgen_cpp.generate_comprehensive_river_flow(x_flat, z_flat, seed)
+    print("River querying complete!")
+    sys.stdout.flush()
     
     # Reshape to grids
     regular_grid = regular_terrain.reshape(samples, samples)
@@ -69,30 +94,60 @@ def simple_river_test():
     print(f"  Terrain range: {np.min(carved_grid):.1f}m to {np.max(carved_grid):.1f}m")
     
     # Simple visualization
-    plt.figure(figsize=(12, 8))
+    plt.figure(figsize=(15, 10))
     
-    # Terrain with rivers overlay
-    plt.subplot(2, 2, 1)
-    apply_standardized_elevation_coloring(carved_grid, plt.gca(), 'Terrain with Rivers')
+    # Terrain with rivers overlay - use local elevation range for better contrast
+    plt.subplot(2, 3, 1)
+    # Use local terrain range instead of global range for better visualization
+    terrain_min, terrain_max = np.min(carved_grid), np.max(carved_grid)
+    im1 = plt.imshow(carved_grid, cmap='terrain', origin='lower', vmin=terrain_min, vmax=terrain_max)
+    plt.colorbar(im1, label='Elevation (m)')
     if river_count > 0:
         river_masked = np.ma.masked_where(river_grid < river_threshold, river_grid)
-        plt.imshow(river_masked, cmap='Blues', origin='lower', alpha=0.8)
+        plt.imshow(river_masked, cmap='Blues', origin='lower', alpha=0.8, vmin=river_threshold, vmax=np.max(river_grid))
     plt.title(f'Terrain + Rivers ({river_count} river points)')
+    plt.xlabel('Distance (10m per pixel)')
+    plt.ylabel('Distance (10m per pixel)')
+
+    # Regular terrain (no carving)
+    plt.subplot(2, 3, 2)
+    regular_min, regular_max = np.min(regular_grid), np.max(regular_grid)
+    im_reg = plt.imshow(regular_grid, cmap='terrain', origin='lower', vmin=regular_min, vmax=regular_max)
+    plt.colorbar(im_reg, label='Elevation (m)')
+    plt.title('Original Terrain (No Rivers)')
+    plt.xlabel('Distance (10m per pixel)')
+    plt.ylabel('Distance (10m per pixel)')
     
     # Carving depth
-    plt.subplot(2, 2, 2)
+    plt.subplot(2, 3, 3)
     plt.imshow(carving_depth, cmap='Blues', origin='lower')
     plt.title('River Carving Depth')
     plt.colorbar(label='Depth (m)')
+    plt.xlabel('Distance (10m per pixel)')
+    plt.ylabel('Distance (10m per pixel)')
     
     # River strength
-    plt.subplot(2, 2, 3)
-    plt.imshow(river_grid, cmap='Blues', origin='lower')
-    plt.title('River Strength')
+    plt.subplot(2, 3, 4)
+    if river_count > 0:
+        plt.imshow(river_grid, cmap='viridis', origin='lower', vmin=0, vmax=np.max(river_grid))
+    else:
+        plt.imshow(river_grid, cmap='viridis', origin='lower')
+    plt.title('River Flow Strength')
     plt.colorbar(label='Flow Strength')
+    plt.xlabel('Distance (10m per pixel)')
+    plt.ylabel('Distance (10m per pixel)')
+    
+    # River network overlay (binary)
+    plt.subplot(2, 3, 5)
+    river_binary = (river_grid > river_threshold).astype(float)
+    plt.imshow(river_binary, cmap='Blues_r', origin='lower')
+    plt.title('River Network (Binary)')
+    plt.colorbar(label='River (1) / Land (0)')
+    plt.xlabel('Distance (10m per pixel)')
+    plt.ylabel('Distance (10m per pixel)')
     
     # Cross-section
-    plt.subplot(2, 2, 4)
+    plt.subplot(2, 3, 6)
     mid_row = samples // 2
     distance = x_coords - center_x
     regular_line = regular_grid[mid_row, :]

@@ -7,6 +7,12 @@
 #include <cmath>
 #include <random>
 #include <limits>
+#include <iostream>
+#include <iomanip>
+
+#ifndef M_PI
+#define M_PI 3.14159265358979323846
+#endif
 
 namespace VoxelCastle {
 namespace World {
@@ -37,50 +43,72 @@ float RiverNetworks::GetTerrainElevation(float world_x, float world_z, uint64_t 
 }
 
 glm::vec2 RiverNetworks::CalculateFlowDirection(float world_x, float world_z, uint64_t seed) {
-    // Sample elevation in 4 cardinal directions
-    const float sample_distance = 10.0f;
-    float north = GetTerrainElevation(world_x, world_z + sample_distance, seed);
-    float south = GetTerrainElevation(world_x, world_z - sample_distance, seed);
-    float east = GetTerrainElevation(world_x + sample_distance, world_z, seed);
-    float west = GetTerrainElevation(world_x - sample_distance, world_z, seed);
+    // Use multi-directional sampling to find the steepest downhill direction
+    const float sample_distance = 50.0f; // Match the step_size used in river tracing
+    const int num_directions = 8; // Sample 8 directions around current point
     
-    // Calculate gradients (water flows downhill)
-    float gradient_x = (west - east) / (2.0f * sample_distance);
-    float gradient_z = (south - north) / (2.0f * sample_distance);
+    float current_elevation = GetTerrainElevation(world_x, world_z, seed);
+    float steepest_gradient = 0.0f;
+    glm::vec2 best_direction(1.0f, 0.0f); // Default eastward flow
     
-    // Create flow direction vector
-    glm::vec2 flow_dir(gradient_x, gradient_z);
-    
-    // Normalize
-    float length = std::sqrt(flow_dir.x * flow_dir.x + flow_dir.y * flow_dir.y);
-    if (length > 0.0f) {
-        flow_dir.x /= length;
-        flow_dir.y /= length;
-    } else {
-        // Default flow direction if terrain is flat
-        flow_dir = glm::vec2(1.0f, 0.0f);
+    // Sample all 8 directions and find steepest downhill
+    for (int i = 0; i < num_directions; i++) {
+        float angle = (float)i * 2.0f * M_PI / (float)num_directions;
+        float test_x = world_x + cos(angle) * sample_distance;
+        float test_z = world_z + sin(angle) * sample_distance;
+        float test_elevation = GetTerrainElevation(test_x, test_z, seed);
+        
+        // Calculate gradient (positive means downhill)
+        float gradient = (current_elevation - test_elevation) / sample_distance;
+        
+        // Keep track of steepest downhill direction
+        if (gradient > steepest_gradient) {
+            steepest_gradient = gradient;
+            best_direction = glm::vec2(cos(angle), sin(angle));
+        }
     }
     
-    return flow_dir;
+    // If no downhill direction found, use traditional 4-direction gradient
+    if (steepest_gradient <= 0.0f) {
+        float north = GetTerrainElevation(world_x, world_z + sample_distance, seed);
+        float south = GetTerrainElevation(world_x, world_z - sample_distance, seed);
+        float east = GetTerrainElevation(world_x + sample_distance, world_z, seed);
+        float west = GetTerrainElevation(world_x - sample_distance, world_z, seed);
+        
+        // Calculate gradients (water flows downhill)
+        float gradient_x = (west - east) / (2.0f * sample_distance);
+        float gradient_z = (south - north) / (2.0f * sample_distance);
+        
+        best_direction = glm::vec2(gradient_x, gradient_z);
+    }
+    
+    // Normalize the direction vector
+    float length = std::sqrt(best_direction.x * best_direction.x + best_direction.y * best_direction.y);
+    if (length > 0.0f) {
+        best_direction.x /= length;
+        best_direction.y /= length;
+    }
+    
+    return best_direction;
 }
 
 // === River Source Detection ===
 
 bool RiverNetworks::IsRiverSource(float world_x, float world_z, 
                                  const ClimateData& climate, float elevation, uint64_t seed) {
-    // FIX: Much more restrictive river source detection to prevent too many rivers
+    // More permissive river source detection as mentioned in handoff document
     
-    // Only allow rivers at high elevations (mountains/hills)
-    if (elevation < 200.0f) return false; // Must be above 200m elevation
+    // Allow rivers at moderate elevations (was 200m, now 100m)
+    if (elevation < 100.0f) return false; // Must be above 100m elevation
     
-    // Require significant precipitation
-    if (climate.precipitation < 100.0f) return false; // Need substantial rainfall
+    // Require moderate precipitation (was 100.0f, now more permissive)
+    if (climate.precipitation < 50.0f) return false; // Need moderate rainfall
     
-    // Use sparse noise for very selective river placement
+    // Use sparse noise for selective river placement
     float source_noise = SimpleNoise(world_x * 0.0001f, world_z * 0.0001f, seed + 9999);
     
-    // Very restrictive threshold - only ~1% of high elevation areas should have rivers
-    return source_noise > 0.95f;
+    // More permissive threshold as mentioned in handoff - was 0.95, now 0.25
+    return source_noise > 0.25f;
 }
 
 // === River Path Generation ===
@@ -89,6 +117,10 @@ RiverPath RiverNetworks::TraceRiverPath(float source_x, float source_z,
                                        float source_elevation, uint64_t seed) {
     RiverPath path;
     path.river_id = static_cast<int>(SimpleNoise(source_x, source_z, seed) * 1000000);
+    
+    // DEBUG: Log river tracing start
+    std::cout << "    Tracing river from (" << source_x << ", " << source_z 
+              << ") elevation: " << source_elevation << "m" << std::endl;
     
     // Start with source point
     RiverPoint current_point;
@@ -121,7 +153,7 @@ RiverPath RiverNetworks::TraceRiverPath(float source_x, float source_z,
         
         // Check if we're flowing uphill (shouldn't happen, but safety check)
         if (next_elevation > current_point.elevation) {
-            // Try to find a better path or end the river
+            // End the river - this indicates a problem with flow direction calculation
             break;
         }
         
@@ -150,6 +182,7 @@ RiverPath RiverNetworks::TraceRiverPath(float source_x, float source_z,
         path.max_width = std::max(path.max_width, next_point.width);
     }
     
+    // DEBUG: Log final river path results    // Debug: Output only summary info without verbose tracing
     return path;
 }
 
@@ -219,14 +252,48 @@ RiverNetwork RiverNetworks::GenerateRiverNetwork(int region_x, int region_z,
     std::vector<std::pair<float, float>> sources = FindRiverSources(region_x, region_z, region_size, seed);
     
     // Generate rivers from sources
-    for (const auto& source : sources) {
+    size_t total_sources = sources.size();
+    for (size_t i = 0; i < sources.size(); i++) {
+        const auto& source = sources[i];
+        
+        // Progress reporting for river generation (force flush for Python interop)
+        if (total_sources > 10) {
+            float progress = (float)(i + 1) / (float)total_sources * 100.0f;
+            printf("\rTracing rivers: %.1f%% (%zu/%zu)", 
+                   progress, (i + 1), total_sources);
+            fflush(stdout);  // Force immediate output for Python interop
+        }
+        
         float source_elevation = GetTerrainElevation(source.first, source.second, seed);
         RiverPath river_path = TraceRiverPath(source.first, source.second, source_elevation, seed);
+        
+        // DEBUG: Log river path tracing results (but less verbose during progress)
+        if (total_sources <= 10) {
+            printf("  River from (%.1f, %.1f) traced %zu points, length: %.1fm\n", 
+                   source.first, source.second, river_path.points.size(), river_path.total_length);
+            fflush(stdout);  // Force immediate output for Python interop
+        }
         
         // REDUCED REQUIREMENT: Accept rivers with 3+ points (was 10+) for realistic coverage
         if (river_path.points.size() >= 3) {
             network.rivers.push_back(river_path);
+            if (total_sources <= 10) {
+                printf("    -> Added to network\n");
+                fflush(stdout);  // Force immediate output for Python interop
+            }
+        } else {
+            if (total_sources <= 10) {
+                printf("    -> Rejected (too short: %zu points)\n", river_path.points.size());
+                fflush(stdout);  // Force immediate output for Python interop
+            }
         }
+    }
+    
+    // Final progress update (force flush for Python interop)
+    if (total_sources > 10) {
+        printf("\nTracing rivers: Complete! Generated %zu rivers from %zu sources.\n", 
+               network.rivers.size(), total_sources);
+        fflush(stdout);  // Force immediate output for Python interop
     }
     
     return network;

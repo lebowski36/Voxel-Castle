@@ -1,6 +1,8 @@
 #include <pybind11/pybind11.h>
 #include <pybind11/numpy.h>
 #include <pybind11/stl.h>
+#include <iostream>
+#include <iomanip>
 #include "world/procedural_terrain/noise/multi_scale_noise.h"
 #include "world/procedural_terrain/noise/fractal_patterns.h"
 #include "world/procedural_terrain/climate/climate_system.h"
@@ -504,17 +506,33 @@ py::array_t<float> generate_comprehensive_river_flow(
     float* z_ptr = static_cast<float*>(z_buf.ptr);
     float* result_ptr = static_cast<float*>(result_buf.ptr);
     
+    // Progress tracking for large datasets - more frequent updates for better feedback
+    size_t progress_interval = std::max(size / 100, size_t(10000)); // Progress every 1% or 10k samples
+    
+    printf("Starting river query for %zu points...\n", size);
+    fflush(stdout);
+    
     for (size_t i = 0; i < size; i++) {
+        // Show progress for large datasets (force flush for Python interop)
+        if (i % progress_interval == 0 || i == size - 1) {
+            float progress = (float)(i + 1) / (float)size * 100.0f;
+            printf("\rProcessing rivers: %.1f%% (%zu/%zu)", 
+                   progress, (i + 1), size);
+            fflush(stdout);  // Force immediate output for Python interop
+        }
+        
         float world_x = x_ptr[i] * VOXEL_SCALE;
         float world_z = z_ptr[i] * VOXEL_SCALE;
         
-        // FIX: Use actual river network data instead of flow accumulation noise
+        // Query river data
         RiverQueryResult river_result = RiverNetworks::QueryRiverAtPoint(world_x, world_z, seed);
         
         // Return river width as flow strength (0 if no river)
         result_ptr[i] = river_result.has_river ? river_result.river_width : 0.0f;
     }
     
+    printf("\nProcessing rivers: Complete!\n");
+    fflush(stdout);  // Force immediate output for Python interop
     return result;
 }
 
