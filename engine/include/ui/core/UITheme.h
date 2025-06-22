@@ -21,12 +21,23 @@ struct UIColors {
     glm::vec4 surfaceSecondary{0.165f, 0.212f, 0.314f, 1.0f};     // #2A3650
     glm::vec4 surfaceAccent{0.204f, 0.267f, 0.400f, 1.0f};        // #344466
     
-    // Accent colors
-    glm::vec4 primaryAccent{0.290f, 0.620f, 1.0f, 1.0f};          // #4A9EFF
-    glm::vec4 secondaryAccent{0.420f, 0.369f, 1.0f, 1.0f};        // #6B5EFF
-    glm::vec4 success{0.290f, 1.0f, 0.533f, 1.0f};                // #4AFF88
-    glm::vec4 warning{1.0f, 0.722f, 0.290f, 1.0f};                // #FFB84A
-    glm::vec4 error{1.0f, 0.290f, 0.420f, 1.0f};                  // #FF4A6B
+    // Accent colors - Enhanced gradients and glows
+    glm::vec4 primaryAccent{0.0f, 0.8f, 1.0f, 1.0f};              // Bright cyan #00CCFF
+    glm::vec4 primaryAccentLight{0.3f, 0.9f, 1.0f, 1.0f};         // Light cyan for gradients
+    glm::vec4 primaryAccentDark{0.0f, 0.6f, 0.8f, 1.0f};          // Dark cyan for shadows
+    
+    glm::vec4 secondaryAccent{0.6f, 0.2f, 1.0f, 1.0f};            // Purple #9933FF
+    glm::vec4 secondaryAccentLight{0.7f, 0.4f, 1.0f, 1.0f};       // Light purple
+    glm::vec4 secondaryAccentDark{0.4f, 0.1f, 0.8f, 1.0f};        // Dark purple
+    
+    glm::vec4 success{0.0f, 1.0f, 0.5f, 1.0f};                    // Bright green #00FF80
+    glm::vec4 warning{1.0f, 0.6f, 0.0f, 1.0f};                    // Orange #FF9900
+    glm::vec4 error{1.0f, 0.2f, 0.4f, 1.0f};                      // Pink-red #FF3366
+    
+    // Glow effects
+    glm::vec4 glowPrimary{0.0f, 0.8f, 1.0f, 0.3f};                // Cyan glow
+    glm::vec4 glowSecondary{0.6f, 0.2f, 1.0f, 0.3f};              // Purple glow
+    glm::vec4 glowDanger{1.0f, 0.2f, 0.4f, 0.3f};                 // Red glow
     
     // Text colors
     glm::vec4 textPrimary{1.0f, 1.0f, 1.0f, 1.0f};                // #FFFFFF

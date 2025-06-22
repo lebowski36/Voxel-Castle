@@ -245,19 +245,19 @@ float UIRenderer::getTextHeight(float scale) const {
 }
 
 void UIRenderer::renderColoredQuad(float x, float y, float width, float height, const glm::vec4& color) {
-    // Add specific debug logging for bright magenta to trace the issue
-    if (color.r > 0.9f && color.g < 0.1f && color.b > 0.9f) {
-        std::cout << "[UIRenderer] BRIGHT MAGENTA renderColoredQuad called! Position(" << x << ", " << y << ") Size(" << width << ", " << height << ")" << std::endl;
-    }
-    
     // This is essentially the same as renderQuad, which already handles colored quads
     renderQuad(x, y, width, height, color);
 }
 
 void UIRenderer::renderQuad(float x, float y, float width, float height, const glm::vec4& color) {
-    // Ensure blending is enabled for proper UI rendering with transparency
+    // CRITICAL FIX: Set proper OpenGL state for UI rendering
+    glDisable(GL_DEPTH_TEST);  // Disable depth testing for UI (always render on top)
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    
+    // Save current viewport and set UI viewport
+    GLint viewport[4];
+    glGetIntegerv(GL_VIEWPORT, viewport);
     
     // Clear any previous OpenGL errors before we start
     while (glGetError() != GL_NO_ERROR) {}
@@ -338,7 +338,25 @@ void UIRenderer::renderQuad(float x, float y, float width, float height, const g
     err = glGetError();
     if (err != GL_NO_ERROR) {
         std::cerr << "[UIRenderer] OpenGL error after drawing quad: 0x" << std::hex << err << std::dec << std::endl;
+    } else {
+        // Reduced logging - only count successful renders
+        static int quadCount = 0;
+        static auto lastSummaryTime = std::chrono::steady_clock::now();
+        quadCount++;
+        
+        auto now = std::chrono::steady_clock::now();
+        auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(now - lastSummaryTime).count();
+        
+        // Log summary every 2 seconds instead of every quad
+        if (elapsed > 2000) {
+            std::cout << "[UIRenderer] Drew " << quadCount << " quads in last " << elapsed << "ms" << std::endl;
+            quadCount = 0;
+            lastSummaryTime = now;
+        }
     }
+    
+    // CRITICAL FIX: Restore OpenGL state after UI rendering
+    glEnable(GL_DEPTH_TEST);  // Re-enable depth testing for 3D rendering
 }
 
 void UIRenderer::renderTexturedQuad(float x, float y, float width, float height, 

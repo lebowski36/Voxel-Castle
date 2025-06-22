@@ -124,6 +124,7 @@ private:
     void DistributeInputEvent(const std::function<bool(UIComponent*)>& eventHandler);
     void NotifyScreenSizeChanged(std::shared_ptr<UIComponent> component);
     void CenterRootComponent();
+    void DrawDebugRectangles(); // Debug method to test coordinate transformations
 };
 
 } // namespace UI

@@ -50,7 +50,7 @@ void MainMenu::CreateLayout() {
 }
 
 void MainMenu::CreateTitle() {
-    // Create title label with responsive sizing
+    // Create title label with responsive sizing and cool effects
     titleLabel_ = CreateComponent<Label>("Voxel Castle");
     titleLabel_->SetTextAlign(Label::TextAlign::CENTER);
     titleLabel_->SetAutoSize(true);
@@ -61,11 +61,14 @@ void MainMenu::CreateTitle() {
         auto theme = uiSystem->GetTheme();
         
         // Responsive font size: larger on bigger screens
-        float baseFontSize = 48.0f;
+        float baseFontSize = 64.0f; // Larger title
         float responsiveFontSize = theme->GetResponsiveFontSize(baseFontSize, screenWidth);
         titleLabel_->SetFontSize(responsiveFontSize);
+        
+        // Enhanced title color with gradient effect (simulate with bright cyan)
+        titleLabel_->SetTextColor(theme->colors.primaryAccentLight);
     } else {
-        titleLabel_->SetFontSize(48.0f);
+        titleLabel_->SetFontSize(64.0f);
     }
     
     // Add title directly to MainMenu (will be centered by mainLayout_)
@@ -87,16 +90,16 @@ void MainMenu::CreateButtons() {
         float screenWidth = uiSystem->GetScreenSize().x;
         auto theme = uiSystem->GetTheme();
         
-        // Responsive gap between buttons
-        float responsiveGap = theme->GetResponsiveSpacing(20.0f, screenWidth);
+        // Responsive gap between buttons - increase for better visual spacing
+        float responsiveGap = theme->GetResponsiveSpacing(30.0f, screenWidth);
         buttonLayout_->SetGap(responsiveGap);
     } else {
-        buttonLayout_->SetGap(20.0f);
+        buttonLayout_->SetGap(30.0f);
     }
     
     buttonPanel_->SetLayout(buttonLayout_);
     
-    // Create buttons
+    // Create buttons with enhanced styling
     resumeButton_ = CreateComponent<Button>("Resume Game");
     resumeButton_->SetStyle(Button::Style::PRIMARY);
     resumeButton_->SetSize(Button::Size::LARGE);

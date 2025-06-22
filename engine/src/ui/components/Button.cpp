@@ -4,6 +4,8 @@
 #include "ui/UIRenderer.h"
 #include <algorithm>
 #include <iostream>
+#include <cmath>
+#include <SDL3/SDL.h>
 
 namespace VoxelEngine {
 namespace UI {
@@ -158,56 +160,149 @@ void Button::RenderModernBackground(glm::vec2 absPos, glm::vec2 size, glm::vec4 
     auto renderer = GetUISystem()->GetRenderer();
     auto theme = GetUISystem()->GetTheme();
     
-    // 1. Render shadow first (behind the button)
+    // Enhanced visual effects for fancy buttons
+    
+    // 1. Render outer glow effect for non-ghost buttons
     if (style_ != Style::GHOST) {
-        auto shadow = theme->shadows.medium;
-        glm::vec2 shadowPos = absPos + shadow.offset;
-        glm::vec4 shadowColor = shadow.color;
-        shadowColor.a *= (hovered_ ? 0.3f : 0.2f); // More shadow on hover
+        glm::vec4 glowColor = baseColor;
+        glowColor.a = hovered_ ? 0.4f : 0.2f;
         
-        // Simple shadow approximation (offset colored quad)
+        // Animated pulsing glow on hover
+        if (hovered_) {
+            float pulseTime = static_cast<float>(SDL_GetTicks()) / 1000.0f;
+            glowColor.a *= (0.8f + 0.2f * std::sin(pulseTime * 3.0f));
+        }
+        
+        float glowSize = hovered_ ? 8.0f : 4.0f;
+        
+        // Multiple glow layers for depth
+        for (int i = 0; i < 3; i++) {
+            float layerSize = glowSize * (1.0f + i * 0.5f);
+            glm::vec4 layerColor = glowColor;
+            layerColor.a *= (1.0f - i * 0.3f);
+            
+            renderer->renderColoredQuad(
+                absPos.x - layerSize, absPos.y - layerSize,
+                size.x + layerSize * 2, size.y + layerSize * 2,
+                layerColor
+            );
+        }
+    }
+    
+    // 2. Render enhanced shadow
+    if (style_ != Style::GHOST) {
+        glm::vec2 shadowOffset(3.0f, 5.0f);
+        if (pressed_ && pressAnimation_ > 0) {
+            shadowOffset *= 0.6f; // Reduce shadow when pressed
+        }
+        
+        glm::vec4 shadowColor(0.0f, 0.0f, 0.0f, hovered_ ? 0.5f : 0.3f);
         renderer->renderColoredQuad(
-            shadowPos.x, shadowPos.y, 
-            size.x, size.y, 
+            absPos.x + shadowOffset.x, absPos.y + shadowOffset.y,
+            size.x, size.y,
             shadowColor
         );
     }
     
-    // 2. Render gradient background
+    // 3. Create gradient effect with multiple strips
     glm::vec4 topColor = baseColor;
     glm::vec4 bottomColor = baseColor;
     
-    // Create gradient effect by darkening bottom
-    bottomColor.r *= 0.8f;
-    bottomColor.g *= 0.8f;
-    bottomColor.b *= 0.8f;
-    
-    // For now, approximate gradient with solid color + overlay
-    // TODO: Implement true gradient rendering in UIRenderer
-    renderer->renderColoredQuad(absPos.x, absPos.y, size.x, size.y, baseColor);
-    
-    // 3. Add glass morphism effect (subtle overlay)
-    if (style_ != Style::GHOST) {
-        glm::vec4 glassOverlay(1.0f, 1.0f, 1.0f, 0.1f); // White overlay for glass effect
-        if (hovered_) glassOverlay.a *= 1.5f; // Stronger effect on hover
+    // Enhanced gradient colors
+    if (style_ == Style::PRIMARY) {
+        topColor = theme->colors.primaryAccentLight;
+        bottomColor = theme->colors.primaryAccent;
+    } else if (style_ == Style::SECONDARY) {
+        topColor = theme->colors.secondaryAccentLight;
+        bottomColor = theme->colors.secondaryAccent;
+    } else {
+        // Create gradient by brightening top and darkening bottom
+        topColor.r = std::min(1.0f, topColor.r * 1.2f);
+        topColor.g = std::min(1.0f, topColor.g * 1.2f);
+        topColor.b = std::min(1.0f, topColor.b * 1.2f);
         
-        renderer->renderColoredQuad(absPos.x, absPos.y, size.x, size.y, glassOverlay);
+        bottomColor.r *= 0.7f;
+        bottomColor.g *= 0.7f;
+        bottomColor.b *= 0.7f;
     }
     
-    // 4. Add border for GHOST style
+    // Apply interaction effects
+    if (pressed_ && pressAnimation_ > 0) {
+        // Darken when pressed
+        topColor.r *= 0.8f; topColor.g *= 0.8f; topColor.b *= 0.8f;
+        bottomColor.r *= 0.8f; bottomColor.g *= 0.8f; bottomColor.b *= 0.8f;
+    } else if (hovered_ && hoverAnimation_ > 0) {
+        // Brighten on hover
+        float factor = 1.0f + hoverAnimation_ * 0.2f;
+        topColor.r = std::min(1.0f, topColor.r * factor);
+        topColor.g = std::min(1.0f, topColor.g * factor);
+        topColor.b = std::min(1.0f, topColor.b * factor);
+        bottomColor.r = std::min(1.0f, bottomColor.r * factor);
+        bottomColor.g = std::min(1.0f, bottomColor.g * factor);
+        bottomColor.b = std::min(1.0f, bottomColor.b * factor);
+    }
+    
+    // Simulate gradient with horizontal strips
+    int gradientSteps = 6;
+    float stripHeight = size.y / gradientSteps;
+    
+    for (int i = 0; i < gradientSteps; i++) {
+        float t = static_cast<float>(i) / (gradientSteps - 1);
+        glm::vec4 stripColor = topColor * (1.0f - t) + bottomColor * t;
+        
+        renderer->renderColoredQuad(
+            absPos.x, absPos.y + i * stripHeight,
+            size.x, stripHeight + 1.0f, // Slight overlap to avoid gaps
+            stripColor
+        );
+    }
+    
+    // 4. Add glossy highlight at the top
+    if (style_ != Style::GHOST) {
+        glm::vec4 highlight(1.0f, 1.0f, 1.0f, hovered_ ? 0.3f : 0.15f);
+        
+        renderer->renderColoredQuad(
+            absPos.x, absPos.y,
+            size.x, size.y * 0.3f, // Top 30% of button
+            highlight
+        );
+    }
+    
+    // 5. Add rim lighting
+    if (style_ != Style::GHOST && hovered_) {
+        glm::vec4 rimLight = topColor;
+        rimLight.a = 0.4f;
+        
+        float rimSize = 1.0f;
+        // Top rim
+        renderer->renderColoredQuad(absPos.x, absPos.y, size.x, rimSize, rimLight);
+        // Bottom rim
+        renderer->renderColoredQuad(absPos.x, absPos.y + size.y - rimSize, size.x, rimSize, rimLight);
+        // Left rim
+        renderer->renderColoredQuad(absPos.x, absPos.y, rimSize, size.y, rimLight);
+        // Right rim
+        renderer->renderColoredQuad(absPos.x + size.x - rimSize, absPos.y, rimSize, size.y, rimLight);
+    }
+    
+    // 6. Enhanced border for GHOST style
     if (style_ == Style::GHOST) {
         float borderWidth = 2.0f;
         glm::vec4 borderColor = theme->colors.primaryAccent;
-        if (!IsEnabled()) borderColor = theme->colors.textDisabled;
+        
+        if (!IsEnabled()) {
+            borderColor = theme->colors.textDisabled;
+        } else if (hovered_) {
+            // Animated pulsing border
+            float pulseTime = static_cast<float>(SDL_GetTicks()) / 1000.0f;
+            borderColor.a = 0.6f + 0.4f * std::sin(pulseTime * 4.0f);
+        } else {
+            borderColor.a = 0.7f;
+        }
         
         // Draw border as 4 rectangles
-        // Top
         renderer->renderColoredQuad(absPos.x, absPos.y, size.x, borderWidth, borderColor);
-        // Bottom  
         renderer->renderColoredQuad(absPos.x, absPos.y + size.y - borderWidth, size.x, borderWidth, borderColor);
-        // Left
         renderer->renderColoredQuad(absPos.x, absPos.y, borderWidth, size.y, borderColor);
-        // Right
         renderer->renderColoredQuad(absPos.x + size.x - borderWidth, absPos.y, borderWidth, size.y, borderColor);
     }
 }
@@ -226,8 +321,20 @@ void Button::OnRender() {
     glm::vec4 textColor = GetCurrentTextColor();
     
     // Get absolute position and size in screen coordinates
-    glm::vec2 absPos = uiSystem->LogicalToScreen(GetAbsolutePosition());
-    glm::vec2 size = uiSystem->LogicalToScreen(UIComponent::GetSize());
+    glm::vec2 logicalPos = GetAbsolutePosition();
+    glm::vec2 logicalSize = UIComponent::GetSize();
+    glm::vec2 absPos = uiSystem->LogicalToScreen(logicalPos);
+    glm::vec2 size = uiSystem->LogicalToScreen(logicalSize);
+    
+    // Debug output when screen size changes significantly
+    static int lastScreenWidth = 0;
+    int currentScreenWidth = renderer->getScreenWidth();
+    if (abs(currentScreenWidth - lastScreenWidth) > 100) {
+        std::cout << "[Button] Screen size changed from " << lastScreenWidth << " to " << currentScreenWidth << std::endl;
+        std::cout << "[Button] Logical pos: (" << logicalPos.x << "," << logicalPos.y << "), size: (" << logicalSize.x << "," << logicalSize.y << ")" << std::endl;
+        std::cout << "[Button] Screen pos: (" << absPos.x << "," << absPos.y << "), size: (" << size.x << "," << size.y << ")" << std::endl;
+        lastScreenWidth = currentScreenWidth;
+    }
     
     // Draw button background
     RenderModernBackground(absPos, size, backgroundColor);

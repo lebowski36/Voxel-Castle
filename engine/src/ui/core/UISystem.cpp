@@ -94,6 +94,17 @@ void UISystem::Update(float deltaTime) {
 
 void UISystem::Render() {
     if (rootComponent_ && renderer_) {
+        // AGGRESSIVE DEBUG: Draw test rectangles every frame to ensure they're visible
+        static int frameCount = 0;
+        frameCount++;
+        
+        // Draw test rectangles every frame for debugging
+        std::cout << "[UISystem] FORCING test rectangles draw (frame " << frameCount << ")..." << std::endl;
+        if (renderer_) {
+            // Call the old working test rectangle method directly
+            renderer_->drawTestRectangle();
+        }
+        
         RenderComponentHierarchy();
     }
     
@@ -176,19 +187,27 @@ void UISystem::SetUserScale(float scale) {
 }
 
 float UISystem::LogicalToScreen(float logicalPixels) const {
-    return scaleManager_ ? scaleManager_->LogicalToScreen(logicalPixels) : logicalPixels;
+    // TEMPORARY: Bypass logical scaling to test if this is the issue
+    return logicalPixels;
+    // return scaleManager_ ? scaleManager_->LogicalToScreen(logicalPixels) : logicalPixels;
 }
 
 glm::vec2 UISystem::LogicalToScreen(const glm::vec2& logicalPixels) const {
-    return scaleManager_ ? scaleManager_->LogicalToScreen(logicalPixels) : logicalPixels;
+    // TEMPORARY: Bypass logical scaling to test if this is the issue
+    return logicalPixels;
+    // return scaleManager_ ? scaleManager_->LogicalToScreen(logicalPixels) : logicalPixels;
 }
 
 float UISystem::ScreenToLogical(float screenPixels) const {
-    return scaleManager_ ? scaleManager_->ScreenToLogical(screenPixels) : screenPixels;
+    // TEMPORARY: Bypass logical scaling to test if this is the issue
+    return screenPixels;
+    // return scaleManager_ ? scaleManager_->ScreenToLogical(screenPixels) : screenPixels;
 }
 
 glm::vec2 UISystem::ScreenToLogical(const glm::vec2& screenPixels) const {
-    return scaleManager_ ? scaleManager_->ScreenToLogical(screenPixels) : screenPixels;
+    // TEMPORARY: Bypass logical scaling to test if this is the issue
+    return screenPixels;
+    // return scaleManager_ ? scaleManager_->ScreenToLogical(screenPixels) : screenPixels;
 }
 
 UISystem::ScreenSize UISystem::GetScreenSizeCategory() const {
@@ -396,6 +415,52 @@ void UISystem::CenterRootComponent() {
     std::cout << "[UISystem] Root component centered at (" << centeredPosition.x << ", " << centeredPosition.y 
               << ") for size " << componentSize.x << "x" << componentSize.y 
               << " on screen " << logicalScreenSize.x << "x" << logicalScreenSize.y << std::endl;
+}
+
+void UISystem::DrawDebugRectangles() {
+    if (!renderer_) return;
+    
+    // Draw test rectangles using the same coordinate system as UI components
+    // This ensures they move correctly when the screen is resized
+    
+    float rectSize = 50.0f; // Logical pixels
+    glm::vec4 colors[] = {
+        {1.0f, 0.0f, 0.0f, 1.0f}, // Red
+        {0.0f, 1.0f, 0.0f, 1.0f}, // Green  
+        {0.0f, 0.0f, 1.0f, 1.0f}, // Blue
+        {1.0f, 1.0f, 0.0f, 1.0f}, // Yellow
+        {1.0f, 0.0f, 1.0f, 1.0f}  // Magenta
+    };
+    
+    // Get logical screen size
+    glm::vec2 logicalScreenSize = ScreenToLogical(screenSize_);
+    
+    // Define positions in logical coordinates
+    glm::vec2 positions[] = {
+        {logicalScreenSize.x * 0.5f - rectSize * 0.5f, logicalScreenSize.y * 0.5f - rectSize * 0.5f}, // Center
+        {20.0f, 20.0f}, // Top-left
+        {logicalScreenSize.x - rectSize - 20.0f, 20.0f}, // Top-right
+        {20.0f, logicalScreenSize.y - rectSize - 20.0f}, // Bottom-left
+        {logicalScreenSize.x - rectSize - 20.0f, logicalScreenSize.y - rectSize - 20.0f} // Bottom-right
+    };
+    
+    const char* labels[] = {"center", "top-left", "top-right", "bottom-left", "bottom-right"};
+    
+    std::cout << "[UISystem] Screen size: " << screenSize_.x << "x" << screenSize_.y 
+              << ", Logical size: " << logicalScreenSize.x << "x" << logicalScreenSize.y << std::endl;
+    
+    // Draw rectangles using logical coordinates (same as UI components)
+    for (int i = 0; i < 5; i++) {
+        // Convert logical coordinates to screen coordinates (same as UI components do)
+        glm::vec2 screenPos = LogicalToScreen(positions[i]);
+        glm::vec2 screenSize = LogicalToScreen(glm::vec2(rectSize, rectSize));
+        
+        std::cout << "[UISystem] Drawing " << labels[i] << " debug rect - Logical: (" 
+                  << positions[i].x << "," << positions[i].y << "), Screen: (" 
+                  << screenPos.x << "," << screenPos.y << "), Size: " << screenSize.x << "x" << screenSize.y << std::endl;
+        
+        renderer_->renderColoredQuad(screenPos.x, screenPos.y, screenSize.x, screenSize.y, colors[i]);
+    }
 }
 
 } // namespace UI
