@@ -250,23 +250,34 @@ void UIRenderer::renderColoredQuad(float x, float y, float width, float height, 
 }
 
 void UIRenderer::renderQuad(float x, float y, float width, float height, const glm::vec4& color) {
-    // CRITICAL FIX: Set proper OpenGL state for UI rendering
-    glDisable(GL_DEPTH_TEST);  // Disable depth testing for UI (always render on top)
-    glEnable(GL_BLEND);
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-    
-    // Save current viewport and set UI viewport
-    GLint viewport[4];
-    glGetIntegerv(GL_VIEWPORT, viewport);
+    // CRITICAL FIX: Ensure full OpenGL state setup for every quad render
+    // This fixes the issue where button backgrounds only appear when test rectangles are drawn
     
     // Clear any previous OpenGL errors before we start
     while (glGetError() != GL_NO_ERROR) {}
     
-    // CRITICAL FIX: Ensure VAO is bound before rendering
+    // Set up complete OpenGL state for UI rendering (same as test rectangles)
+    glDisable(GL_DEPTH_TEST);  // Disable depth testing for UI (always render on top)
+    glDepthMask(GL_FALSE);     // Disable depth writes
+    glEnable(GL_BLEND);        // Enable alpha blending
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);  // Standard alpha blending
+    
+    // Ensure viewport is set correctly for UI rendering
+    glViewport(0, 0, screenWidth_, screenHeight_);
+    
+    // CRITICAL: Ensure shader program is active
+    if (shaderProgram_ == 0) {
+        std::cerr << "[UIRenderer] ERROR: No shader program available!" << std::endl;
+        return;
+    }
+    glUseProgram(shaderProgram_);
+    
+    // CRITICAL: Ensure VAO is bound
     if (vao_ == 0) {
         std::cerr << "[UIRenderer] ERROR: VAO is 0, cannot render quad!" << std::endl;
         return;
     }
+    glBindVertexArray(vao_);
     
     // Bind VAO to ensure geometry is available
     glBindVertexArray(vao_);
@@ -293,6 +304,19 @@ void UIRenderer::renderQuad(float x, float y, float width, float height, const g
     glm::mat4 model = glm::mat4(1.0f);
     model = glm::translate(model, glm::vec3(x, y, 0.0f));
     model = glm::scale(model, glm::vec3(width, height, 1.0f));
+    
+    // CRITICAL FIX: Set projection matrix uniform (was missing!)
+    GLint projLoc = glGetUniformLocation(shaderProgram_, "projection");
+    if (projLoc == -1) {
+        std::cerr << "[UIRenderer] ERROR: 'projection' uniform not found in shader!" << std::endl;
+        return;
+    }
+    glUniformMatrix4fv(projLoc, 1, GL_FALSE, glm::value_ptr(projectionMatrix_));
+    err = glGetError();
+    if (err != GL_NO_ERROR) {
+        std::cerr << "[UIRenderer] ERROR after setting projection uniform: 0x" << std::hex << err << std::dec << std::endl;
+        return;
+    }
     
     // Set uniforms with error checking
     GLint modelLoc = glGetUniformLocation(shaderProgram_, "model");

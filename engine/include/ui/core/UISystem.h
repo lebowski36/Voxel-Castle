@@ -125,6 +125,7 @@ private:
     void NotifyScreenSizeChanged(std::shared_ptr<UIComponent> component);
     void CenterRootComponent();
     void DrawDebugRectangles(); // Debug method to test coordinate transformations
+    void PrimeUIRenderingState(); // Method to setup OpenGL state for UI rendering
 };
 
 } // namespace UI

@@ -94,17 +94,6 @@ void UISystem::Update(float deltaTime) {
 
 void UISystem::Render() {
     if (rootComponent_ && renderer_) {
-        // AGGRESSIVE DEBUG: Draw test rectangles every frame to ensure they're visible
-        static int frameCount = 0;
-        frameCount++;
-        
-        // Draw test rectangles every frame for debugging
-        std::cout << "[UISystem] FORCING test rectangles draw (frame " << frameCount << ")..." << std::endl;
-        if (renderer_) {
-            // Call the old working test rectangle method directly
-            renderer_->drawTestRectangle();
-        }
-        
         RenderComponentHierarchy();
     }
     
@@ -460,6 +449,31 @@ void UISystem::DrawDebugRectangles() {
                   << screenPos.x << "," << screenPos.y << "), Size: " << screenSize.x << "x" << screenSize.y << std::endl;
         
         renderer_->renderColoredQuad(screenPos.x, screenPos.y, screenSize.x, screenSize.y, colors[i]);
+    }
+}
+
+void UISystem::PrimeUIRenderingState() {
+    if (!renderer_) return;
+    
+    // This method replicates the essential OpenGL state setup that the test rectangles
+    // were doing, but without drawing any visible output
+    
+    // The key insight is that something in the test rectangle drawing was setting up
+    // OpenGL state that the regular UI rendering depends on, but doesn't set up itself
+    
+    static int frameCount = 0;
+    frameCount++;
+    
+    // Only do this setup occasionally to avoid performance impact
+    if (frameCount % 60 == 1) { // Every second at 60fps
+        std::cout << "[UISystem] Priming UI rendering state..." << std::endl;
+        
+        // Use the same state setup as the test rectangles
+        renderer_->drawTestRectangle();
+        
+        // Immediately clear the framebuffer to hide the test rectangles
+        // This preserves the OpenGL state setup without visible artifacts
+        glClear(GL_COLOR_BUFFER_BIT);
     }
 }
 
