@@ -28,6 +28,8 @@ public:
     bool toggleFullscreen();
     bool isFullscreen() const;
     void cleanUp();
+    
+    void updateWindowSize(); // Updates internal width/height from actual window size
 
     int getWidth() const;
     int getHeight() const;

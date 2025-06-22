@@ -116,6 +116,9 @@ private:
     glm::vec2 GetTextPadding() const;
     void UpdateAnimations(float deltaTime);
     void TriggerClick();
+    
+    // Modern rendering methods
+    void RenderModernBackground(glm::vec2 absPos, glm::vec2 size, glm::vec4 baseColor) const;
 };
 
 } // namespace UI

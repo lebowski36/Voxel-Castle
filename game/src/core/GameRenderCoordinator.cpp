@@ -24,6 +24,10 @@ void VoxelCastle::Core::GameRenderCoordinator::render(
 ) {
     // ALWAYS use the actual window dimensions from the Window object
     // This ensures we properly handle fullscreen toggle and resizing
+    
+    // First, update the window's internal size tracking to match actual SDL window
+    gameWindow.updateWindowSize();
+    
     int actualWidth = gameWindow.getWidth();
     int actualHeight = gameWindow.getHeight();
     

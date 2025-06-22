@@ -134,6 +134,11 @@ void UIComponent::SetLayout(std::shared_ptr<LayoutManager> layout) {
 }
 
 glm::vec2 UIComponent::CalculatePreferredSize() const {
+    // If we have a layout, use its preferred size calculation
+    if (layout_) {
+        return layout_->CalculatePreferredSize();
+    }
+    
     // Default implementation returns current size
     return size_;
 }

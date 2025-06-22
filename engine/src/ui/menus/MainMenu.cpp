@@ -25,45 +25,75 @@ void MainMenu::Initialize() {
 }
 
 void MainMenu::CreateLayout() {
-    // Set up main vertical layout
+    // Set up main vertical layout that centers content on screen
     mainLayout_ = std::make_shared<FlexLayout>(FlexLayout::Direction::COLUMN);
     mainLayout_->SetJustifyContent(FlexLayout::JustifyContent::CENTER);
     mainLayout_->SetAlignItems(FlexLayout::AlignItems::CENTER);
-    mainLayout_->SetGap(40.0f);
-    SetLayout(mainLayout_);
     
-    // Create background panel
-    backgroundPanel_ = CreateComponent<Panel>();
-    backgroundPanel_->SetBackgroundVisible(false); // Transparent background for main menu
-    AddChild(backgroundPanel_);
+    // Get responsive spacing based on screen size
+    auto uiSystem = GetUISystem();
+    if (uiSystem) {
+        float screenWidth = uiSystem->GetScreenSize().x;
+        auto theme = uiSystem->GetTheme();
+        float responsiveGap = theme->GetResponsiveSpacing(40.0f, screenWidth);
+        mainLayout_->SetGap(responsiveGap);
+        
+        // Add responsive padding to prevent content from touching screen edges
+        float padding = theme->GetResponsiveSpacing(50.0f, screenWidth);
+        mainLayout_->SetPadding(padding);
+    } else {
+        mainLayout_->SetGap(40.0f);
+        mainLayout_->SetPadding(50.0f);
+    }
+    
+    SetLayout(mainLayout_);
 }
 
 void MainMenu::CreateTitle() {
-    // Create title label
+    // Create title label with responsive sizing
     titleLabel_ = CreateComponent<Label>("Voxel Castle");
-    titleLabel_->SetFontSize(48.0f);
     titleLabel_->SetTextAlign(Label::TextAlign::CENTER);
     titleLabel_->SetAutoSize(true);
     
     auto uiSystem = GetUISystem();
     if (uiSystem) {
+        float screenWidth = uiSystem->GetScreenSize().x;
         auto theme = uiSystem->GetTheme();
-        titleLabel_->SetTextColor(theme->colors.primaryAccent);
+        
+        // Responsive font size: larger on bigger screens
+        float baseFontSize = 48.0f;
+        float responsiveFontSize = theme->GetResponsiveFontSize(baseFontSize, screenWidth);
+        titleLabel_->SetFontSize(responsiveFontSize);
+    } else {
+        titleLabel_->SetFontSize(48.0f);
     }
     
+    // Add title directly to MainMenu (will be centered by mainLayout_)
     AddChild(titleLabel_);
 }
 
 void MainMenu::CreateButtons() {
-    // Create button container panel
+    // Create button container panel with responsive sizing
     buttonPanel_ = CreateComponent<Panel>();
     buttonPanel_->SetBackgroundVisible(false);
     
-    // Set up button layout
+    // Set up responsive button layout
     buttonLayout_ = std::make_shared<FlexLayout>(FlexLayout::Direction::COLUMN);
     buttonLayout_->SetJustifyContent(FlexLayout::JustifyContent::CENTER);
     buttonLayout_->SetAlignItems(FlexLayout::AlignItems::CENTER);
-    buttonLayout_->SetGap(20.0f);
+    
+    auto uiSystem = GetUISystem();
+    if (uiSystem) {
+        float screenWidth = uiSystem->GetScreenSize().x;
+        auto theme = uiSystem->GetTheme();
+        
+        // Responsive gap between buttons
+        float responsiveGap = theme->GetResponsiveSpacing(20.0f, screenWidth);
+        buttonLayout_->SetGap(responsiveGap);
+    } else {
+        buttonLayout_->SetGap(20.0f);
+    }
+    
     buttonPanel_->SetLayout(buttonLayout_);
     
     // Create buttons
@@ -154,6 +184,38 @@ void MainMenu::OnExitGameClick() {
     if (menuSystem_) {
         menuSystem_->requestExit();
     }
+}
+
+void MainMenu::OnScreenSizeChanged(float screenWidth, float screenHeight) {
+    UIComponent::OnScreenSizeChanged(screenWidth, screenHeight);
+    
+    auto uiSystem = GetUISystem();
+    if (!uiSystem) return;
+    
+    auto theme = uiSystem->GetTheme();
+    
+    // Update responsive spacing for main layout
+    if (mainLayout_) {
+        float responsiveGap = theme->GetResponsiveSpacing(40.0f, screenWidth);
+        float responsivePadding = theme->GetResponsiveSpacing(50.0f, screenWidth);
+        mainLayout_->SetGap(responsiveGap);
+        mainLayout_->SetPadding(responsivePadding);
+    }
+    
+    // Update responsive font size for title
+    if (titleLabel_) {
+        float baseFontSize = 48.0f;
+        float responsiveFontSize = theme->GetResponsiveFontSize(baseFontSize, screenWidth);
+        titleLabel_->SetFontSize(responsiveFontSize);
+    }
+    
+    // Update responsive gap for button layout
+    if (buttonLayout_) {
+        float responsiveGap = theme->GetResponsiveSpacing(20.0f, screenWidth);
+        buttonLayout_->SetGap(responsiveGap);
+    }
+    
+    std::cout << "[MainMenu] Updated responsive layout for screen size: " << screenWidth << "x" << screenHeight << std::endl;
 }
 
 } // namespace UI

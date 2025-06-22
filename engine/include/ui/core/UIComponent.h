@@ -114,7 +114,7 @@ public:
     glm::vec2 GetResponsiveSize(const glm::vec2& baseSize) const;
     
     // Override this for responsive layout changes
-    virtual void OnScreenSizeChanged() {}
+    virtual void OnScreenSizeChanged(float screenWidth, float screenHeight) {}
     
 protected:
     // Override these for custom rendering

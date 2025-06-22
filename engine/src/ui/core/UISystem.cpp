@@ -116,6 +116,14 @@ void UISystem::SetScreenSize(int width, int height) {
         return; // No change, skip update
     }
     
+    std::cout << "[UISystem] SetScreenSize called: " << width << "x" << height 
+              << " (was " << screenSize_.x << "x" << screenSize_.y << ")" << std::endl;
+    
+    // Add debug info to trace what's calling this
+    if (width == 1920 && height == 1080) {
+        std::cout << "[UISystem] WARNING: Reverting to 1920x1080 - this might be wrong!" << std::endl;
+    }
+    
     screenSize_ = newSize;
     
     if (renderer_) {
@@ -126,9 +134,15 @@ void UISystem::SetScreenSize(int width, int height) {
         scaleManager_->UpdateScreenSize(width, height);
     }
     
-    // Invalidate layout for root component
+    // Update root component layout and positioning for new screen size
     if (rootComponent_) {
+        // Don't force root component to full screen size
+        // Let it maintain its preferred content size and just re-center it
         rootComponent_->InvalidateLayout();
+        
+        // Re-center the root component on the new screen size
+        CenterRootComponent();
+        
         NotifyScreenSizeChanged(rootComponent_);
     }
     
@@ -194,9 +208,21 @@ void UISystem::SetRootComponent(std::shared_ptr<UIComponent> component) {
     rootComponent_ = component;
     
     if (rootComponent_) {
-        rootComponent_->SetPosition(0, 0);
-        rootComponent_->SetSize(screenSize_);
-        rootComponent_->Initialize();
+        // Let the component calculate its preferred size based on its layout and content
+        glm::vec2 preferredSize = rootComponent_->CalculatePreferredSize();
+        
+        // If the component doesn't have a preferred size, use a reasonable default
+        if (preferredSize.x <= 0 || preferredSize.y <= 0) {
+            preferredSize = glm::vec2(400, 500); // Default menu size
+        }
+        
+        rootComponent_->SetSize(preferredSize);
+        
+        // Center the root component on the screen
+        CenterRootComponent();
+        
+        // Don't call Initialize() - component should already be initialized
+        // Calling Initialize() again causes duplicate creation logs and potential issues
     }
 }
 
@@ -339,12 +365,37 @@ void UISystem::NotifyScreenSizeChanged(std::shared_ptr<UIComponent> component) {
     if (!component) return;
     
     // Notify this component
-    component->OnScreenSizeChanged();
+    component->OnScreenSizeChanged(screenSize_.x, screenSize_.y);
     
     // Recursively notify all children
     for (auto& child : component->GetChildren()) {
         NotifyScreenSizeChanged(child);
     }
+}
+
+void UISystem::CenterRootComponent() {
+    if (!rootComponent_) return;
+    
+    // Get the current size of the root component
+    glm::vec2 componentSize = rootComponent_->GetSize();
+    
+    // Convert screen size to logical pixels
+    glm::vec2 logicalScreenSize = ScreenToLogical(screenSize_);
+    
+    // Calculate centered position
+    glm::vec2 centeredPosition = (logicalScreenSize - componentSize) * 0.5f;
+    
+    // Ensure the component doesn't go off-screen (with 10px margin in logical pixels)
+    float margin = 10.0f;
+    centeredPosition.x = std::max(margin, std::min(centeredPosition.x, logicalScreenSize.x - componentSize.x - margin));
+    centeredPosition.y = std::max(margin, std::min(centeredPosition.y, logicalScreenSize.y - componentSize.y - margin));
+    
+    // Set the centered position
+    rootComponent_->SetPosition(centeredPosition);
+    
+    std::cout << "[UISystem] Root component centered at (" << centeredPosition.x << ", " << centeredPosition.y 
+              << ") for size " << componentSize.x << "x" << componentSize.y 
+              << " on screen " << logicalScreenSize.x << "x" << logicalScreenSize.y << std::endl;
 }
 
 } // namespace UI

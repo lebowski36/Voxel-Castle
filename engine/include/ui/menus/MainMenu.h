@@ -30,6 +30,9 @@ public:
     void Initialize() override;
     void SetMenuSystem(MenuSystem* menuSystem) { menuSystem_ = menuSystem; }
     
+    // Responsive design
+    void OnScreenSizeChanged(float screenWidth, float screenHeight) override;
+    
 private:
     void OnResumeGameClick();
     void OnNewWorldClick();

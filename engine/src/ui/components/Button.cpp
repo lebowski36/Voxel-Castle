@@ -60,8 +60,8 @@ glm::vec2 Button::CalculatePreferredSize() const {
     float minWidth = 100.0f; // Minimum button width
     width = std::max(width, minWidth);
     
-    // Convert to screen pixels for accurate sizing
-    return uiSystem->LogicalToScreen(glm::vec2(width, height));
+    // Return logical pixels (UISystem will handle screen conversion)
+    return glm::vec2(width, height);
 }
 
 bool Button::HandleMouseButton(int button, int action, int mods, const glm::vec2& localPos) {
@@ -154,9 +154,69 @@ void Button::SetBorderRadius(float radius) {
     hasCustomBorderRadius_ = true;
 }
 
+void Button::RenderModernBackground(glm::vec2 absPos, glm::vec2 size, glm::vec4 baseColor) const {
+    auto renderer = GetUISystem()->GetRenderer();
+    auto theme = GetUISystem()->GetTheme();
+    
+    // 1. Render shadow first (behind the button)
+    if (style_ != Style::GHOST) {
+        auto shadow = theme->shadows.medium;
+        glm::vec2 shadowPos = absPos + shadow.offset;
+        glm::vec4 shadowColor = shadow.color;
+        shadowColor.a *= (hovered_ ? 0.3f : 0.2f); // More shadow on hover
+        
+        // Simple shadow approximation (offset colored quad)
+        renderer->renderColoredQuad(
+            shadowPos.x, shadowPos.y, 
+            size.x, size.y, 
+            shadowColor
+        );
+    }
+    
+    // 2. Render gradient background
+    glm::vec4 topColor = baseColor;
+    glm::vec4 bottomColor = baseColor;
+    
+    // Create gradient effect by darkening bottom
+    bottomColor.r *= 0.8f;
+    bottomColor.g *= 0.8f;
+    bottomColor.b *= 0.8f;
+    
+    // For now, approximate gradient with solid color + overlay
+    // TODO: Implement true gradient rendering in UIRenderer
+    renderer->renderColoredQuad(absPos.x, absPos.y, size.x, size.y, baseColor);
+    
+    // 3. Add glass morphism effect (subtle overlay)
+    if (style_ != Style::GHOST) {
+        glm::vec4 glassOverlay(1.0f, 1.0f, 1.0f, 0.1f); // White overlay for glass effect
+        if (hovered_) glassOverlay.a *= 1.5f; // Stronger effect on hover
+        
+        renderer->renderColoredQuad(absPos.x, absPos.y, size.x, size.y, glassOverlay);
+    }
+    
+    // 4. Add border for GHOST style
+    if (style_ == Style::GHOST) {
+        float borderWidth = 2.0f;
+        glm::vec4 borderColor = theme->colors.primaryAccent;
+        if (!IsEnabled()) borderColor = theme->colors.textDisabled;
+        
+        // Draw border as 4 rectangles
+        // Top
+        renderer->renderColoredQuad(absPos.x, absPos.y, size.x, borderWidth, borderColor);
+        // Bottom  
+        renderer->renderColoredQuad(absPos.x, absPos.y + size.y - borderWidth, size.x, borderWidth, borderColor);
+        // Left
+        renderer->renderColoredQuad(absPos.x, absPos.y, borderWidth, size.y, borderColor);
+        // Right
+        renderer->renderColoredQuad(absPos.x + size.x - borderWidth, absPos.y, borderWidth, size.y, borderColor);
+    }
+}
+
 void Button::OnRender() {
     auto uiSystem = GetUISystem();
-    if (!uiSystem || !uiSystem->GetRenderer()) return;
+    if (!uiSystem || !uiSystem->GetRenderer()) {
+        return;
+    }
     
     auto renderer = uiSystem->GetRenderer();
     auto theme = uiSystem->GetTheme();
@@ -164,14 +224,13 @@ void Button::OnRender() {
     // Get current colors based on state
     glm::vec4 backgroundColor = GetCurrentBackgroundColor();
     glm::vec4 textColor = GetCurrentTextColor();
-    // float borderRadius = GetCurrentBorderRadius(); // TODO: Implement rounded corners
     
     // Get absolute position and size in screen coordinates
     glm::vec2 absPos = uiSystem->LogicalToScreen(GetAbsolutePosition());
     glm::vec2 size = uiSystem->LogicalToScreen(UIComponent::GetSize());
     
     // Draw button background
-    renderer->renderColoredQuad(absPos.x, absPos.y, size.x, size.y, backgroundColor);
+    RenderModernBackground(absPos, size, backgroundColor);
     
     // Draw focus outline if focused
     if (focused_ && focusAnimation_ > 0.01f) {

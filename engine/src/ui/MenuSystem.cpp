@@ -51,25 +51,50 @@ void MenuSystem::update(float deltaTime) {
     UISystem::Update(deltaTime);
 }
 
-// Menu navigation methods - minimal stubs
+// Menu navigation methods - connect menus to UISystem root
 void MenuSystem::showMainMenu() {
     std::cout << "[MenuSystem] showMainMenu() called" << std::endl;
     menuState_ = MenuState::MAIN_MENU;
+    
+    // CRITICAL FIX: Set MainMenu as the root component so it's actually rendered
+    if (mainMenu_) {
+        SetRootComponent(mainMenu_);
+        std::cout << "[MenuSystem] MainMenu set as root component" << std::endl;
+    } else {
+        std::cerr << "[MenuSystem] ERROR: MainMenu is null!" << std::endl;
+    }
 }
 
 void MenuSystem::showSettingsMenu() {
     std::cout << "[MenuSystem] showSettingsMenu() called" << std::endl;
     menuState_ = MenuState::SETTINGS;
+    
+    // TODO: Implement when SettingsMenu is ready
+    // if (settingsMenu_) {
+    //     SetRootComponent(settingsMenu_);
+    // }
 }
 
 void MenuSystem::showCreateWorldMenu() {
     std::cout << "[MenuSystem] showCreateWorldMenu() called" << std::endl;
     menuState_ = MenuState::CREATE_WORLD;
+    
+    // Set CreateWorldMenu as the root component
+    if (createWorldMenu_) {
+        SetRootComponent(createWorldMenu_);
+        std::cout << "[MenuSystem] CreateWorldMenu set as root component" << std::endl;
+    } else {
+        std::cerr << "[MenuSystem] ERROR: CreateWorldMenu is null!" << std::endl;
+    }
 }
 
 void MenuSystem::closeMenus() {
     std::cout << "[MenuSystem] closeMenus() called" << std::endl;
     menuState_ = MenuState::NONE;
+    
+    // Clear the root component when closing menus
+    SetRootComponent(nullptr);
+    std::cout << "[MenuSystem] Root component cleared" << std::endl;
 }
 
 void MenuSystem::closeAllMenus() {

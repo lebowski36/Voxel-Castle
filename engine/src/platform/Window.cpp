@@ -220,7 +220,27 @@ void Window::handleEvents() {
     // For example, handling SDL_WINDOWEVENT_RESIZED explicitly if not covered by game loop.
 }
 
+void Window::updateWindowSize() {
+    if (!sdlWindow) return;
+    
+    // Get the actual current window size from SDL
+    int currentWidth, currentHeight;
+    SDL_GetWindowSize(sdlWindow, &currentWidth, &currentHeight);
+    
+    // Only update if the size has actually changed
+    if (currentWidth != windowWidth || currentHeight != windowHeight) {
+        std::cout << "[Window] Size updated from " << windowWidth << "x" << windowHeight 
+                  << " to " << currentWidth << "x" << currentHeight << std::endl;
+        
+        windowWidth = currentWidth;
+        windowHeight = currentHeight;
+    }
+}
+
 void Window::update() {
+    // Update internal window size to match actual SDL window size
+    updateWindowSize();
+    
     // Window-specific update logic (e.g., title updates, etc.)
     // Currently, no specific logic here.
 }
