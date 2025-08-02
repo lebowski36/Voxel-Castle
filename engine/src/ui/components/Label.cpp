@@ -2,6 +2,7 @@
 #include "ui/core/UISystem.h"
 #include "ui/UIRenderer.h"
 #include <algorithm>
+#include <iostream>
 
 namespace VoxelEngine {
 namespace UI {
@@ -85,6 +86,15 @@ void Label::OnRender() {
     // Apply UI scaling
     float scale = uiSystem->GetTotalScale();
     float scaledFontSize = fontSize_ * scale;
+    
+    // Debug output for title text positioning
+    if (text_.find("Voxel Castle") != std::string::npos) {
+        std::cout << "[Label::OnRender] Title \"" << text_ << "\" - AbsPos: (" 
+                  << absolutePos.x << ", " << absolutePos.y << "), TextPos: (" 
+                  << textPos.x << ", " << textPos.y << "), Final: (" 
+                  << absolutePos.x + textPos.x << ", " << absolutePos.y + textPos.y 
+                  << "), Scale: " << scale << ", FontSize: " << scaledFontSize << std::endl;
+    }
     
     // Render the text
     renderer->drawText(

@@ -26,6 +26,9 @@ public:
     // Returns OpenGL texture ID for the atlas
     GLuint getAtlasTexture() const { return atlasTexture_; }
 
+    // Validates that the texture is still valid in the OpenGL context
+    bool isTextureValid() const;
+
     // Returns glyph info for a character
     const GlyphInfo* getGlyph(char c) const;
 

@@ -111,6 +111,14 @@ glm::vec2 UIComponent::GetAbsolutePosition() const {
         absolutePos += parent->GetAbsolutePosition();
     }
     
+    // Debug output for main menu title positioning
+    static int debugCounter = 0;
+    if (++debugCounter % 300 == 0 && position_.x > 0 && position_.y > 0) { // Log every ~5 seconds at 60fps
+        std::cout << "[UIComponent::GetAbsolutePosition] Pos: (" << position_.x << ", " << position_.y 
+                  << "), AbsPos: (" << absolutePos.x << ", " << absolutePos.y 
+                  << "), HasParent: " << (parent ? "yes" : "no") << std::endl;
+    }
+    
     return absolutePos;
 }
 

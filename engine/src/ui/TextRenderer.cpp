@@ -163,38 +163,83 @@ float TextRenderer::getFontHeight() const {
 
 void TextRenderer::setProjectionMatrix(const glm::mat4& projection) {
     projectionMatrix_ = projection;
+    std::cout << "[TextRenderer] Projection matrix updated: [" 
+              << projection[0][0] << "," << projection[1][1] 
+              << "," << projection[2][2] << "," << projection[3][3] << "]" << std::endl;
 }
 
 void TextRenderer::drawText(const std::string& text, float x, float y, float scale, const glm::vec3& color) {
     if (shaderProgram_ == 0 || fontManager_.getAtlasTexture() == 0) {
+        std::cout << "[TextRenderer] drawText SKIPPED - shader: " << shaderProgram_ << ", atlas: " << fontManager_.getAtlasTexture() << std::endl;
         return;
     }
+
+    // Validate font atlas texture
+    if (!fontManager_.isTextureValid()) {
+        std::cout << "[TextRenderer] WARNING: Font atlas texture is invalid!" << std::endl;
+        return;
+    }
+
+    // Check for OpenGL errors before rendering
+    GLenum error = glGetError();
+    if (error != GL_NO_ERROR) {
+        std::cout << "[TextRenderer] OpenGL error before text rendering: " << error << std::endl;
+    }
+
+    std::cout << "[TextRenderer] Drawing text: '" << text << "' at (" << x << "," << y << ") scale:" << scale << std::endl;
 
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     
+    // Check depth test state - UI text should not be depth tested
+    GLboolean depthTestEnabled;
+    glGetBooleanv(GL_DEPTH_TEST, &depthTestEnabled);
+    if (depthTestEnabled) {
+        std::cout << "[TextRenderer] WARNING: Depth test is enabled - this may hide UI text!" << std::endl;
+    }
+    
     glUseProgram(shaderProgram_);
     glBindVertexArray(vao_);
+    
+    // Validate shader program state
+    GLint currentProgram;
+    glGetIntegerv(GL_CURRENT_PROGRAM, &currentProgram);
+    if (currentProgram != (GLint)shaderProgram_) {
+        std::cout << "[TextRenderer] WARNING: Shader program not bound correctly! Expected: " << shaderProgram_ << ", Got: " << currentProgram << std::endl;
+    }
     
     // Set uniforms
     GLint projLoc = glGetUniformLocation(shaderProgram_, "projection");
     if (projLoc != -1) {
         glUniformMatrix4fv(projLoc, 1, GL_FALSE, glm::value_ptr(projectionMatrix_));
+    } else {
+        std::cout << "[TextRenderer] WARNING: projection uniform not found!" << std::endl;
     }
     
     GLint colorLoc = glGetUniformLocation(shaderProgram_, "textColor");
     if (colorLoc != -1) {
         glUniform3f(colorLoc, color.r, color.g, color.b);
+    } else {
+        std::cout << "[TextRenderer] WARNING: textColor uniform not found!" << std::endl;
     }
     
     GLint textureLoc = glGetUniformLocation(shaderProgram_, "textTexture");
     if (textureLoc != -1) {
         glUniform1i(textureLoc, 0);
+    } else {
+        std::cout << "[TextRenderer] WARNING: textTexture uniform not found!" << std::endl;
     }
     
     // Bind font atlas texture
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, fontManager_.getAtlasTexture());
+    
+    // Validate texture binding
+    GLint boundTexture;
+    glGetIntegerv(GL_TEXTURE_BINDING_2D, &boundTexture);
+    if (boundTexture != (GLint)fontManager_.getAtlasTexture()) {
+        std::cout << "[TextRenderer] WARNING: Font atlas not bound correctly! Expected: " << fontManager_.getAtlasTexture() << ", Got: " << boundTexture << std::endl;
+    }
     
     float xpos = x;
     float ypos = y;
@@ -237,6 +282,12 @@ void TextRenderer::drawText(const std::string& text, float x, float y, float sca
     glBindVertexArray(0);
     glUseProgram(0);
     glDisable(GL_BLEND);
+    
+    // Check for OpenGL errors after rendering
+    error = glGetError();
+    if (error != GL_NO_ERROR) {
+        std::cout << "[TextRenderer] OpenGL error after text rendering: " << error << std::endl;
+    }
 }
 
 } // namespace UI

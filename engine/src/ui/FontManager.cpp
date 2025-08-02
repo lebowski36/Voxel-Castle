@@ -70,5 +70,29 @@ const GlyphInfo* FontManager::getGlyph(char c) const {
     return nullptr;
 }
 
+bool FontManager::isTextureValid() const {
+    if (atlasTexture_ == 0) return false;
+    
+    GLboolean isTexture = glIsTexture(atlasTexture_);
+    if (!isTexture) {
+        std::cout << "[FontManager] WARNING: Atlas texture " << atlasTexture_ << " is not a valid OpenGL texture!" << std::endl;
+        return false;
+    }
+    
+    // Check if the texture has valid parameters
+    glBindTexture(GL_TEXTURE_2D, atlasTexture_);
+    GLint width, height;
+    glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_WIDTH, &width);
+    glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_HEIGHT, &height);
+    
+    if (width != atlasWidth_ || height != atlasHeight_) {
+        std::cout << "[FontManager] WARNING: Atlas texture dimensions mismatch! Expected: " 
+                  << atlasWidth_ << "x" << atlasHeight_ << ", Got: " << width << "x" << height << std::endl;
+        return false;
+    }
+    
+    return true;
+}
+
 } // namespace UI
 } // namespace VoxelEngine

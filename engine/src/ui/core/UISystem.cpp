@@ -113,10 +113,11 @@ void UISystem::SetScreenSize(int width, int height) {
     // Only update if screen size actually changed
     glm::vec2 newSize(width, height);
     if (screenSize_.x == newSize.x && screenSize_.y == newSize.y) {
+        std::cout << "[UISystem] SetScreenSize called but no change: " << width << "x" << height << std::endl;
         return; // No change, skip update
     }
     
-    std::cout << "[UISystem] SetScreenSize called: " << width << "x" << height 
+    std::cout << "[UISystem] *** SCREEN SIZE CHANGE *** " << width << "x" << height 
               << " (was " << screenSize_.x << "x" << screenSize_.y << ")" << std::endl;
     
     // Add debug info to trace what's calling this
@@ -127,7 +128,10 @@ void UISystem::SetScreenSize(int width, int height) {
     screenSize_ = newSize;
     
     if (renderer_) {
+        std::cout << "[UISystem] Calling renderer_->setScreenSize..." << std::endl;
         renderer_->setScreenSize(width, height);
+    } else {
+        std::cout << "[UISystem] WARNING: renderer_ is null!" << std::endl;
     }
     
     if (scaleManager_) {

@@ -60,6 +60,13 @@ void VoxelCastle::Core::GameRenderCoordinator::render(
     
     // If UI system exists, update its dimensions to match current window size before rendering
     if (uiSystem) {
+        static int lastWidth = 0, lastHeight = 0;
+        if (screenWidth != lastWidth || screenHeight != lastHeight) {
+            std::cout << "[GameRenderCoordinator] *** CALLING uiSystem->setScreenSize(" 
+                      << screenWidth << ", " << screenHeight << ") ***" << std::endl;
+            lastWidth = screenWidth;
+            lastHeight = screenHeight;
+        }
         uiSystem->setScreenSize(screenWidth, screenHeight);
     }
     

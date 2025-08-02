@@ -186,6 +186,9 @@ void UIRenderer::endFrame() {
 }
 
 void UIRenderer::setScreenSize(int width, int height) {
+    std::cout << "[UIRenderer] *** SCREEN SIZE CHANGE *** " << width << "x" << height 
+              << " (was " << screenWidth_ << "x" << screenHeight_ << ")" << std::endl;
+    
     screenWidth_ = width;
     screenHeight_ = height;
     projectionMatrix_ = glm::ortho(0.0f, static_cast<float>(screenWidth_), 
@@ -194,7 +197,10 @@ void UIRenderer::setScreenSize(int width, int height) {
     
     // Update text renderer projection matrix
     if (textRenderer_) {
+        std::cout << "[UIRenderer] Updating TextRenderer projection matrix..." << std::endl;
         textRenderer_->setProjectionMatrix(projectionMatrix_);
+    } else {
+        std::cout << "[UIRenderer] WARNING: TextRenderer is null!" << std::endl;
     }
 }
 
