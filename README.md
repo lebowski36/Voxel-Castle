@@ -116,7 +116,7 @@ For detailed setup instructions for your operating system, see **[BUILD_GUIDE.md
 ### Current Features
 - **Free-flying Camera**: Explore the procedurally generated voxel world
 - **Interactive Blocks**: Place and remove different block types
-- **Real-time Rendering**: 60 FPS target with optimized chunk-based rendering
+- **Real-time Rendering**: Target: 60 FPS with optimized chunk-based rendering
 - **Dynamic World**: Chunks load and unload based on camera position
 
 ### Controls
@@ -145,7 +145,7 @@ For detailed setup instructions for your operating system, see **[BUILD_GUIDE.md
 - **Multithreading**: Background mesh generation and world loading
 
 ### Voxel Technology
-- **Chunk System**: 32³ voxel chunks (8m³ world volumes) for efficient processing
+- **Chunk System**: Chunks are always 32x32x32 voxels (each voxel is 0.25m, so each chunk is 8m x 8m x 8m) for efficient processing
 - **Mesh Generation**: Greedy meshing for optimized triangle count
 - **Level of Detail**: Distance-based chunk management for performance
 - **Texture Atlas**: Efficient texture management for all block types
