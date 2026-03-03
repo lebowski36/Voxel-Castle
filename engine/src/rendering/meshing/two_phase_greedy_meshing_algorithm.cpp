@@ -340,99 +340,84 @@ void VoxelEngine::Rendering::Meshing::TwoPhaseGreedyMeshingAlgorithm::addQuad(Vo
     }
 
     // Map UV coordinates based on world axis orientation for consistent texture orientation
-    // Vertex order: p1, p2, p3, p4 where p1 is the base corner
-    // p2 = p1 + dv_vec, p3 = p1 + dv_vec + du_vec, p4 = p1 + du_vec
+    // CRITICAL: Normalize UV coordinates to [0, 1] based on quad dimensions
     
     glm::vec2 quad_uvs[4];
+    float tex_u_scale = 1.0f;  // Scale UV by 1/quad_width_voxels
+    float tex_v_scale = 1.0f;  // Scale UV by 1/quad_height_voxels
     
-    // Determine face orientation based on normal vector and apply consistent UV mapping
+    if (quad_width_voxels > 0) tex_u_scale = 1.0f / static_cast<float>(quad_width_voxels);
+    if (quad_height_voxels > 0) tex_v_scale = 1.0f / static_cast<float>(quad_height_voxels);
+    
+    // Determine face orientation based on normal vector
     if (std::abs(normal.y) > 0.5f) {
         // Horizontal face (floor/ceiling) - Y+ or Y-
-        // For consistent cardinal orientation: U = X-axis, V = Z-axis
-        // This ensures textures face North consistently
-        
         float u_min = std::min(std::min(p1.x, p2.x), std::min(p3.x, p4.x));
         float u_max = std::max(std::max(p1.x, p2.x), std::max(p3.x, p4.x));
         float v_min = std::min(std::min(p1.z, p2.z), std::min(p3.z, p4.z));
         float v_max = std::max(std::max(p1.z, p2.z), std::max(p3.z, p4.z));
         
-        // Calculate UV coordinates in voxel units for proper texture tiling
-        // The shader uses fract() to repeat textures, so UVs should reflect voxel count
-        
-        // Map each vertex based on its X,Z position in voxel units (not normalized)
-        quad_uvs[0] = glm::vec2((p1.x - u_min), (p1.z - v_min));  // p1
-        quad_uvs[1] = glm::vec2((p2.x - u_min), (p2.z - v_min));  // p2
-        quad_uvs[2] = glm::vec2((p3.x - u_min), (p3.z - v_min));  // p3
-        quad_uvs[3] = glm::vec2((p4.x - u_min), (p4.z - v_min));  // p4
-        
-        // Get quad dimensions for orientation logic
         float u_size = u_max - u_min;
         float v_size = v_max - v_min;
         
-        // For Y- faces (ceiling), flip V to maintain proper orientation
+        // Map and normalize UVs
+        quad_uvs[0] = glm::vec2((p1.x - u_min) * tex_u_scale, (p1.z - v_min) * tex_v_scale);
+        quad_uvs[1] = glm::vec2((p2.x - u_min) * tex_u_scale, (p2.z - v_min) * tex_v_scale);
+        quad_uvs[2] = glm::vec2((p3.x - u_min) * tex_u_scale, (p3.z - v_min) * tex_v_scale);
+        quad_uvs[3] = glm::vec2((p4.x - u_min) * tex_u_scale, (p4.z - v_min) * tex_v_scale);
+        
+        // For Y- faces, flip V
         if (normal.y < 0.0f) {
             for (int i = 0; i < 4; i++) {
-                quad_uvs[i].y = v_size - quad_uvs[i].y;
+                quad_uvs[i].y = 1.0f - quad_uvs[i].y;
             }
         }
         
     } else if (std::abs(normal.x) > 0.5f) {
-        // Vertical face facing East/West (X+ or X-)
-        // U = Z-axis (horizontal), V = Y-axis (up/down)
-        
+        // Vertical face East/West (X+ or X-)
         float u_min = std::min(std::min(p1.z, p2.z), std::min(p3.z, p4.z));
         float u_max = std::max(std::max(p1.z, p2.z), std::max(p3.z, p4.z));
         float v_min = std::min(std::min(p1.y, p2.y), std::min(p3.y, p4.y));
         float v_max = std::max(std::max(p1.y, p2.y), std::max(p3.y, p4.y));
         
-        // Get quad dimensions for orientation logic
-        float u_size = u_max - u_min;
-        float v_size = v_max - v_min;
+        // Map and normalize UVs
+        quad_uvs[0] = glm::vec2((p1.z - u_min) * tex_u_scale, (p1.y - v_min) * tex_v_scale);
+        quad_uvs[1] = glm::vec2((p2.z - u_min) * tex_u_scale, (p2.y - v_min) * tex_v_scale);
+        quad_uvs[2] = glm::vec2((p3.z - u_min) * tex_u_scale, (p3.y - v_min) * tex_v_scale);
+        quad_uvs[3] = glm::vec2((p4.z - u_min) * tex_u_scale, (p4.y - v_min) * tex_v_scale);
         
-        // Map each vertex: U=Z-position, V=Y-position, in voxel units for proper tiling
-        quad_uvs[0] = glm::vec2((p1.z - u_min), (p1.y - v_min));  // p1
-        quad_uvs[1] = glm::vec2((p2.z - u_min), (p2.y - v_min));  // p2
-        quad_uvs[2] = glm::vec2((p3.z - u_min), (p3.y - v_min));  // p3
-        quad_uvs[3] = glm::vec2((p4.z - u_min), (p4.y - v_min));  // p4
-        
-        // For X- faces (west-facing), flip U to maintain consistent orientation
+        // For X- faces, flip U
         if (normal.x < 0.0f) {
             for (int i = 0; i < 4; i++) {
-                quad_uvs[i].x = u_size - quad_uvs[i].x;
+                quad_uvs[i].x = 1.0f - quad_uvs[i].x;
             }
         }
         
     } else if (std::abs(normal.z) > 0.5f) {
-        // Vertical face facing North/South (Z+ or Z-)
-        // U = X-axis (horizontal), V = Y-axis (up/down)
-        
+        // Vertical face North/South (Z+ or Z-)
         float u_min = std::min(std::min(p1.x, p2.x), std::min(p3.x, p4.x));
         float u_max = std::max(std::max(p1.x, p2.x), std::max(p3.x, p4.x));
         float v_min = std::min(std::min(p1.y, p2.y), std::min(p3.y, p4.y));
         float v_max = std::max(std::max(p1.y, p2.y), std::max(p3.y, p4.y));
         
-        // Get quad dimensions for orientation logic
-        float u_size = u_max - u_min;
-        float v_size = v_max - v_min;
+        // Map and normalize UVs  
+        quad_uvs[0] = glm::vec2((p1.x - u_min) * tex_u_scale, (p1.y - v_min) * tex_v_scale);
+        quad_uvs[1] = glm::vec2((p2.x - u_min) * tex_u_scale, (p2.y - v_min) * tex_v_scale);
+        quad_uvs[2] = glm::vec2((p3.x - u_min) * tex_u_scale, (p3.y - v_min) * tex_v_scale);
+        quad_uvs[3] = glm::vec2((p4.x - u_min) * tex_u_scale, (p4.y - v_min) * tex_v_scale);
         
-        // Map each vertex: U=X-position, V=Y-position, in voxel units for proper tiling
-        quad_uvs[0] = glm::vec2((p1.x - u_min), (p1.y - v_min));  // p1
-        quad_uvs[1] = glm::vec2((p2.x - u_min), (p2.y - v_min));  // p2
-        quad_uvs[2] = glm::vec2((p3.x - u_min), (p3.y - v_min));  // p3
-        quad_uvs[3] = glm::vec2((p4.x - u_min), (p4.y - v_min));  // p4
-        
-        // For Z+ faces (north-facing), flip U to maintain consistent left-right orientation
+        // For Z+ faces, flip U
         if (normal.z > 0.0f) {
             for (int i = 0; i < 4; i++) {
-                quad_uvs[i].x = u_size - quad_uvs[i].x;
+                quad_uvs[i].x = 1.0f - quad_uvs[i].x;
             }
         }
     } else {
-        // Fallback for edge cases - use simple quad mapping
-        quad_uvs[0] = glm::vec2(0.0f, 0.0f);  // p1
-        quad_uvs[1] = glm::vec2(0.0f, 1.0f);  // p2
-        quad_uvs[2] = glm::vec2(1.0f, 1.0f);  // p3
-        quad_uvs[3] = glm::vec2(1.0f, 0.0f);  // p4
+        // Fallback
+        quad_uvs[0] = glm::vec2(0.0f, 0.0f);
+        quad_uvs[1] = glm::vec2(0.0f, 1.0f);
+        quad_uvs[2] = glm::vec2(1.0f, 1.0f);
+        quad_uvs[3] = glm::vec2(1.0f, 0.0f);
     }
 
     mesh.vertices.emplace_back(p1, normal, quad_uvs[0], atlas_origin_uv, light, static_cast<int>(atlasType));

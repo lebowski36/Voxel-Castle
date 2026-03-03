@@ -227,7 +227,7 @@ void processInput(Game& game) {
                         std::cout << "[INFO] ESC key ignored in main menu with no previous state" << std::endl;
                     }
                     break;
-                case SDL_SCANCODE_O:
+                case SDL_SCANCODE_C:
                     game.toggleCameraMode();
                     break;
                 case SDL_SCANCODE_W: game.forward_ = true; break;

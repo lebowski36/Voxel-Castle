@@ -320,7 +320,7 @@ private:
     bool jumping_ = false;     // Space key for jumping in first-person
 
     // Player physics state (for first-person mode)
-    glm::vec3 playerPosition_ = glm::vec3(16.0f, 24.0f, 48.0f); // Player world position
+    glm::vec3 playerPosition_ = glm::vec3(16.0f, 100.0f, 16.0f); // Player world position - same as camera spawn height
     glm::vec3 playerVelocity_ = glm::vec3(0.0f); // Player velocity
     bool isOnGround_ = false;  // Ground detection for jumping
     float fallVelocity_ = 0.0f; // For fall damage calculation
