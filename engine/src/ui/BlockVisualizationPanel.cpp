@@ -75,7 +75,7 @@ void BlockVisualizationPanel::render() {
     
     // Block name (center area)
     float name_x = preview_x + preview_size + 20.0f;
-    std::string blockName = getBlockName(currentBlock_);
+    std::string blockName = getBlockName(static_cast<uint8_t>(currentBlock_));
     g_currentRenderer->drawText(blockName, name_x, content_y + 20.0f, 0.95f,
                                glm::vec3(0.9f, 0.9f, 0.9f));
     
@@ -151,17 +151,7 @@ void BlockVisualizationPanel::selectPreviousBlock() {
     currentBlock_ = static_cast<VoxelType>(blockId);
 }
 
-void BlockVisualizationPanel::selectBlockByCategory(int categoryIndex) {
-    if (categoryIndex >= 0 && categoryIndex < static_cast<int>(blockCategories_.size())) {
-        if (!blockCategories_[categoryIndex].blocks.empty()) {
-            selectBlock(blockCategories_[categoryIndex].blocks[0]);
-        }
-    }
-}
-
-std::string BlockVisualizationPanel::getBlockName(VoxelType blockType) const {
-    uint8_t id = static_cast<uint8_t>(blockType);
-    
+std::string BlockVisualizationPanel::getBlockName(uint8_t blockId) const {
     // Simple list of block names
     static const char* blockNames[] = {
         "Air", "Stone", "Dirt", "Grass", "Sand", "Gravel", "Clay", "Bedrock", "Topsoil", "Subsoil",
@@ -172,59 +162,15 @@ std::string BlockVisualizationPanel::getBlockName(VoxelType blockType) const {
         "Water", "Lava", "Oil", "Acid", "Honey", "Steam", "Toxic Gas", "Natural Gas", "Mist", "Smoke"
     };
     
-    if (id < 60) {
-        return blockNames[id];
+    if (blockId < 60) {
+        return blockNames[blockId];
     }
     
-    return "Block " + std::to_string(id);
+    return "Block " + std::to_string(blockId);
 }
 
 void BlockVisualizationPanel::initializeBlockCategories() {
-    blockCategories_.clear();
-    
-    BlockCategory basic;
-    basic.name = "Basic";
-    for (int i = 0; i < 10; i++) {
-        basic.blocks.push_back(static_cast<VoxelType>(i));
-    }
-    blockCategories_.push_back(basic);
-    
-    BlockCategory stones;
-    stones.name = "Stones";
-    for (int i = 10; i < 20; i++) {
-        stones.blocks.push_back(static_cast<VoxelType>(i));
-    }
-    blockCategories_.push_back(stones);
-    
-    BlockCategory ores;
-    ores.name = "Ores";
-    for (int i = 20; i < 30; i++) {
-        ores.blocks.push_back(static_cast<VoxelType>(i));
-    }
-    blockCategories_.push_back(ores);
-    
-    BlockCategory organic;
-    organic.name = "Organic";
-    for (int i = 30; i < 40; i++) {
-        organic.blocks.push_back(static_cast<VoxelType>(i));
-    }
-    blockCategories_.push_back(organic);
-    
-    BlockCategory biome;
-    biome.name = "Biome";
-    for (int i = 40; i < 50; i++) {
-        biome.blocks.push_back(static_cast<VoxelType>(i));
-    }
-    blockCategories_.push_back(biome);
-    
-    BlockCategory fluids;
-    fluids.name = "Fluids";
-    for (int i = 50; i < 60; i++) {
-        fluids.blocks.push_back(static_cast<VoxelType>(i));
-    }
-    blockCategories_.push_back(fluids);
-    
-    selectBlock(VoxelType::STONE);
+    // Simplified: just prepare block names, no complex categories
 }
 
 } // namespace UI

@@ -30,74 +30,34 @@ namespace UI {
 class BlockVisualizationPanel : public UIElement {
 public:
     BlockVisualizationPanel();
-    BlockVisualizationPanel(float x, float y, float width, float height);
     virtual ~BlockVisualizationPanel() = default;
 
     // UIElement interface
     void update(float deltaTime) override;
     void render() override;
-    bool handleInput(float mouseX, float mouseY, bool clicked) override;        bool handleScroll(float x, float y, float scrollDelta);
-
-    // Add scroll wheel support
-
+    bool handleInput(float mouseX, float mouseY, bool clicked) override;
 
     // Configuration
     void setVisible(bool visible);
     void toggleVisibility() { setVisible(!isVisible()); }
-    void setBlockRotationSpeed(float speed) { rotationSpeed_ = speed; }
     
     // Block selection
     void selectBlock(VoxelType blockType);
     void selectNextBlock();
     void selectPreviousBlock();
-    void selectBlockByCategory(int categoryIndex);
-
-    // Display options
-    void setShowBlockInfo(bool show) { showBlockInfo_ = show; }
-    void setShowBlockList(bool show) { showBlockList_ = show; }
-    void setShowFacePatternInfo(bool show) { showFacePatternInfo_ = show; }
-    void setAutoRotate(bool autoRotate) { autoRotate_ = autoRotate; }
-    
-    // Grid view options
-    void toggleGridView() { gridViewEnabled_ = !gridViewEnabled_; }
-    void setGridSize(int columns, int rows) { gridColumns_ = columns; gridRows_ = rows; }
     
     // Static method to set current renderer (called by UISystem)
     static void setCurrentRenderer(class UIRenderer* renderer);
     
     // Texture atlas access
-    static void setTextureAtlas(class VoxelEngine::Rendering::TextureAtlas* atlas);    private:
-        void initializeBlockCategories();
-    // Helper methods
-    void renderBlockList();
-    void renderBlockPreview();
-    void renderBlockInfo();
-    void renderBlockGrid();
-    void updateBlockRotation(float deltaTime);
-    glm::vec4 getBlockColor(VoxelEngine::World::VoxelType blockType);
-    std::string getBlockName(VoxelEngine::World::VoxelType blockType) const;
-    std::string getFacePatternName(VoxelEngine::World::VoxelType blockType) const;
-    glm::vec2 getBlockListPosition() const;
-    glm::vec2 getBlockPreviewPosition() const;
-    glm::vec2 getBlockInfoPosition() const;
+    static void setTextureAtlas(class VoxelEngine::Rendering::TextureAtlas* atlas);
+
+private:
+    void initializeBlockCategories();
+    std::string getBlockName(uint8_t blockId) const;
     
     // UI state
-    bool initialized_{false};
-    bool showBlockInfo_{true};
-    bool showBlockList_{true};
-    bool showFacePatternInfo_{true};
-    bool gridViewEnabled_{false};
-    bool autoRotate_{true};
-    
-    // Block rendering state
     VoxelType currentBlock_{VoxelType::STONE};
-    int categoryFilter_{-1}; // -1 = all categories
-    float rotationAngleX_{0.0f};
-    float rotationAngleY_{0.0f};
-    float rotationAngleZ_{0.0f};
-    float rotationSpeed_{50.0f}; // degrees per second
-    
-    // Multi-axis rotation cycle state
     enum class RotationAxis { X, Y, Z, COMBINED };
     RotationAxis currentRotationAxis_{RotationAxis::Y};
     float axisRotationTime_{0.0f};
