@@ -172,9 +172,10 @@ bool Game::initialize() {
     std::cout << "[Game] Connected Multi-atlas TextureAtlas to MeshRenderer - Main: " << mainAtlasId 
               << ", Side: " << sideAtlasId << ", Bottom: " << bottomAtlasId << std::endl;
     
-    // Initialize camera with a default position
+    // Initialize camera with a default position (above generated terrain)
+    // Position: x=16, y=100 (well above any terrain), z=16
     camera_ = std::make_unique<SpectatorCamera>(
-        glm::vec3(16.0f, 24.0f, 48.0f), 
+        glm::vec3(16.0f, 100.0f, 16.0f), 
         -90.0f, 0.0f, 70.0f,
         static_cast<float>(screenWidth_) / static_cast<float>(screenHeight_), 
         0.1f, 500.0f
@@ -295,9 +296,11 @@ bool Game::initialize() {
                 // Generate a random seed if none provided
                 std::string randomSeed = "voxelcastle" + std::to_string(std::chrono::system_clock::now().time_since_epoch().count());
                 if (initializeWorldSystems(randomSeed)) {
+                    // Close menu BEFORE state change
+                    menuSystem_->closeMenus();
                     // Transition directly from MAIN_MENU to gameplay state (not using stack)
                     if (stateManager_) {
-                        stateManager_->requestStateChange(GameState::STRATEGIC_MODE);
+                        stateManager_->requestStateChange(GameState::FIRST_PERSON_MODE);
                     }
                     std::cout << "[Game] World initialized and switched to gameplay mode" << std::endl;
                 } else {
@@ -305,8 +308,10 @@ bool Game::initialize() {
                 }
             } else {
                 std::cout << "[Game] World already initialized, switching to gameplay" << std::endl;
+                // Close menu BEFORE state change
+                menuSystem_->closeMenus();
                 if (stateManager_) {
-                    stateManager_->requestStateChange(GameState::STRATEGIC_MODE);
+                    stateManager_->requestStateChange(GameState::FIRST_PERSON_MODE);
                 }
             }
         });
@@ -322,9 +327,11 @@ bool Game::initialize() {
             // Create a world using the provided seed
             std::string seedString = std::to_string(seed.getMasterSeed());
             if (initializeWorldSystems(seedString)) {
+                // Close menu BEFORE state change
+                menuSystem_->closeMenus();
                 // Transition to gameplay state
                 if (stateManager_) {
-                    stateManager_->requestStateChange(GameState::STRATEGIC_MODE);
+                    stateManager_->requestStateChange(GameState::FIRST_PERSON_MODE);
                 }
                 std::cout << "[Game] New world created and switched to gameplay mode" << std::endl;
             } else {
