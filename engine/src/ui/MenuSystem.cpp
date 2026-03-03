@@ -22,9 +22,11 @@ bool MenuSystem::initialize(int screenWidth, int screenHeight, const std::string
     
     // Create new UI menus
     mainMenu_ = std::make_shared<MainMenu>();
+    mainMenu_->SetMenuSystem(this);
     mainMenu_->Initialize();
     
     createWorldMenu_ = std::make_shared<CreateWorldMenu>();
+    createWorldMenu_->SetMenuSystem(this);
     createWorldMenu_->Initialize();
     
     // TODO: Create SettingsMenu when implemented
@@ -34,10 +36,11 @@ bool MenuSystem::initialize(int screenWidth, int screenHeight, const std::string
 }
 
 bool MenuSystem::handleInput(float mouseX, float mouseY, bool clicked) {
-    // Basic input forwarding to UISystem
-    if (clicked) {
-        HandleMouseButton(0, 1, 0, mouseX, mouseY);
-    }
+    // Always update hover state by moving the mouse
+    HandleMouseMove(mouseX, mouseY);
+    // Send both press (action=1) and release (action=0) — Button fires onClick_ on release
+    int action = clicked ? 1 : 0;
+    HandleMouseButton(0, action, 0, mouseX, mouseY);
     return false;
 }
 
@@ -150,12 +153,16 @@ bool MenuSystem::toggleFullscreen(bool enable) {
 
 void MenuSystem::requestExit() {
     std::cout << "[MenuSystem] Exit requested!" << std::endl;
-    // TODO: Implement actual exit logic
+    if (onExitRequest_) {
+        onExitRequest_();
+    }
 }
 
 void MenuSystem::requestWorldInitialization() {
     std::cout << "[MenuSystem] World initialization requested!" << std::endl;
-    // TODO: Implement world initialization
+    if (onWorldInitRequest_) {
+        onWorldInitRequest_();
+    }
 }
 
 void MenuSystem::requestProceduralWorldCreation(const std::string& seed) {
